@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from backend.database.database import Base, engine
+from backend.database.database import Base, engine, get_db
 from backend.auth import router as auth_router
+from backend.services.stock_data_service import fetch_and_save_stock_data
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -28,3 +31,17 @@ app.include_router(auth_router, prefix="/auth")
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Stock Scout API!"}
+
+# Add this router to your main FastAPI app
+router = APIRouter()
+
+@router.post("/fetch-stock-data/{ticker}")
+async def fetch_stock_data(ticker: str, db: Session = Depends(get_db)):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)  # Fetch last 30 days of data
+    result = fetch_and_save_stock_data(ticker, start_date, end_date, db)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"No data found for ticker {ticker}")
+    return {"message": f"Data fetched successfully for {ticker}"}
+
+app.include_router(router)
