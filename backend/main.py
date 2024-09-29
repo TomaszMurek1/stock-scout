@@ -71,7 +71,7 @@ async def get_most_recent_golden_cross(request: GoldenCrossRequest, db: Session 
     long_window = request.long_window
     min_volume = request.min_volume
     adjusted = request.adjusted
-w
+
     # Now perform the golden cross analysis
     golden_cross_result = find_most_recent_golden_cross(
         ticker=ticker,
