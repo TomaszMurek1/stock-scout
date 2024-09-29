@@ -1,30 +1,35 @@
-import { createTheme } from "@mui/material";
+// theme.tsx
+import { createTheme } from "@mui/material/styles";
 
 // Define color constants
-const LIGHT_BLUE = "#219ebc";
-const GOLDEN_YELLOW = "#ffb703";
-const LIGHT_GRAY = "#f5f5f5";
-const DARK_BLUE = "#023047";
-const ORANGE = "#fb8500";
-const WHITE = "#ffffff";
+export const LIGHT_BLUE = "#219ebc";
+export const GOLDEN_YELLOW = "#ffb703";
+export const LIGHT_GRAY = "#f5f5f5"; // Light gray color
+export const DARK_BLUE = "#023047";
+export const ORANGE = "#fb8500";
+export const WHITE = "#ffffff";
 
 export const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: LIGHT_BLUE,
+      main: DARK_BLUE,
     },
     secondary: {
       main: GOLDEN_YELLOW,
     },
     background: {
-      default: LIGHT_GRAY,
+      default: LIGHT_GRAY, // Main background color
+      paper: LIGHT_GRAY, // Paper components now use LIGHT_GRAY
     },
     text: {
       primary: DARK_BLUE,
     },
     action: {
       hover: ORANGE,
+    },
+    grey: {
+      400: "#BDBDBD",
     },
   },
   typography: {
@@ -37,14 +42,14 @@ export const theme = createTheme({
       fontSize: "1.8rem",
       fontWeight: 500,
     },
-  },
-  components: {
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          boxShadow: "0px 2px 4px -1px rgba(0,0,0,0.1)",
-        },
-      },
+    h5: {
+      fontWeight: 600,
     },
+    h6: {
+      fontWeight: 500,
+    },
+  },
+  shape: {
+    borderRadius: 8,
   },
 });

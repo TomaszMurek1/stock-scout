@@ -40,7 +40,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ToastContainer />
-      <Box className="App">
+      <Box className="App" sx={{ bgcolor: "background.paper" }}>
         <Header
           token={token}
           showSignIn={showSignIn}
