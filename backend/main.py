@@ -43,6 +43,6 @@ async def fetch_stock_data(ticker: str, db: Session = Depends(get_db)):
     if result is None:
         return {"message": f"Data is already up to date for {ticker}"}
     print(result)
-    return {"message": f"{result['status']}: {result['message']}"}
+    return {"message": result['message']}
 
 app.include_router(router)

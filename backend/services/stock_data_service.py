@@ -4,16 +4,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
 from backend.database.models import Company, HistoricalData, Market
 import logging
-import inspect
 import pandas as pd
 import time
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+# logging.getLogger('yfinance').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 def retry_on_db_lock(func):
     def wrapper(*args, **kwargs):
-        max_attempts = 5
+        max_attempts = 3
         for attempt in range(max_attempts):
             try:
                 return func(*args, **kwargs)
@@ -25,122 +25,140 @@ def retry_on_db_lock(func):
                     raise
     return wrapper
 
+def get_or_create_company(ticker: str, db: Session) -> Company:
+    company = db.query(Company).filter(Company.ticker == ticker).first()
+    if company:
+        logger.debug(f"Company with ticker {ticker} found in the database.")
+        return company
+
+    logger.debug(f"Company with ticker {ticker} not found in the database. Fetching company info from yfinance.")
+    stock = yf.Ticker(ticker)
+    stock_info = stock.info
+
+    if not stock_info:
+        message = f"Could not find company information for ticker {ticker}."
+        logger.error(message)
+        return None
+
+    # Get or create the market
+    exchange_name = stock_info.get('exchange', 'Unknown')
+    market = db.query(Market).filter(Market.name == exchange_name).first()
+    if not market:
+        market = Market(
+            name=exchange_name,
+            country=stock_info.get('country', 'Unknown'),
+            currency=stock_info.get('currency', 'Unknown'),
+            timezone=stock_info.get('timeZoneFullName', 'Unknown')
+        )
+        db.add(market)
+        db.commit()
+        logger.debug(f"Created new market entry for exchange {exchange_name}.")
+
+    # Create new company entry
+    company = Company(
+        name=stock_info.get('longName', 'Unknown'),
+        ticker=ticker,
+        market_id=market.market_id,
+        sector=stock_info.get('sector', 'Unknown'),
+        industry=stock_info.get('industry', 'Unknown')
+    )
+    db.add(company)
+    db.commit()
+    logger.debug(f"Created new company entry for ticker {ticker}.")
+    return company
+
+def get_missing_dates(company_id: int, start_date: datetime, end_date: datetime, db: Session) -> (set, set):
+    existing_dates_query = db.query(HistoricalData.date).filter(
+        HistoricalData.company_id == company_id,
+        HistoricalData.date >= start_date.date(),
+        HistoricalData.date <= end_date.date()
+    ).all()
+    existing_dates = set(row[0] for row in existing_dates_query)
+    all_dates = set(pd.date_range(start=start_date, end=end_date).date)
+    missing_dates = all_dates - existing_dates
+    # logger.debug(f"Existing dates: {existing_dates}")
+    # logger.debug(f"All dates: {all_dates}")
+    # logger.debug(f"Missing dates: {missing_dates}")
+    return missing_dates, existing_dates
+
+def fetch_historical_data(ticker: str, missing_dates: set) -> pd.DataFrame:
+    if not missing_dates:
+        return pd.DataFrame()
+    stock = yf.Ticker(ticker)
+    missing_start = min(missing_dates)
+    missing_end = max(missing_dates) + timedelta(days=1)  # Add one day because end date is exclusive
+    stock_data = stock.history(start=missing_start, end=missing_end)
+    # logger.debug(f"Fetched data shape: {stock_data.shape}")
+    return stock_data
+
+def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dates: set, db: Session) -> int:
+    records_added = 0
+    for index, row in stock_data.iterrows():
+        date = index.date()
+        if date in existing_dates:
+            # logger.debug(f"Record for date {date} already exists. Skipping.")
+            continue
+
+        historical_data = HistoricalData(
+            company_id=company_id,
+            date=date,
+            open=row['Open'],
+            high=row['High'],
+            low=row['Low'],
+            close=row['Close'],
+            adjusted_close=row.get('Adj Close', row['Close']),
+            volume=int(row['Volume'])
+        )
+        db.add(historical_data)
+        records_added += 1
+
+    if records_added > 0:
+        try:
+            db.commit()
+            logger.debug(f"{records_added} new records added to the database.")
+        except IntegrityError:
+            db.rollback()
+            logger.error("IntegrityError during commit. Rolling back.")
+            records_added = 0
+    else:
+        logger.debug("No new records to commit.")
+    return records_added
+
 @retry_on_db_lock
 def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datetime, db: Session):
     try:
-        # Check if the company exists in the database
-        company = db.query(Company).filter(Company.ticker == ticker).first()
-        
+        company = get_or_create_company(ticker, db)
         if not company:
-            print(f"Company with ticker {ticker} not found in the database. Fetching from yfinance.")
-            
-            # Fetch data from yfinance
-            stock = yf.Ticker(ticker)
-            print('stock', stock.info)
-            
-            # Check if the market exists, if not create it
-            exchange_name = stock.info['exchange']
-            market = db.query(Market).filter(Market.name == exchange_name).first()
-            if not market:
-                market = Market(name=exchange_name, country=stock.info['country'], currency=stock.info['currency'], timezone=stock.info['timeZoneFullName'])
-                db.add(market)
-                db.commit()
-                print(f"Created new market entry for exchange {exchange_name}.")
-            
-            # Create new company entry with the correct market_id
-            company = Company(
-                name=stock.info['longName'],
-                ticker=ticker,
-                market_id=market.market_id,
-                sector=stock.info.get('sector', 'Unknown'),
-                industry=stock.info.get('industry', 'Unknown')
-            )
-            db.add(company)
-            db.commit()
-            print(f"Created new company entry for ticker {ticker}.")
-        else:
-            print(f"Company with ticker {ticker} found in the database. Fetching from yfinance.")
-            
-            # Fetch data from yfinance
-            stock = yf.Ticker(ticker)
+            message = f"Failed to retrieve or create company for ticker {ticker}."
+            logger.error(message)
+            return {"status": "error", "message": message}
 
-        # Fetch historical data
-        # Check if data already exists in historical_data
-        # Get the existing data dates
-        existing_dates = set(db.query(HistoricalData.date).filter(
-            HistoricalData.company_id == company.company_id,
-            HistoricalData.date >= start_date,
-            HistoricalData.date <= end_date
-        ).all())
-
-        # Calculate missing dates
-        all_dates = set(pd.date_range(start=start_date, end=end_date).date)
-        missing_dates = all_dates - existing_dates
-
+        # Get missing dates and existing dates
+        missing_dates, existing_dates = get_missing_dates(company.company_id, start_date, end_date, db)
         if not missing_dates:
             message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
-            print(message)
+            logger.info(message)
             return {"status": "up_to_date", "message": message}
 
-        # Fetch historical data only for missing dates
-        missing_start = min(missing_dates)
-        missing_end = max(missing_dates)
-        stock_data = yf.Ticker(ticker).history(start=missing_start, end=missing_end)
-        
-        logger.debug(f"Filtered data shape: {stock_data.shape}")
-
+        stock_data = fetch_historical_data(ticker, missing_dates)
         if stock_data.empty:
-            logging.warning(f"No new data to save for ticker {ticker}.")
-            return None
+            message = f"No new data to save for ticker {ticker}."
+            logger.warning(message)
+            return {"status": "no_data", "message": message}
 
-        # Save historical data to the database
-        records_added = 0
-        for index, row in stock_data.iterrows():
-            historical_data = HistoricalData(
-                company_id=company.company_id,
-                date=index.date(),
-                open=row['Open'],
-                high=row['High'],
-                low=row['Low'],
-                close=row['Close'],
-                adjusted_close=row.get('Adj Close', row['Close']),
-                volume=int(row['Volume'])  # Convert to int to avoid numpy type issues
-            )
-            try:
-                db.add(historical_data)
-                db.flush()  # This will attempt to insert the record without committing
-                records_added += 1
-            except IntegrityError:
-                db.rollback()  # Roll back the failed insertion
-                logger.warning(f"Record for date {index.date()} already exists. Skipping.")
-                continue
-        
+        # Pass existing_dates to save_historical_data
+        records_added = save_historical_data(company.company_id, stock_data, existing_dates, db)
         if records_added > 0:
-            db.commit() 
             message = f"Data for {ticker} fetched and saved successfully. {records_added} new records added."
-            print(message)
+            logger.info(message)
             return {"status": "success", "message": message}
         else:
             message = f"No new records added for {ticker}."
-            print(message)
-            return {"status": "Up to date", "message": message}
+            logger.info(message)
+            return {"status": "up_to_date", "message": message}
 
     except Exception as e:
         db.rollback()
-        logging.error(f"Unexpected error fetching data for {ticker}: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error fetching data for {ticker}: {str(e)}", exc_info=True)
         raise
 
-# Example usage
-if __name__ == "__main__":
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    
-    engine = create_engine('sqlite:///your_database.db')
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    
-    ticker = "AAPL"
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)  # Fetch last 30 days of data
-    
-    with SessionLocal() as db:
-        fetch_and_save_stock_data(ticker, start_date, end_date, db)
