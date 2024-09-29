@@ -46,6 +46,7 @@ class TickerRequest(BaseModel):
 class GoldenCrossRequest(BaseModel):
     short_window: int = 50
     long_window: int = 200
+    days_to_look_back: int = 90  # New parameter
     min_volume: int = 1000000
     adjusted: bool = True
 
@@ -68,6 +69,7 @@ async def fetch_stock_data(request: TickerRequest, db: Session = Depends(get_db)
 async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Session = Depends(get_db)):
     short_window = request.short_window
     long_window = request.long_window
+    days_to_look_back = request.days_to_look_back
     min_volume = request.min_volume
     adjusted = request.adjusted
 
@@ -76,17 +78,19 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
 
     golden_cross_results = []
     for ticker in tickers:
-        print('ticker', ticker)
-        result = find_most_recent_golden_cross(
-            ticker=ticker,
-            short_window=short_window,
-            long_window=long_window,
-            min_volume=min_volume,
-            adjusted=adjusted,
-            db=db
-        )
-        if result:
-            golden_cross_results.append({"ticker": ticker, "data": result})
+        if ticker == 'MUR.WA':
+            print('ticker', ticker)
+            result = find_most_recent_golden_cross(
+                ticker=ticker,
+                short_window=short_window,
+                long_window=long_window,
+                min_volume=min_volume,
+                adjusted=adjusted,
+                max_days_since_cross=days_to_look_back,
+                db=db
+            )
+            if result:
+                golden_cross_results.append({"ticker": ticker, "data": result})
 
     if golden_cross_results:
         return {

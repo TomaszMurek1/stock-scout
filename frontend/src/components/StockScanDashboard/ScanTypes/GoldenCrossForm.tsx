@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 const GoldenCrossForm: React.FC = () => {
   const [shortPeriod, setShortPeriod] = useState("50");
   const [longPeriod, setLongPeriod] = useState("200");
+  const [daysToLookBack, setDaysToLookBack] = useState("365"); // New state for days to look back
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,8 +20,9 @@ const GoldenCrossForm: React.FC = () => {
           body: JSON.stringify({
             short_window: parseInt(shortPeriod),
             long_window: parseInt(longPeriod),
-            min_volume: 1000000, // Optional, can be omitted if using default
-            adjusted: true, // Optional, can be omitted if using default
+            days_to_look_back: parseInt(daysToLookBack), // New parameter
+            min_volume: 1000000,
+            adjusted: true,
           }),
         }
       );
@@ -59,6 +61,15 @@ const GoldenCrossForm: React.FC = () => {
         type="number"
         value={longPeriod}
         onChange={(e) => setLongPeriod(e.target.value)}
+        margin="normal"
+        required
+      />
+      <TextField
+        fullWidth
+        label="Days to Look Back"
+        type="number"
+        value={daysToLookBack}
+        onChange={(e) => setDaysToLookBack(e.target.value)}
         margin="normal"
         required
       />
