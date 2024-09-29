@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import "./App.css";
-import StockScanTool from "./components/StockScanTool";
-import SignIn from "./components/sign-in/SignIn";
+import StockScanTool from "./components/StockScanDashboard/StockScanDashboard";
+import SignIn from "./components/SignInForm/SignIn";
 import { ThemeProvider, CssBaseline, Container, Box } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
-import Header from "./components/Header";
-import Welcome from "./components/Welcome";
+import Header from "./components/Header/Header";
+import Welcome from "./components/SignInForm/Welcome";
 
 function App() {
   const [token, setToken] = useState<string | null>(
