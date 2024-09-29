@@ -5,6 +5,11 @@ from backend.auth import router as auth_router
 from backend.services.stock_data_service import fetch_and_save_stock_data
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from typing import List
+from pydantic import BaseModel
+from sqlalchemy import select
+from backend.services.technical_analysis_service import find_most_recent_golden_cross
+from backend.database.models import Company  # Make sure to import the Company model
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -35,14 +40,61 @@ async def root():
 # Add this router to your main FastAPI app
 router = APIRouter()
 
-@router.post("/fetch-stock-data/{ticker}")
-async def fetch_stock_data(ticker: str, db: Session = Depends(get_db)):
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)  # Fetch last 30 days of data
-    result = fetch_and_save_stock_data(ticker, start_date, end_date, db)
-    if result is None:
-        return {"message": f"Data is already up to date for {ticker}"}
-    print(result)
-    return {"message": result['message']}
+class TickerRequest(BaseModel):
+    tickers: List[str]
 
+class GoldenCrossRequest(BaseModel):
+    short_window: int = 50
+    long_window: int = 200
+    min_volume: int = 1000000
+    adjusted: bool = True
+
+@router.post("/fetch-stock-data")
+async def fetch_stock_data(request: TickerRequest, db: Session = Depends(get_db)):
+    tickers = request.tickers
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=60)  # Fetch last 30 days of data
+    results = []
+    for ticker in tickers:
+        result = fetch_and_save_stock_data(ticker, start_date, end_date, db)
+        print('result', result)
+        if result is None:
+            results.append({"ticker": ticker, "message": f"Data is already up to date for {ticker}", "status": result['status']})
+        else:
+            results.append({"ticker": ticker, "message": result['message'], "status": result['status']})
+    return {"results": results}
+
+@router.post("/technical-analysis/golden-cross")
+async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Session = Depends(get_db)):
+    short_window = request.short_window
+    long_window = request.long_window
+    min_volume = request.min_volume
+    adjusted = request.adjusted
+
+    # Fetch all tickers from the Companies table
+    tickers = db.scalars(select(Company.ticker)).all()
+
+    golden_cross_results = []
+    for ticker in tickers:
+        print('ticker', ticker)
+        result = find_most_recent_golden_cross(
+            ticker=ticker,
+            short_window=short_window,
+            long_window=long_window,
+            min_volume=min_volume,
+            adjusted=adjusted,
+            db=db
+        )
+        if result:
+            golden_cross_results.append({"ticker": ticker, "data": result})
+
+    if golden_cross_results:
+        return {
+            "status": "success",
+            "data": golden_cross_results
+        }
+    else:
+        raise HTTPException(status_code=404, detail="No golden crosses found for any companies.")
+
+# Don't forget to include this router in your main.py
 app.include_router(router)
