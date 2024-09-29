@@ -1,3 +1,4 @@
+// StockScanTool.tsx
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import {
@@ -14,9 +15,9 @@ import {
   Link,
   Typography,
   Card,
-  CardContent,
   CardActionArea,
   Container,
+  useTheme,
 } from "@mui/material";
 import {
   GiSunset,
@@ -33,15 +34,15 @@ import {
 } from "react-icons/fa";
 
 const scanOptions = [
-  { name: "Golden Cross", icon: <GiSunset /> },
-  { name: "Death Cross", icon: <GiSkullCrossedBones /> },
-  { name: "Breakout from Consolidation", icon: <FaRocket /> },
-  { name: "Stocks in Consolidation", icon: <FaLayerGroup /> },
-  { name: "MACD Bullish Crossover", icon: <GiBull /> },
-  { name: "MACD Bearish Crossover", icon: <GiPolarBear /> },
-  { name: "Bollinger Band Breakouts", icon: <FaChartArea /> },
-  { name: "Break Even Point", icon: <FaBalanceScale /> },
-  { name: "Earnings Growth Scans", icon: <FaChartLine /> },
+  { name: "Golden Cross", icon: <GiSunset size={40} /> },
+  { name: "Death Cross", icon: <GiSkullCrossedBones size={40} /> },
+  { name: "Breakout from Consolidation", icon: <FaRocket size={40} /> },
+  { name: "Stocks in Consolidation", icon: <FaLayerGroup size={40} /> },
+  { name: "MACD Bullish Crossover", icon: <GiBull size={40} /> },
+  { name: "MACD Bearish Crossover", icon: <GiPolarBear size={40} /> },
+  { name: "Bollinger Band Breakouts", icon: <FaChartArea size={40} /> },
+  { name: "Break Even Point", icon: <FaBalanceScale size={40} /> },
+  { name: "Earnings Growth Scans", icon: <FaChartLine size={40} /> },
 ];
 
 const marketOptions = ["GPW", "NASDAQ", "SP500"];
@@ -49,90 +50,151 @@ const marketOptions = ["GPW", "NASDAQ", "SP500"];
 const ScanTypeBreadcrumbs: React.FC<{
   selectedScan: string;
   setSelectedScan: (value: string) => void;
-}> = ({ selectedScan, setSelectedScan }) => (
-  <Breadcrumbs aria-label="scan type breadcrumb" sx={{ mb: 2 }}>
-    <Link
-      color="inherit"
-      href="#"
-      onClick={() => setSelectedScan("")}
-      sx={{ fontSize: "0.875rem" }}
-    >
-      Scan Types
-    </Link>
-    {selectedScan && (
-      <Typography color="text.primary" sx={{ fontSize: "0.875rem" }}>
-        {selectedScan}
-      </Typography>
-    )}
-  </Breadcrumbs>
-);
+}> = ({ selectedScan, setSelectedScan }) => {
+  const theme = useTheme();
+  return (
+    <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
+      <Link
+        color="inherit"
+        href="#"
+        onClick={() => setSelectedScan("")}
+        sx={{ fontSize: "0.875rem", color: theme.palette.primary.main }}
+      >
+        Scan Types
+      </Link>
+      {selectedScan && (
+        <Typography color="text.primary" sx={{ fontSize: "0.875rem" }}>
+          {selectedScan}
+        </Typography>
+      )}
+    </Breadcrumbs>
+  );
+};
 
 const ScanTypeSelector: React.FC<{
   setSelectedScan: (value: string) => void;
-}> = ({ setSelectedScan }) => (
-  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-    {scanOptions.map((option) => (
-      <Box
-        key={option.name}
-        sx={{
-          flexBasis: {
-            xs: "100%",
-            sm: "calc(50% - 8px)",
-            md: "calc(33.33% - 10.67px)",
-          },
-        }}
-      >
-        <Card>
-          <CardActionArea onClick={() => setSelectedScan(option.name)}>
-            <CardContent>
-              <Typography variant="h6" component="div" gutterBottom>
-                {option.icon}
+}> = ({ setSelectedScan }) => {
+  const theme = useTheme();
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+      {scanOptions.map((option) => (
+        <Box
+          key={option.name}
+          sx={{
+            flexBasis: {
+              xs: "100%",
+              sm: "calc(50% - 8px)",
+              md: "calc(33.33% - 10.67px)",
+            },
+          }}
+        >
+          <Card
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              backgroundColor: theme.palette.background.paper,
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: theme.shadows[4],
+                backgroundColor: theme.palette.action.hover,
+              },
+            }}
+          >
+            <CardActionArea
+              onClick={() => setSelectedScan(option.name)}
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 2,
+              }}
+            >
+              <Box color={theme.palette.primary.main}>{option.icon}</Box>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  textAlign: "center",
+                  mt: 1,
+                  fontWeight: 500,
+                  color: theme.palette.text.primary,
+                }}
+              >
+                {option.name}
               </Typography>
-              <Typography variant="subtitle1">{option.name}</Typography>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      </Box>
-    ))}
-  </Box>
-);
+            </CardActionArea>
+          </Card>
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 const MarketSelect: React.FC<{
   selectedMarket: string;
   setSelectedMarket: (value: string) => void;
-}> = ({ selectedMarket, setSelectedMarket }) => (
-  <FormControl fullWidth>
-    <InputLabel id="market-label">Select Market</InputLabel>
-    <Select
-      labelId="market-label"
-      value={selectedMarket}
-      onChange={(e) => setSelectedMarket(e.target.value)}
-      label="Select Market"
-      sx={{ minWidth: 200 }}
-    >
-      <MenuItem value="">
-        <em>None</em>
-      </MenuItem>
-      {marketOptions.map((option) => (
-        <MenuItem key={option} value={option}>
-          {option}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-);
+}> = ({ selectedMarket, setSelectedMarket }) => {
+  const theme = useTheme();
+  return (
+    <FormControl fullWidth variant="outlined">
+      <InputLabel>Select Market</InputLabel>
+      <Select
+        value={selectedMarket}
+        onChange={(e) => setSelectedMarket(e.target.value)}
+        label="Select Market"
+        sx={{
+          backgroundColor: theme.palette.background.paper,
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: theme.palette.grey[400],
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: theme.palette.primary.main,
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: theme.palette.primary.main,
+          },
+        }}
+      >
+        {marketOptions.map((option) => (
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+};
 
 const TickerInput: React.FC<{
   ticker: string;
   setTicker: (value: string) => void;
-}> = ({ ticker, setTicker }) => (
-  <TextField
-    label="Ticker Symbol"
-    value={ticker}
-    onChange={(e) => setTicker(e.target.value)}
-    fullWidth
-  />
-);
+}> = ({ ticker, setTicker }) => {
+  const theme = useTheme();
+  return (
+    <TextField
+      label="Ticker Symbol"
+      value={ticker}
+      onChange={(e) => setTicker(e.target.value)}
+      fullWidth
+      variant="outlined"
+      sx={{
+        backgroundColor: theme.palette.background.paper,
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderColor: theme.palette.grey[400],
+        },
+        "&:hover .MuiOutlinedInput-notchedOutline": {
+          borderColor: theme.palette.primary.main,
+        },
+        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+          borderColor: theme.palette.primary.main,
+        },
+      }}
+    />
+  );
+};
 
 const FetchDataButton: React.FC<{
   handleFetchData: () => void;
@@ -142,10 +204,10 @@ const FetchDataButton: React.FC<{
 }> = ({ handleFetchData, isLoading, disabled, selectedScan }) => (
   <Button
     variant="contained"
+    color="primary"
     onClick={handleFetchData}
     disabled={disabled}
     size="large"
-    sx={{ mt: 2 }}
   >
     {isLoading ? (
       <CircularProgress size={24} color="inherit" />
@@ -160,11 +222,11 @@ const ScanButton: React.FC<{
   disabled: boolean;
 }> = ({ isLoading, disabled }) => (
   <Button
-    variant="contained"
+    variant="outlined"
+    color="primary"
     onClick={() => console.log("Scan")}
     disabled={disabled}
     size="large"
-    sx={{ mt: 2 }}
   >
     Scan
   </Button>
@@ -175,6 +237,7 @@ const StockScanTool: React.FC = () => {
   const [selectedMarket, setSelectedMarket] = useState("");
   const [ticker, setTicker] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const theme = useTheme();
 
   const handleFetchData = async () => {
     setIsLoading(true);
@@ -202,46 +265,64 @@ const StockScanTool: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="md" sx={{ py: 4 }}>
       <ScanTypeBreadcrumbs
         selectedScan={selectedScan}
         setSelectedScan={setSelectedScan}
       />
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {!selectedScan ? (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Select a Scan Type:
-              </Typography>
-              <ScanTypeSelector setSelectedScan={setSelectedScan} />
-            </>
-          ) : (
-            <>
-              <Typography variant="h6" gutterBottom>
-                {selectedScan} Scan
-              </Typography>
-              <MarketSelect
-                selectedMarket={selectedMarket}
-                setSelectedMarket={setSelectedMarket}
-              />
-              <TickerInput ticker={ticker} setTicker={setTicker} />
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <FetchDataButton
-                  handleFetchData={handleFetchData}
-                  isLoading={isLoading}
-                  disabled={!ticker || isLoading}
-                  selectedScan={selectedScan}
-                />
-                <ScanButton
-                  isLoading={isLoading}
-                  disabled={!ticker || isLoading}
-                />
-              </Box>
-            </>
-          )}
+      {!selectedScan ? (
+        <Box>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+            Select a Scan Type:
+          </Typography>
+          <ScanTypeSelector setSelectedScan={setSelectedScan} />
         </Box>
-      </Paper>
+      ) : (
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[3],
+          }}
+        >
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ color: theme.palette.primary.main, fontWeight: 600 }}
+          >
+            {selectedScan} Scan
+          </Typography>
+          <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+            <MarketSelect
+              selectedMarket={selectedMarket}
+              setSelectedMarket={setSelectedMarket}
+            />
+            <TickerInput ticker={ticker} setTicker={setTicker} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-start",
+                gap: 2,
+                flexWrap: "wrap",
+                mt: 2,
+              }}
+            >
+              <FetchDataButton
+                handleFetchData={handleFetchData}
+                isLoading={isLoading}
+                disabled={!ticker || isLoading}
+                selectedScan={selectedScan}
+              />
+              <ScanButton
+                isLoading={isLoading}
+                disabled={!ticker || isLoading}
+              />
+            </Box>
+          </Box>
+        </Paper>
+      )}
     </Container>
   );
 };

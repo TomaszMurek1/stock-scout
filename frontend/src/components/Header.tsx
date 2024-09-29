@@ -1,5 +1,13 @@
+// Header.tsx
 import React from "react";
-import { AppBar, Toolbar, Button, Typography, useTheme } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Typography,
+  useTheme,
+  Box,
+} from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 
 interface HeaderProps {
@@ -18,47 +26,31 @@ const Header: React.FC<HeaderProps> = ({
   const theme = useTheme();
 
   // Styles
-  const signOutButtonStyles = {
+  const buttonStyles = {
+    marginLeft: theme.spacing(2),
+    color: theme.palette.common.white,
     borderColor: theme.palette.common.white,
-    opacity: 0.5,
-    "&:hover": {
-      borderColor: theme.palette.common.white,
-      opacity: 1,
-      backgroundColor: `${theme.palette.common.white}14`, // 14 is equivalent to 8% opacity
-    },
-  };
-
-  const signInButtonStyles = {
-    backgroundColor: theme.palette.secondary.main,
-    color: theme.palette.text.primary,
-    "&:hover": {
-      backgroundColor: theme.palette.action.hover,
-    },
   };
 
   return (
     <AppBar position="static" color="primary">
       <Toolbar>
         <ShowChartIcon sx={{ mr: 2 }} />
-        <Typography variant="h1" component="h1" sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{ flexGrow: 1 }}
+          color="inherit"
+        >
           Stock Scan Tool
         </Typography>
         {token ? (
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={onSignOut}
-            sx={signOutButtonStyles}
-          >
+          <Button variant="outlined" onClick={onSignOut} sx={buttonStyles}>
             Sign Out
           </Button>
         ) : (
           !showSignIn && (
-            <Button
-              variant="contained"
-              onClick={onShowSignIn}
-              sx={signInButtonStyles}
-            >
+            <Button variant="outlined" onClick={onShowSignIn} sx={buttonStyles}>
               Sign In
             </Button>
           )
