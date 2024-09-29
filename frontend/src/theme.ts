@@ -4,7 +4,7 @@ import { createTheme } from "@mui/material/styles";
 // Define color constants
 export const LIGHT_BLUE = "#219ebc";
 export const GOLDEN_YELLOW = "#ffb703";
-export const LIGHT_GRAY = "#f5f5f5";
+export const LIGHT_GRAY = "#f5f5f5"; // Light gray color
 export const DARK_BLUE = "#023047";
 export const ORANGE = "#fb8500";
 export const WHITE = "#ffffff";
@@ -19,8 +19,8 @@ export const theme = createTheme({
       main: GOLDEN_YELLOW,
     },
     background: {
-      default: LIGHT_GRAY,
-      paper: WHITE, // Set to white for better contrast
+      default: LIGHT_GRAY, // Main background color
+      paper: LIGHT_GRAY, // Paper components now use LIGHT_GRAY
     },
     text: {
       primary: DARK_BLUE,
@@ -29,7 +29,7 @@ export const theme = createTheme({
       hover: ORANGE,
     },
     grey: {
-      400: "#BDBDBD", // For border colors
+      400: "#BDBDBD",
     },
   },
   typography: {
