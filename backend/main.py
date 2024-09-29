@@ -41,7 +41,8 @@ async def fetch_stock_data(ticker: str, db: Session = Depends(get_db)):
     start_date = end_date - timedelta(days=30)  # Fetch last 30 days of data
     result = fetch_and_save_stock_data(ticker, start_date, end_date, db)
     if result is None:
-        raise HTTPException(status_code=404, detail=f"No data found for ticker {ticker}")
-    return {"message": f"Data fetched successfully for {ticker}"}
+        return {"message": f"Data is already up to date for {ticker}"}
+    print(result)
+    return {"message": f"{result['status']}: {result['message']}"}
 
 app.include_router(router)
