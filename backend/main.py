@@ -78,8 +78,8 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
 
     golden_cross_results = []
     for ticker in tickers:
-        if ticker == 'MUR.WA':
-            print('ticker', ticker)
+        if ticker != 'MUR.WA':
+
             result = find_most_recent_golden_cross(
                 ticker=ticker,
                 short_window=short_window,
