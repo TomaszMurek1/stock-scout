@@ -1,4 +1,4 @@
-import ScenarioCarousel from "./ScenarioCarousel";
+import ScenarioCarousel from "./ScenarioCarousel/ScenarioCarousel";
 import FeaturesSection from "./FeatureSection";
 import CallToActions from "@/components/CallToActions";
 import HeroSection from "./HeroSection/HeroSection";
@@ -8,8 +8,8 @@ export default function Home() {
     <div className="space-y-12">
       <HeroSection />
       <ScenarioCarousel />
-      <FeaturesSection />
-      <CallToActions />
+      {/* <FeaturesSection /> */}
+      {/* <CallToActions /> */}
     </div>
   );
 }
