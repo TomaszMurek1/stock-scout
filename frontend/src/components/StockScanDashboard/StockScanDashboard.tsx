@@ -1,82 +1,98 @@
-// StockScanTool.tsx
-import React, { useState } from "react";
-import { toast } from "react-toastify";
-import {
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Paper,
-  TextField,
-  CircularProgress,
-  Typography,
-  Container,
-  useTheme,
-} from "@mui/material";
-import ScanCard from "./ScanCard";
-import ScanTypeBreadcrumbs from "./ScanBreadcrumbs";
-import GoldenCrossForm from "./ScanTypes/GoldenCrossForm";
-import DeathCrossForm from "./ScanTypes/DeathCrossForm";
-import BreakoutForm from "./ScanTypes/BreakoutForm";
+// import { useState, useRef, useEffect } from "react";
+// import { Button } from "@/components/ui/button";
+// import { ChevronLeft, ChevronRight } from "lucide-react";
+// import ScenarioCard from "./ScenarioCard";
+// import {
+//   FaRocket,
+//   FaLayerGroup,
+//   FaChartArea,
+//   FaBalanceScale,
+//   FaChartLine,
+// } from "react-icons/fa";
+// import {
+//   GiBull,
+//   GiPolarBear,
+//   GiSkullCrossedBones,
+//   GiSunset,
+// } from "react-icons/gi";
 
-const marketOptions = ["GPW", "NASDAQ", "SP500"];
+// const scenarios = [
+//   { name: "Golden Cross", icon: GiSunset },
+//   { name: "Death Cross", icon: GiSkullCrossedBones },
+//   { name: "Breakout from Consolidation", icon: FaRocket },
+//   { name: "Stocks in Consolidation", icon: FaLayerGroup },
+//   { name: "MACD Bullish Crossover", icon: GiBull },
+//   { name: "MACD Bearish Crossover", icon: GiPolarBear },
+//   { name: "Bollinger Band Breakouts", icon: FaChartArea },
+//   { name: "Break Even Point", icon: FaBalanceScale },
+//   { name: "Earnings Growth Scans", icon: FaChartLine },
+// ];
 
-const StockScanDashboard: React.FC = () => {
-  const [selectedScan, setSelectedScan] = useState("");
+// const ScanningScenarios = () => {
+//   const [showLeftArrow, setShowLeftArrow] = useState(false);
+//   const [showRightArrow, setShowRightArrow] = useState(true);
+//   const carouselRef = useRef<HTMLDivElement>(null);
 
-  const theme = useTheme();
+//   const updateArrows = () => {
+//     if (carouselRef.current) {
+//       setShowLeftArrow(carouselRef.current.scrollLeft > 0);
+//       setShowRightArrow(
+//         carouselRef.current.scrollLeft <
+//           carouselRef.current.scrollWidth - carouselRef.current.clientWidth
+//       );
+//     }
+//   };
 
-  const renderScanForm = () => {
-    switch (selectedScan) {
-      case "Golden Cross":
-        return <GoldenCrossForm />;
-      case "Death Cross":
-        return <DeathCrossForm />;
-      case "Breakout from Consolidation":
-        return <BreakoutForm />;
-      // ... add cases for other scan types ...
-      default:
-        return null;
-    }
-  };
+//   useEffect(() => {
+//     updateArrows();
+//   }, []);
 
-  return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <ScanTypeBreadcrumbs
-        selectedScan={selectedScan}
-        setSelectedScan={setSelectedScan}
-      />
-      {!selectedScan ? (
-        <Box>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
-            Select a Scan Type:
-          </Typography>
-          <ScanCard setSelectedScan={setSelectedScan} />
-        </Box>
-      ) : (
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.paper,
-            boxShadow: theme.shadows[3],
-          }}
-        >
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{ color: theme.palette.primary.main, fontWeight: 600 }}
-          >
-            {selectedScan} Scan
-          </Typography>
-          {renderScanForm()}
-        </Paper>
-      )}
-    </Container>
-  );
-};
+//   const handleScroll = (direction: "left" | "right") => {
+//     if (carouselRef.current) {
+//       const scrollAmount = direction === "left" ? -300 : 300;
+//       carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+//       setTimeout(updateArrows, 300);
+//     }
+//   };
 
-export default StockScanDashboard;
+//   return (
+//     <section className="relative">
+//       <h2 className="text-3xl font-bold mb-6 text-gray-800">
+//         Choose a Scanning Scenario
+//       </h2>
+//       <div className="relative px-8">
+//         {showLeftArrow && (
+//           <Button
+//             variant="outline"
+//             size="icon"
+//             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white"
+//             onClick={() => handleScroll("left")}
+//           >
+//             <ChevronLeft className="h-4 w-4" />
+//           </Button>
+//         )}
+//         <div
+//           ref={carouselRef}
+//           className="flex overflow-x-auto space-x-4 pb-4 snap-x snap-mandatory scrollbar-hide"
+//           onScroll={updateArrows}
+//         >
+//           {scenarios.map((scenario, index) => (
+//             <ScenarioCard key={index} {...scenario} />
+//           ))}
+//         </div>
+//         {showRightArrow && (
+//           <Button
+//             variant="outline"
+//             size="icon"
+//             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white"
+//             onClick={() => handleScroll("right")}
+//           >
+//             <ChevronRight className="h-4 w-4" />
+//           </Button>
+//         )}
+//       </div>
+//     </section>
+//   );
+// };
+
+// export default ScanningScenarios;

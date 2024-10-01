@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
+import { Link as MuiLink } from "@mui/material";
 import {
   Card,
   CardContent,
@@ -58,7 +58,7 @@ const scenarios = [
 ];
 
 export default function Home() {
-  const [scrollPosition, setScrollPosition] = useState(0);
+  // const [scrollPosition, setScrollPosition] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -128,7 +128,7 @@ export default function Home() {
           >
             {scenarios.map((scenario, index) => (
               <div key={index} className="flex-none w-[300px] snap-center">
-                <Link href={scenario.href} className="block">
+                <MuiLink href={scenario.href} underline="none">
                   <Card
                     className={`h-full hover:shadow-lg transition-shadow ${scenario.color}`}
                   >
@@ -150,7 +150,7 @@ export default function Home() {
                       </Button>
                     </CardContent>
                   </Card>
-                </Link>
+                </MuiLink>
               </div>
             ))}
           </div>
@@ -198,8 +198,12 @@ export default function Home() {
         <p className="text-xl text-gray-600 mb-6">
           Choose a scanning scenario above or learn more about our services.
         </p>
-        <Button asChild className="bg-gray-800 text-white hover:bg-gray-700">
-          <Link href="/about">Learn More</Link>
+        <Button
+          // component={MuiLink}
+          // href="/about"
+          className="bg-gray-800 text-white hover:bg-gray-700"
+        >
+          Learn More
         </Button>
       </section>
     </div>
