@@ -1,13 +1,24 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: If you're using Radix Primitives, you can import the base styles for Radix here */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --border-radius: 0.5rem; /* Define border-radius for consistency */
+    /* Add any other custom CSS variables or Shadcn-specific styles here */
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Radix and Shadcn-specific tweaks */
+[data-radix-popper-content-wrapper] {
+  z-index: 50; /* Example: ensuring Radix popper content stays on top */
 }
+
+/* body {
+  @apply bg-background text-foreground font-sans;
+} */
+
+/* Add your custom global styles here */
