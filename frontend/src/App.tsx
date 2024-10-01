@@ -6,25 +6,29 @@ import { ThemeProvider, CssBaseline, Container, Box } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
-//import Welcome from "./components/SignInForm/Welcome";
-import Home from "./components/Home";
-import { Button } from "./components/ui/button";
-import { ChevronLeft } from "lucide-react";
+
+import { Routes, Route } from "react-router-dom";
+import PrivateRoute from "./components/PrivateRoute"; // Add this import
+import ScenarioCarousel from "./components/ScenarioCarousel/ScenarioCarousel";
+import GoldenCrossForm from "./components/ScenarioCarousel/ScanTypes/GoldenCrossForm";
+import { useNavigate } from "react-router-dom";
 
 function App() {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token")
+  const [authToken, setAuthToken] = useState<string | null>(
+    localStorage.getItem("authToken")
   );
-  const [showSignIn, setShowSignIn] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignIn = (newToken: string) => {
-    setToken(newToken);
-    localStorage.setItem("token", newToken);
+    setAuthToken(newToken);
+    localStorage.setItem("authToken", newToken);
+    debugger;
+    navigate("/");
   };
 
   const handleSignOut = () => {
-    setToken(null);
-    localStorage.removeItem("token");
+    setAuthToken(null);
+    localStorage.removeItem("setAuthToken");
   };
 
   const handleError = (error: string) => {
@@ -43,29 +47,26 @@ function App() {
       <CssBaseline />
       <ToastContainer />
       <Box className="App" sx={{ bgcolor: "background.paper" }}>
-        <Home />
-        <Container component="main" maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {token ? (
-            <>
-              <div>test</div>
-              <Button className="m-4 p-2 bg-blue-500 text-white">
-                <ChevronLeft className="h-6 w-6 mr-2" />
-                Test Button
-              </Button>
-            </>
-          ) : // <ScanningScenarios />
-          // <StockScanTool />
-          showSignIn ? (
-            <SignIn
-              onClose={() => setShowSignIn(false)}
-              onSignIn={handleSignIn}
-              onError={handleError}
-            />
-          ) : (
-            <div>Welcome</div>
-            // <Welcome onGetStarted={() => setShowSignIn(true)} />
-          )}
-        </Container>
+        <Routes>
+          <Route
+            path="/signin"
+            element={
+              <SignIn
+                onClose={() => {}}
+                onSignIn={handleSignIn}
+                onError={(error: string) => handleError(error)}
+              />
+            }
+          />
+          <Route
+            path="/"
+            element={<PrivateRoute element={<ScenarioCarousel />} />}
+          />
+          <Route
+            path="/scenarios/golden-cross"
+            element={<PrivateRoute element={<GoldenCrossForm />} />}
+          />
+        </Routes>
       </Box>
     </ThemeProvider>
   );

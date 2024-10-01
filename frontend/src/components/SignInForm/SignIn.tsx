@@ -8,7 +8,7 @@ import axios from "axios";
 
 interface SignInProps {
   onClose: () => void;
-  onSignIn: (token: string) => void;
+  onSignIn: (authToken: string) => void;
   onError: (error: string) => void;
 }
 
