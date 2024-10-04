@@ -22,18 +22,6 @@ interface Scenario {
   type: string;
 }
 
-// const scenarios = [
-//     { name: "Golden Cross", icon: GiSunset },
-//     { name: "Death Cross", icon: GiSkullCrossedBones },
-//     { name: "Breakout from Consolidation", icon: FaRocket },
-//     { name: "Stocks in Consolidation", icon: FaLayerGroup },
-//     { name: "MACD Bullish Crossover", icon: GiBull },
-//     { name: "MACD Bearish Crossover", icon: GiPolarBear },
-//     { name: "Bollinger Band Breakouts", icon: FaChartArea },
-//     { name: "Break Even Point", icon: FaBalanceScale },
-//     { name: "Earnings Growth Scans", icon: FaChartLine },
-//   ];
-
 const scenarios: Scenario[] = [
   {
     title: "Golden Cross",
@@ -42,6 +30,14 @@ const scenarios: Scenario[] = [
     href: "/scenarios/golden-cross",
     color: "bg-slate-200 bg-opacity-50",
     type: "golden-cross",
+  },
+  {
+    title: "Death Cross",
+    description: "Identify potential downtrends with moving average crossovers",
+    icon: BarChart,
+    href: "/scenarios/death-cross",
+    color: "bg-slate-200 bg-opacity-50",
+    type: "death-cross",
   },
   {
     title: "Consolidation",
@@ -77,84 +73,88 @@ const scenarios: Scenario[] = [
   },
 ];
 
-// color: "bg-slate-100",
-// "bg-gray-100",
-// color: "bg-neutral-100",
-// color: "bg-stone-100",
-// color: "bg-zinc-100",
-// color: "bg-gray-100",
-
 const ScenarioCarousel = () => {
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  const updateArrows = () => {
+  const scrollToIndex = (index: number) => {
     if (carouselRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-      setShowLeftArrow(scrollLeft > 0);
-      setShowRightArrow(scrollLeft < scrollWidth - clientWidth);
+      const cardElement = carouselRef.current.children[index] as HTMLElement;
+      cardElement.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+      });
+      setActiveIndex(index);
     }
   };
 
   const scroll = (direction: "left" | "right") => {
-    if (carouselRef.current) {
-      const scrollAmount = direction === "left" ? -300 : 300;
-      carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-      setTimeout(updateArrows, 300); // Allow some time for smooth scrolling
+    const newIndex = direction === "left" ? activeIndex - 1 : activeIndex + 1;
+    if (newIndex >= 0 && newIndex < scenarios.length) {
+      scrollToIndex(newIndex);
     }
   };
 
   useEffect(() => {
-    updateArrows();
+    scrollToIndex(activeIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <section className="relative px-4 py-8 md:px-6 lg:px-8">
+    <section className="relative px-4 py-8 md:px-6 lg:px-8 overflow-visible">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">
         Choose a Scanning Scenario
       </h2>
-      <div className="relative px-8">
-        {showLeftArrow && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white hover:bg-gray-100 border border-gray-300 shadow-md h-10 w-10 flex items-center justify-center"
-            onClick={() => scroll("left")}
-            aria-label="Previous"
-          >
-            <ChevronLeft className="h-6 w-6 text-gray-600" />{" "}
-            {/* Ensure correct icon size with h-6 w-6 */}
-          </Button>
-        )}
+      <div className="relative overflow-visible">
+        <Button
+          variant="outline"
+          size="icon"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white hover:bg-gray-100 border border-gray-300 shadow-md h-10 w-10"
+          onClick={() => scroll("left")}
+          aria-label="Previous"
+          disabled={activeIndex === 0}
+        >
+          <ChevronLeft className="h-6 w-6 text-gray-600" />
+        </Button>
+
         <div
           ref={carouselRef}
-          className="flex overflow-x-auto space-x-4 pb-4 snap-x snap-mandatory scrollbar-hide"
-          onScroll={updateArrows}
+          className="flex overflow-x-auto overflow-y-visible pb-4 snap-x snap-mandatory hide-scrollbar space-x-4 px-4"
         >
-          {scenarios.map((scenario) => (
+          {scenarios.map((scenario, index) => (
             <ScenarioCard
               key={scenario.href}
-              title={scenario.title}
-              description={scenario.description}
-              icon={scenario.icon}
-              href={scenario.href}
-              color={scenario.color}
-              type={scenario.type}
+              {...scenario}
+              isActive={activeIndex === index}
+              onClick={() => scrollToIndex(index)}
             />
           ))}
         </div>
-        {showRightArrow && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white hover:bg-gray-100 border border-gray-300 shadow-md h-10 w-10"
-            onClick={() => scroll("right")}
-            aria-label="Next"
-          >
-            <ChevronRight className="h-6 w-6 text-gray-600" />{" "}
-          </Button>
-        )}
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white hover:bg-gray-100 border border-gray-300 shadow-md h-10 w-10"
+          onClick={() => scroll("right")}
+          aria-label="Next"
+          disabled={activeIndex === scenarios.length - 1}
+        >
+          <ChevronRight className="h-6 w-6 text-gray-600" />
+        </Button>
+
+        {/* Dots Indicator */}
+        <div className="flex justify-center mt-4">
+          {scenarios.map((_, index) => (
+            <button
+              key={index}
+              className={`mx-1 h-2 w-2 rounded-full ${
+                activeIndex === index ? "bg-gray-800" : "bg-gray-400"
+              }`}
+              onClick={() => scrollToIndex(index)}
+              aria-label={`Scenario ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

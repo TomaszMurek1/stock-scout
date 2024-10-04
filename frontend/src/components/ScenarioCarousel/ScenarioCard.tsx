@@ -1,5 +1,4 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom"; // Assuming you're using React Router
 import { ArrowRight } from "lucide-react";
 import { GenericIconType } from "./ScenarioCarousel";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ interface ScenarioCardProps {
   href: string;
   color: string;
   type: string;
+  isActive: boolean;
+  onClick: () => void;
 }
 
 const ScenarioCard: React.FC<ScenarioCardProps> = ({
@@ -22,19 +23,31 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
   href,
   color,
   type,
-}: ScenarioCardProps) => {
+  isActive,
+  onClick,
+}) => {
   const navigate = useNavigate();
-
   const handleStartScan = () => {
-    navigate(`/${type.toLowerCase()}-form`);
+    navigate(`/scenarios/${type.toLowerCase()}`);
   };
   return (
-    <div className="flex-none w-[300px] h-[240px] snap-center">
-      <Link to={href} className="block h-full">
+    <div
+      className={`flex-shrink-0 w-[300px] h-[240px] snap-center mt-2 relative`}
+      onClick={onClick}
+      style={{ overflow: "visible" }}
+    >
+      <div
+        className={`transition-transform duration-300 ${
+          isActive ? "scale-105" : "scale-100"
+        } absolute inset-0`}
+        style={{ transformOrigin: "center" }}
+      >
         <Card
           className={cn(
-            "h-full hover:shadow-lg transition-shadow flex flex-col",
-            color
+            "h-full hover:shadow-lg transition-shadow flex flex-col overflow-visible",
+            color,
+            isActive ? "shadow-xl opacity-100" : "opacity-70",
+            isActive ? "border-2 border-blue-500" : ""
           )}
         >
           <CardHeader className="flex-grow">
@@ -56,7 +69,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
             </Button>
           </CardContent>
         </Card>
-      </Link>
+      </div>
     </div>
   );
 };

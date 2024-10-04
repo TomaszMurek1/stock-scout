@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import "./App.css";
-
 import SignIn from "./components/SignInForm/SignIn";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
-
 import { Routes, Route, useNavigate } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute"; // Add this import
-import ScenarioCarousel from "./components/ScenarioCarousel/ScenarioCarousel";
 import GoldenCrossForm from "./components/ScenarioCarousel/ScanTypes/GoldenCrossForm";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Home from "./components/Home";
 
 function App() {
   const [authToken, setAuthToken] = useState<string | null>(
@@ -60,10 +58,7 @@ function App() {
                 />
               }
             />
-            <Route
-              path="/"
-              element={<PrivateRoute element={<ScenarioCarousel />} />}
-            />
+            <Route path="/" element={<PrivateRoute element={<Home />} />} />
             <Route
               path="/scenarios/golden-cross"
               element={<PrivateRoute element={<GoldenCrossForm />} />}
