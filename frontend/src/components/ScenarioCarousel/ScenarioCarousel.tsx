@@ -110,7 +110,7 @@ const ScenarioCarousel = () => {
   }, []);
 
   return (
-    <section className="relative">
+    <section className="relative px-4 py-8 md:px-6 lg:px-8">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">
         Choose a Scanning Scenario
       </h2>
@@ -140,6 +140,7 @@ const ScenarioCarousel = () => {
               icon={scenario.icon}
               href={scenario.href}
               color={scenario.color}
+              type={scenario.type}
             />
           ))}
         </div>
