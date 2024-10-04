@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Button, Typography, Box } from "@mui/material";
 import { login, register } from "../../services/authService";
 import { validateEmail } from "../../utils/validation";
-import SignInForm from "./SignInForm";
-import RegisterForm from "./RegisterForm";
+import SignInForm from "./sign-in-form";
+import RegisterForm from "./register-form";
 import axios from "axios";
 
 interface SignInProps {
