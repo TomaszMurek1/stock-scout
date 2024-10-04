@@ -13,7 +13,7 @@ const GoldenCrossForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     shortPeriod: "50",
     longPeriod: "200",
-    daysToLookBack: "365",
+    daysToLookBack: "60",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -65,45 +65,47 @@ const GoldenCrossForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        name="shortPeriod"
-        type="number"
-        value={formData.shortPeriod}
-        onChange={handleInputChange}
-        placeholder="Short Period (days)"
-        aria-label="Short Period"
-        required
-        className="w-full"
-      />
-      <Input
-        name="longPeriod"
-        type="number"
-        value={formData.longPeriod}
-        onChange={handleInputChange}
-        placeholder="Long Period (days)"
-        aria-label="Long Period"
-        required
-        className="w-full"
-      />
-      <Input
-        name="daysToLookBack"
-        type="number"
-        value={formData.daysToLookBack}
-        onChange={handleInputChange}
-        placeholder="Days to Look Back"
-        aria-label="Days to Look Back"
-        required
-        className="w-full"
-      />
-      <Button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-blue-600 text-white hover:bg-blue-700"
-      >
-        {isLoading ? "Loading..." : "Run Golden Cross Scan"}
-      </Button>
-    </form>
+    <div className="flex justify-center items-center flex-grow">
+      <form onSubmit={handleSubmit} className="space-y-4 p-8 w-96 ">
+        <Input
+          name="shortPeriod"
+          type="number"
+          value={formData.shortPeriod}
+          onChange={handleInputChange}
+          placeholder="Short Period (days)"
+          aria-label="Short Period"
+          required
+          className="w-full"
+        />
+        <Input
+          name="longPeriod"
+          type="number"
+          value={formData.longPeriod}
+          onChange={handleInputChange}
+          placeholder="Long Period (days)"
+          aria-label="Long Period"
+          required
+          className="w-full"
+        />
+        <Input
+          name="daysToLookBack"
+          type="number"
+          value={formData.daysToLookBack}
+          onChange={handleInputChange}
+          placeholder="Days to Look Back"
+          aria-label="Days to Look Back"
+          required
+          className="w-full"
+        />
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+        >
+          {isLoading ? "Loading..." : "Run Golden Cross Scan"}
+        </Button>
+      </form>
+    </div>
   );
 };
 
