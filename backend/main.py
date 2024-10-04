@@ -51,6 +51,11 @@ class GoldenCrossRequest(BaseModel):
     min_volume: int = 1000000
     adjusted: bool = True
 
+# @app.on_event("startup")
+# async def log_routes():
+#     for route in app.routes:
+#         print(f"Route: {route.path} | Methods: {route.methods}")
+
 @router.post("/fetch-stock-data")
 async def fetch_stock_data(request: TickerRequest, db: Session = Depends(get_db)):
     tickers = request.tickers
@@ -73,6 +78,12 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     days_to_look_back = request.days_to_look_back
     min_volume = request.min_volume
     adjusted = request.adjusted
+
+    tickers2 = db.scalars(select(Company.ticker)).all()
+    print(f"Tickers fetched: {tickers2}")  # Debug log
+
+    if not tickers2:
+        raise HTTPException(status_code=404, detail="No tickers found in the database.")
 
     # Fetch all tickers from the Companies table
     tickers = db.scalars(select(Company.ticker)).all()

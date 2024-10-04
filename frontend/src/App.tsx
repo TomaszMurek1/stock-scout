@@ -2,16 +2,17 @@ import React, { useState } from "react";
 import "./App.css";
 
 import SignIn from "./components/SignInForm/SignIn";
-import { ThemeProvider, CssBaseline, Container, Box } from "@mui/material";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute"; // Add this import
 import ScenarioCarousel from "./components/ScenarioCarousel/ScenarioCarousel";
 import GoldenCrossForm from "./components/ScenarioCarousel/ScanTypes/GoldenCrossForm";
-import { useNavigate } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 function App() {
   const [authToken, setAuthToken] = useState<string | null>(
@@ -22,7 +23,6 @@ function App() {
   const handleSignIn = (newToken: string) => {
     setAuthToken(newToken);
     localStorage.setItem("authToken", newToken);
-    debugger;
     navigate("/");
   };
 
@@ -45,29 +45,33 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <ToastContainer />
-      <Box className="App" sx={{ bgcolor: "background.paper" }}>
-        <Routes>
-          <Route
-            path="/signin"
-            element={
-              <SignIn
-                onClose={() => {}}
-                onSignIn={handleSignIn}
-                onError={(error: string) => handleError(error)}
-              />
-            }
-          />
-          <Route
-            path="/"
-            element={<PrivateRoute element={<ScenarioCarousel />} />}
-          />
-          <Route
-            path="/scenarios/golden-cross"
-            element={<PrivateRoute element={<GoldenCrossForm />} />}
-          />
-        </Routes>
-      </Box>
+      <div className="flex flex-col min-h-screen">
+        <ToastContainer />
+        <Header />
+        <main className="flex-grow">
+          <Routes>
+            <Route
+              path="/signin"
+              element={
+                <SignIn
+                  onClose={() => {}}
+                  onSignIn={handleSignIn}
+                  onError={handleError}
+                />
+              }
+            />
+            <Route
+              path="/"
+              element={<PrivateRoute element={<ScenarioCarousel />} />}
+            />
+            <Route
+              path="/scenarios/golden-cross"
+              element={<PrivateRoute element={<GoldenCrossForm />} />}
+            />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </ThemeProvider>
   );
 }

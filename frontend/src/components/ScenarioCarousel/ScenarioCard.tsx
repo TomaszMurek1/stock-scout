@@ -1,13 +1,6 @@
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom"; // Assuming you're using React Router
 import { ArrowRight } from "lucide-react";
-
 import { GenericIconType } from "./ScenarioCarousel";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,7 +12,7 @@ interface ScenarioCardProps {
   icon?: GenericIconType;
   href: string;
   color: string;
-  scenarioType: string;
+  type: string;
 }
 
 const ScenarioCard: React.FC<ScenarioCardProps> = ({
@@ -28,12 +21,12 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
   icon: Icon,
   href,
   color,
-  scenarioType,
+  type,
 }: ScenarioCardProps) => {
   const navigate = useNavigate();
 
   const handleStartScan = () => {
-    navigate(`/${scenarioType.toLowerCase()}-form`);
+    navigate(`/${type.toLowerCase()}-form`);
   };
   return (
     <div className="flex-none w-[300px] h-[240px] snap-center">
