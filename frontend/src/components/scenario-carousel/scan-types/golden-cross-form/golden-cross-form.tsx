@@ -22,12 +22,21 @@ type ISingleItem = {
   ticker: string;
   name: string;
   date: string;
+  days_since_cross: number;
+  close: number;
+  short_ma: number;
+  long_ma: number;
+  volume: number;
 };
+
 type IData = {
+  ticker: string;
   data: ISingleItem;
 };
+
 export interface ScanResultsProps {
-  results: IData[];
+  status: string;
+  data: IData[];
 }
 
 const mockScanSubmission = async (values: FormValues): Promise<string[]> => {
@@ -140,9 +149,9 @@ export default function GoldenCrossScanForm() {
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      {Array.isArray(results) &&
-        Array.isArray(results.data) &&
-        results!.data!.length > 0 && <ScanResults results={results.data} />}
+      {results && results.data && results.data.length > 0 && (
+        <ScanResults results={results.data} />
+      )}
     </GoldenCrossCard>
   );
 }
