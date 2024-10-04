@@ -9,7 +9,7 @@ import {
   DollarSign,
   Percent,
 } from "lucide-react";
-import ScenarioCard from "./ScenarioCard"; // Import the ScenarioCard
+import ScenarioCard from "./scenario-card/scenario-card"; // Import the ScenarioCard
 
 export type GenericIconType = React.FC<SVGAttributes<SVGElement>>;
 // Type definition for the scenario
