@@ -13,7 +13,7 @@ const DeathCrossForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     shortPeriod: "50",
     longPeriod: "200",
-    daysToLookBack: "365",
+    daysToLookBack: "40",
   });
   const [isLoading, setIsLoading] = useState(false);
 

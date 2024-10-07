@@ -7,10 +7,10 @@ import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import PrivateRoute from "./components/private-route"; // Add this import
-import GoldenCrossForm from "./components/scenario-carousel/scan-types/golden-cross-form";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Home from "./components/Home";
+import GoldenCrossForm from "./components/scenario-carousel/scan-types/golden-cross-form/golden-cross-form";
+import Header from "./components/header";
+import Footer from "./components/footer";
+import Home from "./components/home";
 
 function App() {
   const [, setAuthToken] = useState<string | null>(

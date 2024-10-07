@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { GenericIconType } from "../ScenarioCarousel";
+import { GenericIconType } from "../scenario-carousel.helpers";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -46,8 +46,8 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
           className={cn(
             "h-full hover:shadow-lg transition-shadow flex flex-col overflow-visible",
             color,
-            isActive ? "shadow-xl opacity-100" : "opacity-70",
-            isActive ? "border-2 border-blue-500" : ""
+            isActive ? "shadow-xl opacity-100" : "opacity-50",
+            isActive ? "border-2 border-teal-500" : ""
           )}
         >
           <CardHeader className="flex-grow">

@@ -1,8 +1,13 @@
+// tailwind.config.js
 module.exports = {
   mode: "jit",
   content: ["./src/**/*.{html,js,jsx,ts,tsx}", "./public/index.html"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["Inter var", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 };
