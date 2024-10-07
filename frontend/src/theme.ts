@@ -52,4 +52,11 @@ export const theme = createTheme({
   shape: {
     borderRadius: 8,
   },
+  components: {
+    MuiTextField: {
+      defaultProps: {
+        size: "small", // Make all TextField components default to small size
+      },
+    },
+  },
 });
