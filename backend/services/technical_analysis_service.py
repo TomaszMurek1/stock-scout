@@ -1,15 +1,15 @@
 from datetime import datetime, timedelta
 import pandas as pd
-import numpy as np
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
-from backend.database.models import HistoricalData, Company
+from backend.database.models import HistoricalDataNYSE, HistoricalDataWSE, HistoricalDataCAC, Company
 from backend.services.stock_data_service import fetch_and_save_stock_data
 import logging
 
 logger = logging.getLogger(__name__)
 
 def find_most_recent_golden_cross(ticker: str,
+                                  market: str,  # New parameter for the market
                                   short_window: int = 50,
                                   long_window: int = 200,
                                   min_volume: int = 0,
@@ -20,9 +20,25 @@ def find_most_recent_golden_cross(ticker: str,
                                   db: Session = None):
     if db is None:
         raise ValueError("Database session 'db' must be provided.")
+    
+    # Mapping of market names to their historical data tables
+    market_table_map = {
+        'NYSE': HistoricalDataNYSE,
+        'WSE': HistoricalDataWSE,
+        'CAC': HistoricalDataCAC,
+        # Add other markets as needed
+    }
+
+    if market not in market_table_map:
+        logger.error(f"Market {market} is not supported.")
+        return None
+
+    # Get the correct historical data table class
+    HistoricalDataTable = market_table_map[market]
 
     if short_window >= long_window:
-        raise ValueError("short_window must be less than long_window")
+        logger.error("short_window must be less than long_window")
+        return None
 
     # Set end_date to now if not provided
     if end_date is None:
@@ -35,32 +51,33 @@ def find_most_recent_golden_cross(ticker: str,
         start_date = end_date - timedelta(days=days_needed)
 
     if start_date >= end_date:
-        raise ValueError("start_date must be earlier than end_date")
+        logger.error("start_date must be earlier than end_date")
+        return None
 
     # Ensure we have up-to-date data without unnecessary API calls
-    fetch_result = fetch_and_save_stock_data(ticker, start_date, end_date, db)
+    fetch_result = fetch_and_save_stock_data(ticker, start_date, end_date, db, market)
     if fetch_result['status'] == 'error':
         logger.error(f"Failed to fetch data for {ticker}: {fetch_result['message']}")
         return None
 
     # Optimize data fetching using pd.read_sql_query
     engine = db.get_bind()
-    adjusted_close_col = HistoricalData.adjusted_close if adjusted else HistoricalData.close
+    adjusted_close_col = HistoricalDataTable.adjusted_close if adjusted else HistoricalDataTable.close
 
     query = select(
-        HistoricalData.date.label('date'),
+        HistoricalDataTable.date.label('date'),
         adjusted_close_col.label('close'),
-        #HistoricalData.volume.label('volume')
+        # HistoricalDataTable.volume.label('volume')
     ).select_from(
-        HistoricalData.__table__.join(Company.__table__)
+        HistoricalDataTable.__table__.join(Company.__table__)
     ).where(
         and_(
             Company.ticker == ticker,
-            HistoricalData.date >= start_date.date(),
-            HistoricalData.date <= end_date.date(),
-           #HistoricalData.volume >= min_volume
+            HistoricalDataTable.date >= start_date.date(),
+            HistoricalDataTable.date <= end_date.date(),
+            # HistoricalDataTable.volume >= min_volume
         )
-    ).order_by(HistoricalData.date)
+    ).order_by(HistoricalDataTable.date)
 
     data = pd.read_sql_query(query, con=engine, parse_dates=['date'])
     data.set_index('date', inplace=True)
@@ -91,7 +108,6 @@ def find_most_recent_golden_cross(ticker: str,
     days_since_cross = (end_date.date() - most_recent_date.date()).days
 
     if max_days_since_cross is not None and days_since_cross > max_days_since_cross:
-        # logger.info(f"The most recent golden cross for {ticker} is older than {max_days_since_cross} days.")
         return None
 
     # Fetch company name efficiently
@@ -105,5 +121,5 @@ def find_most_recent_golden_cross(ticker: str,
         'close': most_recent_cross['close'],
         'short_ma': most_recent_cross['short_ma'],
         'long_ma': most_recent_cross['long_ma'],
-        #'volume': int(most_recent_cross['volume'])
+        # 'volume': int(most_recent_cross['volume'])
     }
