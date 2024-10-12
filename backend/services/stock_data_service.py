@@ -2,13 +2,13 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
-from backend.database.models import Company, HistoricalData, Market
+from backend.database.models import Company, HistoricalData, HistoricalDataCAC, HistoricalDataNYSE, HistoricalDataWSE, Market
 import logging
 import pandas as pd
 import time
 import pandas_market_calendars as mcal
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 # logging.getLogger('yfinance').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -77,9 +77,6 @@ def get_missing_dates(company_id: int, start_date: datetime, end_date: datetime,
     existing_dates = set(row[0] for row in existing_dates_query)
     all_dates = set(pd.date_range(start=start_date, end=end_date).date)
     missing_dates = all_dates - existing_dates
-    # logger.debug(f"Existing dates: {existing_dates}")
-    # logger.debug(f"All dates: {all_dates}")
-    # logger.debug(f"Missing dates: {missing_dates}")
     return missing_dates, existing_dates
 
 def fetch_historical_data(ticker: str, missing_dates: set) -> pd.DataFrame:
@@ -92,7 +89,7 @@ def fetch_historical_data(ticker: str, missing_dates: set) -> pd.DataFrame:
     # logger.debug(f"Fetched data shape: {stock_data.shape}")
     return stock_data
 
-def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dates: set, db: Session) -> int:
+def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dates: set, db: Session, HistoricalDataTable) -> int:
     records_added = 0
     for index, row in stock_data.iterrows():
         date = index.date()
@@ -100,7 +97,7 @@ def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dat
             # logger.debug(f"Record for date {date} already exists. Skipping.")
             continue
 
-        historical_data = HistoricalData(
+        historical_data = HistoricalDataTable(
             company_id=company_id,
             date=date,
             open=row['Open'],
@@ -125,37 +122,45 @@ def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dat
         logger.debug("No new records to commit.")
     return records_added
 
-def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str = 'XWAR') -> set:
+def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str) -> set:
     calendar = mcal.get_calendar(exchange_code)
     schedule = calendar.schedule(start_date=start_date.date(), end_date=end_date.date())
     trading_days = set(schedule.index.date)
     return trading_days
 
-def data_is_up_to_date(company_id: int, start_date: datetime, end_date: datetime, db: Session) -> bool:
-    # Fetch existing dates from the database
+def data_is_up_to_date(company_id: int, start_date: datetime, end_date: datetime, db: Session, HistoricalDataTable, exchange_code: str) -> bool:
     existing_dates = set(
-        row[0] for row in db.query(HistoricalData.date).filter(
-            HistoricalData.company_id == company_id,
-            HistoricalData.date >= start_date.date(),
-            HistoricalData.date <= end_date.date()
+        row[0] for row in db.query(HistoricalDataTable.date).filter(
+            HistoricalDataTable.company_id == company_id,
+            HistoricalDataTable.date >= start_date.date(),
+            HistoricalDataTable.date <= end_date.date()
         ).all()
     )
 
     if not existing_dates:
-        # No data in the database for this ticker and date range
         return False
 
-    # Generate expected trading days
-    trading_days = get_trading_days(start_date, end_date)
-
-    # Identify missing dates
+    trading_days = get_trading_days(start_date, end_date, exchange_code)
     missing_dates = trading_days - existing_dates
-    # If there are missing dates, data is not up-to-date
     return len(missing_dates) == 0
 
 @retry_on_db_lock
-def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datetime, db: Session):
+def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datetime, db: Session, market: str):
     try:
+        # Mapping of market to HistoricalDataTable and exchange_code
+        market_table_map = {
+            'NYSE': (HistoricalDataNYSE, 'XNYS'),
+            'WSE': (HistoricalDataWSE, 'XWAR'),
+            'CAC': (HistoricalDataCAC, 'XPAR'),
+            # Add other markets as needed
+        }
+
+        if market not in market_table_map:
+            logger.error(f"Market {market} is not supported.")
+            return {"status": "error", "message": f"Market {market} is not supported."}
+
+        HistoricalDataTable, exchange_code = market_table_map[market]
+
         company = get_or_create_company(ticker, db)
         if not company:
             message = f"Failed to retrieve or create company for ticker {ticker}."
@@ -171,27 +176,25 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
         #     return {"status": "up_to_date", "message": message}
         
          # Check if data is up-to-date without calling yf.Ticker
-        if data_is_up_to_date(company.company_id, start_date, end_date, db):
+        if data_is_up_to_date(company.company_id, start_date, end_date, db,HistoricalDataTable,exchange_code):
             message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
             #logger.info(message)
             return {"status": "up_to_date", "message": message}
 
 
         existing_dates = set(
-            row[0] for row in db.query(HistoricalData.date).filter(
-                HistoricalData.company_id == company.company_id,
-                HistoricalData.date >= start_date.date(),
-                HistoricalData.date <= end_date.date()
+            row[0] for row in db.query(HistoricalDataTable.date).filter(
+                HistoricalDataTable.company_id == company.company_id,
+                HistoricalDataTable.date >= start_date.date(),
+                HistoricalDataTable.date <= end_date.date()
             ).all()
         )
-        exchange_code = 'XWAR'
+
         # Generate expected trading days
         trading_days = get_trading_days(start_date, end_date, exchange_code)
 
         # Identify missing dates
         missing_dates = trading_days - existing_dates
-
-        logger.warning(missing_dates)
 
         if not missing_dates:
             message = f"No missing dates to fetch for {ticker}."
@@ -205,7 +208,7 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
             return {"status": "no_data", "message": message}
 
         # Pass existing_dates to save_historical_data
-        records_added = save_historical_data(company.company_id, stock_data, existing_dates, db)
+        records_added = save_historical_data(company.company_id, stock_data, existing_dates, db, HistoricalDataTable)
         if records_added > 0:
             message = f"Data for {ticker} fetched and saved successfully. {records_added} new records added."
             logger.info(message)
@@ -219,4 +222,3 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
         db.rollback()
         logger.error(f"Unexpected error fetching data for {ticker}: {str(e)}", exc_info=True)
         raise
-

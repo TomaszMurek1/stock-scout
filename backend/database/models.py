@@ -60,6 +60,54 @@ class Company(Base):
         Index('idx_companies_ticker', 'ticker'),
     )
 
+
+class HistoricalDataNYSE(Base):
+    __tablename__ = 'historical_data_nyse'
+
+    data_id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+    date = Column(Date, nullable=False, index=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    adjusted_close = Column(Float)
+    volume = Column(Integer)
+
+    company = relationship('Company')  # Assuming one-to-many relation with Company
+
+
+class HistoricalDataWSE(Base):
+    __tablename__ = 'historical_data_wse'
+
+    data_id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+    date = Column(Date, nullable=False, index=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    adjusted_close = Column(Float)
+    volume = Column(Integer)
+
+    company = relationship('Company')
+
+
+class HistoricalDataCAC(Base):
+    __tablename__ = 'historical_data_cac'
+
+    data_id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+    date = Column(Date, nullable=False, index=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    adjusted_close = Column(Float)
+    volume = Column(Integer)
+
+    company = relationship('Company')    
+
 class HistoricalData(Base):
     __tablename__ = 'historical_data'
 

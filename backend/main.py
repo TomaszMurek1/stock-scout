@@ -9,7 +9,7 @@ from typing import List
 from pydantic import BaseModel
 from sqlalchemy import select
 from backend.services.technical_analysis_service import find_most_recent_golden_cross
-from backend.database.models import Company  # Make sure to import the Company model
+from backend.database.models import Company, Market
 import time
 
 # Initialize FastAPI app
@@ -51,7 +51,7 @@ class GoldenCrossRequest(BaseModel):
     days_to_look_back: int = 90  # New parameter
     min_volume: int = 1000000
     adjusted: bool = True
-
+    markets: List[str] 
 # @app.on_event("startup")
 # async def log_routes():
 #     for route in app.routes:
@@ -79,6 +79,8 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     days_to_look_back = request.days_to_look_back
     min_volume = request.min_volume
     adjusted = request.adjusted
+    markets = request.markets
+
 
     start_time = time.time()  # Record the start time
     tickers2 = db.scalars(select(Company.ticker)).all()
@@ -87,15 +89,22 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     if not tickers2:
         raise HTTPException(status_code=404, detail="No tickers found in the database.")
 
-    # Fetch all tickers from the Companies table
-    tickers = db.scalars(select(Company.ticker)).all()
+    # Fetch all companies for given list of market's names
+    companies = db.query(Company.ticker, Market.name.label('market_name')).join(Market).filter(Market.name.in_(markets)).all()
+    print(companies,  markets)
+
+    if not companies:
+        raise HTTPException(status_code=404, detail="No companies found for the selected markets.")
 
     golden_cross_results = []
-    for ticker in tickers:
-        if ticker == 'ALL.WA':
+    for company in companies:
+        ticker = company.ticker
+        market = company.market_name
+        if ticker != 'ALL.WA':
 
             result = find_most_recent_golden_cross(
                 ticker=ticker,
+                market=market,
                 short_window=short_window,
                 long_window=long_window,
                 min_volume=min_volume,
