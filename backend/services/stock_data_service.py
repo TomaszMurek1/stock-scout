@@ -6,6 +6,8 @@ from backend.database.models import Company, HistoricalData, Market
 import logging
 import pandas as pd
 import time
+import holidays
+import pandas_market_calendars as mcal
 
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger('yfinance').setLevel(logging.INFO)
@@ -124,6 +126,34 @@ def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dat
         logger.debug("No new records to commit.")
     return records_added
 
+def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str = 'XWAR') -> set:
+    calendar = mcal.get_calendar(exchange_code)
+    schedule = calendar.schedule(start_date=start_date.date(), end_date=end_date.date())
+    trading_days = set(schedule.index.date)
+    return trading_days
+
+def data_is_up_to_date(company_id: int, start_date: datetime, end_date: datetime, db: Session) -> bool:
+    # Fetch existing dates from the database
+    existing_dates = set(
+        row[0] for row in db.query(HistoricalData.date).filter(
+            HistoricalData.company_id == company_id,
+            HistoricalData.date >= start_date.date(),
+            HistoricalData.date <= end_date.date()
+        ).all()
+    )
+
+    if not existing_dates:
+        # No data in the database for this ticker and date range
+        return False
+
+    # Generate expected trading days
+    trading_days = get_trading_days(start_date, end_date)
+
+    # Identify missing dates
+    missing_dates = trading_days - existing_dates
+    # If there are missing dates, data is not up-to-date
+    return len(missing_dates) == 0
+
 @retry_on_db_lock
 def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datetime, db: Session):
     try:
@@ -133,10 +163,39 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
             logger.error(message)
             return {"status": "error", "message": message}
 
-        # Get missing dates and existing dates
-        missing_dates, existing_dates = get_missing_dates(company.company_id, start_date, end_date, db)
-        if not missing_dates:
+        # Get all missing dates and existing dates not only before start date and after end date but also between them
+
+        # missing_dates, existing_dates = get_missing_dates(company.company_id, start_date, end_date, db)
+        # if not missing_dates:
+        #     message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
+        #     logger.info(message)
+        #     return {"status": "up_to_date", "message": message}
+        
+         # Check if data is up-to-date without calling yf.Ticker
+        if data_is_up_to_date(company.company_id, start_date, end_date, db):
             message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
+            logger.info(message)
+            return {"status": "up_to_date", "message": message}
+
+
+        existing_dates = set(
+            row[0] for row in db.query(HistoricalData.date).filter(
+                HistoricalData.company_id == company.company_id,
+                HistoricalData.date >= start_date.date(),
+                HistoricalData.date <= end_date.date()
+            ).all()
+        )
+        exchange_code = 'XWAR'
+        # Generate expected trading days
+        trading_days = get_trading_days(start_date, end_date, exchange_code)
+
+        # Identify missing dates
+        missing_dates = trading_days - existing_dates
+
+        logger.warning(missing_dates)
+
+        if not missing_dates:
+            message = f"No missing dates to fetch for {ticker}."
             logger.info(message)
             return {"status": "up_to_date", "message": message}
 

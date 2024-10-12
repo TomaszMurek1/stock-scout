@@ -80,7 +80,7 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     adjusted = request.adjusted
 
     tickers2 = db.scalars(select(Company.ticker)).all()
-    print(f"Tickers fetched: {tickers2}")  # Debug log
+    #print(f"Tickers fetched: {tickers2}")  # Debug log
 
     if not tickers2:
         raise HTTPException(status_code=404, detail="No tickers found in the database.")
