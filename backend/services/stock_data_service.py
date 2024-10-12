@@ -6,7 +6,6 @@ from backend.database.models import Company, HistoricalData, Market
 import logging
 import pandas as pd
 import time
-import holidays
 import pandas_market_calendars as mcal
 
 logging.basicConfig(level=logging.INFO)
@@ -174,7 +173,7 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
          # Check if data is up-to-date without calling yf.Ticker
         if data_is_up_to_date(company.company_id, start_date, end_date, db):
             message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
-            logger.info(message)
+            #logger.info(message)
             return {"status": "up_to_date", "message": message}
 
 
