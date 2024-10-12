@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from backend.services.technical_analysis_service import find_most_recent_golden_cross
 from backend.database.models import Company  # Make sure to import the Company model
+import time
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -79,8 +80,9 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     min_volume = request.min_volume
     adjusted = request.adjusted
 
+    start_time = time.time()  # Record the start time
     tickers2 = db.scalars(select(Company.ticker)).all()
-    print(f"Tickers fetched: {tickers2}")  # Debug log
+    #print(f"Tickers fetched: {tickers2}")  # Debug log
 
     if not tickers2:
         raise HTTPException(status_code=404, detail="No tickers found in the database.")
@@ -90,7 +92,7 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
 
     golden_cross_results = []
     for ticker in tickers:
-        if ticker != 'ALL.WA':
+        if ticker == 'ALL.WA':
 
             result = find_most_recent_golden_cross(
                 ticker=ticker,
@@ -104,6 +106,8 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
             if result:
                 golden_cross_results.append({"ticker": ticker, "data": result})
 
+    processing_time = time.time() - start_time 
+    print(processing_time)
     if golden_cross_results:
         return {
             "status": "success",
