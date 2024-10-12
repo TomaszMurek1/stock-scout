@@ -19,6 +19,7 @@ class Market(Base):
     country = Column(String)
     currency = Column(String)
     timezone = Column(String)
+    exchange_code = Column(String)
 
     # Relacje
     indexes = relationship('StockIndex', back_populates='market', cascade='all, delete-orphan')

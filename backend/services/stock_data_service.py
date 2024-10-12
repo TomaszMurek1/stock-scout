@@ -8,7 +8,7 @@ import pandas as pd
 import time
 import pandas_market_calendars as mcal
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 # logging.getLogger('yfinance').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
