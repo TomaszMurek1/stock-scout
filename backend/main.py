@@ -8,9 +8,11 @@ from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from backend.services.technical_analysis_service import find_most_recent_golden_cross
 from backend.database.models import Company, Market
 import time
+import investpy
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -124,6 +126,54 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
         }
     else:
         raise HTTPException(status_code=404, detail="No golden crosses found for any companies.")
+    
+
+
+# Define the route to create tickers based on country and exchange/market
+@router.post("/admin/create-tickers")
+def create_tickers(country: str, market: str, db: Session = Depends(get_db)):
+    try:
+        # Check if the market already exists in the database
+        db_market = db.query(Market).filter(Market.name == market).first()
+        if not db_market:
+            # If market does not exist, create it
+            db_market = Market(name=market, country=country)
+            db.add(db_market)
+            db.commit()
+            db.refresh(db_market)  # Get the new market ID
+
+        # Fetch tickers from investpy based on the given country and market
+        try:
+            tickers = investpy.stocks.get_stocks(country=country)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error fetching data from investpy: {str(e)}")
+
+        # Loop through the tickers and add companies to the database
+        for stock in tickers[:10]:
+            if stock.exchange == market:  # Filter stocks for the provided exchange/market
+                company_data = {
+                    'name': stock.name,
+                    'ticker': stock.symbol,
+                    'market_id': db_market.market_id,
+                    'sector': stock.sector if hasattr(stock, 'sector') else None,
+                    'industry': stock.industry if hasattr(stock, 'industry') else None,
+                }
+
+                # Add company to the database
+                new_company = Company(**company_data)
+                db.add(new_company)
+
+        # Commit all changes
+        db.commit()
+        return {"message": "Companies and tickers have been created successfully."}
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="There was an issue with the database operation.")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
 
 # Don't forget to include this router in your main.py
 app.include_router(router)

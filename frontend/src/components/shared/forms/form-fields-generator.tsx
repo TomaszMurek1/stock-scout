@@ -1,56 +1,41 @@
 import React from "react";
-import { Controller, SubmitHandler } from "react-hook-form";
+import {
+  Controller,
+  UseFormReturn,
+  SubmitHandler,
+  FieldValues,
+  Control,
+  Path,
+} from "react-hook-form";
 import { TextField, Button, Typography, Box } from "@mui/material";
-import { GoldenCrossFormFieldsProps } from "./golden-cross-form.types";
-import { FormValues } from "./golden-cross-form";
+import { IFormField } from "@/components/scenario-carousel/scan-types/golden-cross-form/golden-cross-form.types";
 
-// Helper function to render a form field
-interface FormFieldProps {
-  name: keyof FormValues;
+// Generic FormFieldsGeneratorProps
+interface FormFieldsGeneratorProps<T extends FieldValues> {
+  form: UseFormReturn<T>; // Use generic type for form data
+  formFields: IFormField<T>[]; // Assuming you have this interface already defined
+  isLoading: boolean;
+  onSubmit: SubmitHandler<T>; // Generic submit handler for different form types
+}
+
+// Define form field properties as generic to handle different form values
+interface FormFieldProps<T extends FieldValues> {
+  name: Path<T>; // Generic keyof type
   label: string;
   description: string;
-  control: any;
+  control: Control<T>; // Type for control can be more specific if needed
   type: string;
 }
 
-const formFields: {
-  name: keyof FormValues;
-  label: string;
-  description: string;
-  type: string;
-}[] = [
-  {
-    name: "shortPeriod",
-    label: "Short Period (days)",
-    description:
-      "The number of days for the short-term moving average (e.g., 50 days).",
-    type: "number",
-  },
-  {
-    name: "longPeriod",
-    label: "Long Period (days)",
-    description:
-      "The number of days for the long-term moving average (e.g., 200 days).",
-    type: "number",
-  },
-  {
-    name: "daysToLookBack",
-    label: "Days to Look Back",
-    description:
-      "The number of days in the past to analyze for the Golden Cross pattern.",
-    type: "number",
-  },
-];
-
-const FormField: React.FC<FormFieldProps> = ({
+const FormField = <T extends FieldValues>({
   name,
   label,
   description,
   control,
   type,
-}) => (
+}: FormFieldProps<T>) => (
   <Controller
-    name={name}
+    name={name} // Convert name to string since Controller expects a string
     control={control}
     render={({ field }) => (
       <Box className="space-y-1 m-4">
@@ -79,20 +64,17 @@ const FormField: React.FC<FormFieldProps> = ({
   />
 );
 
-const GoldenCrossFormFields: React.FC<GoldenCrossFormFieldsProps> = ({
+const FormFieldsGenerator = <T extends FieldValues>({
   form,
+  formFields,
   isLoading,
   onSubmit,
-}) => {
-  // Define the type for the form data fields
-
-  // Update the type of the `handleSubmit` function to match the react-hook-form's SubmitHandler
+}: FormFieldsGeneratorProps<T>) => {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
       {formFields.map(({ name, label, description, type }) => (
         <FormField
-          key={name}
-          name={name}
+          name={name} // Use generic keyof T to define field names
           label={label}
           description={description}
           control={form.control}
@@ -114,4 +96,4 @@ const GoldenCrossFormFields: React.FC<GoldenCrossFormFieldsProps> = ({
   );
 };
 
-export default GoldenCrossFormFields;
+export default FormFieldsGenerator;

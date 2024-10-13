@@ -1,3 +1,4 @@
+from typing import Tuple, Set
 import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
@@ -68,7 +69,7 @@ def get_or_create_company(ticker: str, db: Session) -> Company:
     logger.debug(f"Created new company entry for ticker {ticker}.")
     return company
 
-def get_missing_dates(company_id: int, start_date: datetime, end_date: datetime, db: Session) -> (set, set):
+def get_missing_dates(company_id: int, start_date: datetime, end_date: datetime, db: Session) ->  Tuple[Set, Set]:
     existing_dates_query = db.query(HistoricalData.date).filter(
         HistoricalData.company_id == company_id,
         HistoricalData.date >= start_date.date(),

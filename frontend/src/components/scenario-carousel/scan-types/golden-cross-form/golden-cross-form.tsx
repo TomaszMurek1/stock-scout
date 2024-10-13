@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import GoldenCrossFormFields from "./form-fields";
+import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
 import ScanResults from "../scan-result";
 import GoldenCrossCard from "./golden-cross-card";
 import { toast } from "react-toastify";
-import { ScanResultsProps } from "./golden-cross-form.types";
+import { IFormField, ScanResultsProps } from "./golden-cross-form.types";
 
-const formSchema = z.object({
+const goldenCrossFormSchema = z.object({
   shortPeriod: z.coerce
     .number()
     .int()
@@ -17,14 +17,38 @@ const formSchema = z.object({
   longPeriod: z.coerce.number().int().positive().min(1),
   daysToLookBack: z.coerce.number().int().positive(),
 });
-export type FormValues = z.infer<typeof formSchema>;
+type GoldenCrossFormValues = z.infer<typeof goldenCrossFormSchema>;
+
+const formFields: IFormField<GoldenCrossFormValues>[] = [
+  {
+    name: "shortPeriod",
+    label: "Short Period (days)",
+    description:
+      "The number of days for the short-term moving average (e.g., 50 days).",
+    type: "number",
+  },
+  {
+    name: "longPeriod",
+    label: "Long Period (days)",
+    description:
+      "The number of days for the long-term moving average (e.g., 200 days).",
+    type: "number",
+  },
+  {
+    name: "daysToLookBack",
+    label: "Days to Look Back",
+    description:
+      "The number of days in the past to analyze for the Golden Cross pattern.",
+    type: "number",
+  },
+];
 
 export default function GoldenCrossScanForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<GoldenCrossFormValues>({
+    resolver: zodResolver(goldenCrossFormSchema),
     defaultValues: {
       shortPeriod: 50,
       longPeriod: 200,
@@ -32,7 +56,7 @@ export default function GoldenCrossScanForm() {
     },
   });
 
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+  const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
 
     try {
@@ -79,8 +103,9 @@ export default function GoldenCrossScanForm() {
 
   return (
     <GoldenCrossCard>
-      <GoldenCrossFormFields
+      <FormFieldsGenerator<GoldenCrossFormValues>
         form={form}
+        formFields={formFields}
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
