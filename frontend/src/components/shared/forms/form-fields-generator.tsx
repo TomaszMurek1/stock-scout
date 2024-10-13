@@ -8,12 +8,12 @@ import {
   Path,
 } from "react-hook-form";
 import { TextField, Button, Typography, Box } from "@mui/material";
-import { IFormField } from "@/components/scenario-carousel/scan-types/golden-cross-form/golden-cross-form.types";
+import { IFormGeneratorField } from "./form-field-generator.types";
 
 // Generic FormFieldsGeneratorProps
 interface FormFieldsGeneratorProps<T extends FieldValues> {
   form: UseFormReturn<T>; // Use generic type for form data
-  formFields: IFormField<T>[]; // Assuming you have this interface already defined
+  formFields: IFormGeneratorField<T>[]; // Assuming you have this interface already defined
   isLoading: boolean;
   onSubmit: SubmitHandler<T>; // Generic submit handler for different form types
 }
@@ -74,6 +74,7 @@ const FormFieldsGenerator = <T extends FieldValues>({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
       {formFields.map(({ name, label, description, type }) => (
         <FormField
+          key={name}
           name={name} // Use generic keyof T to define field names
           label={label}
           description={description}

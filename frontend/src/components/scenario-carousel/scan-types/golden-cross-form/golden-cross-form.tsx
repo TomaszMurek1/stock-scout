@@ -1,47 +1,16 @@
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
 import ScanResults from "../scan-result";
-import GoldenCrossCard from "./golden-cross-card";
+import FormCardGenerator from "../../../shared/forms/form-card-generator";
 import { toast } from "react-toastify";
-import { IFormField, ScanResultsProps } from "./golden-cross-form.types";
-
-const goldenCrossFormSchema = z.object({
-  shortPeriod: z.coerce
-    .number()
-    .int()
-    .positive()
-    .max(200, "Short period should be less than long period"),
-  longPeriod: z.coerce.number().int().positive().min(1),
-  daysToLookBack: z.coerce.number().int().positive(),
-});
-type GoldenCrossFormValues = z.infer<typeof goldenCrossFormSchema>;
-
-const formFields: IFormField<GoldenCrossFormValues>[] = [
-  {
-    name: "shortPeriod",
-    label: "Short Period (days)",
-    description:
-      "The number of days for the short-term moving average (e.g., 50 days).",
-    type: "number",
-  },
-  {
-    name: "longPeriod",
-    label: "Long Period (days)",
-    description:
-      "The number of days for the long-term moving average (e.g., 200 days).",
-    type: "number",
-  },
-  {
-    name: "daysToLookBack",
-    label: "Days to Look Back",
-    description:
-      "The number of days in the past to analyze for the Golden Cross pattern.",
-    type: "number",
-  },
-];
+import { ScanResultsProps } from "./golden-cross-form.types";
+import {
+  goldenCrossFormFields,
+  goldenCrossFormSchema,
+  GoldenCrossFormValues,
+} from "./golden-cross.helpers";
 
 export default function GoldenCrossScanForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -102,16 +71,19 @@ export default function GoldenCrossScanForm() {
   console.log("results", results);
 
   return (
-    <GoldenCrossCard>
+    <FormCardGenerator
+      title="Golden Cross Scan"
+      subtitle=" Set parameters to scan for stocks showing a Golden Cross pattern."
+    >
       <FormFieldsGenerator<GoldenCrossFormValues>
         form={form}
-        formFields={formFields}
+        formFields={goldenCrossFormFields}
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
       {results && results.data && results.data.length > 0 && (
         <ScanResults results={results.data} />
       )}
-    </GoldenCrossCard>
+    </FormCardGenerator>
   );
 }
