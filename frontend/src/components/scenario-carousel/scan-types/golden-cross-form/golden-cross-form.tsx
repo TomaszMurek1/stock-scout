@@ -27,7 +27,7 @@ export default function GoldenCrossScanForm() {
 
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
-
+    console.log(data);
     try {
       const response = await fetch(
         "http://localhost:8000/technical-analysis/golden-cross",
@@ -40,7 +40,7 @@ export default function GoldenCrossScanForm() {
             days_to_look_back: data.daysToLookBack,
             min_volume: 1000000,
             adjusted: true,
-            markets: ["GSPC"],
+            markets: data.markets,
           }),
         }
       );

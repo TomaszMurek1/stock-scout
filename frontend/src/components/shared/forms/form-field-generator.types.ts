@@ -10,6 +10,7 @@ export interface IFormGeneratorField<T extends FieldValues> {
   label: string;
   description: string;
   type: string;
+  options?: { label: string; value: string }[];
 }
 
 export interface FormFieldsGeneratorProps<T extends FieldValues> {

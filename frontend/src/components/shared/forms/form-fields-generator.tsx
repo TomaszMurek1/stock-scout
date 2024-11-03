@@ -7,7 +7,14 @@ import {
   Control,
   Path,
 } from "react-hook-form";
-import { TextField, Button, Typography, Box } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
 import { IFormGeneratorField } from "./form-field-generator.types";
 
 // Generic FormFieldsGeneratorProps
@@ -25,6 +32,7 @@ interface FormFieldProps<T extends FieldValues> {
   description: string;
   control: Control<T>; // Type for control can be more specific if needed
   type: string;
+  options?: { label: string; value: string }[];
 }
 
 const FormField = <T extends FieldValues>({
@@ -33,36 +41,62 @@ const FormField = <T extends FieldValues>({
   description,
   control,
   type,
-}: FormFieldProps<T>) => (
-  <Controller
-    name={name} // Convert name to string since Controller expects a string
-    control={control}
-    render={({ field }) => (
-      <Box className="space-y-1 m-4">
-        <Typography
-          variant="subtitle1"
-          className="text-slate-700 !font-bold flex justify-start"
-        >
-          {label}
-        </Typography>
-        <TextField
-          size="small"
-          variant="outlined"
-          fullWidth
-          className="bg-zinc-100"
-          {...field}
-          type={type}
-        />
-        <Typography
-          variant="body2"
-          className="text-slate-500 flex justify-start"
-        >
-          {description}
-        </Typography>
-      </Box>
-    )}
-  />
-);
+  options,
+}: FormFieldProps<T>) => {
+  console.log(options);
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <Box className="space-y-1 m-4">
+          <Typography
+            variant="subtitle1"
+            className="text-slate-700 !font-bold flex justify-start"
+          >
+            {label}
+          </Typography>
+          {type === "checkbox" && options ? (
+            // Render checkboxes when the type is 'checkbox' and options are available
+            options.map((option) => (
+              <FormControlLabel
+                key={option.value}
+                control={
+                  <Checkbox
+                    checked={field.value?.includes(option.value)}
+                    onChange={(e) => {
+                      const newValue = e.target.checked
+                        ? [...(field.value || []), option.value]
+                        : field.value.filter((v: string) => v !== option.value);
+                      field.onChange(newValue);
+                    }}
+                  />
+                }
+                label={option.label} // Label for each checkbox
+              />
+            ))
+          ) : (
+            // Render TextField for other input types
+            <TextField
+              size="small"
+              variant="outlined"
+              fullWidth
+              className="bg-zinc-100"
+              {...field}
+              type={type}
+            />
+          )}
+          <Typography
+            variant="body2"
+            className="text-slate-500 flex justify-start"
+          >
+            {description}
+          </Typography>
+        </Box>
+      )}
+    />
+  );
+};
 
 const FormFieldsGenerator = <T extends FieldValues>({
   form,
@@ -72,7 +106,7 @@ const FormFieldsGenerator = <T extends FieldValues>({
 }: FormFieldsGeneratorProps<T>) => {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-      {formFields.map(({ name, label, description, type }) => (
+      {formFields.map(({ name, label, description, type, options }) => (
         <FormField
           key={name}
           name={name} // Use generic keyof T to define field names
@@ -80,6 +114,7 @@ const FormFieldsGenerator = <T extends FieldValues>({
           description={description}
           control={form.control}
           type={type}
+          options={options}
         />
       ))}
       <div className="m-4 pt-8">

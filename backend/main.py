@@ -94,13 +94,14 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     print(markets)
     # Fetch all companies for given list of market's names
     companies = db.query(Company.ticker, Market.name.label('market_name')).join(Market).filter(Market.name.in_(markets)).all()
-    print(companies,  markets)
+    print('main.py',companies,  markets)
 
     if not companies:
         raise HTTPException(status_code=404, detail="No companies found for the selected markets.")
 
     golden_cross_results = []
-    for company in companies:
+    for company in companies[:10000]:
+        print(company)
         ticker = company.ticker
         market = company.market_name
         if ticker != 'ALL.WA':

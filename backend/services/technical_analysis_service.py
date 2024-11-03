@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
-from backend.database.models import HistoricalDataSP500, HistoricalDataWSE, HistoricalDataCAC, Company
+from backend.database.models import HistoricalDataSP500,HistoricalDataDowjones, HistoricalDataWSE, HistoricalDataCAC,HistoricalDataNasdaq, Company
 from backend.services.stock_data_service import fetch_and_save_stock_data
 import logging
 
@@ -26,6 +26,8 @@ def find_most_recent_golden_cross(ticker: str,
         'GSPC': HistoricalDataSP500,
         'WSE': HistoricalDataWSE,
         'CAC': HistoricalDataCAC,
+        'NDX': HistoricalDataNasdaq,
+        'DJI': HistoricalDataDowjones
         # Add other markets as needed
     }
 
@@ -111,7 +113,9 @@ def find_most_recent_golden_cross(ticker: str,
         return None
 
     # Fetch company name efficiently
-    company_name = db.query(Company.name).filter(Company.ticker == ticker).scalar() or 'Unknown'
+    print(market)
+    company = db.query(Company.name).filter(Company.ticker == ticker).first()
+    company_name = company.name if company else 'Unknown'
 
     return {
         'ticker': ticker,

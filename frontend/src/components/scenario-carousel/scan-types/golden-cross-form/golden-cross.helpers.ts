@@ -9,6 +9,7 @@ export const goldenCrossFormSchema = z.object({
     .max(200, "Short period should be less than long period"),
   longPeriod: z.coerce.number().int().positive().min(1),
   daysToLookBack: z.coerce.number().int().positive(),
+  markets: z.array(z.string()).nonempty("Select at least one market"),
 });
 export type GoldenCrossFormValues = z.infer<typeof goldenCrossFormSchema>;
 
@@ -34,5 +35,17 @@ export const goldenCrossFormFields: IFormGeneratorField<GoldenCrossFormValues>[]
       description:
         "The number of days in the past to analyze for the Golden Cross pattern.",
       type: "number",
+    },
+    {
+      name: "markets",
+      label: "Select Markets",
+      description: "Choose one or more markets to scan.",
+      type: "checkbox", // Add this field
+      options: [
+        { label: "S&P 500", value: "GSPC" },
+        { label: "Nasdaq", value: "NDX" },
+        { label: "Dow Jones", value: "DJI" },
+        { label: "GPW", value: "WSE" },
+      ],
     },
   ];
