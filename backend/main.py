@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.services.technical_analysis_service import find_most_recent_golden_cross
 from backend.database.models import Company, Market
 import time
-import investpy
+from pytickersymbols import PyTickerSymbols
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -91,6 +91,7 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
     if not tickers2:
         raise HTTPException(status_code=404, detail="No tickers found in the database.")
 
+    print(markets)
     # Fetch all companies for given list of market's names
     companies = db.query(Company.ticker, Market.name.label('market_name')).join(Market).filter(Market.name.in_(markets)).all()
     print(companies,  markets)
@@ -128,10 +129,25 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
         raise HTTPException(status_code=404, detail="No golden crosses found for any companies.")
     
 
+class TickerRequest(BaseModel):
+    country: str
+    market: str
+
+
+INDEX_MAPPING = {
+    "GSPC": "S&P 500",      # S&P 500
+    "NDX": "NASDAQ 100",    # NASDAQ-100
+    "DJI": "Dow Jones",     # Dow Jones Industrial Average:
+    "FTSE": "FTSE 100"    
+}
+
+stock_data = PyTickerSymbols()
 
 # Define the route to create tickers based on country and exchange/market
-@router.post("/admin/create-tickers")
-def create_tickers(country: str, market: str, db: Session = Depends(get_db)):
+@router.post("/admin/create-tickers2")
+def create_tickers2(ticker_request: TickerRequest, db: Session = Depends(get_db)):
+    country = ticker_request.country
+    market = ticker_request.market
     try:
         # Check if the market already exists in the database
         db_market = db.query(Market).filter(Market.name == market).first()
@@ -142,28 +158,49 @@ def create_tickers(country: str, market: str, db: Session = Depends(get_db)):
             db.commit()
             db.refresh(db_market)  # Get the new market ID
 
-        # Fetch tickers from investpy based on the given country and market
+        # Retrieve index name based on the market symbol
+        index_name = INDEX_MAPPING.get(market)
+        if not index_name:
+            raise HTTPException(status_code=400, detail="Invalid or unsupported market symbol provided.")
+
+        # Fetch tickers for the given index using pytickersymbols
         try:
-            tickers = investpy.stocks.get_stocks(country=country)
+            companies = stock_data.get_stocks_by_index(index_name)
+            if not companies:
+                raise HTTPException(status_code=400, detail="No companies found for the specified index.")
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Error fetching data from investpy: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Error fetching data from pytickersymbols: {str(e)}")
 
-        # Loop through the tickers and add companies to the database
-        for stock in tickers[:10]:
-            if stock.exchange == market:  # Filter stocks for the provided exchange/market
-                company_data = {
-                    'name': stock.name,
-                    'ticker': stock.symbol,
-                    'market_id': db_market.market_id,
-                    'sector': stock.sector if hasattr(stock, 'sector') else None,
-                    'industry': stock.industry if hasattr(stock, 'industry') else None,
-                }
+        # Loop through the companies and add them to the database if they don't exist
+        print('companies',companies)
+        for company in companies:
+            print(company)
+            ticker = company.get("symbol")
+            name = company.get("name")
+            sector = company.get("sector", None)
+            industry = company.get("industry", None)
 
-                # Add company to the database
-                new_company = Company(**company_data)
-                db.add(new_company)
+            # Check if the company with the ticker already exists
+            # existing_company = db.query(Company).filter(Company.ticker == ticker).first()
 
-        # Commit all changes
+            # if existing_company:
+            #     # If the company already exists, skip adding it
+            #     continue
+
+            # Prepare company data
+            company_data = {
+                'name': name,
+                'ticker': ticker,
+                'market_id': db_market.market_id,
+                'sector': sector,
+                'industry': industry,
+            }
+
+            # Add the new company to the database
+            new_company = Company(**company_data)
+            db.add(new_company)
+
+        # Commit all changesd
         db.commit()
         return {"message": "Companies and tickers have been created successfully."}
 
@@ -175,5 +212,6 @@ def create_tickers(country: str, market: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 
-# Don't forget to include this router in your main.py
+
+
 app.include_router(router)

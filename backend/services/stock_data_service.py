@@ -3,7 +3,7 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
-from backend.database.models import Company, HistoricalData, HistoricalDataCAC, HistoricalDataNYSE, HistoricalDataWSE, Market
+from backend.database.models import Company, HistoricalData, HistoricalDataCAC, HistoricalDataSP500, HistoricalDataWSE, Market
 import logging
 import pandas as pd
 import time
@@ -150,7 +150,7 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
     try:
         # Mapping of market to HistoricalDataTable and exchange_code
         market_table_map = {
-            'NYSE': (HistoricalDataNYSE, 'XNYS'),
+            'GSPC': (HistoricalDataSP500, 'GSPC'),
             'WSE': (HistoricalDataWSE, 'XWAR'),
             'CAC': (HistoricalDataCAC, 'XPAR'),
             # Add other markets as needed

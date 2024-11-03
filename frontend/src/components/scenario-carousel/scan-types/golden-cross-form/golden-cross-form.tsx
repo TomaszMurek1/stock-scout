@@ -40,7 +40,7 @@ export default function GoldenCrossScanForm() {
             days_to_look_back: data.daysToLookBack,
             min_volume: 1000000,
             adjusted: true,
-            markets: ["NYSE"],
+            markets: ["GSPC"],
           }),
         }
       );
@@ -67,8 +67,6 @@ export default function GoldenCrossScanForm() {
       setIsLoading(false);
     }
   };
-
-  console.log("results", results);
 
   return (
     <FormCardGenerator

@@ -18,7 +18,7 @@ export default function AdminCreateTickersForm() {
   const form = useForm<CreateTickerValues>({
     resolver: zodResolver(createTickerSchema),
     defaultValues: {
-      country: "PL",
+      country: "Poland",
       market: "XWAR",
     },
   });
@@ -27,17 +27,17 @@ export default function AdminCreateTickersForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/abc", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          country: data.country,
-          market: data.market,
-          min_volume: 1000000,
-          adjusted: true,
-          markets: ["NYSE"],
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:8000/admin/create-tickers2",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            country: data.country,
+            market: data.market,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -48,7 +48,7 @@ export default function AdminCreateTickersForm() {
 
       const result: any = await response.json();
       setResults(result);
-      console.log("Golden Cross Data:", result.data);
+      console.log("Admin Create tickers", result.data);
       toast.success("Golden Cross scan completed successfully");
     } catch (error) {
       console.error("Fetch error:", error);
@@ -61,8 +61,6 @@ export default function AdminCreateTickersForm() {
       setIsLoading(false);
     }
   };
-
-  console.log("form", form);
 
   return (
     <FormCardGenerator
