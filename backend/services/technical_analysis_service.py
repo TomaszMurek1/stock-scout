@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
-from backend.database.models import HistoricalDataNYSE, HistoricalDataWSE, HistoricalDataCAC, Company
+from backend.database.models import HistoricalDataSP500, HistoricalDataWSE, HistoricalDataCAC, Company
 from backend.services.stock_data_service import fetch_and_save_stock_data
 import logging
 
@@ -23,7 +23,7 @@ def find_most_recent_golden_cross(ticker: str,
     
     # Mapping of market names to their historical data tables
     market_table_map = {
-        'NYSE': HistoricalDataNYSE,
+        'GSPC': HistoricalDataSP500,
         'WSE': HistoricalDataWSE,
         'CAC': HistoricalDataCAC,
         # Add other markets as needed

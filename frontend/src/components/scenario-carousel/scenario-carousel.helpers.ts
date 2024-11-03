@@ -27,6 +27,14 @@ export const scenarios: Scenario[] = [
     type: "golden-cross",
   },
   {
+    title: "Admin create tickers for market",
+    description: "Create tiockers data for new market",
+    icon: BarChart,
+    href: "/admin/create-tickers",
+    color: "bg-slate-200 bg-opacity-50",
+    type: "golden-cross",
+  },
+  {
     title: "Death Cross",
     description: "Identify potential downtrends with moving average crossovers",
     icon: BarChart,

@@ -1,6 +1,3 @@
-import { SubmitHandler, UseFormReturn } from "react-hook-form";
-import { FormValues } from "./golden-cross-form";
-
 interface ISingleItem {
   ticker: string;
   name: string;
@@ -20,10 +17,4 @@ export interface IData {
 export interface ScanResultsProps {
   status: string;
   data: IData[];
-}
-
-export interface GoldenCrossFormFieldsProps {
-  form: UseFormReturn<FormValues>;
-  isLoading: boolean;
-  onSubmit: SubmitHandler<FormValues>;
 }

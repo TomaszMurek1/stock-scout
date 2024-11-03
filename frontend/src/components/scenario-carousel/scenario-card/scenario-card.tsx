@@ -22,14 +22,15 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
   icon: Icon,
   href,
   color,
-  type,
   isActive,
   onClick,
 }) => {
   const navigate = useNavigate();
+
   const handleStartScan = () => {
-    navigate(`/scenarios/${type.toLowerCase()}`);
+    navigate(`${href}`);
   };
+
   return (
     <div
       className={`flex-shrink-0 w-[300px] h-[240px] snap-center mt-2 relative`}
@@ -65,7 +66,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
               variant="outline"
               className="w-full bg-white text-gray-700 hover:bg-gray-50"
             >
-              Start Scan <ArrowRight className="ml-2 h-4 w-4" />
+              Activate Scan <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </CardContent>
         </Card>

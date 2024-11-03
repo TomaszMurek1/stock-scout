@@ -1,30 +1,23 @@
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import GoldenCrossFormFields from "./form-fields";
+import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
 import ScanResults from "../scan-result";
-import GoldenCrossCard from "./golden-cross-card";
+import FormCardGenerator from "../../../shared/forms/form-card-generator";
 import { toast } from "react-toastify";
 import { ScanResultsProps } from "./golden-cross-form.types";
-
-const formSchema = z.object({
-  shortPeriod: z.coerce
-    .number()
-    .int()
-    .positive()
-    .max(200, "Short period should be less than long period"),
-  longPeriod: z.coerce.number().int().positive().min(1),
-  daysToLookBack: z.coerce.number().int().positive(),
-});
-export type FormValues = z.infer<typeof formSchema>;
+import {
+  goldenCrossFormFields,
+  goldenCrossFormSchema,
+  GoldenCrossFormValues,
+} from "./golden-cross.helpers";
 
 export default function GoldenCrossScanForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<GoldenCrossFormValues>({
+    resolver: zodResolver(goldenCrossFormSchema),
     defaultValues: {
       shortPeriod: 50,
       longPeriod: 200,
@@ -32,7 +25,7 @@ export default function GoldenCrossScanForm() {
     },
   });
 
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+  const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
 
     try {
@@ -47,7 +40,7 @@ export default function GoldenCrossScanForm() {
             days_to_look_back: data.daysToLookBack,
             min_volume: 1000000,
             adjusted: true,
-            markets: ["NYSE"],
+            markets: ["GSPC"],
           }),
         }
       );
@@ -75,18 +68,20 @@ export default function GoldenCrossScanForm() {
     }
   };
 
-  console.log("results", results);
-
   return (
-    <GoldenCrossCard>
-      <GoldenCrossFormFields
+    <FormCardGenerator
+      title="Golden Cross Scan"
+      subtitle=" Set parameters to scan for stocks showing a Golden Cross pattern."
+    >
+      <FormFieldsGenerator<GoldenCrossFormValues>
         form={form}
+        formFields={goldenCrossFormFields}
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
       {results && results.data && results.data.length > 0 && (
         <ScanResults results={results.data} />
       )}
-    </GoldenCrossCard>
+    </FormCardGenerator>
   );
 }

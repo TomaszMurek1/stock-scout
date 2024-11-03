@@ -11,6 +11,7 @@ import GoldenCrossForm from "./components/scenario-carousel/scan-types/golden-cr
 import Header from "./components/header";
 import Footer from "./components/footer";
 import Home from "./components/home";
+import AdminCreateTickersForm from "./components/admin/admin-create-tickers/admin-create-tickers";
 
 function App() {
   const [, setAuthToken] = useState<string | null>(
@@ -24,10 +25,10 @@ function App() {
     navigate("/");
   };
 
-  const handleSignOut = () => {
-    setAuthToken(null);
-    localStorage.removeItem("setAuthToken");
-  };
+  // const handleSignOut = () => {
+  //   setAuthToken(null);
+  //   localStorage.removeItem("setAuthToken");
+  // };
 
   const handleError = (error: string) => {
     toast.error(error, {
@@ -62,6 +63,10 @@ function App() {
             <Route
               path="/scenarios/golden-cross"
               element={<PrivateRoute element={<GoldenCrossForm />} />}
+            />
+            <Route
+              path="/admin/create-tickers"
+              element={<PrivateRoute element={<AdminCreateTickersForm />} />}
             />
           </Routes>
         </main>

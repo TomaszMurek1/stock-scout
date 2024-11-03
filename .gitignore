@@ -15,5 +15,5 @@ __pycache__/
 
 # Database
 *.sqlite3
-stock_scout.db
-stock_scout1.db
+*.db
+
