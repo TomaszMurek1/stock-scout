@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
-from backend.database.models import HistoricalDataSP500, HistoricalDataWSE, HistoricalDataCAC, Company
-from backend.services.stock_data_service import fetch_and_save_stock_data
+from database.models import HistoricalDataSP500, HistoricalDataWSE, HistoricalDataCAC, Company
+from services.stock_data_service import fetch_and_save_stock_data
 import logging
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,8 @@ def find_most_recent_golden_cross(ticker: str,
         return None
 
     # Fetch company name efficiently
-    company_name = db.query(Company.name).filter(Company.ticker == ticker).scalar() or 'Unknown'
+    company_name = db.query(Company.name).filter(Company.ticker == ticker).first()
+    company_name = company_name[0] if company_name else 'Unknown'
 
     return {
         'ticker': ticker,
