@@ -1,16 +1,16 @@
 from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from backend.database.database import Base, engine, get_db
-from backend.auth import router as auth_router
-from backend.services.stock_data_service import fetch_and_save_stock_data
+from database.database import Base, engine, get_db
+from auth import router as auth_router
+from services.stock_data_service import fetch_and_save_stock_data
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from backend.services.technical_analysis_service import find_most_recent_golden_cross
-from backend.database.models import Company, Market
+from services.technical_analysis_service import find_most_recent_golden_cross
+from database.models import Company, Market
 import time
 from pytickersymbols import PyTickerSymbols
 
