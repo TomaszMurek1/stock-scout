@@ -1,6 +1,5 @@
 // tailwind.config.js
-module.exports = {
-  mode: "jit",
+export default{
   content: ["./src/**/*.{html,js,jsx,ts,tsx}", "./public/index.html"],
   theme: {
     extend: {

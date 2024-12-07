@@ -124,7 +124,10 @@ def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dat
     return records_added
 
 def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str) -> set:
-    calendar = mcal.get_calendar(exchange_code)
+    try:
+        calendar = mcal.get_calendar(exchange_code)
+    except Exception as e:
+        raise RuntimeError(f"Invalid exchange code '{exchange_code}'. Error: {str(e)}")
     schedule = calendar.schedule(start_date=start_date.date(), end_date=end_date.date())
     trading_days = set(schedule.index.date)
     return trading_days
@@ -150,6 +153,7 @@ def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datet
     try:
         # Mapping of market to HistoricalDataTable and exchange_code
         market_table_map = {
+            'GSPC': (HistoricalDataSP500, 'XNYS'),
             'GSPC': (HistoricalDataSP500, 'XNYS'),
             'WSE': (HistoricalDataWSE, 'XWAR'),
             'CAC': (HistoricalDataCAC, 'XPAR'),
