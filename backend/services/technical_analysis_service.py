@@ -92,8 +92,6 @@ def find_most_recent_golden_cross(ticker: str,
     # Calculate moving averages
     data['short_ma'] = data['close'].rolling(window=short_window, min_periods=1).mean()
     data['long_ma'] = data['close'].rolling(window=long_window, min_periods=1).mean()
-
-    # Identify golden crosses
     data['signal'] = (data['short_ma'] > data['long_ma']).astype(int)
     data['positions'] = data['signal'].diff()
 
@@ -112,8 +110,7 @@ def find_most_recent_golden_cross(ticker: str,
     if max_days_since_cross is not None and days_since_cross > max_days_since_cross:
         return None
 
-    # Fetch company name efficiently
-    print(market)
+    # Fetch company name
     company = db.query(Company.name).filter(Company.ticker == ticker).first()
     company_name = company.name if company else 'Unknown'
 
