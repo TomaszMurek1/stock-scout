@@ -64,7 +64,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
   return (
     <Box sx={{ maxWidth: 400, margin: "auto", mt: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        {isRegistering ? "Register" : "Sign In"}
+        {isRegistering ? "Register2" : "Sign In"}
       </Typography>
       <form onSubmit={handleSubmit} noValidate>
         {isRegistering ? (

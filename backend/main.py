@@ -100,7 +100,7 @@ async def get_companies_with_golden_cross(request: GoldenCrossRequest, db: Sessi
         raise HTTPException(status_code=404, detail="No companies found for the selected markets.")
 
     golden_cross_results = []
-    for company in companies[:10000]:
+    for company in companies[:10]:
         print(company)
         ticker = company.ticker
         market = company.market_name

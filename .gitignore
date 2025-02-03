@@ -12,8 +12,10 @@ __pycache__/
 
 # Environment variables
 .env
+.env.prod
 
 # Database
 *.sqlite3
 *.db
 
+stock_scout_db.dump

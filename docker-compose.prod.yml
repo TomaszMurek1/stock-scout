@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  # Remove or comment out the db service since the database is external.
+  # db:
+  #   image: postgres:15
+  #   container_name: prod_db
+  #   environment:
+  #     POSTGRES_USER: stockscout_user
+  #     POSTGRES_PASSWORD: newpassword
+  #     POSTGRES_DB: stock_scout_db
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: prod_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --log-level debug
+    environment:
+      # Use host.docker.internal so that the container can reach the host’s PostgreSQL.
+      DATABASE_URL: postgresql://stockscout_user:newpassword@host.docker.internal:5432/stock_scout_db
+    # This extra_hosts mapping tells Docker to resolve host.docker.internal to the host gateway.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Remove depends_on for db since db service is no longer part of this file.
+    expose:
+      - "8000"  # Expose for internal networking; Nginx will access it.
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "https://tomektest.byst.re/api"
+    container_name: prod_frontend
+    depends_on:
+      - backend
+    expose:
+      - "80"  # Expose for internal networking; Nginx will serve it.
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: prod_nginx
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+# Remove the volumes section if no other services require it.
+# volumes:
+#   db_data:
