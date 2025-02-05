@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: dev_backend
     environment:
-      DATABASE_URL: postgresql://stockscout_user:newpassword@db:5432/stock_scout_db
+      DATABASE_URL:  postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:${DB_PORT}/${DB_NAME}
     depends_on:
       - db
     ports:

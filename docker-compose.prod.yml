@@ -22,7 +22,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --log-level debug
     environment:
       # Use host.docker.internal so that the container can reach the host’s PostgreSQL.
-      DATABASE_URL: postgresql://stockscout_user:newpassword@host.docker.internal:5432/stock_scout_db
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:${DB_PORT}/${DB_NAME}
     # This extra_hosts mapping tells Docker to resolve host.docker.internal to the host gateway.
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -35,7 +35,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: "https://tomektest.byst.re/api"
+        - VITE_API_URL=${VITE_API_URL} 
     container_name: prod_frontend
     depends_on:
       - backend
