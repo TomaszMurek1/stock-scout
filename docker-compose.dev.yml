@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: dev_db
+    environment:
+      POSTGRES_USER: stockscout_user
+      POSTGRES_PASSWORD: newpassword
+      POSTGRES_DB: stock_scout_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: dev_backend
+    environment:
+      DATABASE_URL:  postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:${DB_PORT}/${DB_NAME}
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    # For live code editing, you might do:
+    # volumes:
+    #   - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: dev_frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    # For live reload, mount your local code:
+    # volumes:
+    #   - ./frontend:/app
+
+volumes:
+  db_data:

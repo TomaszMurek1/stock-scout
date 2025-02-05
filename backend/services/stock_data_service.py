@@ -3,11 +3,12 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
-from backend.database.models import Company, HistoricalData, HistoricalDataDowjones,HistoricalDataCAC,HistoricalDataNasdaq, HistoricalDataSP500, HistoricalDataWSE, Market
+from database.models import Company, HistoricalData, HistoricalDataDowjones,HistoricalDataCAC,HistoricalDataNasdaq, HistoricalDataSP500, HistoricalDataWSE, Market
 import logging
 import pandas as pd
 import time
 import pandas_market_calendars as mcal
+from sqlalchemy.exc import IntegrityError
 
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger('yfinance').setLevel(logging.INFO)
@@ -95,17 +96,17 @@ def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dat
     for index, row in stock_data.iterrows():
         date = index.date()
         if date in existing_dates:
-            # logger.debug(f"Record for date {date} already exists. Skipping.")
+            # Skip records that already exist
             continue
 
         historical_data = HistoricalDataTable(
             company_id=company_id,
             date=date,
-            open=row['Open'],
-            high=row['High'],
-            low=row['Low'],
-            close=row['Close'],
-            adjusted_close=row.get('Adj Close', row['Close']),
+            open=float(row['Open']),
+            high=float(row['High']),
+            low=float(row['Low']),
+            close=float(row['Close']),
+            adjusted_close=float(row.get('Adj Close', row['Close'])),
             volume=int(row['Volume'])
         )
         db.add(historical_data)
@@ -117,7 +118,7 @@ def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dat
             logger.debug(f"{records_added} new records added to the database.")
         except IntegrityError:
             db.rollback()
-            logger.error("IntegrityError during commit. Rolling back.")
+            logger.error("IntegrityError during commit. Rolling back.", exc_info=True)
             records_added = 0
     else:
         logger.debug("No new records to commit.")

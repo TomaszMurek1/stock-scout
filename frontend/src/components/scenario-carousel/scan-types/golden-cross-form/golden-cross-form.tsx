@@ -24,13 +24,14 @@ export default function GoldenCrossScanForm() {
       daysToLookBack: 60,
     },
   });
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
     console.log(data);
     try {
       const response = await fetch(
-        "http://localhost:8000/technical-analysis/golden-cross",
+        `${API_URL}/technical-analysis/golden-cross`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

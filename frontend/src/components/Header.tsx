@@ -41,7 +41,7 @@ const Header: React.FC = () => {
                 <Button
                   variant="outline"
                   className="bg-gray-800 text-white hover:bg-gray-700"
-                  onClick={login}
+                  onClick={()=>login('mystesttoken')}
                 >
                   Login
                 </Button>

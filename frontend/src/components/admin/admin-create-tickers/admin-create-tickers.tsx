@@ -14,6 +14,8 @@ import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 export default function AdminCreateTickersForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  console.log('API_URL',API_URL)
 
   const form = useForm<CreateTickerValues>({
     resolver: zodResolver(createTickerSchema),
@@ -28,7 +30,7 @@ export default function AdminCreateTickersForm() {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/admin/create-tickers2",
+        `${API_URL}/admin/create-tickers2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

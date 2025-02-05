@@ -7,13 +7,13 @@ const CallToActions = () => (
     <p className="text-xl text-gray-600 mb-6">
       Choose a scanning scenario above or learn more about our services.
     </p>
+    <Link to="/about">
     <Button
-      component={Link}
-      to="/about"
       className="bg-gray-800 text-white hover:bg-gray-700"
     >
       Learn More
     </Button>
+    </Link>
   </section>
 );
 
