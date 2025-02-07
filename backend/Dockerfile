@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the backend source code
 COPY . /app
+COPY .env /app/.env
 
 # Ensure Python finds the module
 ENV PYTHONPATH=/app
