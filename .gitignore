@@ -8,6 +8,7 @@ npm-debug.log
 
 # Python virtual environment
 venv/
+backend/.venv
 __pycache__/
 
 # Environment variables

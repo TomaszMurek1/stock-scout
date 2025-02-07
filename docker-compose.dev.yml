@@ -11,35 +11,50 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - dev_db_data:/var/lib/postgresql/data
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: dev_backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
     environment:
-      DATABASE_URL:  postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:${DB_PORT}/${DB_NAME}
+      # Point to the local DB container
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
     depends_on:
       - db
+    volumes:
+      - ./backend:/app  # Assuming your code is in ./backend and changes should reflect immediately.
+    expose:
+      - "8000"
     ports:
-      - "8000:8000"
-    # For live code editing, you might do:
-    # volumes:
-    #   - ./backend:/app
+      - "8000:8000"  # <-- This maps container port 8000 to host port 8000.
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL} 
     container_name: dev_frontend
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app  # Again, mount your code for live changes if needed.
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: dev_nginx
+    depends_on:
+      - backend
+      - frontend
     ports:
-      - "5173:5173"
-    # For live reload, mount your local code:
-    # volumes:
-    #   - ./frontend:/app
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
-  db_data:
+  dev_db_data:
