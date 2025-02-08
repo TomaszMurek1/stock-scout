@@ -4,8 +4,8 @@ from datetime import datetime
 from .database import Base
 
 # Tabela asocjacyjna dla relacji wiele-do-wielu między spółkami a indeksami
-company_indexes_table = Table(
-    'company_indexes',
+company_stockindex_association = Table(
+    'company_stockindex_association',
     Base.metadata,
     Column('company_id', Integer, ForeignKey('companies.company_id'), primary_key=True),
     Column('index_id', Integer, ForeignKey('stock_indexes.index_id'), primary_key=True)
@@ -34,7 +34,7 @@ class StockIndex(Base):
 
     # Relacje
     market = relationship('Market', back_populates='indexes')
-    companies = relationship('Company', secondary=company_indexes_table, back_populates='stock_indexes')
+    companies = relationship('Company', secondary=company_stockindex_association, back_populates='stock_indexes')
 
     __table_args__ = (
         Index('idx_indexes_name', 'name'),
@@ -52,7 +52,7 @@ class Company(Base):
 
     # Relacje
     market = relationship('Market', back_populates='companies')
-    stock_indexes = relationship('StockIndex', secondary=company_indexes_table, back_populates='companies')
+    stock_indexes = relationship('StockIndex', secondary=company_stockindex_association, back_populates='companies')
     historical_data = relationship('HistoricalData', back_populates='company', cascade='all, delete-orphan')
 
     __table_args__ = (
@@ -164,7 +164,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    password_hash = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    username = Column(String, unique=True, nullable=False, index=True)  # Ensuring it's not empty
+    email = Column(String, unique=True, nullable=False, index=True)  # Ensuring it's not empty
+    password_hash = Column(String, nullable=False)  # Ensuring password is stored securely
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
