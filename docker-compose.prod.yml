@@ -1,19 +1,6 @@
 version: "3.9"
 
 services:
-  # Remove or comment out the db service since the database is external.
-  # db:
-  #   image: postgres:15
-  #   container_name: prod_db
-  #   environment:
-  #     POSTGRES_USER: stockscout_user
-  #     POSTGRES_PASSWORD: newpassword
-  #     POSTGRES_DB: stock_scout_db
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - db_data:/var/lib/postgresql/data
-
   backend:
     build:
       context: ./backend

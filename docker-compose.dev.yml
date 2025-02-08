@@ -1,9 +1,7 @@
-version: "3.9"
-
 services:
-  db:
+  dev_db:
     image: postgres:15
-    container_name: dev_db
+    # container_name: dev_db  # Optional: Remove if not strictly needed
     environment:
       POSTGRES_USER: stockscout_user
       POSTGRES_PASSWORD: newpassword
@@ -12,42 +10,47 @@ services:
       - "5432:5432"
     volumes:
       - dev_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockscout_user -d stock_scout_db"]
+      interval: 5s
+      retries: 5
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: dev_backend
+    # container_name: dev_backend  # Optional: remove if you don’t need a fixed name
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    # Use env_file to load environment variables from .env
+    env_file:
+      - .env
     environment:
-      # Point to the local DB container
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@dev_db:${DB_PORT}/${DB_NAME}
     depends_on:
-      - db
+      dev_db:
+        condition: service_healthy
     volumes:
-      - ./backend:/app  # Assuming your code is in ./backend and changes should reflect immediately.
-    expose:
-      - "8000"
+      - ./backend:/app
     ports:
-      - "8000:8000"  # <-- This maps container port 8000 to host port 8000.
+      - "8000:8000"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL} 
-    container_name: dev_frontend
+        - VITE_API_URL=${VITE_API_URL}
+    # container_name: dev_frontend
     depends_on:
       - backend
     volumes:
-      - ./frontend:/app  # Again, mount your code for live changes if needed.
+      - ./frontend:/app
     expose:
       - "80"
 
   nginx:
     image: nginx:stable-alpine
-    container_name: dev_nginx
+    # container_name: dev_nginx
     depends_on:
       - backend
       - frontend
