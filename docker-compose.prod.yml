@@ -9,6 +9,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --log-level debug
     environment:
       # Use host.docker.internal so that the container can reach the host’s PostgreSQL.
+      SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:${DB_PORT}/${DB_NAME}
     # This extra_hosts mapping tells Docker to resolve host.docker.internal to the host gateway.
     extra_hosts:
@@ -35,6 +36,7 @@ services:
     depends_on:
       - backend
       - frontend
+    restart: unless-stopped  # Ensures it retries if backend is not ready
     ports:
       - "80:80"
     volumes:
