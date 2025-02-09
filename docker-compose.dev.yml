@@ -37,7 +37,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
       args:
         - VITE_API_URL=${VITE_API_URL}
     # container_name: dev_frontend
@@ -45,8 +45,10 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-    expose:
-      - "80"
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
 
   nginx:
     image: nginx:stable-alpine

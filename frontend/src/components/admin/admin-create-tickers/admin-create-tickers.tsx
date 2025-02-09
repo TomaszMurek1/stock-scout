@@ -15,7 +15,6 @@ export default function AdminCreateTickersForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  console.log('API_URL',API_URL)
 
   const form = useForm<CreateTickerValues>({
     resolver: zodResolver(createTickerSchema),
