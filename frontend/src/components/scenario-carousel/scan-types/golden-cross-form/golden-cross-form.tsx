@@ -24,8 +24,8 @@ export default function GoldenCrossScanForm() {
       daysToLookBack: 60,
     },
   });
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
     console.log(data);
