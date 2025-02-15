@@ -21,7 +21,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
       args:
         - VITE_API_URL=${VITE_API_URL} 
     container_name: prod_frontend
