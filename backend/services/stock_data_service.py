@@ -3,7 +3,11 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
-from database.models import Company, HistoricalData, HistoricalDataDowjones,HistoricalDataCAC,HistoricalDataNasdaq, HistoricalDataSP500, HistoricalDataWSE, Market
+from database.models import (
+    Company,
+    StockPriceHistory,
+    Market
+)
 import logging
 import pandas as pd
 import time
@@ -11,10 +15,10 @@ import pandas_market_calendars as mcal
 from sqlalchemy.exc import IntegrityError
 
 logging.basicConfig(level=logging.INFO)
-# logging.getLogger('yfinance').setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 def retry_on_db_lock(func):
+    """Simple retry decorator in case the DB is locked."""
     def wrapper(*args, **kwargs):
         max_attempts = 3
         for attempt in range(max_attempts):
@@ -29,204 +33,180 @@ def retry_on_db_lock(func):
     return wrapper
 
 def get_or_create_company(ticker: str, db: Session) -> Company:
+    """Fetch a company by ticker, or create if not found."""
     company = db.query(Company).filter(Company.ticker == ticker).first()
     if company:
-        logger.debug(f"Company with ticker {ticker} found in the database.")
         return company
 
-    logger.debug(f"Company with ticker {ticker} not found in the database. Fetching company info from yfinance.")
+    # If not found, try to fetch info from Yahoo
+    logger.info(f"Company {ticker} not found in DB; fetching from yfinance.")
     stock = yf.Ticker(ticker)
-    stock_info = stock.info
-
+    stock_info = stock.info or {}
     if not stock_info:
-        message = f"Could not find company information for ticker {ticker}."
-        logger.error(message)
+        logger.error(f"No company info found for ticker {ticker}.")
         return None
 
-    # Get or create the market
-    exchange_name = stock_info.get('exchange', 'Unknown')
-    market = db.query(Market).filter(Market.name == exchange_name).first()
-    if not market:
-        market = Market(
-            name=exchange_name,
-            country=stock_info.get('country', 'Unknown'),
-            currency=stock_info.get('currency', 'Unknown'),
-            timezone=stock_info.get('timeZoneFullName', 'Unknown')
-        )
-        db.add(market)
-        db.commit()
-        logger.debug(f"Created new market entry for exchange {exchange_name}.")
-
-    # Create new company entry
     company = Company(
         name=stock_info.get('longName', 'Unknown'),
         ticker=ticker,
-        market_id=market.market_id,
         sector=stock_info.get('sector', 'Unknown'),
         industry=stock_info.get('industry', 'Unknown')
     )
     db.add(company)
-    db.commit()
-    logger.debug(f"Created new company entry for ticker {ticker}.")
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        logger.error(f"Integrity error creating company {ticker}: {exc}")
+        return None
     return company
 
-def get_missing_dates(company_id: int, start_date: datetime, end_date: datetime, db: Session) ->  Tuple[Set, Set]:
-    existing_dates_query = db.query(HistoricalData.date).filter(
-        HistoricalData.company_id == company_id,
-        HistoricalData.date >= start_date.date(),
-        HistoricalData.date <= end_date.date()
-    ).all()
-    existing_dates = set(row[0] for row in existing_dates_query)
-    all_dates = set(pd.date_range(start=start_date, end=end_date).date)
-    missing_dates = all_dates - existing_dates
-    return missing_dates, existing_dates
-
-def fetch_historical_data(ticker: str, missing_dates: set) -> pd.DataFrame:
-    if not missing_dates:
-        return pd.DataFrame()
-    stock = yf.Ticker(ticker)
-    missing_start = min(missing_dates)
-    missing_end = max(missing_dates) + timedelta(days=1)  # Add one day because end date is exclusive
-    stock_data = stock.history(start=missing_start, end=missing_end)
-    # logger.debug(f"Fetched data shape: {stock_data.shape}")
-    return stock_data
-
-def save_historical_data(company_id: int, stock_data: pd.DataFrame, existing_dates: set, db: Session, HistoricalDataTable) -> int:
-    records_added = 0
-    for index, row in stock_data.iterrows():
-        date = index.date()
-        if date in existing_dates:
-            # Skip records that already exist
-            continue
-
-        historical_data = HistoricalDataTable(
-            company_id=company_id,
-            date=date,
-            open=float(row['Open']),
-            high=float(row['High']),
-            low=float(row['Low']),
-            close=float(row['Close']),
-            adjusted_close=float(row.get('Adj Close', row['Close'])),
-            volume=int(row['Volume'])
-        )
-        db.add(historical_data)
-        records_added += 1
-
-    if records_added > 0:
-        try:
-            db.commit()
-            logger.debug(f"{records_added} new records added to the database.")
-        except IntegrityError:
-            db.rollback()
-            logger.error("IntegrityError during commit. Rolling back.", exc_info=True)
-            records_added = 0
-    else:
-        logger.debug("No new records to commit.")
-    return records_added
+def get_or_create_market(market_name: str, db: Session) -> Market:
+    """Fetch a market by name, or create if not found."""
+    market_obj = db.query(Market).filter_by(name=market_name).first()
+    if market_obj:
+        return market_obj
+    logger.info(f"Market {market_name} not found; creating new Market entry.")
+    market_obj = Market(name=market_name, country='Unknown', currency='Unknown', timezone='Unknown')
+    db.add(market_obj)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        logger.error(f"Integrity error creating market {market_name}: {exc}")
+        return None
+    return market_obj
 
 def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str) -> set:
-    try:
-        calendar = mcal.get_calendar(exchange_code)
-    except Exception as e:
-        raise RuntimeError(f"Invalid exchange code '{exchange_code}'. Error: {str(e)}")
+    """
+    Returns a set of trading days (dates) between start_date and end_date
+    using the provided exchange_code (NY, WAR, PAR, etc.).
+    """
+    calendar = mcal.get_calendar(exchange_code)
     schedule = calendar.schedule(start_date=start_date.date(), end_date=end_date.date())
-    trading_days = set(schedule.index.date)
-    return trading_days
+    return set(schedule.index.date)
 
-def data_is_up_to_date(company_id: int, start_date: datetime, end_date: datetime, db: Session, HistoricalDataTable, exchange_code: str) -> bool:
+def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, end_date: datetime, db: Session, exchange_code: str) -> bool:
+    """Check if we already have all the trading days covered in stock_price_history."""
     existing_dates = set(
-        row[0] for row in db.query(HistoricalDataTable.date).filter(
-            HistoricalDataTable.company_id == company_id,
-            HistoricalDataTable.date >= start_date.date(),
-            HistoricalDataTable.date <= end_date.date()
-        ).all()
+        r[0] for r in db.query(StockPriceHistory.date)
+        .filter(StockPriceHistory.company_id == company_id)
+        .filter(StockPriceHistory.market_id == market_id)
+        .filter(StockPriceHistory.date >= start_date.date())
+        .filter(StockPriceHistory.date <= end_date.date())
+        .all()
     )
 
     if not existing_dates:
         return False
 
     trading_days = get_trading_days(start_date, end_date, exchange_code)
-    missing_dates = trading_days - existing_dates
-    return len(missing_dates) == 0
+    missing = trading_days - existing_dates
+    return len(missing) == 0
 
 @retry_on_db_lock
-def fetch_and_save_stock_data(ticker: str, start_date: datetime, end_date: datetime, db: Session, market: str):
+def fetch_and_save_stock_data(ticker: str, market_name: str, start_date: datetime, end_date: datetime, db: Session):
+    """
+    Fetch historical data from yfinance for (ticker, market_name) between start_date and end_date,
+    and insert into stock_price_history. 
+    """
     try:
-        # Mapping of market to HistoricalDataTable and exchange_code
-        market_table_map = {
-            'GSPC': (HistoricalDataSP500, 'XNYS'),
-            'GSPC': (HistoricalDataSP500, 'XNYS'),
-            'WSE': (HistoricalDataWSE, 'XWAR'),
-            'CAC': (HistoricalDataCAC, 'XPAR'),
-            'NDX': (HistoricalDataNasdaq, 'XNYS'),
-            'DJI': (HistoricalDataDowjones, 'XNYS'),
-            # Add other markets as needed
-        }
-
-        if market not in market_table_map:
-            logger.error(f"Market {market} is not supported.")
-            return {"status": "error", "message": f"Market {market} is not supported."}
-
-        HistoricalDataTable, exchange_code = market_table_map[market]
-
+        # 1) Get or create the Company
         company = get_or_create_company(ticker, db)
         if not company:
-            message = f"Failed to retrieve or create company for ticker {ticker}."
-            logger.error(message)
-            return {"status": "error", "message": message}
+            msg = f"Could not retrieve/create company with ticker {ticker}."
+            return {"status": "error", "message": msg}
 
-        # Get all missing dates and existing dates not only before start date and after end date but also between them
+        # 2) Get or create the Market
+        market_obj = get_or_create_market(market_name, db)
 
-        # missing_dates, existing_dates = get_missing_dates(company.company_id, start_date, end_date, db)
-        # if not missing_dates:
-        #     message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
-        #     logger.info(message)
-        #     return {"status": "up_to_date", "message": message}
-        
-         # Check if data is up-to-date without calling yf.Ticker
-        if data_is_up_to_date(company.company_id, start_date, end_date, db,HistoricalDataTable,exchange_code):
-            message = f"All data for {ticker} from {start_date.date()} to {end_date.date()} already exists in the database."
-            #logger.info(message)
-            return {"status": "up_to_date", "message": message}
+        # 3) Optional: define exchange_code for holiday calendars
+        #    This is a mapping you must define yourself:
+        exchange_code_map = {
+            'GSPC': 'XNYS',    # S&P 500
+            'DJI': 'XNYS',     # Dow Jones
+            'WSE': 'XWAR',     # Warsaw
+            'CAC': 'XPAR',     # Paris
+            'NDX': 'XNYS',     # Nasdaq (technically 'XNAS')
+            # etc...
+        }
+        exchange_code = exchange_code_map.get(market_name, 'XNYS')  # fallback
 
+        # 4) Check if data is already up to date
+        if data_is_up_to_date(company.company_id, market_obj.market_id, start_date, end_date, db, exchange_code):
+            msg = f"All data for {ticker} in market {market_name} from {start_date.date()} to {end_date.date()} is already up to date."
+            return {"status": "up_to_date", "message": msg}
 
-        existing_dates = set(
-            row[0] for row in db.query(HistoricalDataTable.date).filter(
-                HistoricalDataTable.company_id == company.company_id,
-                HistoricalDataTable.date >= start_date.date(),
-                HistoricalDataTable.date <= end_date.date()
-            ).all()
-        )
-
-        # Generate expected trading days
+        # 5) Determine the trading days
         trading_days = get_trading_days(start_date, end_date, exchange_code)
 
-        # Identify missing dates
+        # 6) Find which dates we already have
+        existing_dates = set(
+            r[0] for r in db.query(StockPriceHistory.date)
+            .filter(StockPriceHistory.company_id == company.company_id)
+            .filter(StockPriceHistory.market_id == market_obj.market_id)
+            .filter(StockPriceHistory.date >= start_date.date())
+            .filter(StockPriceHistory.date <= end_date.date())
+            .all()
+        )
+
+        # 7) Missing dates are the trading days minus existing
         missing_dates = trading_days - existing_dates
-
         if not missing_dates:
-            message = f"No missing dates to fetch for {ticker}."
-            logger.info(message)
-            return {"status": "up_to_date", "message": message}
+            msg = f"No missing dates for {ticker}, market={market_name}."
+            return {"status": "up_to_date", "message": msg}
 
-        stock_data = fetch_historical_data(ticker, missing_dates)
+        # 8) Fetch from yfinance
+        #    Because yfinance fetches in a range, figure out min/max needed
+        fetch_start = min(missing_dates)
+        fetch_end = max(missing_dates) + timedelta(days=1)  # end is exclusive in yfinance
+        stock = yf.Ticker(ticker)
+        stock_data = stock.history(start=fetch_start, end=fetch_end)
+
         if stock_data.empty:
-            message = f"No new data to save for ticker {ticker}."
-            logger.warning(message)
-            return {"status": "no_data", "message": message}
+            msg = f"No data returned from yfinance for {ticker} in range {fetch_start} to {fetch_end}."
+            return {"status": "no_data", "message": msg}
 
-        # Pass existing_dates to save_historical_data
-        records_added = save_historical_data(company.company_id, stock_data, existing_dates, db, HistoricalDataTable)
-        if records_added > 0:
-            message = f"Data for {ticker} fetched and saved successfully. {records_added} new records added."
-            logger.info(message)
-            return {"status": "success", "message": message}
+        # 9) Insert new rows
+        new_records = 0
+        for idx, row in stock_data.iterrows():
+            date_obj = idx.date()
+            # Insert only if it's in our missing_dates set
+            if date_obj not in missing_dates:
+                continue
+
+            record = StockPriceHistory(
+                company_id=company.company_id,
+                market_id=market_obj.market_id,
+                date=date_obj,
+                open=float(row['Open']),
+                high=float(row['High']),
+                low=float(row['Low']),
+                close=float(row['Close']),
+                adjusted_close=float(row.get('Adj Close', row['Close'])),
+                volume=int(row['Volume'])
+            )
+            db.add(record)
+            new_records += 1
+
+        if new_records > 0:
+            try:
+                db.commit()
+                msg = f"{new_records} new records added for {ticker}, market={market_name}."
+                logger.info(msg)
+                return {"status": "success", "message": msg}
+            except IntegrityError as exc:
+                db.rollback()
+                msg = f"Integrity error while inserting {ticker} data: {exc}"
+                logger.error(msg)
+                return {"status": "error", "message": msg}
         else:
-            message = f"No new records added for {ticker}."
-            logger.info(message)
-            return {"status": "up_to_date", "message": message}
+            msg = f"No new records to add for {ticker}, market={market_name}."
+            logger.info(msg)
+            return {"status": "up_to_date", "message": msg}
 
     except Exception as e:
         db.rollback()
-        logger.error(f"Unexpected error fetching data for {ticker}: {str(e)}", exc_info=True)
-        raise
+        msg = f"Unexpected error fetching data for {ticker}, market={market_name}: {e}"
+        logger.error(msg, exc_info=True)
+        return {"status": "error", "message": msg}
