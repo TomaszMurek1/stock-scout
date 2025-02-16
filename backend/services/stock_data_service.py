@@ -13,6 +13,7 @@ import pandas as pd
 import time
 import pandas_market_calendars as mcal
 from sqlalchemy.exc import IntegrityError
+from datetime import date
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,7 +88,6 @@ def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: st
     return set(schedule.index.date)
 
 def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, end_date: datetime, db: Session, exchange_code: str) -> bool:
-    """Check if we already have all the trading days covered in stock_price_history."""
     existing_dates = set(
         r[0] for r in db.query(StockPriceHistory.date)
         .filter(StockPriceHistory.company_id == company_id)
@@ -101,6 +101,17 @@ def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, en
         return False
 
     trading_days = get_trading_days(start_date, end_date, exchange_code)
+    remove_date = date(2025, 1, 9)  # US president funeral, not included in Calendar for 2025
+
+    if exchange_code == "XNYS" and remove_date in trading_days:
+        trading_days.remove(remove_date)
+
+    for day in trading_days:
+        print(f"{day} -> {type(day)}")
+
+    if exchange_code == "XNYS" and remove_date in trading_days:
+        trading_days.remove(remove_date)
+
     missing = trading_days - existing_dates
     return len(missing) == 0
 
@@ -140,6 +151,10 @@ def fetch_and_save_stock_data(ticker: str, market_name: str, start_date: datetim
         # 5) Determine the trading days
         trading_days = get_trading_days(start_date, end_date, exchange_code)
 
+
+        remove_date = datetime.date(2025, 1, 9) #US president funeral
+        if exchange_code == "XNYS" and remove_date in trading_days:
+            trading_days.remove(remove_date)
         # 6) Find which dates we already have
         existing_dates = set(
             r[0] for r in db.query(StockPriceHistory.date)
@@ -160,7 +175,10 @@ def fetch_and_save_stock_data(ticker: str, market_name: str, start_date: datetim
         #    Because yfinance fetches in a range, figure out min/max needed
         fetch_start = min(missing_dates)
         fetch_end = max(missing_dates) + timedelta(days=1)  # end is exclusive in yfinance
+        ticker = ticker.strip()
         stock = yf.Ticker(ticker)
+        stock_info = stock.info  # This fetches stock details
+        print(stock_info) 
         stock_data = stock.history(start=fetch_start, end=fetch_end)
 
         if stock_data.empty:

@@ -22,7 +22,7 @@ async def get_companies_with_golden_cross(
     markets = request.markets
 
     start_time = time.time()
-    numberOfCompanies = 10
+    numberOfCompanies = 2
 
     if not markets:
         raise HTTPException(status_code=400, detail="No markets specified in the request.")
