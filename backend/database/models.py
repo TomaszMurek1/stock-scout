@@ -51,6 +51,7 @@ class Market(Base):
         secondary=company_market_association,
         back_populates='markets'
     )
+    analysis_results = relationship("AnalysisResult", back_populates="market")
     indexes = relationship('StockIndex', back_populates='market', cascade='all, delete-orphan')
 
 class StockIndex(Base):
@@ -95,6 +96,8 @@ class Company(Base):
         back_populates='companies'
     )
 
+    analysis_results = relationship("AnalysisResult", back_populates="company")
+
     __table_args__ = (
         UniqueConstraint('ticker', name='_company_ticker_uc'),
         Index('idx_companies_ticker', 'ticker'),
@@ -136,3 +139,32 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class AnalysisResult(Base):
+    """
+    Stores point-in-time analysis for a company & market, e.g., 
+    last golden or death cross information. This allows you to quickly
+    query results without recalculating on every request.
+    """
+    __tablename__ = "analysis_results"
+
+    analysis_id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+    market_id = Column(Integer, ForeignKey('markets.market_id'), nullable=False)
+    
+    # e.g., "golden_cross", "death_cross"
+    analysis_type = Column(String, nullable=False)
+    short_window = Column(Integer)
+    long_window = Column(Integer)
+
+    # The actual date that the cross happened, if any
+    cross_date = Column(Date, nullable=True)
+    cross_price = Column(Float, nullable=True)
+    days_since_cross = Column(Integer, nullable=True)
+
+    # Track when we last updated this record
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Optional relationships
+    company = relationship('Company', back_populates='analysis_results')
+    market = relationship('Market', back_populates='analysis_results')

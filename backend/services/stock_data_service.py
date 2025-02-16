@@ -106,12 +106,6 @@ def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, en
     if exchange_code == "XNYS" and remove_date in trading_days:
         trading_days.remove(remove_date)
 
-    for day in trading_days:
-        print(f"{day} -> {type(day)}")
-
-    if exchange_code == "XNYS" and remove_date in trading_days:
-        trading_days.remove(remove_date)
-
     missing = trading_days - existing_dates
     return len(missing) == 0
 
@@ -152,7 +146,7 @@ def fetch_and_save_stock_data(ticker: str, market_name: str, start_date: datetim
         trading_days = get_trading_days(start_date, end_date, exchange_code)
 
 
-        remove_date = datetime.date(2025, 1, 9) #US president funeral
+        remove_date = date(2025, 1, 9) #US president funeral
         if exchange_code == "XNYS" and remove_date in trading_days:
             trading_days.remove(remove_date)
         # 6) Find which dates we already have
@@ -177,8 +171,6 @@ def fetch_and_save_stock_data(ticker: str, market_name: str, start_date: datetim
         fetch_end = max(missing_dates) + timedelta(days=1)  # end is exclusive in yfinance
         ticker = ticker.strip()
         stock = yf.Ticker(ticker)
-        stock_info = stock.info  # This fetches stock details
-        print(stock_info) 
         stock_data = stock.history(start=fetch_start, end=fetch_end)
 
         if stock_data.empty:
