@@ -27,6 +27,14 @@ export const scenarios: Scenario[] = [
     type: "golden-cross",
   },
   {
+    title: "EV to revenue",
+    description: "Create desc later ",
+    icon: BarChart,
+    href: "/scenarios/ev-to-revenue",
+    color: "bg-neutral-200 bg-opacity-50",
+    type: "ev-to-revenue",
+  },
+  {
     title: "Admin create tickers for market",
     description: "Create tiockers data for new market",
     icon: BarChart,
