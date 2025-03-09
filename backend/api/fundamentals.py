@@ -47,7 +47,7 @@ def ev_revenue_scan(
     logger.info(f"Scanning {len(companies)} companies in markets: {request.markets}")
 
     # 3) Fetch/update financial data if necessary
-    for c in companies[:1]:  # Limit for testing
+    for c in companies[:10]:  # Limit for testing
         for m in c.markets:
             if m.market_id in market_ids:
                 fetch_and_save_financial_data(c.ticker, m.name, db)
