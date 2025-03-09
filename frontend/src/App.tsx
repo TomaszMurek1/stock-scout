@@ -7,12 +7,12 @@ import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import PrivateRoute from "./components/private-route"; // Add this import
-import GoldenCrossForm from "./components/scenario-carousel/scan-types/golden-cross-form/golden-cross-form";
-import EvToRevenueForm from "./components/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-form";
+import GoldenCrossPage from "./components/scenario-carousel/scan-types/golden-cross/golden-cross-page";
+import EvToRevenuePage from "./components/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-page";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
-import AdminCreateTickersForm from "./components/admin/admin-create-tickers/admin-create-tickers";
+import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
 
 function App() {
   const [, setAuthToken] = useState<string | null>(
@@ -63,15 +63,15 @@ function App() {
             <Route path="/" element={<PrivateRoute element={<Home />} />} />
             <Route
               path="/scenarios/golden-cross"
-              element={<PrivateRoute element={<GoldenCrossForm />} />}
+              element={<PrivateRoute element={<GoldenCrossPage />} />}
             />
             <Route
               path="/scenarios/ev-to-revenue"
-              element={<PrivateRoute element={<EvToRevenueForm />} />}
+              element={<PrivateRoute element={<EvToRevenuePage/>} />}
             />
             <Route
               path="/admin/create-tickers"
-              element={<PrivateRoute element={<AdminCreateTickersForm />} />}
+              element={<PrivateRoute element={<AdminCreateTickersPage />} />}
             />
           </Routes>
         </main>

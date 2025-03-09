@@ -3,7 +3,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
-import { ScanResultsProps } from "@/components/scenario-carousel/scan-types/golden-cross-form/golden-cross-form.types";
+import { ScanResultsProps } from "@/components/scenario-carousel/scan-types/golden-cross/golden-cross-page.types";
 import {
   createTickerSchema,
   createTickersFormFields,
