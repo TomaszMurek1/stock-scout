@@ -8,6 +8,7 @@ import { theme } from "./theme";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import PrivateRoute from "./components/private-route"; // Add this import
 import GoldenCrossForm from "./components/scenario-carousel/scan-types/golden-cross-form/golden-cross-form";
+import EvToRevenueForm from "./components/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-form";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
@@ -63,6 +64,10 @@ function App() {
             <Route
               path="/scenarios/golden-cross"
               element={<PrivateRoute element={<GoldenCrossForm />} />}
+            />
+            <Route
+              path="/scenarios/ev-to-revenue"
+              element={<PrivateRoute element={<EvToRevenueForm />} />}
             />
             <Route
               path="/admin/create-tickers"

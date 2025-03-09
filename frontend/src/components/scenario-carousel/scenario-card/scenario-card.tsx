@@ -51,7 +51,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
             isActive ? "border-2 border-teal-500" : ""
           )}
         >
-          <CardHeader className="flex-grow">
+          <CardHeader id='card-header-title' className="flex-grow">
             <div className="flex items-center gap-2 mb-2">
               {Icon && <Icon className="w-6 h-6 text-gray-700" />}
               <CardTitle className="text-xl font-bold text-gray-800">
