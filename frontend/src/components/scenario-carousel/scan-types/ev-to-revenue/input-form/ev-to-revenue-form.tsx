@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
-import ScanResults from "../scan-result";
-import FormCardGenerator from "../../../shared/forms/form-card-generator";
+import FormFieldsGenerator from "../../../../shared/forms/form-fields-generator";
+import FormCardGenerator from "../../../../shared/forms/form-card-generator";
 import { toast } from "react-toastify";
 import { EvToRevenueFormFields, EvToRevenueValues,EvToRevenueFormSchema } from "./ev-to-revenue-form.helpers";
-import { ScanResultsProps } from "./ev-to-revenue-form.types";
+import { EvToRevenueOutput } from "../ev-to-revenoue-output/ev-to-revenue-output";
+import { EvToRevenueResultsProps } from "../ev-to-revenoue-output/ev-to-revenue-output.types";
 
 
 
 export default function EvToRevenueScanForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<ScanResultsProps | null>(null);
+  const [results, setResults] = useState<EvToRevenueResultsProps | null>(null);
 
   const form = useForm<EvToRevenueValues>({
     resolver: zodResolver(EvToRevenueFormSchema),
@@ -44,7 +44,7 @@ export default function EvToRevenueScanForm() {
         );
       }
 
-      const result: ScanResultsProps = await response.json();
+      const result: EvToRevenueResultsProps = await response.json();
       setResults(result);
       console.log("EV to Revenue:", result.data);
       toast.success("EV to Revenue scan completed successfully");
@@ -72,7 +72,7 @@ export default function EvToRevenueScanForm() {
         onSubmit={onSubmit}
       />
       {results && results.data && results.data.length > 0 && (
-        <ScanResults results={results.data} />
+        <EvToRevenueOutput data={results.data} />
       )}
     </FormCardGenerator>
   );
