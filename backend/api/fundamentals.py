@@ -6,6 +6,7 @@ from database.dependencies import get_db
 from database.models import Company, Market, company_market_association, CompanyFinancials
 from schemas.fundamentals_schemas import EVRevenueScanRequest
 from services.financial_data_service import fetch_and_save_financial_data
+from services.break_even_companies import  find_companies_with_break_even
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -95,4 +96,19 @@ def ev_revenue_scan(
             "last_updated": item.last_updated.isoformat() if item.last_updated else None
         })
 
+    return {"status": "success", "data": results}
+
+
+@router.post("/break-even-companies")
+def get_break_even_companies(months: int = 12, db: Session = Depends(get_db)):
+    # Possibly refresh for ALL companies (or only certain ones).
+    # Then analyze CompanyFinancialHistory table to find break-even crossing.
+    
+    companies = db.query(Company).all()
+    for comp in companies[:10]:
+        for m in comp.markets:
+            fetch_and_save_financial_data(comp.ticker, m.name, db)
+    
+    # break-even logic using the now-updated CompanyFinancialHistory
+    results = find_companies_with_break_even(db, months)
     return {"status": "success", "data": results}

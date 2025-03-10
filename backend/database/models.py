@@ -11,7 +11,7 @@ from sqlalchemy import (
     DateTime
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from .database import Base
 
 # ---------------------------
@@ -49,6 +49,7 @@ class Market(Base):
     financials = relationship("CompanyFinancials", back_populates="market", cascade="all, delete-orphan")
     market_data = relationship("CompanyMarketData", back_populates="market", cascade="all, delete-orphan")
     indexes = relationship('StockIndex', back_populates='market', cascade='all, delete-orphan')
+    financial_history = relationship("CompanyFinancialHistory",back_populates="market",cascade="all, delete-orphan")
 
 class StockIndex(Base):
     __tablename__ = 'stock_indexes'
@@ -78,6 +79,7 @@ class Company(Base):
     stock_indexes = relationship('StockIndex', secondary=company_stockindex_association, back_populates='companies')
     analysis_results = relationship("AnalysisResult", back_populates="company")
     financials = relationship("CompanyFinancials", back_populates="company", cascade="all, delete-orphan")
+    financial_history = relationship("CompanyFinancialHistory", back_populates="company", cascade="all, delete-orphan") 
     market_data = relationship("CompanyMarketData", back_populates="company", cascade="all, delete-orphan")
 
     # ✅ Added missing relationship to `CompanyOverview`
@@ -199,7 +201,7 @@ class CompanyFinancials(Base):
     last_fiscal_year_end = Column(DateTime, nullable=True)
     most_recent_quarter = Column(DateTime, nullable=True)
 
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     company = relationship("Company", back_populates="financials")
     market = relationship("Market", back_populates="financials")
@@ -237,3 +239,19 @@ class CompanyMarketData(Base):
 
     company = relationship("Company", back_populates="market_data")
     market = relationship("Market", back_populates="market_data")
+
+
+class CompanyFinancialHistory(Base):
+    __tablename__ = "company_financial_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+    market_id = Column(Integer, ForeignKey('markets.market_id'), nullable=False)
+    quarter_end_date = Column(DateTime, nullable=False, index=True)
+    net_income = Column(Float, nullable=True)
+    total_revenue = Column(Float, nullable=True)
+    ebitda = Column(Float, nullable=True)
+    last_updated = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+
+    company = relationship("Company", back_populates="financial_history")
+    market = relationship("Market", back_populates="financial_history")

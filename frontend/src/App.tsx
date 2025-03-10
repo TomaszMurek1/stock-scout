@@ -13,6 +13,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
 import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
+import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 
 function App() {
   const [, setAuthToken] = useState<string | null>(
@@ -68,6 +69,10 @@ function App() {
             <Route
               path="/scenarios/ev-to-revenue"
               element={<PrivateRoute element={<EvToRevenuePage/>} />}
+            />
+            <Route
+              path="/scenarios/break-even-point"
+              element={<PrivateRoute element={<BreakEvenPointPage/>} />}
             />
             <Route
               path="/admin/create-tickers"
