@@ -55,7 +55,7 @@ def cached_golden_cross(
 
     # 3) For each (company, market), use the caching logic
     cross_type = "golden"  # Hard-coded to 'golden' cross; adapt if needed
-    for company in companies:
+    for company in companies[:10]:
         for market in company.markets:
             if market.market_id not in market_ids:
                 continue  # skip irrelevant markets

@@ -5,14 +5,14 @@ import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
 import ScanResults from "../scan-result";
 import FormCardGenerator from "../../../shared/forms/form-card-generator";
 import { toast } from "react-toastify";
-import { ScanResultsProps } from "./golden-cross-form.types";
+import { ScanResultsProps } from "./golden-cross-page.types";
 import {
   goldenCrossFormFields,
   goldenCrossFormSchema,
   GoldenCrossFormValues,
-} from "./golden-cross.helpers";
+} from "./golden-cross-page.helpers";
 
-export default function GoldenCrossScanForm() {
+export default function GoldenCrossScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
 

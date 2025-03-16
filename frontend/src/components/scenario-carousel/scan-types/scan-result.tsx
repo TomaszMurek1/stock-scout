@@ -1,4 +1,4 @@
-import { IData } from "./golden-cross-form/golden-cross-form.types";
+import { IData } from "./golden-cross/golden-cross-page.types";
 
 const ScanResults = ({ results }: { results: IData[] }) => {
   if (results.length === 0) return null;

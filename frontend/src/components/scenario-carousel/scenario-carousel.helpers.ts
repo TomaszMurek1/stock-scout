@@ -62,7 +62,7 @@ export const scenarios: Scenario[] = [
     title: "Break Even Point",
     description: "Discover stocks approaching their break-even levels",
     icon: TrendingUp,
-    href: "/scenarios/break-even",
+    href: "/scenarios/break-even-point",
     color: "bg-zinc-200 bg-opacity-50",
     type: "golden-cross",
   },

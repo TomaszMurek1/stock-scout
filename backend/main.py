@@ -24,6 +24,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(stocks.router, prefix="/api/stocks", tags=["Stock Data"])
 app.include_router(analysis.router, prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analysis"])
+app.include_router(fundamentals.router, prefix="/api/break-even-companies", tags=["Analysis"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 @app.get("/")

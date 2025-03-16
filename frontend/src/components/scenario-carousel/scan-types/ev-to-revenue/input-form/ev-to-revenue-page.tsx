@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormFieldsGenerator from "../../../../shared/forms/form-fields-generator";
-import FormCardGenerator from "../../../../shared/forms/form-card-generator";
+import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
+import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import { toast } from "react-toastify";
-import { EvToRevenueFormFields, EvToRevenueValues,EvToRevenueFormSchema } from "./ev-to-revenue-form.helpers";
-import { EvToRevenueOutput } from "../ev-to-revenoue-output/ev-to-revenue-output";
-import { EvToRevenueResultsProps } from "../ev-to-revenoue-output/ev-to-revenue-output.types";
+import { EvToRevenueFormFields, EvToRevenueValues,EvToRevenueFormSchema } from "./ev-to-revenue-page.helpers";
+import { EvToRevenueOutput } from "../ev-to-revenue-output/ev-to-revenue-output";
+import { EvToRevenueResultsProps } from "../ev-to-revenue-output/ev-to-revenue-output.types";
 
 
 
@@ -46,7 +46,6 @@ export default function EvToRevenueScanForm() {
 
       const result: EvToRevenueResultsProps = await response.json();
       setResults(result);
-      console.log("EV to Revenue:", result.data);
       toast.success("EV to Revenue scan completed successfully");
     } catch (error) {
       console.error("Fetch error:", error);
