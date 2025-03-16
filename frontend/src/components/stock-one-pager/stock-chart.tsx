@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import {
   ComposedChart,
   CartesianGrid,
@@ -8,7 +9,7 @@ import {
   Area,
   ResponsiveContainer,
 } from "recharts";
-import { format, subYears, parseISO } from "date-fns";
+import { format, subYears } from "date-fns";
 
 interface HistoricalData {
   date: string;
@@ -21,25 +22,22 @@ interface StockChartProps {
   historicalData: HistoricalData[];
   showLastYear?: boolean;
 }
-const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", { month: "short" });
-//const formatMonth = (dateString: string) => format(new Date(dateString), "MMM");
 
-// Single function for decimal formatting based on max price
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString("en-US", { month: "short" });
+
 const getPriceFormatter = (maxPrice: number) => {
   if (maxPrice < 5) return (price: number) => price.toFixed(2);
   if (maxPrice < 10) return (price: number) => price.toFixed(1);
   return (price: number) => price.toFixed(0);
 };
 
-// Filter data to last year
 const filterLastYearData = (data: HistoricalData[], showLastYear: boolean) => {
   if (!showLastYear) return data;
   const oneYearAgo = subYears(new Date(), 1);
   return data.filter((d) => new Date(d.date) >= oneYearAgo);
 };
 
-// Calculate nice rounded Y-axis min/max and step
 const calculateYAxisDomain = (min: number, max: number) => {
   const range = max - min;
   let step: number;
@@ -59,8 +57,6 @@ const calculateYAxisDomain = (min: number, max: number) => {
   return { niceMin, niceMax, step };
 };
 
-
-// Generate Y-axis ticks
 const generateYAxisTicks = (min: number, max: number, step: number) => {
   const ticks = [];
   for (let tick = min; tick <= max; tick += step) {
@@ -69,7 +65,6 @@ const generateYAxisTicks = (min: number, max: number, step: number) => {
   return ticks;
 };
 
-// Ensure exactly one tick per month on X-axis
 const getMonthlyTicks = (data: HistoricalData[]) => {
   const months = new Set();
   return data
@@ -84,95 +79,90 @@ const getMonthlyTicks = (data: HistoricalData[]) => {
     .map((entry) => entry.date);
 };
 
-interface HistoricalData {
-  date: string;
-  price: number;
-  sma50?: number;
-  sma200?: number;
-}
-
-interface StockChartProps {
-  historicalData: HistoricalData[];
-  showLastYear?: boolean;
-}
-
 export default function StockChart({
   historicalData,
   showLastYear = true,
 }: StockChartProps) {
-  if (!historicalData.length) {
+  const filteredData = useMemo(
+    () => filterLastYearData(historicalData, showLastYear),
+    [historicalData, showLastYear]
+  );
+
+  const { maxPrice, minPrice } = useMemo(() => {
+    const prices = filteredData.map((d) => d.price);
+    return {
+      maxPrice: Math.max(...prices),
+      minPrice: Math.min(...prices),
+    };
+  }, [filteredData]);
+
+  if (!filteredData.length) {
     return <div className="text-gray-500">No data available</div>;
   }
 
-  // Filter data
-  const filteredData = filterLastYearData(historicalData, showLastYear);
-
-  // Extract price values
-  const prices = filteredData.map((d) => d.price);
-  const maxPrice = Math.max(...prices);
-  const minPrice = Math.min(...prices);
-
   const priceFormatter = getPriceFormatter(maxPrice);
-  const [yAxisMin, yAxisMax, yAxisStep] = (() => {
-    const domain = calculateYAxisDomain(minPrice, maxPrice);
-    return [domain.niceMin, domain.niceMax, domain.step];
-  })();
+  const { niceMin: yAxisMin, niceMax: yAxisMax, step: yAxisStep } = calculateYAxisDomain(
+    minPrice,
+    maxPrice
+  );
 
-  const yAxisTicks = generateYAxisTicks(yAxisMin, yAxisMax, yAxisStep);
-  const monthlyTicks = getMonthlyTicks(filteredData);
+  const yAxisTicks = useMemo(() => generateYAxisTicks(yAxisMin, yAxisMax, yAxisStep), [
+    yAxisMin,
+    yAxisMax,
+    yAxisStep,
+  ]);
+
+  const monthlyTicks = useMemo(() => getMonthlyTicks(filteredData), [filteredData]);
 
   return (
-    <div className="w-full h-80 bg-gray-50 p-4 rounded-lg border">
+    <div className="w-full h-80 bg-gray-50 p-4 rounded-lg border shadow-sm">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={filteredData}>
           <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} />
-
-          {/* X-Axis: Exactly one label per month */}
           <XAxis
             dataKey="date"
             ticks={monthlyTicks}
             tickFormatter={formatDate}
-            tick={{ fontSize: 12, fill: "#555" }}
+            tick={{ fontSize: 12, fill: "#374151" }} // Tailwind gray-700
           />
-
-          {/* Dynamically scaled Y-axis with nice rounded increments */}
           <YAxis
             domain={[yAxisMin, yAxisMax]}
-            ticks={generateYAxisTicks(yAxisMin, yAxisMax, yAxisStep)}
+            ticks={yAxisTicks}
             tickFormatter={priceFormatter}
-            tick={{ fontSize: 12, fill: "#555" }}
+            tick={{ fontSize: 12, fill: "#374151" }} // Tailwind gray-700
           />
-
           <Tooltip formatter={(value) => priceFormatter(Number(value))} />
           <Legend verticalAlign="top" />
 
-          {/* Price area */}
+          {/* Stock Price Area - Blue */}
           <Area
             type="monotone"
             dataKey="price"
-            fill="rgba(37,99,235,0.3)"
-            stroke="#2563eb"
-            strokeWidth={1.5}
+            fill="rgba(59,130,246,0.3)" // Tailwind blue-500 (soft)
+            stroke="#3b82f6" // Tailwind blue-500
+            strokeWidth={2}
             name="Stock Price"
           />
 
+          {/* SMA 50 - Teal (instead of green for accessibility) */}
           <Area
             type="monotone"
             dataKey="sma50"
-            stroke="#16a34a"
-            strokeDasharray="5 5"
-            strokeWidth={1.8}
+            stroke="#0f766e" // Tailwind teal-600 (high contrast)
+            strokeDasharray="5 5" // Dotted for differentiation
+            strokeWidth={2}
             fill="none"
             dot={false}
             name="SMA 50"
           />
 
+          {/* SMA 200 - Orange (instead of red for accessibility) */}
           <Area
             type="monotone"
             dataKey="sma200"
-            stroke="#dc2626"
-            strokeDasharray="3 3"
-            strokeWidth={1.8}
+            stroke="#fb923c" // Tailwind orange-600
+            strokeDasharray="7 4" // Dashed for differentiation
+            strokeWidth={2}
             fill="none"
             dot={false}
             name="SMA 200"
@@ -182,5 +172,3 @@ export default function StockChart({
     </div>
   );
 }
-
-
