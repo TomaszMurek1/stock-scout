@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.dependencies import get_db
 from database.models import Company, Market, company_market_association, CompanyFinancials
-from schemas.fundamentals_schemas import EVRevenueScanRequest
+from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanRequest
 from services.financial_data_service import fetch_and_save_financial_data
 from services.break_even_companies import  find_companies_with_break_even
 
@@ -100,15 +100,36 @@ def ev_revenue_scan(
 
 
 @router.post("/break-even-companies")
-def get_break_even_companies(months: int = 12, db: Session = Depends(get_db)):
+def get_break_even_companies(request: BreakEvenPointRequest, db: Session = Depends(get_db)):
     # Possibly refresh for ALL companies (or only certain ones).
     # Then analyze CompanyFinancialHistory table to find break-even crossing.
     
-    companies = db.query(Company).all()
+    # TODO: adjust month later to be taken from api call
+    months=12
+    # 1) Find relevant markets
+    market_ids = [
+        m[0] for m in (
+            db.query(Market.market_id)
+              .filter(Market.name.in_(request.markets))
+              .all()
+        )
+    ]
+    if not market_ids:
+        raise HTTPException(status_code=404, detail="No matching markets found in DB.")
+    
+    companies = (
+        db.query(Company)
+        .join(company_market_association)
+        .join(Market)
+        .filter(Market.market_id.in_(market_ids))
+        .all()
+    )
+    company_ids = [comp.company_id for comp in companies]
     for comp in companies[:10]:
         for m in comp.markets:
             fetch_and_save_financial_data(comp.ticker, m.name, db)
     
     # break-even logic using the now-updated CompanyFinancialHistory
-    results = find_companies_with_break_even(db, months)
+    results = find_companies_with_break_even(db, months, company_ids)
+    logger.info(results)
     return {"status": "success", "data": results}

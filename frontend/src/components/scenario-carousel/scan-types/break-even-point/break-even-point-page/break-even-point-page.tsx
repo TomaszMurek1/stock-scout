@@ -21,6 +21,7 @@ export default function BreakEvenPointScanForm() {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   
   const onSubmit: SubmitHandler<BreakEvenPointValues> = async (data) => {
+    setResults(null)
     setIsLoading(true);
     console.log(data);
     try {

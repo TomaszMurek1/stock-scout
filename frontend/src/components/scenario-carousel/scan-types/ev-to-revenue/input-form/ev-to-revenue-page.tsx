@@ -46,7 +46,6 @@ export default function EvToRevenueScanForm() {
 
       const result: EvToRevenueResultsProps = await response.json();
       setResults(result);
-      console.log("EV to Revenue:", result.data);
       toast.success("EV to Revenue scan completed successfully");
     } catch (error) {
       console.error("Fetch error:", error);
