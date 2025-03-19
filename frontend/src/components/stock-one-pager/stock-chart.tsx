@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react"
 import {
   ComposedChart,
   CartesianGrid,
@@ -9,19 +9,19 @@ import {
   Area,
   Scatter,
   ResponsiveContainer,
-} from "recharts";
-import { addDays, format, parseISO, startOfMonth, subYears } from "date-fns";
+} from "recharts"
+import { addDays, format, parseISO, startOfMonth, subYears } from "date-fns"
 
 interface HistoricalData {
-  date: string;
-  price: number;
-  sma50?: number;
-  sma200?: number;
+  date: string
+  price: number
+  sma50?: number
+  sma200?: number
 }
 
 interface StockChartProps {
-  historicalData: HistoricalData[];
-  showLastYear?: boolean;
+  historicalData: HistoricalData[]
+  showLastYear?: boolean
 }
 
 const formatDate = (dateString: string) =>
@@ -63,6 +63,7 @@ const generateYAxisTicks = (min: number, max: number, step: number) => {
   for (let tick = min; tick < max; tick += step) {
     ticks.push(Number(tick.toFixed(2)));
   }
+  console.log(ticks)
   return ticks;
 };
 
@@ -188,6 +189,7 @@ export default function StockChart({
     yAxisMax,
     yAxisStep,
   ]);
+  console.log('yAxisTicks', yAxisTicks)
 
   const monthlyTicks = useMemo(() => getMonthlyTicks(filteredData), [filteredData]);
 
@@ -203,82 +205,111 @@ export default function StockChart({
   });
 
   return (
-    <div className="w-full h-80 bg-gray-50 p-4 rounded-lg border shadow-sm">
+    <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={mergedData} margin={{ left: -20, right: 40 }} >
-          <CartesianGrid  strokeOpacity={0.5}   stroke="#CBD5E1"/>
+        <ComposedChart data={mergedData} margin={{ top: 20, right: 0, bottom: 20, left: 40 }}>
+          <CartesianGrid strokeOpacity={0.3} stroke="#99a1af" />
           <XAxis
-          interval={0}
+            interval={0}
             dataKey="date"
             ticks={monthlyTicks}
             tickFormatter={formatDate}
-            tick={{ fontSize: 12, fill: "#374151" }} // Tailwind gray-700
+            tick={{ fontSize: 12, fill: "#334155" }}
+            axisLine={{ stroke: "#CBD5E1" }}
           />
           <YAxis
-          interval={0}
+            interval={0}
             domain={[yAxisMin, yAxisMax]}
             ticks={yAxisTicks}
-            tickFormatter={priceFormatter}
-            tick={{ fontSize: 12, fill: "#374151" }}
+            //tickFormatter={priceFormatter}
+            tick={{ fontSize: 12, fill: "#334155" }}
+            axisLine={{ stroke: "#CBD5E1" }}
+            orientation="right"
           />
           <Tooltip
-            formatter={(value) => priceFormatter(Number(value))}
+            formatter={(value) => [`$${priceFormatter(Number(value))}`, ""]}
+            labelFormatter={(label) => format(new Date(label), "MMM d, yyyy")}
             contentStyle={{
-              backgroundColor: "#F9FAFB",
-              borderColor: "#D1D5DB",
-              color: "#111827",
-              fontSize: "12px",
+              backgroundColor: "#FFFFFF",
+              borderColor: "#CBD5E1",
+              borderRadius: "4px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              color: "#1E293B", // Tailwind slate-800
+              fontSize: "13px",
+              padding: "8px 12px",
             }}
-           />
-      
+          />
 
           {/* Stock Price Area - Blue */}
           <Area
             type="monotone"
             dataKey="price"
-            fill="rgba(59,130,246,0.3)"
+            fill="rgba(59,130,246,0.15)"
             stroke="#3b82f6"
-            strokeWidth={1}
+            strokeWidth={1.5}
             name="Stock Price"
+            activeDot={{ r: 6, stroke: "#2563EB", strokeWidth: 1, fill: "#3b82f6" }}
           />
 
           {/* SMA 50 - Teal */}
           <Area
             type="monotone"
             dataKey="sma50"
-            stroke="#0f766e"
+            stroke="#0d9488"
             strokeDasharray="5 5"
-            strokeWidth={1}
+            strokeWidth={1.5}
             fill="none"
             name="SMA 50"
+            dot={false}
+            activeDot={false}
           />
 
           {/* SMA 200 - Orange */}
           <Area
             type="monotone"
             dataKey="sma200"
-            stroke="#fb923c"
+            stroke="#ea580c"
             strokeDasharray="7 4"
-            strokeWidth={1}
+            strokeWidth={1.5}
             fill="none"
             name="SMA 200"
+            dot={false}
+            activeDot={false}
           />
 
-          <Scatter dataKey="bullish" fill="#facc15" stroke="#374151" strokeWidth={0.5} name="Golden Cross" />
-          <Scatter dataKey="bearish" fill="#EF4444" stroke="#111827" strokeWidth={0.5}  name="Death Cross" />
+          <Scatter
+            dataKey="bullish"
+            fill="#22c55e"
+            stroke="#ffffff"
+            strokeWidth={1.5}
+            name="Golden Cross"
+            shape="circle"
+            r={6}
+          />
+          <Scatter
+            dataKey="bearish"
+            fill="#ef4444"
+            stroke="#ffffff"
+            strokeWidth={1.5}
+            name="Death Cross"
+            shape="circle"
+            r={6}
+          />
           <Legend
-            verticalAlign="bottom"
-            height={20}
-            iconSize={8}
+            verticalAlign="top"
+            height={36}
+            iconSize={10}
+            iconType="circle"
             wrapperStyle={{
-              marginLeft:"30px",
-              fontSize: "10px",
-              color: "#374151",
-              paddingBottom: "4px",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "#334155",
+              paddingBottom: "12px",
             }}
           />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }
+
