@@ -147,8 +147,8 @@ const fillHistoricalData = (data: HistoricalData[]): HistoricalData[] => {
     lastKnownSMA50 = entry.sma50;
     lastKnownSMA200 = entry.sma200;
 
-    currentDate = addDays(entryDate, 1);
-    lastIndex++;
+    currentDate = addDays(entryDate, 1)
+    lastIndex++
   }
   return filledData;
 };
