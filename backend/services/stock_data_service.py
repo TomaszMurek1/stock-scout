@@ -110,7 +110,7 @@ def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, en
     return len(missing) == 0
 
 @retry_on_db_lock
-def fetch_and_save_stock_data(ticker: str, market_name: str, start_date: datetime, end_date: datetime, db: Session):
+def fetch_and_save_stock_history_data(ticker: str, market_name: str, start_date: datetime, end_date: datetime, db: Session):
     """
     Fetch historical data from yfinance for (ticker, market_name) between start_date and end_date,
     and insert into stock_price_history. 
