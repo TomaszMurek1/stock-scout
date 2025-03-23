@@ -166,7 +166,7 @@ class CompanyOverview(Base):
     headquarters_city = Column(String, nullable=True)
     headquarters_country = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-
+    description = Column(String, nullable=True)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     company = relationship("Company", back_populates="overview")

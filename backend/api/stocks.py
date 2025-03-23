@@ -9,6 +9,9 @@ import yfinance as yf
 import pandas as pd
 from database.models import Company, CompanyFinancials, Market, StockPriceHistory
 from database.dependencies import get_db
+import requests
+import os
+from database.models import CompanyOverview
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -16,6 +19,34 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+
+def fetch_company_overview_from_api(ticker: str) -> dict:
+    api_key = os.getenv("FMP_API_KEY")
+    url = f"https://financialmodelingprep.com/stable/profile?symbol={ticker}&apikey={api_key}"
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to fetch data from external API.")
+
+    data = response.json()
+    if not data:
+        raise HTTPException(status_code=404, detail="No data found for this ticker from external API.")
+
+    profile = data[0]
+    return {
+        "long_name": profile.get("companyName"),
+        "short_name": profile.get("symbol"),
+        "industry": profile.get("industry"),
+        "sector": profile.get("sector"),
+        "full_time_employees": profile.get("fullTimeEmployees"), # Not available in API
+        "website": profile.get("website"),
+        "headquarters_address": profile.get("address"),
+        "headquarters_city": profile.get("city"),
+        "headquarters_country": profile.get("country"),
+        "phone": profile.get("phone"),
+        "description": profile.get("description"),
+    }
 
 def get_or_fetch_stock_history(ticker: str, market_name: str, company_id: int, cutoff_date: datetime, db: Session):
     # Try fetching from DB
@@ -97,6 +128,37 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     company = get_company_by_ticker(ticker, db)
     market = get_company_market(company, db)
 
+    # Try to get existing overview
+    overview = company.overview
+
+    if not overview:
+        logger.info(f"Overview missing for {ticker}, fetching from external API...")
+        overview_data = fetch_company_overview_from_api(ticker)
+        logger.info(f"Fetched overview data: {overview_data}")
+
+        try:
+            existing_overview = db.query(CompanyOverview).get(company.company_id)
+
+            if existing_overview:
+                # Update existing record
+                for key, value in overview_data.items():
+                    setattr(existing_overview, key, value)
+                db.commit()
+                db.refresh(existing_overview)
+                overview = existing_overview
+            else:
+                # Insert new record
+                new_overview = CompanyOverview(company_id=company.company_id, **overview_data)
+                db.add(new_overview)
+                db.commit()
+                db.refresh(new_overview)
+                overview = new_overview
+
+        except Exception as e:
+            logger.error(f"Failed to save overview for {ticker}: {e}", exc_info=True)
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Error saving company overview.")
+
     executive_summary = build_executive_summary(company, market)
     financial_performance = get_company_financials(company, db)
 
@@ -116,6 +178,13 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
 
     return {
         "executive_summary": executive_summary,
+        "company_overview": {
+            "description": overview.description,
+            "website": overview.website,
+            "sector": overview.sector,
+            "industry": overview.industry,
+            "country": overview.headquarters_country,
+        },
         "financial_performance": financial_performance,
         "technical_analysis": technical_analysis,
     }

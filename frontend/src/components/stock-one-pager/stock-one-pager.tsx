@@ -78,7 +78,7 @@ export const StockOnePager = () => {
     );
   }
 
-  const { executive_summary, financial_performance } = stock;
+  const { executive_summary, financial_performance, company_overview } = stock;
   const chartData = getChartData();
   const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
 
@@ -101,7 +101,7 @@ export const StockOnePager = () => {
           <div className="text-left">
             <h1 className="text-3xl font-bold text-gray-800">{executive_summary?.name}</h1>
             <p className="text-gray-600 mt-2">
-              {executive_summary?.sector} — {executive_summary?.industry}
+              {company_overview?.sector} — {company_overview?.industry}
             </p>
           </div>
         </div>
@@ -113,8 +113,8 @@ export const StockOnePager = () => {
           <CardTitle className="text-xl text-gray-800">Executive Summary</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <p className="text-gray-700 leading-relaxed">
-            {executive_summary?.description || "No summary available."}
+          <p className="text-left text-gray-700 leading-relaxed">
+            {company_overview?.description || "No summary available."}
           </p>
         </CardContent>
       </Card>
