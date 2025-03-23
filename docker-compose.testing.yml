@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  recovery_db:
+    image: postgres:15
+    container_name: recovery_postgres
+    environment:
+      POSTGRES_USER: stockscout_user
+      POSTGRES_PASSWORD: newpassword
+      POSTGRES_DB: stock_scout_db
+    ports:
+      - "5434:5432"  # use 5434 so you don’t clash with existing DB
+    volumes:
+      - stock-scout_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  stock-scout_postgres_data:
+    external: true
