@@ -19,4 +19,4 @@ __pycache__/
 *.sqlite3
 *.db
 
-stock_scout_db.dump
+*.dump

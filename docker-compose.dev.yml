@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - dev_db_data:/var/lib/postgresql/data
+      - stock_scout_dev_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stockscout_user -d stock_scout_db"]
       interval: 5s
@@ -45,6 +45,7 @@ services:
       - backend
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
     environment:
@@ -62,4 +63,5 @@ services:
       - ./nginx/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
-  dev_db_data:
+  stock_scout_dev_db_data:
+    external: true
