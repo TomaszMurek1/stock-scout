@@ -2,16 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.dependencies import get_db
 from schemas.stock_schemas import TickerRequest
+from services.financial_data.financial_data_service import fetch_and_save_financial_data
 from services.stock_data_service import fetch_and_save_stock_history_data
 from datetime import datetime, timedelta, timezone
 import logging
 import yfinance as yf
 import pandas as pd
-from database.models import Company, CompanyFinancials, Market, StockPriceHistory
+from database.models import Company, CompanyFinancials, Market, StockPriceHistory, CompanyFinancialHistory
 from database.dependencies import get_db
 import requests
 import os
 from database.models import CompanyOverview
+from services.utils.financial_utils import calculate_financial_ratios
+from services.utils.insights import build_financial_trends, build_investor_metrics
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -92,15 +95,20 @@ def get_company_market(company: Company, db: Session) -> Market | None:
 
 
 def get_company_financials(company: Company, db: Session) -> dict:
-    financials = db.query(CompanyFinancials).filter(CompanyFinancials.company_id == company.company_id).first()
+    financials = db.query(CompanyFinancials).filter(
+        CompanyFinancials.company_id == company.company_id
+    ).first()
+
     if not financials:
         raise HTTPException(status_code=404, detail="Financial data not found.")
-    return {
-        "gross_margin": financials.gross_margins,
-        "operating_margin": financials.operating_margins,
-        "net_margin": financials.profit_margins,
-    }
 
+    ratios = calculate_financial_ratios(financials)
+
+    return {
+        "gross_margin": ratios["gross_margin"],
+        "operating_margin": ratios["operating_margin"],
+        "net_margin": ratios["net_margin"],
+    }
 
 def build_executive_summary(company: Company, market: Market | None) -> dict:
     return {
@@ -127,6 +135,8 @@ def build_technical_analysis(stock_history: list[tuple], window_50: int = 50, wi
 def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     company = get_company_by_ticker(ticker, db)
     market = get_company_market(company, db)
+
+    fetch_and_save_financial_data(company.ticker, market.name, db)
 
     # Try to get existing overview
     overview = company.overview
@@ -161,6 +171,8 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
 
     executive_summary = build_executive_summary(company, market)
     financial_performance = get_company_financials(company, db)
+    financials = db.query(CompanyFinancials).filter(CompanyFinancials.company_id == company.company_id).first()
+
 
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=730)
     stock_history = get_or_fetch_stock_history(
@@ -175,7 +187,9 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Stock price history not found.")
 
     technical_analysis = build_technical_analysis(stock_history)
-
+    ratios = build_investor_metrics(financials)
+    trends = build_financial_trends(db, company.company_id, market.market_id)
+    
     return {
         "executive_summary": executive_summary,
         "company_overview": {
@@ -186,6 +200,8 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
             "country": overview.headquarters_country,
         },
         "financial_performance": financial_performance,
+        "investor_metrics": ratios,
+        "financial_trends": trends,
         "technical_analysis": technical_analysis,
     }
 

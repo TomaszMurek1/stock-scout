@@ -120,4 +120,4 @@ def print_yfinance_summary(ticker: str):
         logging.error(f"Error fetching news: {e}")
 
 if __name__ == "__main__":
-    print_yfinance_summary("AAPL")
+    print_yfinance_summary("SOFI")

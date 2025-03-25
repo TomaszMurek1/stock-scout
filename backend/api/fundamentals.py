@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from database.dependencies import get_db
 from database.models import Company, Market, company_market_association, CompanyFinancials
 from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanRequest
-from services.financial_data_service import fetch_and_save_financial_data
+from services.financial_data.financial_data_service import fetch_and_save_financial_data
 from services.break_even_companies import  find_companies_with_break_even
 
 router = APIRouter()
