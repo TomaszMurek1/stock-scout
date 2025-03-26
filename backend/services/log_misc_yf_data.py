@@ -58,8 +58,8 @@ def print_yfinance_summary(ticker: str):
         logging.info(f"\nIncome Statement:\n{yticker.financials}")
         logging.info(f"\nBalance Sheet:\n{yticker.balance_sheet}")
         logging.info(f"\nCash Flow Statement:\n{yticker.cashflow}")
-        logging.info(f"\nEarnings:\n{yticker.earnings}")
-        logging.info(f"\nQuarterly Earnings:\n{yticker.quarterly_earnings}")
+        # logging.info(f"\nEarnings:\n{yticker.earnings}")
+        # logging.info(f"\nQuarterly Earnings:\n{yticker.quarterly_earnings}")
     except Exception as e:
         logging.error(f"Error fetching financial statements: {e}")
 
@@ -119,5 +119,29 @@ def print_yfinance_summary(ticker: str):
     except Exception as e:
         logging.error(f"Error fetching news: {e}")
 
+
+
+def print_financial_statements(ticker: str):
+    logging.info(f"\n==============================")
+    logging.info(f"📊 YFinance Summary for {ticker}")
+    logging.info(f"==============================")
+
+    yticker = yf.Ticker(ticker)
+
+   
+
+    # SECTION: Financial Statements
+    logging.info("\n🔹 Financial Statements")
+    try:
+        logging.info(f"\nIncome Statement:\n{yticker.financials}")
+        logging.info(f"\nBalance Sheet:\n{yticker.balance_sheet}")
+        logging.info(f"\nCash Flow Statement:\n{yticker.cashflow}")
+        # logging.info(f"\nEarnings:\n{yticker.earnings}")
+        # logging.info(f"\nQuarterly Earnings:\n{yticker.quarterly_earnings}")
+    except Exception as e:
+        logging.error(f"Error fetching financial statements: {e}")
+
+   
+
 if __name__ == "__main__":
-    print_yfinance_summary("SOFI")
+    print_financial_statements("AAPL")

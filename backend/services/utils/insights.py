@@ -24,33 +24,26 @@ def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict
     if len(records) < 2:
         return {}
 
-    def yoy_change(current, previous):
-        if previous in (None, 0) or current is None:
-            return None
-        return round((current - previous) / abs(previous) * 100, 2)
-
     def trend_series(metric):
         trend = []
-        for i in range(len(records) - 1):
-            current = getattr(records[i], metric)
-            previous = getattr(records[i + 1], metric)
-            change = yoy_change(current, previous)
+        for i in range(len(records)):
             year = records[i].quarter_end_date.year
+            value = getattr(records[i], metric)
             trend.append({
                 "year": year,
-                "yoy_change": None if change is None or (isinstance(change, float) and (pd.isna(change) or change != change)) else change
+                "value": None if value is None or (isinstance(value, float) and (pd.isna(value) or value != value)) else value
             })
         return trend
 
     return {
-        "revenue_growth_yoy": trend_series("total_revenue"),
-        "net_income_growth_yoy": trend_series("net_income"),
-        "ebitda_growth_yoy": trend_series("ebitda"),
-        "fcf_growth_yoy": trend_series("free_cash_flow"),
+        "revenue": trend_series("total_revenue"),
+        "net_income": trend_series("net_income"),
+        "ebitda": trend_series("ebitda"),
+        "free_cash_flow": trend_series("free_cash_flow"),
     }
 
 
-def build_investor_metrics(financials: CompanyFinancials) -> dict:
+def build_investor_metrics(financials: CompanyFinancials, financial_history: dict) -> dict:
     revenue = financials.total_revenue or 0
     gross_profit = financials.gross_profit or 0
     net_income = financials.net_income or 0
@@ -58,7 +51,9 @@ def build_investor_metrics(financials: CompanyFinancials) -> dict:
     operating_income = financials.operating_income or 0
     free_cash_flow = financials.free_cash_flow or 0
     capex = financials.capital_expenditure or 0
-    revenue_growth = None  # calculated from history separately
+    recent_year = financial_history['revenue'][0]['value'] if financial_history['revenue'] else None
+    previous_year = financial_history['revenue'][1]['value'] if len(financial_history['revenue']) > 1 else None
+    revenue_growth = ((recent_year - previous_year) / abs(previous_year) * 100) if recent_year and previous_year else None
 
     gross_margin = gross_profit / revenue if revenue else None
     operating_margin = operating_income / revenue if revenue else None
@@ -73,9 +68,16 @@ def build_investor_metrics(financials: CompanyFinancials) -> dict:
         "ebitda_margin": round(ebitda_margin, 4) if ebitda_margin is not None else None,
         "fcf_margin": round(fcf_margin, 4) if fcf_margin is not None else None,
         "capex_ratio": round(capex_ratio, 4) if capex_ratio is not None else None,
-        "rule_of_40": round(rule_of_40, 2) if gross_margin is not None else None,
+        "rule_of_40": round((revenue_growth or 0) + (gross_margin * 100 if gross_margin else 0), 2) if revenue_growth is not None else None,
         "growth_sustainability_index": round(net_income / capex, 2) if capex else None,
     }
+
+    raw.update({
+        "revenue_growth": round(revenue_growth, 2) if revenue_growth is not None else None,
+        "net_margin": round(net_income / revenue, 4) if revenue else None,
+        "operating_efficiency_ratio": round(operating_income / revenue, 4) if revenue else None,
+        "cash_conversion_ratio": round(free_cash_flow / net_income, 4) if net_income else None,
+    })
 
     return clean_nan_dict(raw)
 

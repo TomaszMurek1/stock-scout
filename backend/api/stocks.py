@@ -187,7 +187,8 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Stock price history not found.")
 
     technical_analysis = build_technical_analysis(stock_history)
-    ratios = build_investor_metrics(financials)
+    financial_history = build_financial_trends(db, company.company_id, market.market_id)
+    ratios = build_investor_metrics(financials, financial_history)
     trends = build_financial_trends(db, company.company_id, market.market_id)
     
     return {

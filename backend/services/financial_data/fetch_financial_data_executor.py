@@ -18,6 +18,13 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+def get_first_valid_row(df, keys, col):
+    for key in keys:
+        value = safe_get(df, key, col)
+        if value is not None:
+            return value
+    return None
+
 def safe_get(df, row, col):
     lookup = {i.strip().lower(): i for i in df.index}
     key = row.strip().lower()
@@ -54,12 +61,12 @@ def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, 
     fin_record.net_income = safe_get(income_stmt, "Net Income", col)
     fin_record.total_revenue = safe_get(income_stmt, "Total Revenue", col)
     fin_record.ebit = safe_get(income_stmt, "EBIT", col)
-    fin_record.ebitda = safe_get(income_stmt, "EBITDA", col)
+    fin_record.ebitda = get_first_valid_row(income_stmt, ["EBITDA", "Normalized EBITDA"], col)
     fin_record.diluted_eps = safe_get(income_stmt, "Diluted EPS", col)
     fin_record.basic_eps = safe_get(income_stmt, "Basic EPS", col)
     fin_record.interest_income = safe_get(income_stmt, "Interest Income", col)
     fin_record.interest_expense = safe_get(income_stmt, "Interest Expense", col)
-    fin_record.operating_income = safe_get(income_stmt, "Operating Income", col)
+    fin_record.operating_income = get_first_valid_row(income_stmt, ["Operating Income", "Total Operating Income As Reported"], col)
 
     logger.debug(f"[update_financial_snapshot] Checking Gross Profit for column: {col}")
     gross_profit = safe_get(income_stmt, "Gross Profit", col)
@@ -100,10 +107,10 @@ def upsert_financial_history(db, company_id, market_id, income_stmt, cashflow, c
         net_income=safe_get(income_stmt, "Net Income", col),
         total_revenue=safe_get(income_stmt, "Total Revenue", col),
         ebit=safe_get(income_stmt, "EBIT", col),
-        ebitda=safe_get(income_stmt, "EBITDA", col),
+        ebitda=get_first_valid_row(income_stmt, ["EBITDA", "Normalized EBITDA"], col),
         diluted_eps=safe_get(income_stmt, "Diluted EPS", col),
         basic_eps=safe_get(income_stmt, "Basic EPS", col),
-        operating_income=safe_get(income_stmt, "Operating Income", col),
+        operating_income=get_first_valid_row(income_stmt, ["Operating Income", "Total Operating Income As Reported"], col),
         interest_income=safe_get(income_stmt, "Interest Income", col),
         interest_expense=safe_get(income_stmt, "Interest Expense", col),
         depreciation_amortization=safe_get(income_stmt, "Reconciled Depreciation", col) or
