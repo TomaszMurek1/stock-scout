@@ -13,8 +13,12 @@ from database.dependencies import get_db
 import requests
 import os
 from database.models import CompanyOverview
+from services.utils.comparables import build_peer_comparisons
 from services.utils.financial_utils import calculate_financial_ratios
-from services.utils.insights import build_financial_trends, build_investor_metrics
+from services.utils.insights import build_extended_technical_analysis, build_financial_trends, build_investor_metrics
+from services.utils.risk import build_risk_metrics
+from services.utils.sanitize import sanitize_numpy_types
+from services.utils.valuation import build_valuation_metrics
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -138,41 +142,26 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
 
     fetch_and_save_financial_data(company.ticker, market.name, db)
 
-    # Try to get existing overview
     overview = company.overview
-
     if not overview:
-        logger.info(f"Overview missing for {ticker}, fetching from external API...")
         overview_data = fetch_company_overview_from_api(ticker)
-        logger.info(f"Fetched overview data: {overview_data}")
-
-        try:
-            existing_overview = db.query(CompanyOverview).get(company.company_id)
-
-            if existing_overview:
-                # Update existing record
-                for key, value in overview_data.items():
-                    setattr(existing_overview, key, value)
-                db.commit()
-                db.refresh(existing_overview)
-                overview = existing_overview
-            else:
-                # Insert new record
-                new_overview = CompanyOverview(company_id=company.company_id, **overview_data)
-                db.add(new_overview)
-                db.commit()
-                db.refresh(new_overview)
-                overview = new_overview
-
-        except Exception as e:
-            logger.error(f"Failed to save overview for {ticker}: {e}", exc_info=True)
-            db.rollback()
-            raise HTTPException(status_code=500, detail="Error saving company overview.")
+        existing = db.query(CompanyOverview).get(company.company_id)
+        if existing:
+            for key, value in overview_data.items():
+                setattr(existing, key, value)
+            db.commit()
+            db.refresh(existing)
+            overview = existing
+        else:
+            new_overview = CompanyOverview(company_id=company.company_id, **overview_data)
+            db.add(new_overview)
+            db.commit()
+            db.refresh(new_overview)
+            overview = new_overview
 
     executive_summary = build_executive_summary(company, market)
     financial_performance = get_company_financials(company, db)
     financials = db.query(CompanyFinancials).filter(CompanyFinancials.company_id == company.company_id).first()
-
 
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=730)
     stock_history = get_or_fetch_stock_history(
@@ -186,12 +175,14 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     if not stock_history:
         raise HTTPException(status_code=404, detail="Stock price history not found.")
 
-    technical_analysis = build_technical_analysis(stock_history)
-    financial_history = build_financial_trends(db, company.company_id, market.market_id)
-    ratios = build_investor_metrics(financials, financial_history)
     trends = build_financial_trends(db, company.company_id, market.market_id)
-    
-    return {
+    investor_metrics = build_investor_metrics(financials, trends)
+    valuation_metrics = build_valuation_metrics(company, financials, db)
+    technical_analysis = build_extended_technical_analysis(stock_history)
+    risk_metrics = build_risk_metrics(company, stock_history, db)
+    peer_comparison = build_peer_comparisons(company, db)
+
+    response = {
         "executive_summary": executive_summary,
         "company_overview": {
             "description": overview.description,
@@ -201,11 +192,14 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
             "country": overview.headquarters_country,
         },
         "financial_performance": financial_performance,
-        "investor_metrics": ratios,
+        "investor_metrics": investor_metrics,
+        "valuation_metrics": valuation_metrics,
         "financial_trends": trends,
         "technical_analysis": technical_analysis,
+        "risk_metrics": risk_metrics,
+        "peer_comparison": peer_comparison
     }
-
+    return sanitize_numpy_types(response)
 
 # @router.post("/fetch-stock-data")
 # async def fetch_stock_data(request: TickerRequest, db: Session = Depends(get_db)):

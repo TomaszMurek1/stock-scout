@@ -6,8 +6,13 @@ import pandas as pd
 
 
 def clean_nan_dict(d: dict) -> dict:
+    def is_invalid(val):
+        if isinstance(val, (float, int)):
+            return pd.isna(val) or val != val or val in (float("inf"), float("-inf"))
+        return False
+
     return {
-        k: (None if (v is None or pd.isna(v) or isinstance(v, float) and (v != v or v in (float('inf'), float('-inf')))) else v)
+        k: (None if (v is None or is_invalid(v)) else v)
         for k, v in d.items()
     }
 
@@ -115,6 +120,9 @@ def build_extended_technical_analysis(stock_history: list[tuple]) -> dict:
         "range_position_52w": round(range_position * 100, 2) if range_position is not None else None,
         "golden_cross": golden_cross,
         "death_cross": death_cross,
+        "stock_prices": df[["date", "close"]].dropna().to_dict(orient="records"),
+        "sma_50": df[["date", "SMA_50"]].dropna().to_dict(orient="records"),
+        "sma_200": df[["date", "SMA_200"]].dropna().to_dict(orient="records"),
     }
 
     return clean_nan_dict(raw)
