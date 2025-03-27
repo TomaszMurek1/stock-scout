@@ -13,6 +13,7 @@ from database.dependencies import get_db
 import requests
 import os
 from database.models import CompanyOverview
+from services.utils.cleaning import clean_nan_values
 from services.utils.comparables import build_peer_comparisons
 from services.utils.financial_utils import calculate_financial_ratios
 from services.utils.insights import build_extended_technical_analysis, build_financial_trends, build_investor_metrics
@@ -178,7 +179,8 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     trends = build_financial_trends(db, company.company_id, market.market_id)
     investor_metrics = build_investor_metrics(financials, trends)
     valuation_metrics = build_valuation_metrics(company, financials, db)
-    technical_analysis = build_extended_technical_analysis(stock_history)
+    raw_technical_analysis = build_extended_technical_analysis(stock_history)
+    technical_analysis = clean_nan_values(raw_technical_analysis)
     risk_metrics = build_risk_metrics(company, stock_history, db)
     peer_comparison = build_peer_comparisons(company, db)
 
