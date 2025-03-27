@@ -36,6 +36,7 @@ export const getMetricStatus = (label: string, raw: number | null): MetricStatus
       return raw > 0.2 ? "good" : raw > 0.05 ? "neutral" : "bad";
 
     case "Rule of 40":
+      debugger
       return raw >= 40 ? "good" : raw >= 30 ? "neutral" : "bad";
 
     case "EBITDA Margin":
