@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from dateutil.relativedelta import relativedelta
 import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -108,7 +109,7 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         return []
 
     now = datetime.now(timezone.utc)
-    recent_cutoff = now - timedelta(days=months * 30)
+    recent_cutoff = datetime(now.year, now.month, 1, tzinfo=timezone.utc) - relativedelta(months=months)
     lookback_window = timedelta(days=150)  # ~5 months window to match ~1 year earlier
 
     # Get all financials for target companies, sorted by date
@@ -131,34 +132,40 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
     results = []
 
     for cid, entries in company_history.items():
+        
+
         # Get the latest report within the recent window
         latest = None
         for rec, comp, curr in reversed(entries):
             rec_date = rec.quarter_end_date.replace(tzinfo=timezone.utc) if rec.quarter_end_date.tzinfo is None else rec.quarter_end_date
+            print(f"[DEBUG] BCM.WA: rec_date = {rec_date}, recent_cutoff = {recent_cutoff}, result = {rec_date >= recent_cutoff}")
             if rec_date >= recent_cutoff:
                 latest = (rec, comp, curr)
                 break
 
         if not latest:
-            continue  # No recent report
+            print("[DEBUG] BCM.WA: No recent report found.")
+            continue
 
         latest_rec, company, currency = latest
         latest_date = latest_rec.quarter_end_date
         latest_net = latest_rec.net_income
         latest_rev = latest_rec.total_revenue
 
+        print(f"\n[DEBUG] BCM.WA: Latest report date: {latest_date.date()}, Net Income: {latest_net}, Revenue: {latest_rev}")
+
         # Find the record ~1 year before
         def make_aware(dt):
             return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
-        # Make target_date aware too
         target_date = make_aware(latest_date - timedelta(days=365))
+
+        print(f"[DEBUG] BCM.WA: Target comparison date: {target_date.date()}")
 
         for e in entries:
             qd = make_aware(e[0].quarter_end_date)
-            delta_days = abs((qd - make_aware(latest_date - timedelta(days=365))).days)
-            print(f"[DEBUG] {company.ticker}: Checking {qd.date()} vs target {target_date.date()} → Δ = {delta_days} days")
-
+            delta_days = abs((qd - target_date).days)
+            print(f"[DEBUG] BCM.WA: Checking {qd.date()} vs target {target_date.date()} → Δ = {delta_days} days")
 
         closest = min(
             (
@@ -170,12 +177,10 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         )
 
         if closest:
-            print(f"[DEBUG] {company.ticker}: Closest match found → {closest[0].quarter_end_date.date()}")
+            print(f"[DEBUG] BCM.WA: Closest match found → {closest[0].quarter_end_date.date()}, Net Income: {closest[0].net_income}")
         else:
-            print(f"[DEBUG] {company.ticker}: No match found within {lookback_window.days} days")
-
-        if not closest:
-            continue  # No suitable comparison record
+            print(f"[DEBUG] BCM.WA: ❌ No match found within {lookback_window.days} days")
+            continue
 
         prev_rec = closest[0]
         prev_net = prev_rec.net_income
@@ -185,7 +190,13 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         threshold_val = abs(latest_rev) * (threshold_pct / 100.0)
         within_threshold = abs(latest_net) <= threshold_val
 
+        print(f"[DEBUG] BCM.WA: Previous Net Income: {prev_net}")
+        print(f"[DEBUG] BCM.WA: Net income improving? {improving}")
+        print(f"[DEBUG] BCM.WA: Threshold margin (5%): {threshold_val}")
+        print(f"[DEBUG] BCM.WA: Within threshold? {within_threshold}")
+
         if improving and within_threshold:
+            print(f"[DEBUG] BCM.WA: ✅ Added to results")
             results.append({
                 "ticker": company.ticker,
                 "company_name": company.name,
@@ -197,6 +208,8 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
                 "currency": currency,
                 "threshold_margin": round(threshold_val, 2),
             })
+        else:
+            print(f"[DEBUG] BCM.WA: ❌ Failed condition(s): {'not improving' if not improving else ''} {'not within threshold' if not within_threshold else ''}")
 
     return results
 
