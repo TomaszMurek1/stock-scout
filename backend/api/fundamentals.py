@@ -148,12 +148,31 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         latest_rev = latest_rec.total_revenue
 
         # Find the record ~1 year before
-        target_date = latest_date - timedelta(days=365)
+        def make_aware(dt):
+            return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+
+        # Make target_date aware too
+        target_date = make_aware(latest_date - timedelta(days=365))
+
+        for e in entries:
+            qd = make_aware(e[0].quarter_end_date)
+            delta_days = abs((qd - make_aware(latest_date - timedelta(days=365))).days)
+            print(f"[DEBUG] {company.ticker}: Checking {qd.date()} vs target {target_date.date()} → Δ = {delta_days} days")
+
+
         closest = min(
-            (e for e in entries if abs((e[0].quarter_end_date - target_date).days) <= lookback_window.days),
-            key=lambda x: abs((x[0].quarter_end_date - target_date).days),
+            (
+                e for e in entries
+                if abs((make_aware(e[0].quarter_end_date) - target_date).days) <= lookback_window.days
+            ),
+            key=lambda x: abs((make_aware(x[0].quarter_end_date) - target_date).days),
             default=None
         )
+
+        if closest:
+            print(f"[DEBUG] {company.ticker}: Closest match found → {closest[0].quarter_end_date.date()}")
+        else:
+            print(f"[DEBUG] {company.ticker}: No match found within {lookback_window.days} days")
 
         if not closest:
             continue  # No suitable comparison record
@@ -208,6 +227,16 @@ def get_break_even_companies(request: BreakEvenPointRequest, db: Session = Depen
         .all()
     )
     company_ids = [comp.company_id for comp in companies]
+
+    tickers = [comp.ticker for comp in companies]
+    print(f"[DEBUG] Matched companies: {len(tickers)}")
+    if "BCM.WA" not in tickers:
+        print("❌ BCM.WA (Betacom) NOT included in search set.")
+    else:
+        print("✅ BCM.WA (Betacom) is included.")
+
+
+    
     for comp in companies[:140]:
         for m in comp.markets:
             fetch_and_save_financial_data(comp.ticker, m.name, db)

@@ -19,7 +19,6 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
     if not company.industry or not company.markets or len(company.markets) == 0:
         return {}
 
-# Pick the first market (or decide logic here)
     market = company.markets[0]
 
     peers = (
@@ -39,12 +38,18 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
         price = peer.current_price
         if price is not None and eps and eps > 0:
             pe_list.append(price / eps)
+
     ev_ebitda_list = []
     for peer in peers:
         if peer.ebitda not in (None, 0):
+            market_cap = (
+                peer.shares_outstanding * peer.current_price
+                if peer.shares_outstanding and peer.current_price
+                else 0
+            )
             ev = peer.enterprise_value
             if ev is None:
-                ev = (peer.market_cap or 0) + (peer.total_debt or 0) - (peer.cash_and_cash_equivalents or 0)
+                ev = market_cap + (peer.total_debt or 0) - (peer.cash_and_cash_equivalents or 0)
             ev_ebitda_list.append(ev / peer.ebitda)
 
     pb_list = []
@@ -55,12 +60,22 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
             book_value_per_share = equity / peer.shares_outstanding
             if book_value_per_share != 0:
                 pb_list.append(price / book_value_per_share)
+
     div_list = []
     for peer in peers:
-        if peer.market_cap not in (None, 0):
-            dividend_yield = (peer.dividends_paid or 0) / peer.market_cap
+        market_cap = (
+            peer.shares_outstanding * peer.current_price
+            if peer.shares_outstanding and peer.current_price
+            else None
+        )
+        if market_cap not in (None, 0):
+            dividend_yield = (peer.dividends_paid or 0) / market_cap
             div_list.append(dividend_yield)
-        rev_growth_list = [peer.revenue_growth for peer in peers if hasattr(peer, "revenue_growth") and peer.revenue_growth is not None]
+
+    rev_growth_list = [
+        peer.revenue_growth for peer in peers
+        if hasattr(peer, "revenue_growth") and peer.revenue_growth is not None
+    ]
 
     return {
         "p_e_ratio": {"industry_avg": to_python(rounded_safe_avg(pe_list))},
