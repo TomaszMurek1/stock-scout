@@ -68,16 +68,15 @@ def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, 
     fin_record.interest_expense = safe_get(income_stmt, "Interest Expense", col)
     fin_record.operating_income = get_first_valid_row(income_stmt, ["Operating Income", "Total Operating Income As Reported"], col)
 
-    logger.debug(f"[update_financial_snapshot] Checking Gross Profit for column: {col}")
+
     gross_profit = safe_get(income_stmt, "Gross Profit", col)
     if gross_profit is None:
         revenue = safe_get(income_stmt, "Total Revenue", col)
         cost_of_revenue = safe_get(income_stmt, "Cost Of Revenue", col)
         if revenue is not None and cost_of_revenue is not None:
             gross_profit = revenue - cost_of_revenue
-            logger.info(f"[fallback] Calculated Gross Profit: {gross_profit} (Revenue: {revenue}, Cost: {cost_of_revenue})")
     fin_record.gross_profit = gross_profit
-    logger.debug(f"[update_financial_snapshot] Extracted Gross Profit: {fin_record.gross_profit}")
+
 
     fin_record.depreciation_amortization = (
         safe_get(income_stmt, "Reconciled Depreciation", col)

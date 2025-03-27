@@ -21,4 +21,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"), // Alias '@' to the 'src' directory
     },
   },
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 100, // optional: how often to poll
+    },
+    host: true, // allow external access (optional)
+  },
 });
