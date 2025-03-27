@@ -33,11 +33,34 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
         .all()
     )
 
-    pe_list = [peer.pe_ratio for peer in peers if peer.pe_ratio is not None]
-    ev_ebitda_list = [peer.ev_to_ebitda for peer in peers if peer.ev_to_ebitda is not None]
-    pb_list = [peer.pb_ratio for peer in peers if peer.pb_ratio is not None]
-    div_list = [peer.dividend_yield for peer in peers if peer.dividend_yield is not None]
-    rev_growth_list = [peer.revenue_growth for peer in peers if hasattr(peer, "revenue_growth") and peer.revenue_growth is not None]
+    pe_list = []
+    for peer in peers:
+        eps = peer.diluted_eps or peer.basic_eps
+        price = peer.current_price
+        if price is not None and eps and eps > 0:
+            pe_list.append(price / eps)
+    ev_ebitda_list = []
+    for peer in peers:
+        if peer.ebitda not in (None, 0):
+            ev = peer.enterprise_value
+            if ev is None:
+                ev = (peer.market_cap or 0) + (peer.total_debt or 0) - (peer.cash_and_cash_equivalents or 0)
+            ev_ebitda_list.append(ev / peer.ebitda)
+
+    pb_list = []
+    for peer in peers:
+        price = peer.current_price
+        equity = peer.enterprise_value - (peer.total_debt or 0) + (peer.cash_and_cash_equivalents or 0) if peer.enterprise_value else None
+        if price is not None and equity and peer.shares_outstanding:
+            book_value_per_share = equity / peer.shares_outstanding
+            if book_value_per_share != 0:
+                pb_list.append(price / book_value_per_share)
+    div_list = []
+    for peer in peers:
+        if peer.market_cap not in (None, 0):
+            dividend_yield = (peer.dividends_paid or 0) / peer.market_cap
+            div_list.append(dividend_yield)
+        rev_growth_list = [peer.revenue_growth for peer in peers if hasattr(peer, "revenue_growth") and peer.revenue_growth is not None]
 
     return {
         "p_e_ratio": {"industry_avg": to_python(rounded_safe_avg(pe_list))},

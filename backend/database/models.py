@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    BigInteger,
     Column,
     Integer,
     String,
@@ -195,9 +196,13 @@ class CompanyFinancials(Base):
     depreciation_amortization = Column(Float, nullable=True)
     free_cash_flow = Column(Float, nullable=True)
     capital_expenditure = Column(Float, nullable=True)
+    total_debt = Column(Float, nullable=True)
+    cash_and_cash_equivalents = Column(Float, nullable=True)
+    shares_outstanding = Column(BigInteger, nullable=True)
 
     last_fiscal_year_end = Column(DateTime, nullable=True)
     most_recent_quarter = Column(DateTime, nullable=True)
+    current_price = Column(Float, nullable=True)
 
     last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -236,7 +241,7 @@ class CompanyMarketData(Base):
     two_hundred_day_average = Column(Float, nullable=True)
     shares_outstanding = Column(Float, nullable=True)
 
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     company = relationship("Company", back_populates="market_data")
     market = relationship("Market", back_populates="market_data")
@@ -265,6 +270,9 @@ class CompanyFinancialHistory(Base):
     gross_profit = Column(Float, nullable=True)
     earnings_growth = Column(Float, nullable=True)
     revenue_growth = Column(Float, nullable=True)
+    total_debt = Column(Float, nullable=True)
+    cash_and_cash_equivalents = Column(Float, nullable=True)
+    shares_outstanding = Column(BigInteger, nullable=True)
     last_updated = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     company = relationship("Company", back_populates="financial_history")

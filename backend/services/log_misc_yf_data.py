@@ -122,6 +122,10 @@ def print_yfinance_summary(ticker: str):
 
 
 def print_financial_statements(ticker: str):
+    pd.set_option("display.max_rows", None)  # Show all rows
+    pd.set_option("display.max_columns", None)  # Show all columns (if needed)
+    pd.set_option("display.width", 1000)  # Avoid line wrapping
+    pd.set_option("display.colheader_justify", "right")
     logging.info(f"\n==============================")
     logging.info(f"📊 YFinance Summary for {ticker}")
     logging.info(f"==============================")
@@ -142,6 +146,22 @@ def print_financial_statements(ticker: str):
         logging.error(f"Error fetching financial statements: {e}")
 
    
+def print_fast_info(ticker: str):
+    logging.info(f"\n==============================")
+    logging.info(f"📊 YFinance fast info for {ticker}")
+    logging.info(f"==============================")
+
+    yticker = yf.Ticker(ticker)
+
+    fast_info = yticker.fast_info
+
+    # SECTION: Financial Statements
+    logging.info(f"Fast Info: {fast_info}")
+    logging.info(f"Fast Info: {fast_info['shares']}")
+   
+
+
+   
 
 if __name__ == "__main__":
-    print_financial_statements("AAPL")
+    print_fast_info("AAPL")

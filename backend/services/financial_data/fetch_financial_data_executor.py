@@ -13,10 +13,10 @@ from database.models import (
 )
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     format="%(asctime)s - %(levelname)s - %(message)s"
+# )
 
 def get_first_valid_row(df, keys, col):
     for key in keys:
@@ -30,7 +30,7 @@ def safe_get(df, row, col):
     key = row.strip().lower()
 
     if key not in lookup:
-        logger.warning(f"[safe_get] Row '{row}' not found. Index: {list(df.index)}")
+        # logger.warning(f"[safe_get] Row '{row}' not found. Index: {list(df.index)}")
         return None
 
     return df.loc[lookup[key], col] if col in df.columns else None
@@ -57,7 +57,9 @@ def update_market_data(record, fast_info):
     record.shares_outstanding = fast_info.get("shares")
     record.last_updated = datetime.now(timezone.utc)
 
-def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, info_dict, col):
+def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, info_dict,fast_info, col):
+    logger.warning(f"[{'ticker'}] Entered update_financial_snapshot. Price: {fast_info.get('lastPrice')}")
+
     fin_record.net_income = safe_get(income_stmt, "Net Income", col)
     fin_record.total_revenue = safe_get(income_stmt, "Total Revenue", col)
     fin_record.ebit = safe_get(income_stmt, "EBIT", col)
@@ -67,6 +69,16 @@ def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, 
     fin_record.interest_income = safe_get(income_stmt, "Interest Income", col)
     fin_record.interest_expense = safe_get(income_stmt, "Interest Expense", col)
     fin_record.operating_income = get_first_valid_row(income_stmt, ["Operating Income", "Total Operating Income As Reported"], col)
+    fin_record.total_debt = safe_get(balance_sheet, "Total Debt", col)
+    fin_record.cash_and_cash_equivalents = get_first_valid_row(balance_sheet, [
+        "Cash And Cash Equivalents",
+        "Cash Cash Equivalents And Short Term Investments",
+        "Cash Financial",
+    ], col)
+    fin_record.shares_outstanding = fast_info.get("shares")
+    logger.debug(f"------------------------------------------")
+    logger.debug(f"Last price: {fast_info.get("lastPrice")}")
+    fin_record.current_price = fast_info.get("lastPrice")
 
 
     gross_profit = safe_get(income_stmt, "Gross Profit", col)
@@ -95,7 +107,7 @@ def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, 
     if most_recent_q:
         fin_record.most_recent_quarter = datetime.fromtimestamp(most_recent_q, timezone.utc)
 
-def upsert_financial_history(db, company_id, market_id, income_stmt, cashflow, col):
+def upsert_financial_history(db, company_id, market_id, income_stmt, cashflow, balance_sheet, fast_info, col):
     end_date = col.to_pydatetime() if hasattr(col, "to_pydatetime") else datetime.strptime(str(col), "%Y-%m-%d")
 
     record = db.query(CompanyFinancialHistory).filter_by(
@@ -116,6 +128,13 @@ def upsert_financial_history(db, company_id, market_id, income_stmt, cashflow, c
                                    safe_get(cashflow, "Depreciation And Amortization", col),
         free_cash_flow=safe_get(cashflow, "Free Cash Flow", col),
         capital_expenditure=safe_get(cashflow, "Capital Expenditure", col),
+        total_debt=safe_get(balance_sheet, "Total Debt", col),
+        cash_and_cash_equivalents = get_first_valid_row(balance_sheet, [
+            "Cash And Cash Equivalents",
+            "Cash Cash Equivalents And Short Term Investments",
+            "Cash Financial",
+        ], col),
+        shares_outstanding = fast_info.get("shares"),
         last_updated=datetime.now(timezone.utc),
     )
 
@@ -161,10 +180,10 @@ def fetch_and_save_financial_data_core(ticker: str, market_name: str, db: Sessio
 
     update_market_data(market_data_record, fast_info)
     most_recent_col = get_most_recent_column(income_stmt.columns)
-    update_financial_snapshot(financial_record, income_stmt, cashflow, balance_sheet, info_dict, most_recent_col)
+    update_financial_snapshot(financial_record, income_stmt, cashflow, balance_sheet, info_dict, fast_info, most_recent_col)
 
     for col in income_stmt.columns:
-        upsert_financial_history(db, company.company_id, market.market_id, income_stmt, cashflow, col)
+        upsert_financial_history(db, company.company_id, market.market_id, income_stmt, cashflow, balance_sheet,fast_info, col)
 
     try:
         db.commit()
