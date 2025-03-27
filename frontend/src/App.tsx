@@ -14,6 +14,7 @@ import Footer from "./components/Footer";
 import Home from "./components/Home";
 import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
+import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 
 function App() {
   const [, setAuthToken] = useState<string | null>(
@@ -77,6 +78,10 @@ function App() {
             <Route
               path="/admin/create-tickers"
               element={<PrivateRoute element={<AdminCreateTickersPage />} />}
+            />
+             <Route
+              path="/stock-details/:ticker"
+              element={<PrivateRoute element={<StockOnePager />} />}
             />
           </Routes>
         </main>

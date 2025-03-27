@@ -8,7 +8,7 @@ from database.models import (
     Company, 
     Market
 )
-from services.stock_data_service import fetch_and_save_stock_data
+from services.stock_data_service import fetch_and_save_stock_history_data
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ def find_most_recent_crossover(
         return None
 
     # 5) Ensure DB is up to date for this ticker/market
-    fetch_result = fetch_and_save_stock_data(ticker, market, start_date, end_date, db)
+    fetch_result = fetch_and_save_stock_history_data(ticker, market, start_date, end_date, db)
     if fetch_result.get('status') == 'error':
         logger.error(f"Failed to fetch data for {ticker}: {fetch_result['message']}")
         return None

@@ -166,7 +166,7 @@ class CompanyOverview(Base):
     headquarters_city = Column(String, nullable=True)
     headquarters_country = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-
+    description = Column(String, nullable=True)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     company = relationship("Company", back_populates="overview")
@@ -175,29 +175,27 @@ class CompanyOverview(Base):
 # Company Financials (Quarterly Updated Data)
 # ---------------------------
 class CompanyFinancials(Base):
-    """
-    Stores fundamental financial metrics that are updated periodically.
-    """
     __tablename__ = 'company_financials'
 
     financials_id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
     market_id = Column(Integer, ForeignKey('markets.market_id'), nullable=False)
 
-    # Financial Metrics
     enterprise_value = Column(Float, nullable=True)
     total_revenue = Column(Float, nullable=True)
     net_income = Column(Float, nullable=True)
     ebitda = Column(Float, nullable=True)
-    earnings_growth = Column(Float, nullable=True)
-    revenue_growth = Column(Float, nullable=True)
+    ebit = Column(Float, nullable=True)
+    diluted_eps = Column(Float, nullable=True)
+    basic_eps = Column(Float, nullable=True)
     gross_profit = Column(Float, nullable=True)
-    gross_margins = Column(Float, nullable=True)
-    operating_margins = Column(Float, nullable=True)
-    profit_margins = Column(Float, nullable=True)
-    return_on_assets = Column(Float, nullable=True)
-    return_on_equity = Column(Float, nullable=True)
-    
+    operating_income = Column(Float, nullable=True)
+    interest_income = Column(Float, nullable=True)
+    interest_expense = Column(Float, nullable=True)
+    depreciation_amortization = Column(Float, nullable=True)
+    free_cash_flow = Column(Float, nullable=True)
+    capital_expenditure = Column(Float, nullable=True)
+
     last_fiscal_year_end = Column(DateTime, nullable=True)
     most_recent_quarter = Column(DateTime, nullable=True)
 
@@ -205,7 +203,6 @@ class CompanyFinancials(Base):
 
     company = relationship("Company", back_populates="financials")
     market = relationship("Market", back_populates="financials")
-
 # ---------------------------
 # Company Market Data (Daily Updates)
 # ---------------------------
@@ -234,6 +231,10 @@ class CompanyMarketData(Base):
     average_volume = Column(Integer, nullable=True)
     bid_price = Column(Float, nullable=True)
     ask_price = Column(Float, nullable=True)
+    year_change = Column(Float, nullable=True)
+    fifty_day_average = Column(Float, nullable=True)
+    two_hundred_day_average = Column(Float, nullable=True)
+    shares_outstanding = Column(Float, nullable=True)
 
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -251,7 +252,40 @@ class CompanyFinancialHistory(Base):
     net_income = Column(Float, nullable=True)
     total_revenue = Column(Float, nullable=True)
     ebitda = Column(Float, nullable=True)
+    ebit = Column(Float, nullable=True)
+    diluted_eps = Column(Float, nullable=True)
+    basic_eps = Column(Float, nullable=True)
+    operating_income = Column(Float, nullable=True)
+    free_cash_flow = Column(Float, nullable=True)
+    capital_expenditure = Column(Float, nullable=True)
+    interest_expense = Column(Float, nullable=True)
+    interest_income = Column(Float, nullable=True)
+    depreciation_amortization = Column(Float, nullable=True)
+    enterprise_value = Column(Float, nullable=True)
+    gross_profit = Column(Float, nullable=True)
+    earnings_growth = Column(Float, nullable=True)
+    revenue_growth = Column(Float, nullable=True)
     last_updated = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     company = relationship("Company", back_populates="financial_history")
     market = relationship("Market", back_populates="financial_history")
+
+class CompanyESGData(Base):
+    __tablename__ = 'company_esg_data'
+
+    esg_id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+
+    total_esg_score = Column(Float, nullable=True)
+    environment_score = Column(Float, nullable=True)
+    social_score = Column(Float, nullable=True)
+    governance_score = Column(Float, nullable=True)
+    highest_controversy = Column(Integer, nullable=True)
+
+    rating_year = Column(Integer, nullable=True)
+    rating_month = Column(Integer, nullable=True)
+    peer_group = Column(String, nullable=True)
+
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    company = relationship("Company", backref="esg_data")

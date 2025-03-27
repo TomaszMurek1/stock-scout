@@ -12,7 +12,7 @@ export const BreakEvenPointOutput = ({ data }: { data: IBreakEvenPointData[]}) =
           {data.map((stock) => (
             <Link
               key={stock.ticker}
-              to={`/stock/${stock.ticker}`} // Internal navigation
+              to={`/stock-details/${stock.ticker}`} // Internal navigation
               className="flex items-center justify-between bg-white p-4 rounded-lg border border-slate-300 hover:bg-slate-200 transition cursor-pointer shadow-sm"
             >
               <div className="text-lg font-semibold text-slate-800">{stock.ticker}</div>
