@@ -178,7 +178,7 @@ export const StockOnePager = () => {
   const currentInRange = ((latestPrice! - min52Week) / (max52Week - min52Week)) * 100
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-300">
       <div className="max-w-[1600px] mx-auto px-4 py-6">
         {/* Header Section */}
         <div className="mb-6 p-6 rounded-xl bg-white shadow-md border border-gray-100">

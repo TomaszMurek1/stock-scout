@@ -184,7 +184,7 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         prev_rec = closest[0]
         prev_net = prev_rec.net_income
 
-        improving = latest_net > prev_net
+        improving = latest_net >= prev_net * 1.1  # take from param in future
         threshold_val = abs(latest_rev) * (threshold_pct / 100.0)
         within_threshold = latest_net >= -threshold_val
 
@@ -193,7 +193,8 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         print(f"[DEBUG] SOFI: Threshold (5%): {threshold_val}")
         print(f"[DEBUG] SOFI: Within threshold? {within_threshold}")
 
-        if improving and within_threshold:
+        previous_was_low = prev_net <= threshold_val  # allows small profit or loss
+        if improving and within_threshold and previous_was_low:
             print(f"[DEBUG] SOFI: ✅ Added to results")
             results.append({
                 "ticker": company.ticker,

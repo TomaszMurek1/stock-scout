@@ -1,9 +1,10 @@
+import math
 import numpy as np
 
 def sanitize_numpy_types(obj):
     """
-    Recursively convert numpy types (e.g., np.bool_, np.int64, etc.) 
-    into native Python types for JSON serialization.
+    Recursively convert numpy types into native types,
+    and replace NaN/inf with None for JSON compliance.
     """
     if isinstance(obj, dict):
         return {k: sanitize_numpy_types(v) for k, v in obj.items()}
@@ -12,5 +13,10 @@ def sanitize_numpy_types(obj):
     elif isinstance(obj, tuple):
         return tuple(sanitize_numpy_types(item) for item in obj)
     elif isinstance(obj, np.generic):
-        return obj.item()
+        val = obj.item()
+        if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+            return None
+        return val
+    elif isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
     return obj
