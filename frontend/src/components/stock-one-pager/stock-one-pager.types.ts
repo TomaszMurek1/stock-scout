@@ -1,44 +1,52 @@
 // src/types/stockTypes.ts
 
+import { Nullable } from "../types/shared.types";
+
 export interface ExecutiveSummary {
-    name: string;
+    ticker: Nullable<string>,
+    name: Nullable<string>,
+    sector: Nullable<string>,
+    industry: Nullable<string>,
+    currency: Nullable<string>
   }
   
   export interface CompanyOverview {
-    sector: string | null;
-    industry: string | null;
-    description: string | null;
+    sector: Nullable<string>;
+    industry: Nullable<string>;
+    description: Nullable<string>;
+    website: Nullable<string>;
+    country: Nullable<string>;
   }
   
   export interface FinancialPerformance {
-    gross_margin: number | null;
-    operating_margin: number | null;
-    net_margin: number | null;
+    gross_margin: Nullable<number>;
+    operating_margin: Nullable<number>;
+    net_margin: Nullable<number>;
   }
   
   export interface ValuationMetrics {
-    pe_ratio: number | null;
-    ev_ebitda: number | null;
-    peg_ratio: number | null;
-    dividend_yield: number | null;
+    pe_ratio: Nullable<number>;
+    ev_ebitda: Nullable<number>;
+    peg_ratio: Nullable<number>;
+    dividend_yield: Nullable<number>;
     // Add more if you want to enrich this section:
-    price_to_sales?: number | null;
-    price_to_book?: number | null;
+    price_to_sales?: Nullable<number>;
+    price_to_book?: Nullable<number>;
   }
   
   export interface InvestorMetrics {
     rule_of_40: number;
-    ebitda_margin: number | null;
+    ebitda_margin: Nullable<number>;
     revenue_growth: number;
-    fcf_margin: number | null;
+    fcf_margin: Nullable<number>;
     cash_conversion_ratio: number;
     capex_ratio: number;
   }
   
   export interface RiskMetrics {
-    annual_volatility: number | null;
-    max_drawdown: number | null;
-    beta: number | null;
+    annual_volatility: Nullable<number>;
+    max_drawdown: Nullable<number>;
+    beta: Nullable<number>;
   }
   
   export interface StockPrice {
@@ -48,14 +56,20 @@ export interface ExecutiveSummary {
   
   export interface SMAValue {
     date: string;
-    SMA_50?: number;
-    SMA_200?: number;
+    sma_short?: number;
+    sma_long?: number;
   }
   
   export interface TechnicalAnalysis {
+    momentum_30d: number,
+    momentum_90d: number,
+    volatility_30d: number,
+    range_position_52w: number,
+    golden_cross: boolean,
+    death_cross: boolean,
     stock_prices: StockPrice[];
-    sma_50: SMAValue[];
-    sma_200: SMAValue[];
+    sma_short: SMAValue[];
+    sma_long: SMAValue[];
   }
   
   export interface StockData {

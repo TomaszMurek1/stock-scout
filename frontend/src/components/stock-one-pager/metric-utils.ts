@@ -1,9 +1,10 @@
 // src/components/StockOnePager/metric-utils.ts
 
+import { Nullable } from "../types/shared.types";
 import { MetricStatus } from "./metric-card";
 
-export const getMetricStatus = (label: string, raw: number | null): MetricStatus => {
-  if (raw === null) return "neutral";
+export const getMetricStatus = (label: string, raw:Nullable<number>): MetricStatus => {
+  if (!raw) return "neutral";
 
   switch (label) {
     case "P/E Ratio":

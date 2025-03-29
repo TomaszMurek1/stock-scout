@@ -32,15 +32,16 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Nullable } from "../types/shared.types"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 
-function formatPercentage(value: number | null) {
-  return value !== null ? `${(value * 100).toFixed(2)}%` : "N/A"
+function formatPercentage(value: Nullable<number>) {
+  return value ? `${(value * 100).toFixed(2)}%` : "N/A"
 }
 
-function formatCurrency(value: number | null, currency = "PLN") {
-  if (value === null) return "N/A"
+function formatCurrency(value: Nullable<number>, currency:Nullable<string> = "PLN") {
+  if (!value || !currency) return "N/A"
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
@@ -86,17 +87,16 @@ export const StockOnePager = () => {
 
   const getChartData = () => {
     if (!stock) return []
-    const { stock_prices, sma_50, sma_200 } = stock.technical_analysis
-
+    const { stock_prices,  sma_short,  sma_long } = stock.technical_analysis
     return stock_prices.map((price) => {
-      const sma50Entry = sma_50.find((s) => s.date === price.date)
-      const sma200Entry = sma_200.find((s) => s.date === price.date)
+      const sma50Entry = sma_short.find((s) => s.date === price.date)
+      const sma200Entry = sma_long.find((s) => s.date === price.date)
 
       return {
         date: price.date,
         price: price.close,
-        sma50: sma50Entry?.SMA_50 ?? null,
-        sma200: sma200Entry?.SMA_200 ?? null,
+        sma_short: sma50Entry?.sma_short ?? null,
+        sma_long: sma200Entry?.sma_long ?? null,
       }
     })
   }

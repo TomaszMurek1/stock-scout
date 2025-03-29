@@ -87,16 +87,20 @@ def build_investor_metrics(financials: CompanyFinancials, financial_history: dic
     return clean_nan_dict(raw)
 
 
-def build_extended_technical_analysis(stock_history: list[tuple]) -> dict:
+def build_extended_technical_analysis(
+    stock_history: list[tuple],
+    short_window: int = 50,
+    long_window: int = 200
+) -> dict:
     df = pd.DataFrame(stock_history, columns=["date", "close"])
     df["close"] = pd.to_numeric(df["close"], errors="coerce")
     df = df.dropna()
 
-    df["SMA_50"] = df["close"].rolling(window=50).mean()
-    df["SMA_200"] = df["close"].rolling(window=200).mean()
-    df["Volatility_30d"] = df["close"].rolling(window=30).std()
-    df["Momentum_30d"] = df["close"].pct_change(periods=30)
-    df["Momentum_90d"] = df["close"].pct_change(periods=90)
+    df["sma_short"] = df["close"].rolling(window=short_window).mean()
+    df["sma_long"] = df["close"].rolling(window=long_window).mean()
+    df["volatility_30d"] = df["close"].rolling(window=30).std()
+    df["momentum_30d"] = df["close"].pct_change(periods=30)
+    df["momentum_90d"] = df["close"].pct_change(periods=90)
 
     current_price = df["close"].iloc[-1]
     high_52w = df["close"].max()
@@ -104,25 +108,24 @@ def build_extended_technical_analysis(stock_history: list[tuple]) -> dict:
     range_position = (current_price - low_52w) / (high_52w - low_52w) if high_52w != low_52w else None
 
     golden_cross = (
-        df["SMA_50"].iloc[-1] > df["SMA_200"].iloc[-1]
-        and df["SMA_50"].iloc[-2] <= df["SMA_200"].iloc[-2]
-    ) if len(df) >= 200 else False
+        ((df["sma_short"] > df["sma_long"]) & (df["sma_short"].shift(1) <= df["sma_long"].shift(1))).any()
+    ) if len(df) >= long_window else False
 
     death_cross = (
-        df["SMA_50"].iloc[-1] < df["SMA_200"].iloc[-1]
-        and df["SMA_50"].iloc[-2] >= df["SMA_200"].iloc[-2]
-    ) if len(df) >= 200 else False
+        ((df["sma_short"] < df["sma_long"]) & (df["sma_short"].shift(1) >= df["sma_long"].shift(1))).any()
+    ) if len(df) >= long_window else False
 
     raw = {
-        "momentum_30d": round(df["Momentum_30d"].iloc[-1] * 100, 2) if not pd.isna(df["Momentum_30d"].iloc[-1]) else None,
-        "momentum_90d": round(df["Momentum_90d"].iloc[-1] * 100, 2) if not pd.isna(df["Momentum_90d"].iloc[-1]) else None,
-        "volatility_30d": round(df["Volatility_30d"].iloc[-1], 2) if not pd.isna(df["Volatility_30d"].iloc[-1]) else None,
+        "momentum_30d": round(df["momentum_30d"].iloc[-1] * 100, 2) if not pd.isna(df["momentum_30d"].iloc[-1]) else None,
+        "momentum_90d": round(df["momentum_90d"].iloc[-1] * 100, 2) if not pd.isna(df["momentum_90d"].iloc[-1]) else None,
+        "volatility_30d": round(df["volatility_30d"].iloc[-1], 2) if not pd.isna(df["volatility_30d"].iloc[-1]) else None,
         "range_position_52w": round(range_position * 100, 2) if range_position is not None else None,
         "golden_cross": golden_cross,
         "death_cross": death_cross,
         "stock_prices": df[["date", "close"]].dropna().to_dict(orient="records"),
-        "sma_50": df[["date", "SMA_50"]].dropna().to_dict(orient="records"),
-        "sma_200": df[["date", "SMA_200"]].dropna().to_dict(orient="records"),
+        "sma_short": df[["date", "sma_short"]].dropna().to_dict(orient="records"),
+        "sma_long": df[["date", "sma_long"]].dropna().to_dict(orient="records"),
     }
+
 
     return clean_nan_dict(raw)
