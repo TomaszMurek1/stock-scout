@@ -203,6 +203,7 @@ class CompanyFinancials(Base):
     last_fiscal_year_end = Column(DateTime, nullable=True)
     most_recent_quarter = Column(DateTime, nullable=True)
     current_price = Column(Float, nullable=True)
+    dividends_paid = Column(Float, nullable=True) 
 
     last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -273,6 +274,7 @@ class CompanyFinancialHistory(Base):
     total_debt = Column(Float, nullable=True)
     cash_and_cash_equivalents = Column(Float, nullable=True)
     shares_outstanding = Column(BigInteger, nullable=True)
+    dividends_paid = Column(Float, nullable=True) 
     last_updated = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     company = relationship("Company", back_populates="financial_history")

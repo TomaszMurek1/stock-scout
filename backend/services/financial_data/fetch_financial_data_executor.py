@@ -76,8 +76,6 @@ def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, 
         "Cash Financial",
     ], col)
     fin_record.shares_outstanding = fast_info.get("shares")
-    logger.debug(f"------------------------------------------")
-    logger.debug(f"Last price: {fast_info.get("lastPrice")}")
     fin_record.current_price = fast_info.get("lastPrice")
 
 
