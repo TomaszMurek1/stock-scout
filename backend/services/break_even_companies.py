@@ -23,7 +23,7 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
         .filter(CompanyFinancialHistory.net_income.isnot(None))
         .filter(CompanyFinancialHistory.total_revenue.isnot(None))
-        .order_by(CompanyFinancialHistory.company_id, CompanyFinancialHistory.quarter_end_date)
+        .order_by(CompanyFinancialHistory.company_id, CompanyFinancialHistory.report_end_date)
         .all()
     )
 
@@ -41,7 +41,7 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         # Get the latest report within the recent window
         latest = None
         for rec, comp, curr in reversed(entries):
-            rec_date = rec.quarter_end_date.replace(tzinfo=timezone.utc) if rec.quarter_end_date.tzinfo is None else rec.quarter_end_date
+            rec_date = rec.report_end_date.replace(tzinfo=timezone.utc) if rec.report_end_date.tzinfo is None else rec.report_end_date
             
             if rec_date >= recent_cutoff:
                 latest = (rec, comp, curr)
@@ -51,7 +51,7 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
             continue
 
         latest_rec, company, currency = latest
-        latest_date = latest_rec.quarter_end_date
+        latest_date = latest_rec.report_end_date
         latest_net = latest_rec.net_income
         latest_rev = latest_rec.total_revenue
 
@@ -61,20 +61,20 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
         target_date = make_aware(latest_date - timedelta(days=365))
       
         for e in entries:
-            qd = make_aware(e[0].quarter_end_date)
+            qd = make_aware(e[0].report_end_date)
             delta_days = abs((qd - target_date).days)
 
         closest = min(
             (
                 e for e in entries
-                if abs((make_aware(e[0].quarter_end_date) - target_date).days) <= lookback_window.days
+                if abs((make_aware(e[0].report_end_date) - target_date).days) <= lookback_window.days
             ),
-            key=lambda x: abs((make_aware(x[0].quarter_end_date) - target_date).days),
+            key=lambda x: abs((make_aware(x[0].report_end_date) - target_date).days),
             default=None
         )
 
         if closest:
-            print(f"[DEBUG] {company.ticker}: Closest match found → {closest[0].quarter_end_date.date()}, Net Income: {closest[0].net_income}")
+            print(f"[DEBUG] {company.ticker}: Closest match found → {closest[0].report_end_date.date()}, Net Income: {closest[0].net_income}")
         else:
             print(f"[DEBUG] {company.ticker}: ❌ No suitable previous report found")
             continue
@@ -91,8 +91,8 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
             results.append({
                 "ticker": company.ticker,
                 "company_name": company.name,
-                "current_quarter": latest_rec.quarter_end_date.isoformat(),
-                "previous_quarter": prev_rec.quarter_end_date.isoformat(),
+                "current_quarter": latest_rec.report_end_date.isoformat(),
+                "previous_quarter": prev_rec.report_end_date.isoformat(),
                 "previous_net_income": prev_net,
                 "current_net_income": latest_net,
                 "total_revenue": latest_rev,

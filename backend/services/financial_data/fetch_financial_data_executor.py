@@ -103,13 +103,13 @@ def update_financial_snapshot(fin_record, income_stmt, cashflow, balance_sheet, 
     if fiscal_year_end:
         fin_record.last_fiscal_year_end = datetime.fromtimestamp(fiscal_year_end, timezone.utc)
     if most_recent_q:
-        fin_record.most_recent_quarter = datetime.fromtimestamp(most_recent_q, timezone.utc)
+        fin_record.most_recent_report = datetime.fromtimestamp(most_recent_q, timezone.utc)
 
 def upsert_financial_history(db, company_id, market_id, income_stmt, cashflow, balance_sheet, fast_info, col):
     end_date = col.to_pydatetime() if hasattr(col, "to_pydatetime") else datetime.strptime(str(col), "%Y-%m-%d")
 
     record = db.query(CompanyFinancialHistory).filter_by(
-        company_id=company_id, market_id=market_id, quarter_end_date=end_date
+        company_id=company_id, market_id=market_id, report_end_date=end_date
     ).first()
 
     hist_data = dict(
@@ -140,7 +140,7 @@ def upsert_financial_history(db, company_id, market_id, income_stmt, cashflow, b
         db.add(CompanyFinancialHistory(
             company_id=company_id,
             market_id=market_id,
-            quarter_end_date=end_date,
+            report_end_date=end_date,
             **hist_data
         ))
     else:
