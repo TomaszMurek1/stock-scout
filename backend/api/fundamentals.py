@@ -1,12 +1,13 @@
+
 import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.dependencies import get_db
-from database.models import Company, Market, company_market_association, CompanyFinancials
+from database.models import Company, CompanyFinancialHistory, Market, company_market_association, CompanyFinancials
 from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanRequest
 from services.financial_data.financial_data_service import fetch_and_save_financial_data
-from services.break_even_companies import  find_companies_with_break_even
+from services.break_even_companies import  find_companies_near_break_even
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -76,8 +77,6 @@ def ev_revenue_scan(
     if not matches:
         raise HTTPException(status_code=404, detail="No companies match the EV-to-Revenue criteria.")
 
-    logger.info(f"EV-to-Revenue Query Found {len(matches)} results")
-
     # 5) Format response
     results = []
     for item in matches:
@@ -125,11 +124,14 @@ def get_break_even_companies(request: BreakEvenPointRequest, db: Session = Depen
         .all()
     )
     company_ids = [comp.company_id for comp in companies]
-    for comp in companies[:10]:
+
+    tickers = [comp.ticker for comp in companies]
+    print(f"[DEBUG] Matched companies: {len(tickers)}")
+    
+    for comp in companies[:140]:
         for m in comp.markets:
             fetch_and_save_financial_data(comp.ticker, m.name, db)
     
     # break-even logic using the now-updated CompanyFinancialHistory
-    results = find_companies_with_break_even(db, months, company_ids)
-    logger.info(results)
+    results = find_companies_near_break_even(db, months, company_ids, threshold_pct=5.0)
     return {"status": "success", "data": results}

@@ -1,5 +1,7 @@
 # utils/insights.py
 from datetime import datetime
+import json
+import logging
 from sqlalchemy.orm import Session
 from database.models import CompanyFinancialHistory, CompanyFinancials
 import pandas as pd
@@ -16,12 +18,11 @@ def clean_nan_dict(d: dict) -> dict:
         for k, v in d.items()
     }
 
-
 def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict:
     records = (
         db.query(CompanyFinancialHistory)
         .filter_by(company_id=company_id, market_id=market_id)
-        .order_by(CompanyFinancialHistory.quarter_end_date.desc())
+        .order_by(CompanyFinancialHistory.report_end_date.desc())
         .limit(6)
         .all()
     )
@@ -29,11 +30,14 @@ def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict
     if len(records) < 2:
         return {}
 
-    def trend_series(metric):
+    def trend_series(primary_metric, fallback_metric=None):
         trend = []
-        for i in range(len(records)):
-            year = records[i].quarter_end_date.year
-            value = getattr(records[i], metric)
+        for r in records:
+            year = r.report_end_date.year
+            value = getattr(r, primary_metric, None)
+            if (value is None or (isinstance(value, float) and (pd.isna(value) or value != value))) and fallback_metric:
+                value = getattr(r, fallback_metric, None)
+
             trend.append({
                 "year": year,
                 "value": None if value is None or (isinstance(value, float) and (pd.isna(value) or value != value)) else value
@@ -45,58 +49,83 @@ def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict
         "net_income": trend_series("net_income"),
         "ebitda": trend_series("ebitda"),
         "free_cash_flow": trend_series("free_cash_flow"),
+        "eps": trend_series("diluted_eps", "basic_eps"), 
     }
-
 
 def build_investor_metrics(financials: CompanyFinancials, financial_history: dict) -> dict:
-    revenue = financials.total_revenue or 0
-    gross_profit = financials.gross_profit or 0
-    net_income = financials.net_income or 0
-    ebitda = financials.ebitda or 0
-    operating_income = financials.operating_income or 0
-    free_cash_flow = financials.free_cash_flow or 0
-    capex = financials.capital_expenditure or 0
-    recent_year = financial_history['revenue'][0]['value'] if financial_history['revenue'] else None
-    previous_year = financial_history['revenue'][1]['value'] if len(financial_history['revenue']) > 1 else None
-    revenue_growth = ((recent_year - previous_year) / abs(previous_year) * 100) if recent_year and previous_year else None
+    def safe_divide(numerator, denominator):
+        return numerator / denominator if denominator else None
 
-    gross_margin = gross_profit / revenue if revenue else None
-    operating_margin = operating_income / revenue if revenue else None
-    ebitda_margin = ebitda / revenue if revenue else None
-    fcf_margin = free_cash_flow / revenue if revenue else None
-    capex_ratio = capex / revenue if revenue else None
-    rule_of_40 = (revenue_growth or 0) + (gross_margin * 100 if gross_margin else 0)
+    def get_recent_and_previous(history_list):
+        recent = history_list[0]['value'] if history_list else None
+        previous = history_list[1]['value'] if len(history_list) > 1 else None
+        return recent, previous
 
-    raw = {
-        "gross_margin": round(gross_margin, 4) if gross_margin is not None else None,
-        "operating_margin": round(operating_margin, 4) if operating_margin is not None else None,
-        "ebitda_margin": round(ebitda_margin, 4) if ebitda_margin is not None else None,
-        "fcf_margin": round(fcf_margin, 4) if fcf_margin is not None else None,
-        "capex_ratio": round(capex_ratio, 4) if capex_ratio is not None else None,
-        "rule_of_40": round((revenue_growth or 0) + (gross_margin * 100 if gross_margin else 0), 2) if revenue_growth is not None else None,
-        "growth_sustainability_index": round(net_income / capex, 2) if capex else None,
+    def round_or_none(value, digits=4):
+        return round(value, digits) if value is not None else None
+
+    # Extract financial values directly
+    revenue = financials.total_revenue
+    gross_profit = financials.gross_profit
+    net_income = financials.net_income
+    ebitda = financials.ebitda
+    operating_income = financials.operating_income
+    free_cash_flow = financials.free_cash_flow
+    capex = financials.capital_expenditure
+
+    # Revenue growth
+    recent_year, previous_year = get_recent_and_previous(financial_history.get('revenue', []))
+    revenue_growth = (
+        ((recent_year - previous_year) / abs(previous_year)) * 100
+        if recent_year and previous_year else None
+    )
+
+    # Margins and ratios
+    gross_margin = safe_divide(gross_profit, revenue)
+    operating_margin = safe_divide(operating_income, revenue)
+    ebitda_margin = safe_divide(ebitda, revenue)
+    fcf_margin = safe_divide(free_cash_flow, revenue)
+    capex_ratio = safe_divide(capex, revenue)
+    net_margin = safe_divide(net_income, revenue)
+    operating_efficiency_ratio = safe_divide(operating_income, revenue)
+    cash_conversion_ratio = safe_divide(free_cash_flow, net_income)
+    growth_sustainability_index = safe_divide(net_income, capex)
+
+    # Composite metric
+    rule_of_40 = (revenue_growth or 0) + (ebitda_margin * 100 if ebitda_margin else 0)
+
+    # Final metrics dict
+    metrics = {
+        "gross_margin": round_or_none(gross_margin),
+        "operating_margin": round_or_none(operating_margin),
+        "ebitda_margin": round_or_none(ebitda_margin),
+        "fcf_margin": round_or_none(fcf_margin),
+        "capex_ratio": round_or_none(capex_ratio),
+        "rule_of_40": round_or_none(rule_of_40, 2) if revenue_growth is not None else None,
+        "growth_sustainability_index": round_or_none(growth_sustainability_index, 2),
+        "revenue_growth": round_or_none(revenue_growth, 2),
+        "net_margin": round_or_none(net_margin),
+        "operating_efficiency_ratio": round_or_none(operating_efficiency_ratio),
+        "cash_conversion_ratio": round_or_none(cash_conversion_ratio),
     }
 
-    raw.update({
-        "revenue_growth": round(revenue_growth, 2) if revenue_growth is not None else None,
-        "net_margin": round(net_income / revenue, 4) if revenue else None,
-        "operating_efficiency_ratio": round(operating_income / revenue, 4) if revenue else None,
-        "cash_conversion_ratio": round(free_cash_flow / net_income, 4) if net_income else None,
-    })
-
-    return clean_nan_dict(raw)
+    return clean_nan_dict(metrics)
 
 
-def build_extended_technical_analysis(stock_history: list[tuple]) -> dict:
+def build_extended_technical_analysis(
+    stock_history: list[tuple],
+    short_window: int = 50,
+    long_window: int = 200
+) -> dict:
     df = pd.DataFrame(stock_history, columns=["date", "close"])
     df["close"] = pd.to_numeric(df["close"], errors="coerce")
     df = df.dropna()
 
-    df["SMA_50"] = df["close"].rolling(window=50).mean()
-    df["SMA_200"] = df["close"].rolling(window=200).mean()
-    df["Volatility_30d"] = df["close"].rolling(window=30).std()
-    df["Momentum_30d"] = df["close"].pct_change(periods=30)
-    df["Momentum_90d"] = df["close"].pct_change(periods=90)
+    df["sma_short"] = df["close"].rolling(window=short_window).mean()
+    df["sma_long"] = df["close"].rolling(window=long_window).mean()
+    df["volatility_30d"] = df["close"].rolling(window=30).std()
+    df["momentum_30d"] = df["close"].pct_change(periods=30)
+    df["momentum_90d"] = df["close"].pct_change(periods=90)
 
     current_price = df["close"].iloc[-1]
     high_52w = df["close"].max()
@@ -104,25 +133,24 @@ def build_extended_technical_analysis(stock_history: list[tuple]) -> dict:
     range_position = (current_price - low_52w) / (high_52w - low_52w) if high_52w != low_52w else None
 
     golden_cross = (
-        df["SMA_50"].iloc[-1] > df["SMA_200"].iloc[-1]
-        and df["SMA_50"].iloc[-2] <= df["SMA_200"].iloc[-2]
-    ) if len(df) >= 200 else False
+        ((df["sma_short"] > df["sma_long"]) & (df["sma_short"].shift(1) <= df["sma_long"].shift(1))).any()
+    ) if len(df) >= long_window else False
 
     death_cross = (
-        df["SMA_50"].iloc[-1] < df["SMA_200"].iloc[-1]
-        and df["SMA_50"].iloc[-2] >= df["SMA_200"].iloc[-2]
-    ) if len(df) >= 200 else False
+        ((df["sma_short"] < df["sma_long"]) & (df["sma_short"].shift(1) >= df["sma_long"].shift(1))).any()
+    ) if len(df) >= long_window else False
 
     raw = {
-        "momentum_30d": round(df["Momentum_30d"].iloc[-1] * 100, 2) if not pd.isna(df["Momentum_30d"].iloc[-1]) else None,
-        "momentum_90d": round(df["Momentum_90d"].iloc[-1] * 100, 2) if not pd.isna(df["Momentum_90d"].iloc[-1]) else None,
-        "volatility_30d": round(df["Volatility_30d"].iloc[-1], 2) if not pd.isna(df["Volatility_30d"].iloc[-1]) else None,
+        "momentum_30d": round(df["momentum_30d"].iloc[-1] * 100, 2) if not pd.isna(df["momentum_30d"].iloc[-1]) else None,
+        "momentum_90d": round(df["momentum_90d"].iloc[-1] * 100, 2) if not pd.isna(df["momentum_90d"].iloc[-1]) else None,
+        "volatility_30d": round(df["volatility_30d"].iloc[-1], 2) if not pd.isna(df["volatility_30d"].iloc[-1]) else None,
         "range_position_52w": round(range_position * 100, 2) if range_position is not None else None,
         "golden_cross": golden_cross,
         "death_cross": death_cross,
         "stock_prices": df[["date", "close"]].dropna().to_dict(orient="records"),
-        "sma_50": df[["date", "SMA_50"]].dropna().to_dict(orient="records"),
-        "sma_200": df[["date", "SMA_200"]].dropna().to_dict(orient="records"),
+        "sma_short": df[["date", "sma_short"]].dropna().to_dict(orient="records"),
+        "sma_long": df[["date", "sma_long"]].dropna().to_dict(orient="records"),
     }
+
 
     return clean_nan_dict(raw)

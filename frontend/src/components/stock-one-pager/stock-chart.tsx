@@ -15,8 +15,8 @@ import { addDays, format, parseISO, startOfMonth, subYears } from "date-fns"
 interface HistoricalData {
   date: string
   price: number
-  sma50?: number
-  sma200?: number
+  sma_short?: number
+  sma_long?: number
 }
 
 interface StockChartProps {
@@ -93,20 +93,20 @@ const detectCrossovers = (data: HistoricalData[]) => {
     const prev = data[i - 1];
     const curr = data[i];
 
-    if (prev.sma50 !== undefined && prev.sma200 !== undefined && curr.sma50 !== undefined && curr.sma200 !== undefined) {
+    if (prev.sma_short !== undefined && prev.sma_long !== undefined && curr.sma_short !== undefined && curr.sma_long !== undefined) {
       // Detect crossovers
-      const wasBelow = prev.sma50 < prev.sma200;
-      const isAbove = curr.sma50 > curr.sma200;
+      const wasBelow = prev.sma_short < prev.sma_long;
+      const isAbove = curr.sma_short > curr.sma_long;
 
-      const wasAbove = prev.sma50 > prev.sma200;
-      const isBelow = curr.sma50 < curr.sma200;
+      const wasAbove = prev.sma_short > prev.sma_long;
+      const isBelow = curr.sma_short < curr.sma_long;
 
       if (wasBelow && isAbove) {
         // Bullish crossover (Golden Cross)
-        crossovers.push({ date: curr.date, bullish: curr.sma50 });
+        crossovers.push({ date: curr.date, bullish: curr.sma_short });
       } else if (wasAbove && isBelow) {
         // Bearish crossover (Death Cross)
-        crossovers.push({ date: curr.date, bearish: curr.sma50 });
+        crossovers.push({ date: curr.date, bearish: curr.sma_short });
       }
     }
   }
@@ -119,8 +119,8 @@ const fillHistoricalData = (data: HistoricalData[]): HistoricalData[] => {
 
   const filledData: HistoricalData[] = [];
   let lastKnownPrice = data[0].price;
-  let lastKnownSMA50 = data[0].sma50;
-  let lastKnownSMA200 = data[0].sma200;
+  let lastKnownSMA50 = data[0].sma_short;
+  let lastKnownSMA200 = data[0].sma_long;
 
   let currentDate = parseISO(data[0].date);
   let lastIndex = 0;
@@ -134,8 +134,8 @@ const fillHistoricalData = (data: HistoricalData[]): HistoricalData[] => {
       filledData.push({
         date: format(currentDate, "yyyy-MM-dd"),
         price: lastKnownPrice,
-        sma50: lastKnownSMA50,
-        sma200: lastKnownSMA200,
+        sma_short: lastKnownSMA50,
+        sma_long: lastKnownSMA200,
       });
 
       // Move to next day
@@ -145,8 +145,8 @@ const fillHistoricalData = (data: HistoricalData[]): HistoricalData[] => {
     // Add actual stock data entry
     filledData.push(entry);
     lastKnownPrice = entry.price;
-    lastKnownSMA50 = entry.sma50;
-    lastKnownSMA200 = entry.sma200;
+    lastKnownSMA50 = entry.sma_short;
+    lastKnownSMA200 = entry.sma_long;
 
     currentDate = addDays(entryDate, 1)
     lastIndex++
@@ -254,7 +254,7 @@ export default function StockChart({
           {/* SMA 50 - Teal */}
           <Area
             type="monotone"
-            dataKey="sma50"
+            dataKey="sma_short"
             stroke="#0d9488"
             strokeDasharray="5 5"
             strokeWidth={1.5}
@@ -267,7 +267,7 @@ export default function StockChart({
           {/* SMA 200 - Orange */}
           <Area
             type="monotone"
-            dataKey="sma200"
+            dataKey="sma_long"
             stroke="#ea580c"
             strokeDasharray="7 4"
             strokeWidth={1.5}

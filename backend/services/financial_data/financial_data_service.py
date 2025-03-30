@@ -8,9 +8,6 @@ from database.models import (
     Market,
 )
 
-logger = logging.getLogger(__name__)
-
-
 def fetch_and_save_financial_data(ticker: str, market_name: str, db: Session, max_age_hours: int = 24):
     company = db.query(Company).filter_by(ticker=ticker).first()
     market = db.query(Market).filter_by(name=market_name).first()

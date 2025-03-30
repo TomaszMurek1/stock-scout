@@ -179,9 +179,9 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     trends = build_financial_trends(db, company.company_id, market.market_id)
     investor_metrics = build_investor_metrics(financials, trends)
     valuation_metrics = build_valuation_metrics(company, financials, db)
-    raw_technical_analysis = build_extended_technical_analysis(stock_history)
+    raw_technical_analysis = build_extended_technical_analysis(stock_history, short_window=50, long_window=200)
     technical_analysis = clean_nan_values(raw_technical_analysis)
-    risk_metrics = build_risk_metrics(company, stock_history, db)
+    risk_metrics = {} # build_risk_metrics(company, stock_history, db)# refactor this at it always connects to yfinance
     peer_comparison = build_peer_comparisons(company, db)
 
     response = {

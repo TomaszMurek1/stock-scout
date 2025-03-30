@@ -1,4 +1,5 @@
 # services/utils/valuation.py
+import logging
 from database.models import Company, CompanyFinancials, CompanyMarketData
 from services.utils.insights import build_financial_trends
 
@@ -13,7 +14,7 @@ def build_valuation_metrics(company: Company, financials: CompanyFinancials, db)
     net_income = financials.net_income or 0
 
     market_cap = price * shares if price and shares else None
-    pe_ratio = market_cap / net_income if market_cap and net_income else None
+    pe_ratio = price / eps if eps else None
     pb_ratio = market_data.price_to_book
     ev = financials.enterprise_value
     ev_ebitda = ev / financials.ebitda if ev and financials.ebitda else None
@@ -27,7 +28,17 @@ def build_valuation_metrics(company: Company, financials: CompanyFinancials, db)
         if recent and prev:
             revenue_growth = (recent - prev) / abs(prev)
 
-    peg_ratio = (pe_ratio / revenue_growth) if pe_ratio and revenue_growth else None
+    eps_growth = None
+    if trends.get("eps") and len(trends["eps"]) >= 2:
+        eps_latest = trends["eps"][0]["value"]
+        eps_prev = trends["eps"][1]["value"]
+        if eps_latest and eps_prev and eps_latest > 0 and eps_prev > 0: 
+            logging.info(f"EPS latest: {eps_latest} ")
+            logging.info(f"EPS previous: {eps_prev} ")
+            logging.info(f"EPS growth: {eps_latest} - {eps_prev} = {eps_growth}")
+            eps_growth = ((eps_latest - eps_prev) / eps_prev) * 100
+
+    peg_ratio = (pe_ratio / eps_growth)  if pe_ratio and eps_growth else None
     dividend_yield = getattr(market_data, "dividend_yield", None)
 
     return {
