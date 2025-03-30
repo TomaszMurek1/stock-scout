@@ -9,3 +9,9 @@ export const register = (username: string, email: string, password: string) => {
 export const login = (email: string, password: string) => {
   return axios.post(`${API_BASE_URL}/login`, { email, password });
 };
+
+export const refreshTokenRequest = (refreshToken: string) => {
+  return axios.post(`${API_BASE_URL}/refresh`, {
+    refresh_token: refreshToken,
+  })
+};

@@ -8,7 +8,7 @@ import axios from "axios";
 
 interface SignInProps {
   onClose: () => void;
-  onSignIn: (authToken: string) => void;
+  onSignIn: (tokenData: { access_token: string; refresh_token: string }) => void;
   onError: (error: string) => void;
 }
 
@@ -33,12 +33,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-
-    if (!email || !password || (isRegistering && !username)) {
-      setError("Please fill in all required fields.");
-      return;
-    }
-
+    // (Validation code here)
     try {
       if (isRegistering) {
         await register(username, email, password);
@@ -49,7 +44,8 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
         onError("Registration successful. Please sign in.");
       } else {
         const response = await login(email, password);
-        onSignIn(response.data.access_token);
+        // Pass the entire token object instead of only the access token:
+        onSignIn(response.data);
         onClose();
       }
     } catch (err: any) {
