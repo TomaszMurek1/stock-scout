@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api import auth, stocks, analysis, admin, fundamentals
-from database.database import Base, engine
+from database.base import Base, engine
 
 # Initialize FastAPI
 app = FastAPI(title="Stock Scout API")

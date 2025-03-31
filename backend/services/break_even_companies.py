@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 from sqlalchemy.orm import Session
-from database.models import Company, CompanyFinancialHistory, Market
+from database.company import Company
+from database.financials import  CompanyFinancialHistory
+from database.market import Market
 
 def find_companies_near_break_even(db: Session, months: int, company_ids: list[int], threshold_pct: float = 5.0):
     """

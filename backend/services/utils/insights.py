@@ -1,9 +1,6 @@
 # utils/insights.py
-from datetime import datetime
-import json
-import logging
 from sqlalchemy.orm import Session
-from database.models import CompanyFinancialHistory, CompanyFinancials
+from database.financials import  CompanyFinancialHistory, CompanyFinancials
 import pandas as pd
 
 

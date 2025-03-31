@@ -51,6 +51,7 @@ webencodings==0.5.1
 yfinance==0.2.54
 psycopg2-binary>=2.9
 python-dotenv>=0.19.0
+pyjwt==2.10.1
 pydantic-settings
 email-validator
 alembic

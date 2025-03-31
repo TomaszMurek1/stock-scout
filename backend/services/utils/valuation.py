@@ -1,6 +1,7 @@
-# services/utils/valuation.py
 import logging
-from database.models import Company, CompanyFinancials, CompanyMarketData
+from database.company import Company
+from database.stock_data import CompanyMarketData
+from database.financials import  CompanyFinancials
 from services.utils.insights import build_financial_trends
 
 def build_valuation_metrics(company: Company, financials: CompanyFinancials, db) -> dict:

@@ -11,6 +11,7 @@ import {
   goldenCrossFormSchema,
   GoldenCrossFormValues,
 } from "./golden-cross-page.helpers";
+import { apiClient } from "@/services/apiClient";
 
 export default function GoldenCrossScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,45 +26,33 @@ export default function GoldenCrossScanPage() {
     },
   });
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
-    console.log(data);
     try {
-      const response = await fetch(
-        `${API_URL}/technical-analysis/golden-cross`,
+      const response = await apiClient.post(
+        "/technical-analysis/golden-cross",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            short_window: data.shortPeriod,
-            long_window: data.longPeriod,
-            days_to_look_back: data.daysToLookBack,
-            min_volume: 1000000,
-            adjusted: true,
-            markets: data.markets,
-          }),
+          short_window: data.shortPeriod,
+          long_window: data.longPeriod,
+          days_to_look_back: data.daysToLookBack,
+          min_volume: 1000000,
+          adjusted: true,
+          markets: data.markets,
         }
       );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.detail || "An error occurred during the scan"
-        );
-      }
-
-      const result: ScanResultsProps = await response.json();
+  
+      const result: ScanResultsProps = response.data;
       setResults(result);
       console.log("Golden Cross Data:", result.data);
       toast.success("Golden Cross scan completed successfully");
-    } catch (error) {
-      console.error("Fetch error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Network error. Please try again."
-      );
+    } catch (error: any) {
+      console.error("API error:", error);
+      
+      const errorMessage = error.response?.data?.detail 
+        || error.message 
+        || "Network error. Please try again.";
+        
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

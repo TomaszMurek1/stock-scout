@@ -1,29 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 export const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const token = localStorage.getItem("authToken");
-    return !!token;
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem("authToken");
   });
 
-  const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem("authToken");
-    setIsAuthenticated(!!token);
-  }, []);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const login = useCallback((token: string) => {
-    localStorage.setItem("authToken", token);
+  const login = useCallback((tokens: { access_token: string; refresh_token: string }) => {
+    localStorage.setItem("authToken", tokens.access_token);
+    localStorage.setItem("refreshToken", tokens.refresh_token);
     setIsAuthenticated(true);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
     setIsAuthenticated(false);
   }, []);
 
-  return { isAuthenticated, login, logout, checkAuth };
+  return { isAuthenticated, login, logout };
 };

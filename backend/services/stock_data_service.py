@@ -1,13 +1,10 @@
-from typing import Tuple, Set
 import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
-from database.models import (
-    Company,
-    StockPriceHistory,
-    Market
-)
+from database.company import Company
+from database.stock_data import  StockPriceHistory
+from database.market import Market
 import logging
 import pandas as pd
 import time

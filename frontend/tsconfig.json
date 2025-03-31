@@ -10,7 +10,8 @@
     "esModuleInterop": true,
     "moduleResolution": "node", // Resolve modules using Node-style resolution
     "strict": true, // Optional, but enforces TypeScript strict mode
-    "skipLibCheck": true // Avoids checking type definitions of external libs
+    "skipLibCheck": true, // Avoids checking type definitions of external libs
+    "allowSyntheticDefaultImports": true,
   },
   "exclude": ["node_modules", "dist"]
 }

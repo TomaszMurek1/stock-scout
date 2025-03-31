@@ -4,10 +4,9 @@ from alembic import context
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-from database.models import Base  # Your Base includes all models
+from database.base import Base
 
 # Alembic config object
 config = context.config

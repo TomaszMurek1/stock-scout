@@ -1,10 +1,9 @@
-# analysis_utils.py (or within analysis.py, whichever you prefer)
-
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-
-from database.models import AnalysisResult, Company, Market
+from database.analysis import AnalysisResult
+from database.company import Company
+from database.market import Market
 from services.technical_analysis_service import find_most_recent_crossover
 
 logger = logging.getLogger(__name__)

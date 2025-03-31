@@ -80,5 +80,6 @@ export interface ExecutiveSummary {
     valuation_metrics: ValuationMetrics;
     risk_metrics: RiskMetrics;
     technical_analysis: TechnicalAnalysis;
+    financial_trends: any[]; // Placeholder for financial trends data
   }
   

@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
-from database.models import Company, CompanyFinancials, Market
+from database.company import Company
+from database.financials import  CompanyFinancials
+from database.market import Market
 import numpy as np
 
 def safe_avg(vals):
