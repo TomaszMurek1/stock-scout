@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database.dependencies import get_db
+from database.database import get_db
 from schemas.stock_schemas import TickerRequest
 from services.financial_data.financial_data_service import fetch_and_save_financial_data
 from services.stock_data_service import fetch_and_save_stock_history_data
@@ -9,7 +9,6 @@ import logging
 import yfinance as yf
 import pandas as pd
 from database.models import Company, CompanyFinancials, Market, StockPriceHistory, CompanyFinancialHistory
-from database.dependencies import get_db
 import requests
 import os
 from database.models import CompanyOverview

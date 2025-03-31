@@ -1,11 +1,13 @@
 import logging
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from database.dependencies import get_db
+from database.database import get_db
 from schemas.stock_schemas import GoldenCrossRequest
 from database.models import Company, Market, company_market_association, AnalysisResult
 from .analysis_utils import get_or_update_analysis_result
+from .security import get_current_user
+from database.models import User
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -13,12 +15,20 @@ logger = logging.getLogger(__name__)
 @router.post("/golden-cross")
 def cached_golden_cross(
     request: GoldenCrossRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     This endpoint checks for a "golden cross" using the AnalysisResult cache
     and returns the SAME JSON structure as the old code did.
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+
     if not request.markets:
         raise HTTPException(status_code=400, detail="No markets specified in the request.")
 

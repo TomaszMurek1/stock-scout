@@ -1,17 +1,13 @@
-import axios from "axios";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-const API_BASE_URL = `${API_URL}/auth`;
+import { apiClient } from "./apiClient";
 
 export const register = (username: string, email: string, password: string) => {
-  return axios.post(`${API_BASE_URL}/register`, { username, email, password });
+  return apiClient.post("/auth/register", { username, email, password });
 };
 
 export const login = (email: string, password: string) => {
-  return axios.post(`${API_BASE_URL}/login`, { email, password });
+  return apiClient.post("/auth/login", { email, password });
 };
 
 export const refreshTokenRequest = (refreshToken: string) => {
-  return axios.post(`${API_BASE_URL}/refresh`, {
-    refresh_token: refreshToken,
-  })
+  return apiClient.post("/auth/refresh", { refresh_token: `${refreshToken}+1` });
 };
