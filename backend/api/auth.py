@@ -74,6 +74,14 @@ def refresh_token(
 ):
     try:
         payload = jwt.decode(token_request.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # TODO: Fully implement token revocation
+        revoked = db.query(RevokedToken).filter(
+            RevokedToken.jti == payload.get("jti")
+        ).first()
+        if revoked:
+            raise HTTPException(status_code=401, detail="Revoked token")
+        
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=400, detail="Invalid token type")
         

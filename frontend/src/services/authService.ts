@@ -9,5 +9,5 @@ export const login = (email: string, password: string) => {
 };
 
 export const refreshTokenRequest = (refreshToken: string) => {
-  return apiClient.post("/auth/refresh", { refresh_token: `${refreshToken}+1` });
+  return apiClient.post("/auth/refresh", { refresh_token: `${refreshToken}` });
 };
