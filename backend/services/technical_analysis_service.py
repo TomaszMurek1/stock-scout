@@ -3,11 +3,9 @@ from datetime import datetime, timedelta
 import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from database.models import (
-    StockPriceHistory, 
-    Company, 
-    Market
-)
+from database.company import Company
+from database.market import Market
+from database.stock_data import StockPriceHistory
 from services.stock_data_service import fetch_and_save_stock_history_data
 
 logger = logging.getLogger(__name__)

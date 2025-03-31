@@ -1,17 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database.database import get_db
-from schemas.stock_schemas import TickerRequest
+from database.base import get_db
 from services.financial_data.financial_data_service import fetch_and_save_financial_data
 from services.stock_data_service import fetch_and_save_stock_history_data
 from datetime import datetime, timedelta, timezone
 import logging
 import yfinance as yf
 import pandas as pd
-from database.models import Company, CompanyFinancials, Market, StockPriceHistory, CompanyFinancialHistory
+from database.company import Company, CompanyOverview
+from database.market import  Market
+from database.financials import  CompanyFinancials
+from database.stock_data import  StockPriceHistory
 import requests
 import os
-from database.models import CompanyOverview
 from services.utils.cleaning import clean_nan_values
 from services.utils.comparables import build_peer_comparisons
 from services.utils.financial_utils import calculate_financial_ratios

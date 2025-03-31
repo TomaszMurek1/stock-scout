@@ -1,10 +1,11 @@
 
 import logging
-from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database.database import get_db
-from database.models import Company, CompanyFinancialHistory, Market, company_market_association, CompanyFinancials
+from database.base import get_db
+from database.market import  Market
+from database.company import Company, company_market_association
+from database.financials import  CompanyFinancials
 from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanRequest
 from services.financial_data.financial_data_service import fetch_and_save_financial_data
 from services.break_even_companies import  find_companies_near_break_even

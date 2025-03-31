@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from database.database import get_db
-from database.models import User, RevokedToken
+from database.base import get_db
+from database.token_mgmt import RevokedToken
+from database.user import User
 from .security import (
     SECRET_KEY,
     ALGORITHM,
@@ -14,7 +15,6 @@ from .security import (
 )
 from jose import JWTError, jwt
 from pydantic import BaseModel
-from datetime import timedelta
 from fastapi import Request
 
 router = APIRouter()

@@ -3,14 +3,10 @@ import logging
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 import yfinance as yf
-
-from database.models import (
-    Company,
-    Market,
-    CompanyFinancials,
-    CompanyMarketData,
-    CompanyFinancialHistory,
-)
+from database.company import Company
+from database.market import Market
+from database.stock_data import  CompanyMarketData
+from database.financials import CompanyFinancials, CompanyFinancialHistory
 
 logger = logging.getLogger(__name__)
 # logging.basicConfig(

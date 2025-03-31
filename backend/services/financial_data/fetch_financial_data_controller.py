@@ -1,7 +1,7 @@
 from datetime import timezone, timedelta, datetime
 from sqlalchemy.orm import Session
-from database.models import CompanyFinancials, CompanyMarketData
-
+from database.financials import CompanyFinancials
+from database.stock_data import  CompanyMarketData
 
 def is_data_fresh(last_updated, max_age_hours):
     if not last_updated:
@@ -9,7 +9,6 @@ def is_data_fresh(last_updated, max_age_hours):
     if last_updated.tzinfo is None:
         last_updated = last_updated.replace(tzinfo=timezone.utc)
     return datetime.now(timezone.utc) - last_updated < timedelta(hours=max_age_hours)
-
 
 def should_fetch_financial_data(company_id: int, market_id: int, db: Session, max_age_hours=24) -> bool:
     fin = db.query(CompanyFinancials).filter_by(company_id=company_id, market_id=market_id).first()
