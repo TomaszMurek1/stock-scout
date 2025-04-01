@@ -71,7 +71,17 @@ export interface ExecutiveSummary {
     sma_short: SMAValue[];
     sma_long: SMAValue[];
   }
-  
+  interface TrendItem {
+    year: number;
+    value: number;
+  }
+  interface FinancialTrends {
+    revenue: TrendItem[];
+    net_income: TrendItem[];
+    ebitda: TrendItem[];
+    free_cash_flow: TrendItem[];
+  }
+
   export interface StockData {
     executive_summary: ExecutiveSummary;
     company_overview: CompanyOverview;
@@ -80,6 +90,6 @@ export interface ExecutiveSummary {
     valuation_metrics: ValuationMetrics;
     risk_metrics: RiskMetrics;
     technical_analysis: TechnicalAnalysis;
-    financial_trends: any[]; // Placeholder for financial trends data
+    financial_trends: FinancialTrends;
   }
   

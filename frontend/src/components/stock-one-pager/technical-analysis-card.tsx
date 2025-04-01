@@ -33,8 +33,8 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
     return {
       date: price.date,
       price: price.close,
-      sma_short: smaShortEntry?.sma_short ?? null,
-      sma_long: smaLongEntry?.sma_long ?? null,
+      sma_short: smaShortEntry?.sma_short ?? undefined,
+      sma_long: smaLongEntry?.sma_long ?? undefined,
     };
   });
 

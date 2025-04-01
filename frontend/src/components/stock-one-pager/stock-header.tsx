@@ -102,7 +102,7 @@ const StockHeader: FC<StockHeaderProps> = ({
               <div className="flex items-center gap-1">
                 <GlobeAltIcon className="h-4 w-4" />
                 <a
-                  href={companyOverview?.website}
+                  href={companyOverview?.website ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary"
