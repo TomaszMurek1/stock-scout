@@ -51,7 +51,9 @@ def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict
 
 def build_investor_metrics(financials: CompanyFinancials, financial_history: dict) -> dict:
     def safe_divide(numerator, denominator):
-        return numerator / denominator if denominator else None
+        if numerator is None or denominator in (0, None):
+            return None
+        return numerator / denominator
 
     def get_recent_and_previous(history_list):
         recent = history_list[0]['value'] if history_list else None
