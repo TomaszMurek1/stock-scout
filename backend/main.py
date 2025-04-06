@@ -27,6 +27,7 @@ app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analy
 app.include_router(fundamentals.router, prefix="/api/break-even-companies", tags=["Analysis"])
 app.include_router(stocks.router, prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Invitations"])
 
 @app.get("/")
 async def root():

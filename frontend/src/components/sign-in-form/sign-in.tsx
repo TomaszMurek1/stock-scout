@@ -5,6 +5,7 @@ import { validateEmail } from "../../utils/validation";
 import SignInForm from "./sign-in-form";
 import RegisterForm from "./register-form";
 import axios from "axios";
+import { useSearchParams } from "react-router-dom";
 
 interface SignInProps {
   onClose: () => void;
@@ -19,6 +20,10 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
   const [username, setUsername] = useState<string>("");
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const invitationCodeFromUrl = searchParams.get("invitation_code") || "";
+
+  console.log("Invitation Code from URL:", invitationCodeFromUrl);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
@@ -36,7 +41,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
     // (Validation code here)
     try {
       if (isRegistering) {
-        await register(username, email, password);
+        await register(username, email, password, invitationCodeFromUrl);
         setIsRegistering(false);
         setUsername("");
         setPassword("");

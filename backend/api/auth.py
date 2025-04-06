@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database.base import get_db
 from database.token_mgmt import RevokedToken
-from database.user import User
+from database.user import Invitation, User
+from schemas.user_schemas import RefreshTokenRequest, Token, UserCreate, UserLogin
 from .security import (
     SECRET_KEY,
     ALGORITHM,
@@ -19,48 +21,75 @@ from fastapi import Request
 
 router = APIRouter()
 
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-class Token(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str
 
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
-@router.post("/register", response_model=dict)
+
+
+@router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == user.email).first():
+    print("Received registration:", user)
+    # Find and validate invitation
+    invitation = db.query(Invitation).filter(
+        Invitation.code == user.invitation_code,
+        Invitation.is_active == True
+    ).first()
+
+    if not invitation:
+        raise HTTPException(status_code=400, detail="Invalid or inactive invitation code.")
+
+    if invitation.expires_at and datetime.utcnow() > invitation.expires_at:
+        raise HTTPException(status_code=400, detail="Invitation code is expired.")
+
+    if invitation.used_count >= invitation.max_uses:
+        raise HTTPException(status_code=400, detail="Invitation usage limit reached.")
+
+    # Check if email is already used
+    if db.query(User).filter_by(email=user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     hashed_password = get_password_hash(user.password)
-    new_user = User(username=user.username, email=user.email, password_hash=hashed_password)
-    
+
+    new_user = User(
+        username=user.username,
+        email=user.email,
+        password_hash=hashed_password,
+        invitation_id=invitation.id
+    )
+
+    # Apply and update invitation
+    invitation.used_count += 1
+    if invitation.used_count >= invitation.max_uses:
+        invitation.is_active = False
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
+
     return {"message": "User registered successfully"}
+
+def is_user_invitation_valid(user: User) -> bool:
+    if not user.invitation:
+        return False
+    valid_until = user.created_at + timedelta(days=user.invitation.duration_days)
+    return datetime.utcnow() <= valid_until
+
+
 
 @router.post("/login", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
+
     if not db_user or not verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
-    
+
+    if not is_user_invitation_valid(db_user):
+        raise HTTPException(status_code=403, detail="Your invitation-based access has expired.")
+
     access_token = create_access_token(data={"sub": db_user.email})
     refresh_token = create_refresh_token(data={"sub": db_user.email})
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
