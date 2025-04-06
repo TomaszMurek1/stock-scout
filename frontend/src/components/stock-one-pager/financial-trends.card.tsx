@@ -22,10 +22,11 @@ import {
 
 import type { StockData } from "./stock-one-pager.types";
 import { formatNumber } from "@/utils/formatting";
+import { Nullable } from "../types/shared.types";
 
 interface FinancialTrendsCardProps {
   financialTrends: StockData["financial_trends"];
-  currency: string | null;
+  currency: Nullable<string>;
 }
 
 const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({

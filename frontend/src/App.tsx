@@ -15,12 +15,10 @@ import Home from "./components/Home";
 import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
-import { useAuth } from "./services/useAuth";
+import { useAuth } from "./services/AuthContext";
+
 
 function App() {
-  const [, setAuthToken] = useState<string | null>(
-    localStorage.getItem("authToken")
-  );
   const { login } = useAuth(); 
   const navigate = useNavigate();
 
@@ -32,11 +30,6 @@ function App() {
       handleError("Login failed");
     }
   };
-
-  // const handleSignOut = () => {
-  //   setAuthToken(null);
-  //   localStorage.removeItem("setAuthToken");
-  // };
 
   const handleError = (error: string) => {
     toast.error(error, {

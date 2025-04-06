@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "../services/useAuth"; // Adjusted import path
+import { useAuth } from "@/services/AuthContext";
+
 
 const Header: React.FC = () => {
-  const { isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated, logout, login } = useAuth();
 
   return (
     <header className="bg-white shadow-md">
@@ -41,7 +42,7 @@ const Header: React.FC = () => {
                 <Button
                   variant="outline"
                   className="bg-gray-800 text-white hover:bg-gray-700"
-                  onClick={()=>login('mystesttoken')}
+                  onClick={() => login({ access_token: 'mystesttoken', refresh_token: 'dummyrefresh' })}
                 >
                   Login
                 </Button>

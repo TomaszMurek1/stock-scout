@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.base import get_db
-from services.financial_data.financial_data_service import fetch_and_save_financial_data
+from services.fundamentals.financial_data_service import fetch_and_save_financial_data
 from services.stock_data_service import fetch_and_save_stock_history_data
 from datetime import datetime, timedelta, timezone
 import logging
-import yfinance as yf
 import pandas as pd
 from database.company import Company, CompanyOverview
 from database.market import  Market

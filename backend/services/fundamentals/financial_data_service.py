@@ -1,8 +1,8 @@
-from services.financial_data.fetch_financial_data_controller import should_fetch_financial_data
-from services.financial_data.fetch_financial_data_executor import fetch_and_save_financial_data_core
 from sqlalchemy.orm import Session
 from database.market import Market
 from database.company import Company
+from services.fundamentals.fetch_financial_data_controller import should_fetch_financial_data
+from services.fundamentals.fetch_financial_data_executor import fetch_and_save_financial_data_core
 
 def fetch_and_save_financial_data(ticker: str, market_name: str, db: Session, max_age_hours: int = 24):
     company = db.query(Company).filter_by(ticker=ticker).first()

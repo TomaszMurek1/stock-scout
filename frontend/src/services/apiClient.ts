@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, {  InternalAxiosRequestConfig } from "axios";
 import { jwtDecode } from "jwt-decode";
 import { refreshTokenRequest } from "./authService";
 
@@ -16,14 +16,9 @@ export const apiClient = axios.create({
 
 let refreshPromise: Promise<void> | null = null;
 
-// Add proper TypeScript interface for error config
-interface RetryableRequestConfig extends axios.AxiosRequestConfig {
-  _retry?: boolean;
-}
 
-apiClient.interceptors.request.use(async (config: RetryableRequestConfig) => {
+apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem("authToken");
-  
   // Skip token check for refresh requests
   if (config.url?.includes("/auth/refresh")) return config;
 
@@ -40,8 +35,10 @@ apiClient.interceptors.request.use(async (config: RetryableRequestConfig) => {
           });
         }
         await refreshPromise;
-        // Update token after refresh
-        config.headers.Authorization = `Bearer ${localStorage.getItem("authToken")}`;
+      }
+
+      if (config.headers) {
+        config.headers.set("Authorization", `Bearer ${localStorage.getItem("authToken")}`);
       }
     } catch (error) {
       clearAuth();

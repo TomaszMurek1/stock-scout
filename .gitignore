@@ -1,5 +1,6 @@
 # Node modules and log files
 frontend/.env
+frontend/dist
 frontend/node_modules
 frontend/npm-debug.log  
 frontend/__pycache__

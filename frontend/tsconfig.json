@@ -4,6 +4,9 @@
     "paths": {
       "@/*": ["src/*"]
     },
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": true,  
     "jsx": "react-jsx", // or "react" for React 16 and below
     "module": "esnext", // Use ES modules for modern JS
     "target": "esnext", // Target modern JavaScript versions
@@ -13,5 +16,6 @@
     "skipLibCheck": true, // Avoids checking type definitions of external libs
     "allowSyntheticDefaultImports": true,
   },
-  "exclude": ["node_modules", "dist"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "vite.config.ts", "theme.ts"]
 }
