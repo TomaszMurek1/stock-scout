@@ -5,7 +5,6 @@ from services.fundamentals.financial_data_service import fetch_and_save_financia
 from services.stock_data_service import fetch_and_save_stock_history_data
 from datetime import datetime, timedelta, timezone
 import logging
-import yfinance as yf
 import pandas as pd
 from database.company import Company, CompanyOverview
 from database.market import  Market
