@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "../services/useAuth"; // Adjusted import path
+import { useAuth } from "@/services/AuthContext";
+
 
 const Header: React.FC = () => {
-  const { isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated, logout, login } = useAuth();
 
   return (
     <header className="bg-white shadow-md">

@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 import type { StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
+import { fetchFavorites, toggleFavorite } from "@/services/api/favorites";
 
 interface StockHeaderProps {
   ticker: string | undefined;
@@ -30,6 +31,23 @@ const StockHeader: FC<StockHeaderProps> = ({
   const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!ticker) return;
+    fetchFavorites().then((list) => {
+
+      setIsFavorite(list.includes(ticker))
+    });
+  }, [ticker]);
+
+  const handleToggleFavorite = async () => {
+    try {
+      await toggleFavorite(ticker!, isFavorite);
+      setIsFavorite(!isFavorite);
+    } catch (err) {
+      console.error("Failed to toggle favorite", err);
+    }
+  };
 
   const prices = technicalAnalysis.stock_prices;
   const latestPrice = prices.length ? prices[prices.length - 1].close : null;
@@ -73,12 +91,16 @@ const StockHeader: FC<StockHeaderProps> = ({
                 {executiveSummary?.name}
               </h1>
               <Button
-                variant="ghost"
+                variant={"ghost"}
                 size="icon"
-                className={isFavorite ? "text-red-500" : "text-gray-400"}
-                onClick={() => setIsFavorite(!isFavorite)}
+                className={isFavorite ? "text-green-700" : "text-gray-400"}
+                onClick={handleToggleFavorite}
               >
-                <HeartIcon className="h-5 w-5" />
+                  {isFavorite ? (
+                    <HeartIcon className="h-5 w-5 fill-current" />
+                  ) : (
+                    <HeartIcon className="h-5 w-5" />
+                  )}
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-1">

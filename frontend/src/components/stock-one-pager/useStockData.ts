@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { StockData } from "./stock-one-pager.types";
+import { apiClient } from "@/services/apiClient";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -18,15 +19,10 @@ export function useStockData(ticker: string | undefined): {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`${API_URL}/stock-details/${ticker}`);
-        if (!response.ok) {
-          const errBody = await response.json();
-          throw new Error(errBody.detail || "Failed to fetch stock details.");
-        }
-        const data: StockData = await response.json();
-        setStock(data);
+        const response = await apiClient.get<StockData>(`/stock-details/${ticker}`);
+        setStock(response.data);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || "Failed to fetch stock details.");
       } finally {
         setIsLoading(false);
       }

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, DateTime,  ForeignKey, Integer, Numeric, String, func
+from datetime import datetime
+from sqlalchemy import Column, DateTime, Float,  ForeignKey, Integer, Numeric, String, func
 from sqlalchemy import Enum as SQLAlchemyEnum
 from enum import Enum as PyEnum
 from sqlalchemy.orm import relationship, backref
@@ -93,3 +94,27 @@ class CashBalance(Base):
 
     def __repr__(self):
         return f"<CashBalance(portfolio_id={self.portfolio_id}, balance={self.balance})>"
+    
+class FavoriteStock(Base):
+    __tablename__ = "favorite_stocks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # references user table
+    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False) 
+
+    user = relationship("User", back_populates="favorite_stocks") 
+    company = relationship("Company")
+    
+class Position(Base):
+    __tablename__ = "positions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    ticker = Column(String, nullable=False)
+
+
+    shares = Column(Float, default=0.0)
+    average_price = Column(Float, default=0.0)
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="portfolio_positions")

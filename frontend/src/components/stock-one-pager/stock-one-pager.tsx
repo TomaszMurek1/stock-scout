@@ -23,6 +23,7 @@ import TechnicalAnalysisChartCard from "./technical-analysis-card"
 import FinancialTrendsCard from "./financial-trends.card"
 import KeyMetricsSummaryCard from "./key-metrics-summary-card"
 import TechnicalIndicatorsCard from "./technical-indicators-card"
+import TradePanel from "./trade-panel"
 
 export const StockOnePager: FC = () => {
   const { ticker } = useParams();
@@ -213,6 +214,9 @@ export const StockOnePager: FC = () => {
             />
 
             <TechnicalIndicatorsCard technicalAnalysis={technical_analysis} />
+            {/*TODO: Pleceholder, not working yet */}
+            <TradePanel companyId={1} currentPrice={10}/>
+
           </div>
         </div>
       </div>

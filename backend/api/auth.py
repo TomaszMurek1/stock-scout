@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from database.base import get_db
 from database.token_mgmt import RevokedToken
 from database.user import Invitation, User
+from dependencies.auth import get_user_by_email, is_user_invitation_valid
 from schemas.user_schemas import RefreshTokenRequest, Token, UserCreate, UserLogin
 from .security import (
     SECRET_KEY,
@@ -20,12 +21,6 @@ from pydantic import BaseModel
 from fastapi import Request
 
 router = APIRouter()
-
-
-def get_user_by_email(db: Session, email: str):
-    return db.query(User).filter(User.email == email).first()
-
-
 
 @router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -68,13 +63,6 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     return {"message": "User registered successfully"}
-
-def is_user_invitation_valid(user: User) -> bool:
-    if not user.invitation:
-        return False
-    valid_until = user.created_at + timedelta(days=user.invitation.duration_days)
-    return datetime.utcnow() <= valid_until
-
 
 
 @router.post("/login", response_model=Token)

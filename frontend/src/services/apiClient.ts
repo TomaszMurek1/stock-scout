@@ -19,7 +19,6 @@ let refreshPromise: Promise<void> | null = null;
 
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem("authToken");
-  
   // Skip token check for refresh requests
   if (config.url?.includes("/auth/refresh")) return config;
 
@@ -36,10 +35,10 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
           });
         }
         await refreshPromise;
-        // Update token after refresh
-        if (config.headers) {
-          config.headers.set("Authorization", `Bearer ${localStorage.getItem("authToken")}`);
-        }
+      }
+
+      if (config.headers) {
+        config.headers.set("Authorization", `Bearer ${localStorage.getItem("authToken")}`);
       }
     } catch (error) {
       clearAuth();
