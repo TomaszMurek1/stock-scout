@@ -7,8 +7,8 @@ from database.market import  Market
 from database.company import Company, company_market_association
 from database.financials import  CompanyFinancials
 from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanRequest
-from services.financial_data.financial_data_service import fetch_and_save_financial_data
-from services.break_even_companies import  find_companies_near_break_even
+from services.fundamentals.break_even.break_even_companies import  find_companies_near_break_even
+from services.fundamentals.financial_data_service import fetch_and_save_financial_data
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from database.base import get_db
 from database.user import User
 from database.market import Market
 from database.company import Company, company_market_association
-from .analysis_utils import get_or_update_analysis_result
+from services.analysis.analysis import get_or_update_analysis_result
 from .security import get_current_user
 
 router = APIRouter()

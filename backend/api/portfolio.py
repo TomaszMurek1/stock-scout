@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.portfolio import PortfolioPosition, Transaction, Portfolio
-from dependencies.auth import get_current_user
+from services.auth.auth import get_current_user
 from database.base import get_db
 from schemas.portfolio_schemas import TradeRequest
 from database.user import User

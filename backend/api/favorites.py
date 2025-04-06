@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from dependencies.auth import get_current_user
+from services.auth.auth import get_current_user
 from database.base import get_db
 from database.portfolio import FavoriteStock
 from database.user import User

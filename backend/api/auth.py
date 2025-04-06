@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database.base import get_db
 from database.token_mgmt import RevokedToken
 from database.user import Invitation, User
-from dependencies.auth import get_user_by_email, is_user_invitation_valid
+from services.auth.auth import get_user_by_email, is_user_invitation_valid
 from schemas.user_schemas import RefreshTokenRequest, Token, UserCreate, UserLogin
 from .security import (
     SECRET_KEY,
