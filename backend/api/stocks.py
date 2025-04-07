@@ -11,7 +11,7 @@ from database.financials import  CompanyFinancials
 from database.stock_data import  StockPriceHistory
 import requests
 import os
-from services.stock_data.stock_data_service import fetch_and_save_stock_history_data
+from services.stock_data.stock_data_service import fetch_and_save_stock_price_history_data
 from services.utils.cleaning import clean_nan_values
 from services.utils.comparables import build_peer_comparisons
 from services.utils.financial_utils import calculate_financial_ratios
@@ -55,9 +55,10 @@ def fetch_company_overview_from_api(ticker: str) -> dict:
         "description": profile.get("description"),
     }
 
-def get_or_fetch_stock_history(ticker: str, market_name: str, company_id: int, cutoff_date: datetime, db: Session):
+def get_or_fetch_stock_price_history(ticker: str, market_name: str, company_id: int, cutoff_date: datetime, db: Session):
     # Try fetching from DB
-    stock_history = (
+    print(f"cutoff_date {cutoff_date}...")
+    stock_price_history = (
         db.query(StockPriceHistory.date, StockPriceHistory.close)
         .filter(StockPriceHistory.company_id == company_id)
         .filter(StockPriceHistory.date >= cutoff_date)
@@ -66,16 +67,16 @@ def get_or_fetch_stock_history(ticker: str, market_name: str, company_id: int, c
     )
 
     # If not found, fetch new data
-    if not stock_history:
+    if not stock_price_history:
         logger.info(f"No stock history found for {ticker}, fetching from source...")
         end_date = datetime.now()
         start_date = end_date - timedelta(days=360)
 
-        fetch_and_save_stock_history_data(ticker, market_name, start_date, end_date, db)
+        fetch_and_save_stock_price_history_data(ticker, market_name, start_date, end_date, db)
         db.expire_all()
 
         # Retry fetching
-        stock_history = (
+        stock_price_history = (
             db.query(StockPriceHistory.date, StockPriceHistory.close)
             .filter(StockPriceHistory.company_id == company_id)
             .filter(StockPriceHistory.date >= cutoff_date)
@@ -83,7 +84,7 @@ def get_or_fetch_stock_history(ticker: str, market_name: str, company_id: int, c
             .all()
         )
 
-    return stock_history
+    return stock_price_history
 
 def get_company_by_ticker(ticker: str, db: Session) -> Company:
     company = db.query(Company).filter(Company.ticker == ticker).first()
@@ -164,7 +165,7 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     financials = db.query(CompanyFinancials).filter(CompanyFinancials.company_id == company.company_id).first()
 
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=730)
-    stock_history = get_or_fetch_stock_history(
+    stock_history = get_or_fetch_stock_price_history(
         ticker,
         market.name if market else "Unknown",
         company.company_id,
