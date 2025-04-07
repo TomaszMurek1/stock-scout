@@ -6,17 +6,10 @@ from sqlalchemy.orm import Session
 from database.company import Company
 from database.market import Market
 from database.stock_data import StockPriceHistory
-from services.stock_data_service import fetch_and_save_stock_history_data
+from services.stock_data.stock_data_service import fetch_and_save_stock_history_data
+from services.utils.sanitize import convert_value
 
 logger = logging.getLogger(__name__)
-
-def convert_value(value):
-    """
-    Convert numpy scalar to a native Python type if needed.
-    """
-    if hasattr(value, "item"):
-        return value.item()
-    return value
 
 def find_most_recent_crossover(
     ticker: str,

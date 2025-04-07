@@ -1,79 +1,18 @@
 import yfinance as yf
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import OperationalError, IntegrityError
-from database.company import Company
+from sqlalchemy.exc import  IntegrityError
 from database.stock_data import  StockPriceHistory
-from database.market import Market
 import logging
-import pandas as pd
-import time
 import pandas_market_calendars as mcal
 from sqlalchemy.exc import IntegrityError
 from datetime import date
+from services.company.company_service import get_or_create_company
+from services.market.market_service import get_or_create_market
+from services.utils.db_retry import retry_on_db_lock
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-def retry_on_db_lock(func):
-    """Simple retry decorator in case the DB is locked."""
-    def wrapper(*args, **kwargs):
-        max_attempts = 3
-        for attempt in range(max_attempts):
-            try:
-                return func(*args, **kwargs)
-            except OperationalError as e:
-                if "database is locked" in str(e) and attempt < max_attempts - 1:
-                    logger.warning(f"Database locked. Retrying in {2**attempt} seconds...")
-                    time.sleep(2**attempt)
-                else:
-                    raise
-    return wrapper
-
-def get_or_create_company(ticker: str, db: Session) -> Company:
-    """Fetch a company by ticker, or create if not found."""
-    company = db.query(Company).filter(Company.ticker == ticker).first()
-    if company:
-        return company
-
-    # If not found, try to fetch info from Yahoo
-    logger.info(f"Company {ticker} not found in DB; fetching from yfinance.")
-    stock = yf.Ticker(ticker)
-    stock_info = stock.info or {}
-    if not stock_info:
-        logger.error(f"No company info found for ticker {ticker}.")
-        return None
-
-    company = Company(
-        name=stock_info.get('longName', 'Unknown'),
-        ticker=ticker,
-        sector=stock_info.get('sector', 'Unknown'),
-        industry=stock_info.get('industry', 'Unknown')
-    )
-    db.add(company)
-    try:
-        db.commit()
-    except IntegrityError as exc:
-        db.rollback()
-        logger.error(f"Integrity error creating company {ticker}: {exc}")
-        return None
-    return company
-
-def get_or_create_market(market_name: str, db: Session) -> Market:
-    """Fetch a market by name, or create if not found."""
-    market_obj = db.query(Market).filter_by(name=market_name).first()
-    if market_obj:
-        return market_obj
-    logger.info(f"Market {market_name} not found; creating new Market entry.")
-    market_obj = Market(name=market_name, country='Unknown', currency='Unknown', timezone='Unknown')
-    db.add(market_obj)
-    try:
-        db.commit()
-    except IntegrityError as exc:
-        db.rollback()
-        logger.error(f"Integrity error creating market {market_name}: {exc}")
-        return None
-    return market_obj
 
 def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str) -> set:
     """
@@ -105,6 +44,8 @@ def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, en
 
     missing = trading_days - existing_dates
     return len(missing) == 0
+
+
 
 @retry_on_db_lock
 def fetch_and_save_stock_history_data(ticker: str, market_name: str, start_date: datetime, end_date: datetime, db: Session):

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database.analysis import AnalysisResult
 from database.company import Company
 from database.market import Market
-from services.technical_analysis_service import find_most_recent_crossover
+from services.technical_analysis.technical_analysis import find_most_recent_crossover
 
 logger = logging.getLogger(__name__)
 
@@ -84,4 +84,4 @@ def get_or_update_analysis_result(
         existing.last_updated = datetime.utcnow()
         db.commit()
 
-    return existing
+    return existing 
