@@ -20,3 +20,11 @@ def sanitize_numpy_types(obj):
     elif isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
         return None
     return obj
+
+def convert_value(value):
+    """
+    Convert numpy scalar to a native Python type if needed.
+    """
+    if hasattr(value, "item"):
+        return value.item()
+    return value
