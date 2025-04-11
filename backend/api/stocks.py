@@ -19,6 +19,7 @@ from services.utils.insights import build_extended_technical_analysis, build_fin
 from services.utils.risk import build_risk_metrics
 from services.utils.sanitize import sanitize_numpy_types
 from services.utils.valuation import build_valuation_metrics
+from services.yfinance_data_update.data_update_service import ensure_fresh_data 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -141,7 +142,7 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     company = get_company_by_ticker(ticker, db)
     market = get_company_market(company, db)
 
-    fetch_and_save_financial_data(company.ticker, market.name, db)
+    ensure_fresh_data(company.ticker, market.name if market else "Unknown", db)
 
     overview = company.overview
     if not overview:

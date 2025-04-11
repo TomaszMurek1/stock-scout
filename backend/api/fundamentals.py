@@ -9,6 +9,7 @@ from database.financials import  CompanyFinancials
 from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanRequest
 from services.fundamentals.break_even.break_even_companies import  find_companies_near_break_even
 from services.fundamentals.financial_data_service import fetch_and_save_financial_data
+from services.yfinance_data_update.data_update_service import ensure_fresh_data
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -129,9 +130,10 @@ def get_break_even_companies(request: BreakEvenPointRequest, db: Session = Depen
     tickers = [comp.ticker for comp in companies]
     print(f"[DEBUG] Matched companies: {len(tickers)}")
     
-    for comp in companies[:140]:
+    for comp in companies[146:147]:
+        print(f"[DEBUG] {comp.ticker} ({comp.name})")
         for m in comp.markets:
-            fetch_and_save_financial_data(comp.ticker, m.name, db)
+            ensure_fresh_data(comp.ticker, m.name if m else "Unknown", db)
     
     # break-even logic using the now-updated CompanyFinancialHistory
     results = find_companies_near_break_even(db, months, company_ids, threshold_pct=5.0)

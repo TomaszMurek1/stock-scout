@@ -8,6 +8,7 @@ from database.user import User
 from database.market import Market
 from database.company import Company, company_market_association
 from services.analysis_results.analysis_results import get_or_update_analysis_result
+from services.yfinance_data_update.data_update_service import ensure_fresh_data
 from .security import get_current_user
 
 router = APIRouter()
@@ -67,9 +68,13 @@ def cached_golden_cross(
     # 3) For each (company, market), use the caching logic
     cross_type = "golden"  # Hard-coded to 'golden' cross; adapt if needed
     for company in companies[:10]:
+        print(f"Analyzing {company.ticker}...")
         for market in company.markets:
             if market.market_id not in market_ids:
                 continue  # skip irrelevant markets
+
+            # Ensure fresh data before analysis
+            ensure_fresh_data(company.ticker, market.name, db)
 
             analysis_record = get_or_update_analysis_result(
                 db=db,

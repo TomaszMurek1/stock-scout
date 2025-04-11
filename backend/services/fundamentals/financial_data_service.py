@@ -10,8 +10,9 @@ def fetch_and_save_financial_data(ticker: str, market_name: str, db: Session, ma
 
     if not company or not market:
         return {"status": "error", "message": "Company or market not found"}
-
+    print(f"11111111111111111111111111111111111111111111111111111111")
     if should_fetch_financial_data(company.company_id, market.market_id, db, max_age_hours):
+        print(f"--------------------------------------------------------")
         return fetch_and_save_financial_data_core(ticker, market_name, db)
 
     return {"status": "skipped", "message": "Data is fresh"}

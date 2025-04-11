@@ -51,6 +51,7 @@ class StockPriceHistory(Base):
     close = Column(Float)
     adjusted_close = Column(Float)
     volume = Column(Integer)
+    created_at = Column(DateTime,default=lambda: datetime(1900, 1, 1, tzinfo=timezone.utc), nullable=False)
 
     company = relationship('Company')
     market = relationship('Market')
