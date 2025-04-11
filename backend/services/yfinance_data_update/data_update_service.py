@@ -36,7 +36,5 @@ def ensure_fresh_data(ticker: str, market_name: str, db: Session):
     fetch_and_save_stock_price_history_data(
         ticker=ticker,
         market_name=market_name,
-        start_date=start_date,
-        end_date=end_date,
         db=db,
     )
