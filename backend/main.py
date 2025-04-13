@@ -16,16 +16,19 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-# Create database tables (only for dev, remove for production) 
+# Create database tables (only for dev, remove for production)
 Base.metadata.create_all(bind=engine)
 
 # Register routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(golden_cross.router, prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(
+    golden_cross.router, prefix="/api/technical-analysis", tags=["Analysis"]
+)
 app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(stocks.router, prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitations"])
 app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
+
 
 @app.get("/")
 async def root():

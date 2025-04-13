@@ -14,11 +14,12 @@ from .security import get_current_user
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.post("/golden-cross")
 def cached_golden_cross(
     request: GoldenCrossRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     This endpoint checks for a "golden cross" using the AnalysisResult cache
@@ -26,13 +27,13 @@ def cached_golden_cross(
     """
     if not current_user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
         )
 
-
     if not request.markets:
-        raise HTTPException(status_code=400, detail="No markets specified in the request.")
+        raise HTTPException(
+            status_code=400, detail="No markets specified in the request."
+        )
 
     short_window = request.short_window
     long_window = request.long_window
@@ -45,9 +46,10 @@ def cached_golden_cross(
 
     # 1) Get Market IDs
     market_ids = [
-        m[0] for m in db.query(Market.market_id)
-                        .filter(Market.name.in_(request.markets))
-                        .all()
+        m[0]
+        for m in db.query(Market.market_id)
+        .filter(Market.name.in_(request.markets))
+        .all()
     ]
     if not market_ids:
         raise HTTPException(status_code=404, detail="No matching markets found.")
@@ -61,18 +63,20 @@ def cached_golden_cross(
         .all()
     )
     if not companies:
-        raise HTTPException(status_code=404, detail="No companies found for these markets.")
+        raise HTTPException(
+            status_code=404, detail="No companies found for these markets."
+        )
 
     logger.info(f"Found {len(companies)} companies to analyze in {request.markets}.")
 
     # 3) For each (company, market), use the caching logic
     cross_type = "golden"  # Hard-coded to 'golden' cross; adapt if needed
     for company in companies[:10]:
-        
+
         for market in company.markets:
             if market.market_id not in market_ids:
                 continue  # skip irrelevant markets
-            
+
             print(f"Analyzing golden-cross for {company.ticker}...")
             # Ensure fresh data before analysis
             ensure_fresh_data(company.ticker, market.name, db)
@@ -87,17 +91,18 @@ def cached_golden_cross(
                 days_to_look_back=days_to_look_back,
                 min_volume=min_volume,
                 adjusted=adjusted,
-                stale_after_days=1  # or whatever logic
+                stale_after_days=1,  # or whatever logic
             )
 
             # If analysis_record.cross_date is present, it means there was a cross
             # But we also check days_since_cross <= days_to_look_back
-            if (analysis_record 
-                and analysis_record.cross_date 
+            if (
+                analysis_record
+                and analysis_record.cross_date
                 and analysis_record.days_since_cross is not None
                 and analysis_record.days_since_cross <= days_to_look_back
             ):
-                # Convert it to your OLD structure: 
+                # Convert it to your OLD structure:
                 #   { "ticker": <company.ticker>, "data": { ... } }
                 this_result = {
                     "ticker": company.ticker,
@@ -109,7 +114,7 @@ def cached_golden_cross(
                         "close": analysis_record.cross_price,
                         "short_ma": short_window,  # If you want actual values, you'd recalc or store them
                         "long_ma": long_window,
-                    }
+                    },
                 }
                 golden_cross_results.append(this_result)
 
@@ -121,7 +126,9 @@ def cached_golden_cross(
     # 4) If we found no crosses => handle same as old code
     if not golden_cross_results:
         # If your old code returned 404 in this case:
-        raise HTTPException(status_code=404, detail="No golden crosses found for any companies.")
+        raise HTTPException(
+            status_code=404, detail="No golden crosses found for any companies."
+        )
 
     # 5) Return old structure
     return {"status": "success", "data": golden_cross_results}

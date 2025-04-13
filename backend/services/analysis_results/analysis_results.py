@@ -8,11 +8,12 @@ from services.technical_analysis.technical_analysis import find_most_recent_cros
 
 logger = logging.getLogger(__name__)
 
+
 def get_or_update_analysis_result(
     db: Session,
     company: Company,
     market: Market,
-    cross_type: str,        # "golden" or "death"
+    cross_type: str,  # "golden" or "death"
     short_window: int,
     long_window: int,
     days_to_look_back: int,
@@ -41,7 +42,9 @@ def get_or_update_analysis_result(
     needs_refresh = False
     if existing:
         # If last_updated is older than X days, re-check
-        if existing.last_updated and (datetime.utcnow() - existing.last_updated) > timedelta(days=stale_after_days):
+        if existing.last_updated and (
+            datetime.utcnow() - existing.last_updated
+        ) > timedelta(days=stale_after_days):
             needs_refresh = True
 
     else:
@@ -58,7 +61,7 @@ def get_or_update_analysis_result(
             min_volume=min_volume,
             adjusted=adjusted,
             max_days_since_cross=days_to_look_back,
-            db=db
+            db=db,
         )
         if not existing:
             # Create a new record if needed
@@ -67,7 +70,7 @@ def get_or_update_analysis_result(
                 market_id=market.market_id,
                 analysis_type=f"{cross_type}_cross",
                 short_window=short_window,
-                long_window=long_window
+                long_window=long_window,
             )
             db.add(existing)
 
@@ -84,4 +87,4 @@ def get_or_update_analysis_result(
         existing.last_updated = datetime.utcnow()
         db.commit()
 
-    return existing 
+    return existing

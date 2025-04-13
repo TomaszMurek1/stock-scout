@@ -6,27 +6,29 @@ from sqlalchemy.orm import Session
 from database.company import Company
 from database.market import Market
 from database.stock_data import StockPriceHistory
-from services.stock_data.stock_data_service import fetch_and_save_stock_price_history_data
+from services.stock_data.stock_data_service import (
+    fetch_and_save_stock_price_history_data,
+)
 from services.utils.sanitize import convert_value
 
 logger = logging.getLogger(__name__)
 
+
 def find_most_recent_crossover(
     ticker: str,
     market: str,
-    cross_type: str,            # "golden" or "death"
+    cross_type: str,  # "golden" or "death"
     short_window: int = 50,
     long_window: int = 200,
-    min_volume: int = 0,        # In this snippet, not heavily used, but included
+    min_volume: int = 0,  # In this snippet, not heavily used, but included
     adjusted: bool = True,
     start_date: datetime = None,
     end_date: datetime = None,
     max_days_since_cross: int = 30,
-    db: Session = None
+    db: Session = None,
 ):
     """
     Detect the most recent 'golden' or 'death' MA crossover for a given ticker & market.
-    
     :param cross_type: "golden" -> short_ma crosses above long_ma
                        "death"  -> short_ma crosses below long_ma
     :return: A dict with cross info, or None if not found / out of range.
@@ -49,7 +51,7 @@ def find_most_recent_crossover(
     if not company_obj:
         logger.error(f"Company with ticker={ticker} not found.")
         return None
-    
+
     # 3) Verify the company is actually in the specified market
     if market_obj not in company_obj.markets:
         logger.error(f"Company {ticker} is not associated with market {market}.")
@@ -68,19 +70,18 @@ def find_most_recent_crossover(
 
     # 5) Ensure DB is up to date for this ticker/market
     fetch_result = fetch_and_save_stock_price_history_data(ticker, market, db, False)
-    if fetch_result.get('status') == 'error':
+    if fetch_result.get("status") == "error":
         logger.error(f"Failed to fetch data for {ticker}: {fetch_result['message']}")
         return None
 
     # 6) Load price data from stock_price_history
     engine = db.get_bind()
-    price_col = StockPriceHistory.adjusted_close if adjusted else StockPriceHistory.close
+    price_col = (
+        StockPriceHistory.adjusted_close if adjusted else StockPriceHistory.close
+    )
 
     query = (
-        select(
-            StockPriceHistory.date.label('date'),
-            price_col.label('close')
-        )
+        select(StockPriceHistory.date.label("date"), price_col.label("close"))
         .where(StockPriceHistory.company_id == company_obj.company_id)
         .where(StockPriceHistory.market_id == market_obj.market_id)
         .where(StockPriceHistory.date >= start_date.date())
@@ -88,29 +89,31 @@ def find_most_recent_crossover(
         .order_by(StockPriceHistory.date)
     )
 
-    df = pd.read_sql_query(query, con=engine, parse_dates=['date'])
-    df.set_index('date', inplace=True)
+    df = pd.read_sql_query(query, con=engine, parse_dates=["date"])
+    df.set_index("date", inplace=True)
 
     if len(df) < long_window:
-        logger.warning(f"Not enough data to compute a {long_window}-day MA for {ticker}.")
+        logger.warning(
+            f"Not enough data to compute a {long_window}-day MA for {ticker}."
+        )
         return None
 
     # 7) Calculate rolling averages
-    df['short_ma'] = df['close'].rolling(window=short_window, min_periods=1).mean()
-    df['long_ma']  = df['close'].rolling(window=long_window, min_periods=1).mean()
+    df["short_ma"] = df["close"].rolling(window=short_window, min_periods=1).mean()
+    df["long_ma"] = df["close"].rolling(window=long_window, min_periods=1).mean()
 
     # 8) Set up 'signal' for golden or death cross
     if cross_type == "golden":
-        df['signal'] = (df['short_ma'] > df['long_ma']).astype(int)
+        df["signal"] = (df["short_ma"] > df["long_ma"]).astype(int)
     elif cross_type == "death":
-        df['signal'] = (df['short_ma'] < df['long_ma']).astype(int)
+        df["signal"] = (df["short_ma"] < df["long_ma"]).astype(int)
     else:
         logger.error(f"Unsupported cross_type: {cross_type}")
         return None
 
     # 9) When 'signal' changes from 0 to 1 => positions == 1.0 => a new cross
-    df['positions'] = df['signal'].diff()
-    crosses = df[df['positions'] == 1.0]
+    df["positions"] = df["signal"].diff()
+    crosses = df[df["positions"] == 1.0]
     if crosses.empty:
         logger.info(f"No {cross_type} cross found for {ticker} in {market}.")
         return None
@@ -129,15 +132,15 @@ def find_most_recent_crossover(
         return None
 
     result = {
-        'ticker': ticker,
-        'company_name': company_obj.name,
-        'market': market_obj.name,
-        'cross_type': cross_type,
-        'date': most_recent_date.strftime('%Y-%m-%d'),
-        'days_since_cross': int(days_since_cross),
-        'close_price': float(most_recent_cross['close']),
-        'short_ma': float(most_recent_cross['short_ma']),
-        'long_ma': float(most_recent_cross['long_ma']),
+        "ticker": ticker,
+        "company_name": company_obj.name,
+        "market": market_obj.name,
+        "cross_type": cross_type,
+        "date": most_recent_date.strftime("%Y-%m-%d"),
+        "days_since_cross": int(days_since_cross),
+        "close_price": float(most_recent_cross["close"]),
+        "short_ma": float(most_recent_cross["short_ma"]),
+        "long_ma": float(most_recent_cross["long_ma"]),
     }
     # Convert potential numpy dtypes
     result = {k: convert_value(v) for k, v in result.items()}
