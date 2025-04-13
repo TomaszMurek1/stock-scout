@@ -73,7 +73,7 @@ def get_or_fetch_stock_price_history(ticker: str, market_name: str, company_id: 
         end_date = datetime.now()
         start_date = end_date - timedelta(days=360)
 
-        fetch_and_save_stock_price_history_data(ticker, market_name, start_date, end_date, db)
+        fetch_and_save_stock_price_history_data(ticker, market_name, db)
         db.expire_all()
 
         # Retry fetching

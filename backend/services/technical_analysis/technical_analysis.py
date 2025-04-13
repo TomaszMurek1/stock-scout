@@ -67,7 +67,7 @@ def find_most_recent_crossover(
         return None
 
     # 5) Ensure DB is up to date for this ticker/market
-    fetch_result = fetch_and_save_stock_price_history_data(ticker, market, start_date, end_date, db)
+    fetch_result = fetch_and_save_stock_price_history_data(ticker, market, db, False)
     if fetch_result.get('status') == 'error':
         logger.error(f"Failed to fetch data for {ticker}: {fetch_result['message']}")
         return None

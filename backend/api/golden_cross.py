@@ -68,11 +68,12 @@ def cached_golden_cross(
     # 3) For each (company, market), use the caching logic
     cross_type = "golden"  # Hard-coded to 'golden' cross; adapt if needed
     for company in companies[:10]:
-        print(f"Analyzing {company.ticker}...")
+        
         for market in company.markets:
             if market.market_id not in market_ids:
                 continue  # skip irrelevant markets
-
+            
+            print(f"Analyzing golden-cross for {company.ticker}...")
             # Ensure fresh data before analysis
             ensure_fresh_data(company.ticker, market.name, db)
 
