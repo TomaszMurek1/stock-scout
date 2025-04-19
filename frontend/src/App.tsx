@@ -16,10 +16,11 @@ import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admi
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
+import PortfolioManagement from "./components/portfolio-management/portfolio-management";
 
 
 function App() {
-  const { login } = useAuth(); 
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSignIn = async (tokenData: { access_token: string; refresh_token: string }) => {
@@ -54,30 +55,31 @@ function App() {
               path="/signin"
               element={
                 <SignIn
-                  onClose={() => {}}
+                  onClose={() => { }}
                   onSignIn={handleSignIn}
                   onError={handleError}
                 />
               }
             />
             <Route path="/" element={<PrivateRoute element={<Home />} />} />
+            <Route path="/portfolio-management" element={<PortfolioManagement />} />
             <Route
               path="/scenarios/golden-cross"
               element={<PrivateRoute element={<GoldenCrossPage />} />}
             />
             <Route
               path="/scenarios/ev-to-revenue"
-              element={<PrivateRoute element={<EvToRevenuePage/>} />}
+              element={<PrivateRoute element={<EvToRevenuePage />} />}
             />
             <Route
               path="/scenarios/break-even-point"
-              element={<PrivateRoute element={<BreakEvenPointPage/>} />}
+              element={<PrivateRoute element={<BreakEvenPointPage />} />}
             />
             <Route
               path="/admin/create-tickers"
               element={<PrivateRoute element={<AdminCreateTickersPage />} />}
             />
-             <Route
+            <Route
               path="/stock-details/:ticker"
               element={<PrivateRoute element={<StockOnePager />} />}
             />
