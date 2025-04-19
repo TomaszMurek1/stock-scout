@@ -10,9 +10,6 @@ from database.financials import CompanyFinancials
 from database.stock_data import StockPriceHistory
 import requests
 import os
-from services.stock_data.stock_data_service import (
-    fetch_and_save_stock_price_history_data,
-)
 from services.utils.cleaning import clean_nan_values
 from services.utils.comparables import build_peer_comparisons
 from services.utils.financial_utils import calculate_financial_ratios
@@ -81,7 +78,7 @@ def get_or_fetch_stock_price_history(
     if not stock_price_history:
         logger.info(f"No stock history found for {ticker}, fetching from source...")
 
-        fetch_and_save_stock_price_history_data(ticker, market_name, db)
+        ensure_fresh_data(ticker, market_name, db)
         db.expire_all()
 
         # Retry fetching

@@ -90,7 +90,14 @@ def fetch_and_save_stock_price_history_data(
             db, company, market_obj, calendar, exchange_code, today
         )
 
-        # Always re-fetch and overwrite the last DB date
+        # ⛔️ Early exit if today's record is already present
+        if last_db_date and last_db_date >= today:
+            return {
+                "status": "up_to_date",
+                "message": f"Latest record is already up to date ({last_db_date.isoformat()})",
+            }
+
+        # Re-fetch and replace the last DB record if not today
         recheck_dates = missing_dates.copy()
         forced_overwrite_dates = set()
         if last_db_date:
@@ -198,4 +205,4 @@ def process_updates(
         new_records += 1
 
     db.commit()
-    logger.info(f"Processed {new_records} records")
+    logger.info(f"Processed_ {new_records} records")

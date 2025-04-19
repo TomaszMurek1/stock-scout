@@ -49,18 +49,19 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
     logger.info(f"Scanning {len(companies)} companies in markets: {request.markets}")
 
     # 3) Fetch/update financial data if necessary
-    for c in companies[:10]:  # Limit for testing
+    for c in companies[:400]:  # Limit for testing
         for m in c.markets:
             if m.market_id in market_ids:
-                fetch_and_save_financial_data(c.ticker, m.name, db)
+                ensure_fresh_data(c.ticker, m.name, db)
 
     # 4) Query `CompanyFinancials` table
     q = (
         db.query(CompanyFinancials)
         .join(Company)
         .filter(CompanyFinancials.market_id.in_(market_ids))
-        .filter(CompanyFinancials.enterprise_value.isnot(None))  # Avoid NULLs
-        .filter(CompanyFinancials.total_revenue.isnot(None))  # Avoid NULLs
+        .filter(CompanyFinancials.enterprise_value.isnot(None))
+        .filter(CompanyFinancials.total_revenue.isnot(None))
+        .filter(CompanyFinancials.total_revenue != 0)  # Add this line!
     )
 
     # Calculate EV-to-Revenue dynamically (since it's not stored in DB)

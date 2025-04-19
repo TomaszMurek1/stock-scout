@@ -6,9 +6,6 @@ from sqlalchemy.orm import Session
 from database.company import Company
 from database.market import Market
 from database.stock_data import StockPriceHistory
-from services.stock_data.stock_data_service import (
-    fetch_and_save_stock_price_history_data,
-)
 from services.utils.sanitize import convert_value
 
 logger = logging.getLogger(__name__)
@@ -68,13 +65,7 @@ def find_most_recent_crossover(
         logger.error("start_date must be earlier than end_date.")
         return None
 
-    # 5) Ensure DB is up to date for this ticker/market
-    fetch_result = fetch_and_save_stock_price_history_data(ticker, market, db, False)
-    if fetch_result.get("status") == "error":
-        logger.error(f"Failed to fetch data for {ticker}: {fetch_result['message']}")
-        return None
-
-    # 6) Load price data from stock_price_history
+    # 5) Load price data from stock_price_history
     engine = db.get_bind()
     price_col = (
         StockPriceHistory.adjusted_close if adjusted else StockPriceHistory.close
