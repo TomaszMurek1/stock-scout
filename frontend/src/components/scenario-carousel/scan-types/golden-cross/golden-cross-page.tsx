@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
-import ScanResults from "../scan-result";
 import FormCardGenerator from "../../../shared/forms/form-card-generator";
+import { GoldenCrossOutput } from "./golden-cross-output";
 import { toast } from "react-toastify";
 import { ScanResultsProps } from "./golden-cross-page.types";
 import {
@@ -40,18 +40,18 @@ export default function GoldenCrossScanPage() {
           markets: data.markets,
         }
       );
-  
+
       const result: ScanResultsProps = response.data;
       setResults(result);
       console.log("Golden Cross Data:", result.data);
       toast.success("Golden Cross scan completed successfully");
     } catch (error: any) {
       console.error("API error:", error);
-      
-      const errorMessage = error.response?.data?.detail 
-        || error.message 
+
+      const errorMessage = error.response?.data?.detail
+        || error.message
         || "Network error. Please try again.";
-        
+
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -70,7 +70,7 @@ export default function GoldenCrossScanPage() {
         onSubmit={onSubmit}
       />
       {results && results.data && results.data.length > 0 && (
-        <ScanResults results={results.data} />
+        <GoldenCrossOutput results={results.data} />
       )}
     </FormCardGenerator>
   );

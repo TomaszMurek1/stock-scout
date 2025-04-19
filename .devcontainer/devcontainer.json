@@ -1,12 +1,14 @@
 {
   "name": "Backend Dev Container",
-  "dockerComposeFile": ["../docker-compose.dev.yml"],
-  "service": "backend",
-  "runServices": ["backend", "dev_db"],
-  "workspaceFolder": "/workspace",
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+  "dockerComposeFile": [
+    "../docker-compose.dev.yml"
   ],
+  "service": "backend",
+  "runServices": [
+    "backend",
+    "dev_db"
+  ],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "customizations": {
     "vscode": {
       "extensions": [

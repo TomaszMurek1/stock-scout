@@ -31,6 +31,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - .:/workspaces/stock-scout
     ports:
       - "8000:8000"
 

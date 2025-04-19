@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from api import auth, favorites, stocks, analysis, admin, fundamentals
+from api import auth, favorites, stocks, golden_cross, admin, fundamentals
 from database.base import Base, engine
 
 # Initialize FastAPI
@@ -21,11 +21,14 @@ Base.metadata.create_all(bind=engine)
 
 # Register routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(analysis.router, prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(
+    golden_cross.router, prefix="/api/technical-analysis", tags=["Analysis"]
+)
 app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(stocks.router, prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitations"])
 app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
+
 
 @app.get("/")
 async def root():

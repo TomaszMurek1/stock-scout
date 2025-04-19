@@ -1,11 +1,11 @@
+from typing import List, Set
+from sqlalchemy import func
 import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import  IntegrityError
-from database.stock_data import  StockPriceHistory
+from database.stock_data import StockPriceHistory
 import logging
 import pandas_market_calendars as mcal
-from sqlalchemy.exc import IntegrityError
 from datetime import date
 from services.company.company_service import get_or_create_company
 from services.market.market_service import get_or_create_market
@@ -14,147 +14,195 @@ from services.utils.db_retry import retry_on_db_lock
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_trading_days(start_date: datetime, end_date: datetime, exchange_code: str) -> set:
+
+def get_missing_trading_days(
+    db: Session, company, market, calendar, exchange_code: str, today: date
+) -> tuple[List[date], date]:
     """
-    Returns a set of trading days (dates) between start_date and end_date
-    using the provided exchange_code (NY, WAR, PAR, etc.).
+    Determine all missing trading days between the last available date
+    in the database and the last trading day up to today.
+    Returns both the list of missing trading days and the last DB date.
     """
+    last_db_date = (
+        db.query(func.max(StockPriceHistory.date))
+        .filter(StockPriceHistory.company_id == company.company_id)
+        .filter(StockPriceHistory.market_id == market.market_id)
+        .scalar()
+    )
+
+    if last_db_date is None:
+        start_date = today - timedelta(days=3 * 365)
+    else:
+        start_date = last_db_date + timedelta(days=1)
+
+    last_trading_day = get_last_trading_day(exchange_code, today)
+    if not last_trading_day:
+        last_trading_day = today  # fallback
+
+    if start_date > last_trading_day:
+        return [], last_db_date
+
+    schedule = calendar.schedule(start_date=start_date, end_date=last_trading_day)
+    return list(schedule.index.date), last_db_date
+
+
+def get_trading_days(
+    start_date: datetime, end_date: datetime, exchange_code: str
+) -> set:
     calendar = mcal.get_calendar(exchange_code)
     schedule = calendar.schedule(start_date=start_date.date(), end_date=end_date.date())
     return set(schedule.index.date)
 
-def data_is_up_to_date(company_id: int, market_id: int, start_date: datetime, end_date: datetime, db: Session, exchange_code: str) -> bool:
-    existing_dates = set(
-        r[0] for r in db.query(StockPriceHistory.date)
-        .filter(StockPriceHistory.company_id == company_id)
-        .filter(StockPriceHistory.market_id == market_id)
-        .filter(StockPriceHistory.date >= start_date.date())
-        .filter(StockPriceHistory.date <= end_date.date())
-        .all()
-    )
 
-    if not existing_dates:
-        return False
-
-    trading_days = get_trading_days(start_date, end_date, exchange_code)
-    remove_date = date(2025, 1, 9)  # US president funeral, not included in Calendar for 2025
-
-    if exchange_code == "XNYS" and remove_date in trading_days:
-        trading_days.remove(remove_date)
-
-    missing = trading_days - existing_dates
-    return len(missing) == 0
-
+def get_last_trading_day(exchange_code: str, up_to_date: date) -> date:
+    calendar = mcal.get_calendar(exchange_code)
+    start_date = up_to_date - timedelta(days=7)
+    schedule = calendar.schedule(start_date=start_date, end_date=up_to_date)
+    if schedule.empty:
+        return None
+    return schedule.index[-1].date()
 
 
 @retry_on_db_lock
-def fetch_and_save_stock_history_data(ticker: str, market_name: str, start_date: datetime, end_date: datetime, db: Session):
-    """
-    Fetch historical data from yfinance for (ticker, market_name) between start_date and end_date,
-    and insert into stock_price_history. 
-    """
+def fetch_and_save_stock_price_history_data(
+    ticker: str, market_name: str, db: Session, force_update: bool = False
+) -> dict:
     try:
-        # 1) Get or create the Company
         company = get_or_create_company(ticker, db)
-        if not company:
-            msg = f"Could not retrieve/create company with ticker {ticker}."
-            return {"status": "error", "message": msg}
-
-        # 2) Get or create the Market
         market_obj = get_or_create_market(market_name, db)
+        if not company or not market_obj:
+            logger.error("Company or market not found")
+            return {"status": "error", "message": "Company or market not found"}
 
-        # 3) Optional: define exchange_code for holiday calendars
-        #    This is a mapping you must define yourself:
         exchange_code_map = {
-            'GSPC': 'XNYS',    # S&P 500
-            'DJI': 'XNYS',     # Dow Jones
-            'WSE': 'XWAR',     # Warsaw
-            'CAC': 'XPAR',     # Paris
-            'NDX': 'XNYS',     # Nasdaq (technically 'XNAS')
-            # etc...
+            "GSPC": "XNYS",
+            "DJI": "XNYS",
+            "WSE": "XWAR",
+            "CAC": "XPAR",
+            "NDX": "XNYS",
         }
-        exchange_code = exchange_code_map.get(market_name, 'XNYS')  # fallback
+        exchange_code = exchange_code_map.get(market_name, "XNYS")
+        calendar = mcal.get_calendar(exchange_code)
+        today = datetime.now(timezone.utc).date()
 
-        # 4) Check if data is already up to date
-        if data_is_up_to_date(company.company_id, market_obj.market_id, start_date, end_date, db, exchange_code):
-            msg = f"All data for {ticker} in market {market_name} from {start_date.date()} to {end_date.date()} is already up to date."
-            return {"status": "up_to_date", "message": msg}
-
-        # 5) Determine the trading days
-        trading_days = get_trading_days(start_date, end_date, exchange_code)
-
-
-        remove_date = date(2025, 1, 9) #US president funeral
-        if exchange_code == "XNYS" and remove_date in trading_days:
-            trading_days.remove(remove_date)
-        # 6) Find which dates we already have
-        existing_dates = set(
-            r[0] for r in db.query(StockPriceHistory.date)
-            .filter(StockPriceHistory.company_id == company.company_id)
-            .filter(StockPriceHistory.market_id == market_obj.market_id)
-            .filter(StockPriceHistory.date >= start_date.date())
-            .filter(StockPriceHistory.date <= end_date.date())
-            .all()
+        # Get missing dates and last DB date
+        missing_dates, last_db_date = get_missing_trading_days(
+            db, company, market_obj, calendar, exchange_code, today
         )
 
-        # 7) Missing dates are the trading days minus existing
-        missing_dates = trading_days - existing_dates
-        if not missing_dates:
-            msg = f"No missing dates for {ticker}, market={market_name}."
-            return {"status": "up_to_date", "message": msg}
+        # ⛔️ Early exit if today's record is already present
+        if last_db_date and last_db_date >= today:
+            return {
+                "status": "up_to_date",
+                "message": f"Latest record is already up to date ({last_db_date.isoformat()})",
+            }
 
-        # 8) Fetch from yfinance
-        #    Because yfinance fetches in a range, figure out min/max needed
-        fetch_start = min(missing_dates)
-        fetch_end = max(missing_dates) + timedelta(days=1)  # end is exclusive in yfinance
-        ticker = ticker.strip()
-        stock = yf.Ticker(ticker)
-        stock_data = stock.history(start=fetch_start, end=fetch_end)
+        # Re-fetch and replace the last DB record if not today
+        recheck_dates = missing_dates.copy()
+        forced_overwrite_dates = set()
+        if last_db_date:
+            recheck_dates.insert(0, last_db_date)
+            forced_overwrite_dates.add(last_db_date)
 
-        if stock_data.empty:
-            msg = f"No data returned from yfinance for {ticker} in range {fetch_start} to {fetch_end}."
-            return {"status": "no_data", "message": msg}
+        if not recheck_dates:
+            return {"status": "up_to_date", "message": "No relevant dates to check"}
 
-        # 9) Insert new rows
-        new_records = 0
-        for idx, row in stock_data.iterrows():
-            date_obj = idx.date()
-            # Insert only if it's in our missing_dates set
-            if date_obj not in missing_dates:
-                continue
+        start_fetch_date = min(recheck_dates) - timedelta(days=1)
+        end_fetch_date = max(recheck_dates) + timedelta(days=1)
 
-            record = StockPriceHistory(
-                company_id=company.company_id,
-                market_id=market_obj.market_id,
-                date=date_obj,
-                open=float(row['Open']),
-                high=float(row['High']),
-                low=float(row['Low']),
-                close=float(row['Close']),
-                adjusted_close=float(row.get('Adj Close', row['Close'])),
-                volume=int(row['Volume'])
+        stock_data = yf.Ticker(ticker).history(
+            start=start_fetch_date,
+            end=end_fetch_date,
+            interval="1d",
+            prepost=False,
+            actions=False,
+        )
+
+        if stock_data is None or stock_data.empty:
+            return {"status": "no_data", "message": "No data from yfinance"}
+
+        fetched_dates = stock_data.index.date.tolist()
+        dates_to_update = (
+            recheck_dates
+            if force_update
+            else [d for d in recheck_dates if d in fetched_dates]
+        )
+
+        if dates_to_update:
+            process_updates(
+                db=db,
+                company=company,
+                market=market_obj,
+                stock_data=stock_data,
+                dates_to_update=dates_to_update,
+                force_update=force_update,
+                forced_overwrite_dates=forced_overwrite_dates,
             )
-            db.add(record)
-            new_records += 1
 
-        if new_records > 0:
-            try:
-                db.commit()
-                msg = f"{new_records} new records added for {ticker}, market={market_name}."
-                logger.info(msg)
-                return {"status": "success", "message": msg}
-            except IntegrityError as exc:
-                db.rollback()
-                msg = f"Integrity error while inserting {ticker} data: {exc}"
-                logger.error(msg)
-                return {"status": "error", "message": msg}
-        else:
-            msg = f"No new records to add for {ticker}, market={market_name}."
-            logger.info(msg)
-            return {"status": "up_to_date", "message": msg}
+        return {
+            "status": "success",
+            "message": f"Updated {len(dates_to_update)} records",
+            "dates": [d.isoformat() for d in dates_to_update],
+        }
 
     except Exception as e:
         db.rollback()
-        msg = f"Unexpected error fetching data for {ticker}, market={market_name}: {e}"
-        logger.error(msg, exc_info=True)
-        return {"status": "error", "message": msg}
+        logger.error(f"Update failed: {str(e)}", exc_info=True)
+        return {"status": "error", "message": str(e)}
+
+
+def process_updates(
+    db: Session,
+    company,
+    market,
+    stock_data,
+    dates_to_update: List[date],
+    force_update: bool,
+    forced_overwrite_dates: Set[date],
+):
+    """Insert or update records in StockPriceHistory."""
+    new_records = 0
+    for date_str, row in stock_data.iterrows():
+        date_obj = date_str.date()
+        if date_obj not in dates_to_update:
+            continue
+
+        # Always overwrite for forced dates like last_db_date
+        if force_update or date_obj in forced_overwrite_dates:
+            db.query(StockPriceHistory).filter_by(
+                company_id=company.company_id,
+                market_id=market.market_id,
+                date=date_obj,
+            ).delete()
+        else:
+            # Skip if the record already exists
+            exists = (
+                db.query(StockPriceHistory)
+                .filter_by(
+                    company_id=company.company_id,
+                    market_id=market.market_id,
+                    date=date_obj,
+                )
+                .first()
+            )
+            if exists:
+                continue
+
+        db.add(
+            StockPriceHistory(
+                company_id=company.company_id,
+                market_id=market.market_id,
+                date=date_obj,
+                open=round(float(row["Open"]), 3),
+                high=round(float(row["High"]), 3),
+                low=round(float(row["Low"]), 3),
+                close=round(float(row["Close"]), 3),
+                adjusted_close=round(float(row.get("Adj Close", row["Close"])), 3),
+                volume=int(row["Volume"]),
+                created_at=datetime.now(timezone.utc),
+            )
+        )
+        new_records += 1
+
+    db.commit()
+    logger.info(f"Processed_ {new_records} records")
