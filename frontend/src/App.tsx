@@ -17,6 +17,7 @@ import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
 import PortfolioManagement from "./components/portfolio-management/portfolio-management";
+import FibonacciElliott from "./components/scenario-carousel/scan-types/fibonacci-elliott/fibonacci-elliott";
 
 
 function App() {
@@ -83,6 +84,11 @@ function App() {
               path="/stock-details/:ticker"
               element={<PrivateRoute element={<StockOnePager />} />}
             />
+            <Route
+              path="/scenarios/fibonacci-elliott/:ticker?"
+              element={<PrivateRoute element={<FibonacciElliott />} />}
+            />
+
           </Routes>
         </main>
         <Footer />

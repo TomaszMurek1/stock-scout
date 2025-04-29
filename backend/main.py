@@ -9,6 +9,7 @@ from api import (
     golden_cross,
     admin,
     fundamentals,
+    fibonacci_elliott,
 )
 from database.base import Base, engine
 
@@ -38,6 +39,11 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitation
 app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
 app.include_router(
     portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
+)
+app.include_router(
+    fibonacci_elliott.router,
+    prefix="/api/fibonacci-elliott",
+    tags=["Technical Analysis"],
 )
 
 

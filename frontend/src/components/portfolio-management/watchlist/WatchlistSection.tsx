@@ -19,11 +19,7 @@ export default function WatchlistSection({ watchlist }: WatchlistSectionProps) {
     }, [watchlist])
 
     const toggleFavorite = (id: number) => {
-        setData((prev) =>
-            prev.map((stock) =>
-                stock.company_id === id ? { ...stock, isFavorite: !stock.isFavorite } : stock
-            )
-        )
+
     }
 
     console.log('watchlist', watchlist)
