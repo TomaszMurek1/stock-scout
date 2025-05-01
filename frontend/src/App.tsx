@@ -17,7 +17,8 @@ import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
 import PortfolioManagement from "./components/portfolio-management/portfolio-management";
-import FibonacciElliott from "./components/scenario-carousel/scan-types/fibonacci-elliott/fibonacci-elliott";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/fibo-wave-scenario";
 
 
 function App() {
@@ -47,52 +48,54 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <div className="flex flex-col min-h-screen">
-        <ToastContainer />
-        <Header />
-        <main className="flex-grow">
-          <Routes>
-            <Route
-              path="/signin"
-              element={
-                <SignIn
-                  onClose={() => { }}
-                  onSignIn={handleSignIn}
-                  onError={handleError}
-                />
-              }
-            />
-            <Route path="/" element={<PrivateRoute element={<Home />} />} />
-            <Route path="/portfolio-management" element={<PortfolioManagement />} />
-            <Route
-              path="/scenarios/golden-cross"
-              element={<PrivateRoute element={<GoldenCrossPage />} />}
-            />
-            <Route
-              path="/scenarios/ev-to-revenue"
-              element={<PrivateRoute element={<EvToRevenuePage />} />}
-            />
-            <Route
-              path="/scenarios/break-even-point"
-              element={<PrivateRoute element={<BreakEvenPointPage />} />}
-            />
-            <Route
-              path="/admin/create-tickers"
-              element={<PrivateRoute element={<AdminCreateTickersPage />} />}
-            />
-            <Route
-              path="/stock-details/:ticker"
-              element={<PrivateRoute element={<StockOnePager />} />}
-            />
-            <Route
-              path="/scenarios/fibonacci-elliott/:ticker?"
-              element={<PrivateRoute element={<FibonacciElliott />} />}
-            />
+      <TooltipProvider>
+        <div className="flex flex-col min-h-screen">
+          <ToastContainer />
+          <Header />
+          <main className="flex-grow">
+            <Routes>
+              <Route
+                path="/signin"
+                element={
+                  <SignIn
+                    onClose={() => { }}
+                    onSignIn={handleSignIn}
+                    onError={handleError}
+                  />
+                }
+              />
+              <Route path="/" element={<PrivateRoute element={<Home />} />} />
+              <Route path="/portfolio-management" element={<PortfolioManagement />} />
+              <Route
+                path="/scenarios/golden-cross"
+                element={<PrivateRoute element={<GoldenCrossPage />} />}
+              />
+              <Route
+                path="/scenarios/ev-to-revenue"
+                element={<PrivateRoute element={<EvToRevenuePage />} />}
+              />
+              <Route
+                path="/scenarios/break-even-point"
+                element={<PrivateRoute element={<BreakEvenPointPage />} />}
+              />
+              <Route
+                path="/admin/create-tickers"
+                element={<PrivateRoute element={<AdminCreateTickersPage />} />}
+              />
+              <Route
+                path="/stock-details/:ticker"
+                element={<PrivateRoute element={<StockOnePager />} />}
+              />
+              <Route
+                path="/scenarios/fibonacci-elliott/:ticker?"
+                element={<PrivateRoute element={<FiboWaveScenario />} />}
+              />
 
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

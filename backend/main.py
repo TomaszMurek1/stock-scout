@@ -41,9 +41,7 @@ app.include_router(
     portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
 )
 app.include_router(
-    fibonacci_elliott.router,
-    prefix="/api/fibonacci-elliott",
-    tags=["Technical Analysis"],
+    fibonacci_elliott.router, prefix="/api/fibo-waves", tags=["Fibonacci & Elliott"]
 )
 
 
