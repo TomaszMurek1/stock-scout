@@ -139,20 +139,6 @@ def build_executive_summary(company: Company, market: Market | None) -> dict:
     }
 
 
-def build_technical_analysis(
-    stock_history: list[tuple], window_50: int = 50, window_200: int = 200
-) -> dict:
-    df = pd.DataFrame(stock_history, columns=["date", "close"])
-    df["SMA_50"] = df["close"].rolling(window=window_50).mean()
-    df["SMA_200"] = df["close"].rolling(window=window_200).mean()
-
-    return {
-        "stock_prices": df[["date", "close"]].dropna().to_dict(orient="records"),
-        "sma_50": df[["date", "SMA_50"]].dropna().to_dict(orient="records"),
-        "sma_200": df[["date", "SMA_200"]].dropna().to_dict(orient="records"),
-    }
-
-
 @router.get("/{ticker}")
 def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     company = get_company_by_ticker(ticker, db)

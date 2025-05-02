@@ -277,7 +277,7 @@ def analyze(
     ticker: str = Path(...),
     start: Optional[str] = Query(None),
     end: Optional[str] = Query(None),
-    pct: float = Query(0.03),
+    pct: float = Query(0.05),
     db: Session = Depends(get_db),
 ):
     df = load_data(

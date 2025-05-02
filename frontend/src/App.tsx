@@ -18,7 +18,7 @@ import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
 import PortfolioManagement from "./components/portfolio-management/portfolio-management";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/fibo-wave-scenario";
+import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 
 
 function App() {

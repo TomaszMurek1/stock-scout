@@ -88,7 +88,7 @@ def cached_golden_cross(
 
     # 4) Determine which company/market pairs need fresh analysis
     company_market_pairs_to_check = []
-    for company in companies[:400]:
+    for company in companies:
         for market in company.markets:
             if market.market_id not in market_ids:
                 continue

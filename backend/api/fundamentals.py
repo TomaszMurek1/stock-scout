@@ -49,7 +49,7 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
     logger.info(f"Scanning {len(companies)} companies in markets: {request.markets}")
 
     # 3) Fetch/update financial data if necessary
-    for c in companies[:400]:  # Limit for testing
+    for c in companies:
         for m in c.markets:
             if m.market_id in market_ids:
                 ensure_fresh_data(c.ticker, m.name, db)
