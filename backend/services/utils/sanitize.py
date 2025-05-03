@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+
 def sanitize_numpy_types(obj):
     """
     Recursively convert numpy types into native types,
@@ -20,6 +21,7 @@ def sanitize_numpy_types(obj):
     elif isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
         return None
     return obj
+
 
 def convert_value(value):
     """

@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 @router.post("/ev-to-revenue")
 def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)):
     """
-    Search for companies in the specified markets whose Enterprise Value to Revenue ratio
-    falls within a certain range.
+    Search for companies in the specified markets whose Enterprise Value to
+    Revenue ratio falls within a certain range.
     """
     if not request.markets:
         raise HTTPException(status_code=400, detail="No markets specified.")

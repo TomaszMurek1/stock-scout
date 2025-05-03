@@ -19,6 +19,7 @@ import { useAuth } from "./services/AuthContext";
 import PortfolioManagement from "./components/portfolio-management/portfolio-management";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
+import StockCompare from "./components/comapre-stocks-page/StockCompare";
 
 
 function App() {
@@ -90,6 +91,7 @@ function App() {
                 path="/scenarios/fibonacci-elliott/:ticker?"
                 element={<PrivateRoute element={<FiboWaveScenario />} />}
               />
+              <Route path="/compare/:tickerA/:tickerB" element={<StockCompare />} />
 
             </Routes>
           </main>

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api import (
     auth,
+    compare,
     favorites,
     portfolio_management,
     stocks,
@@ -43,6 +44,7 @@ app.include_router(
 app.include_router(
     fibonacci_elliott.router, prefix="/api/fibo-waves", tags=["Fibonacci & Elliott"]
 )
+app.include_router(compare.router, prefix="/api/compare", tags=["Comparison"])
 
 
 @app.get("/")
