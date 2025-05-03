@@ -9,7 +9,6 @@ from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanReq
 from services.fundamentals.break_even.break_even_companies import (
     find_companies_near_break_even,
 )
-from services.fundamentals.financial_data_service import fetch_and_save_financial_data
 from services.yfinance_data_update.data_update_service import ensure_fresh_data
 
 router = APIRouter()

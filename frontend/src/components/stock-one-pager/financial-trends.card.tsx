@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 
 import type { StockData } from "./stock-one-pager.types";
-import { formatNumber } from "@/utils/formatting";
+import { formatCurrency, formatNumber } from "@/utils/formatting";
 import { Nullable } from "../types/shared.types";
 
 interface FinancialTrendsCardProps {
@@ -46,6 +46,7 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
     key: "revenue" | "net_income" | "ebitda" | "free_cash_flow"
   ) => {
     const data = getTrendData(key);
+    console.log("Trend Data:", data);
     return (
       <Table>
         <TableHeader>
@@ -65,7 +66,7 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
             return (
               <TableRow key={item.year}>
                 <TableCell className="font-medium">{item.year}</TableCell>
-                <TableCell>{formatNumber(item.value)}</TableCell>
+                <TableCell>{formatCurrency({ value: item.value, notation: 'compact', currency })}</TableCell>
                 <TableCell>
                   {yoyChange !== null ? (
                     <span className={yoyChange >= 0 ? "text-green-600" : "text-red-600"}>

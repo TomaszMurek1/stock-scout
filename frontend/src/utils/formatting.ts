@@ -6,16 +6,25 @@ export function formatPercentage(value: number | null | undefined): string {
     : "N/A";
 }
 
-export function formatCurrency(
-  value: Nullable<number>,
-  currency: string | null = "PLN"
-): string {
-  if (!value || !currency) return "N/A";
+interface FormatCurrencyOptions {
+  value: Nullable<number>;
+  currency?: string | null;
+  notation?: Intl.NumberFormatOptions["notation"];
+  maximumFractionDigits?: number;
+}
+
+export function formatCurrency({
+  value,
+  currency = "USD",
+  notation = "standard",
+  maximumFractionDigits = 2,
+}: FormatCurrencyOptions): string {
+  if (value == null || !currency) return "N/A";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    notation: "compact",
-    maximumFractionDigits: 1,
+    notation,
+    maximumFractionDigits,
   }).format(value);
 }
 

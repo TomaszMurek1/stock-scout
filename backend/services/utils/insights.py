@@ -1,6 +1,6 @@
 # utils/insights.py
 from sqlalchemy.orm import Session
-from database.financials import  CompanyFinancialHistory, CompanyFinancials
+from database.financials import CompanyFinancialHistory, CompanyFinancials
 import pandas as pd
 
 
@@ -10,10 +10,8 @@ def clean_nan_dict(d: dict) -> dict:
             return pd.isna(val) or val != val or val in (float("inf"), float("-inf"))
         return False
 
-    return {
-        k: (None if (v is None or is_invalid(v)) else v)
-        for k, v in d.items()
-    }
+    return {k: (None if (v is None or is_invalid(v)) else v) for k, v in d.items()}
+
 
 def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict:
     records = (
@@ -32,13 +30,26 @@ def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict
         for r in records:
             year = r.report_end_date.year
             value = getattr(r, primary_metric, None)
-            if (value is None or (isinstance(value, float) and (pd.isna(value) or value != value))) and fallback_metric:
+            if (
+                value is None
+                or (isinstance(value, float) and (pd.isna(value) or value != value))
+            ) and fallback_metric:
                 value = getattr(r, fallback_metric, None)
 
-            trend.append({
-                "year": year,
-                "value": None if value is None or (isinstance(value, float) and (pd.isna(value) or value != value)) else value
-            })
+            trend.append(
+                {
+                    "year": year,
+                    "value": (
+                        None
+                        if value is None
+                        or (
+                            isinstance(value, float)
+                            and (pd.isna(value) or value != value)
+                        )
+                        else value
+                    ),
+                }
+            )
         return trend
 
     return {
@@ -46,18 +57,21 @@ def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict
         "net_income": trend_series("net_income"),
         "ebitda": trend_series("ebitda"),
         "free_cash_flow": trend_series("free_cash_flow"),
-        "eps": trend_series("diluted_eps", "basic_eps"), 
+        "eps": trend_series("diluted_eps", "basic_eps"),
     }
 
-def build_investor_metrics(financials: CompanyFinancials, financial_history: dict) -> dict:
+
+def build_investor_metrics(
+    financials: CompanyFinancials, financial_history: dict
+) -> dict:
     def safe_divide(numerator, denominator):
         if numerator is None or denominator in (0, None):
             return None
         return numerator / denominator
 
     def get_recent_and_previous(history_list):
-        recent = history_list[0]['value'] if history_list else None
-        previous = history_list[1]['value'] if len(history_list) > 1 else None
+        recent = history_list[0]["value"] if history_list else None
+        previous = history_list[1]["value"] if len(history_list) > 1 else None
         return recent, previous
 
     def round_or_none(value, digits=4):
@@ -73,10 +87,13 @@ def build_investor_metrics(financials: CompanyFinancials, financial_history: dic
     capex = financials.capital_expenditure
 
     # Revenue growth
-    recent_year, previous_year = get_recent_and_previous(financial_history.get('revenue', []))
+    recent_year, previous_year = get_recent_and_previous(
+        financial_history.get("revenue", [])
+    )
     revenue_growth = (
         ((recent_year - previous_year) / abs(previous_year)) * 100
-        if recent_year and previous_year else None
+        if recent_year and previous_year
+        else None
     )
 
     # Margins and ratios
@@ -100,7 +117,9 @@ def build_investor_metrics(financials: CompanyFinancials, financial_history: dic
         "ebitda_margin": round_or_none(ebitda_margin),
         "fcf_margin": round_or_none(fcf_margin),
         "capex_ratio": round_or_none(capex_ratio),
-        "rule_of_40": round_or_none(rule_of_40, 2) if revenue_growth is not None else None,
+        "rule_of_40": (
+            round_or_none(rule_of_40, 2) if revenue_growth is not None else None
+        ),
         "growth_sustainability_index": round_or_none(growth_sustainability_index, 2),
         "revenue_growth": round_or_none(revenue_growth, 2),
         "net_margin": round_or_none(net_margin),
@@ -112,44 +131,81 @@ def build_investor_metrics(financials: CompanyFinancials, financial_history: dic
 
 
 def build_extended_technical_analysis(
-    stock_history: list[tuple],
-    short_window: int = 50,
-    long_window: int = 200
+    stock_history: list[tuple], short_window: int = 50, long_window: int = 200
 ) -> dict:
+    # 1) Build DataFrame
     df = pd.DataFrame(stock_history, columns=["date", "close"])
     df["close"] = pd.to_numeric(df["close"], errors="coerce")
-    df = df.dropna()
+    df = df.dropna(subset=["close"]).copy()
 
+    # 2) Compute rolling indicators
     df["sma_short"] = df["close"].rolling(window=short_window).mean()
     df["sma_long"] = df["close"].rolling(window=long_window).mean()
     df["volatility_30d"] = df["close"].rolling(window=30).std()
     df["momentum_30d"] = df["close"].pct_change(periods=30)
     df["momentum_90d"] = df["close"].pct_change(periods=90)
 
+    # 3) Summary stats
     current_price = df["close"].iloc[-1]
     high_52w = df["close"].max()
     low_52w = df["close"].min()
-    range_position = (current_price - low_52w) / (high_52w - low_52w) if high_52w != low_52w else None
+    range_position = (
+        (current_price - low_52w) / (high_52w - low_52w)
+        if high_52w != low_52w
+        else None
+    )
 
-    golden_cross = (
-        ((df["sma_short"] > df["sma_long"]) & (df["sma_short"].shift(1) <= df["sma_long"].shift(1))).any()
-    ) if len(df) >= long_window else False
+    golden_cross = False
+    death_cross = False
+    if len(df) >= long_window:
+        golden_cross = (
+            (df["sma_short"] > df["sma_long"])
+            & (df["sma_short"].shift(1) <= df["sma_long"].shift(1))
+        ).any()
+        death_cross = (
+            (df["sma_short"] < df["sma_long"])
+            & (df["sma_short"].shift(1) >= df["sma_long"].shift(1))
+        ).any()
 
-    death_cross = (
-        ((df["sma_short"] < df["sma_long"]) & (df["sma_short"].shift(1) >= df["sma_long"].shift(1))).any()
-    ) if len(df) >= long_window else False
+    # 4) Build one per-date list
+    historical = []
+    for row in df.itertuples(index=False):
+        historical.append(
+            {
+                "date": row.date.isoformat(),
+                "close": round(row.close, 4),
+                "sma_short": (
+                    round(row.sma_short, 4) if not pd.isna(row.sma_short) else None
+                ),
+                "sma_long": (
+                    round(row.sma_long, 4) if not pd.isna(row.sma_long) else None
+                ),
+            }
+        )
 
-    raw = {
-        "momentum_30d": round(df["momentum_30d"].iloc[-1] * 100, 2) if not pd.isna(df["momentum_30d"].iloc[-1]) else None,
-        "momentum_90d": round(df["momentum_90d"].iloc[-1] * 100, 2) if not pd.isna(df["momentum_90d"].iloc[-1]) else None,
-        "volatility_30d": round(df["volatility_30d"].iloc[-1], 2) if not pd.isna(df["volatility_30d"].iloc[-1]) else None,
-        "range_position_52w": round(range_position * 100, 2) if range_position is not None else None,
+    # 5) Package up and clean any NaNs → None
+    payload = {
+        "momentum_30d": (
+            round(df["momentum_30d"].iloc[-1] * 100, 2)
+            if not pd.isna(df["momentum_30d"].iloc[-1])
+            else None
+        ),
+        "momentum_90d": (
+            round(df["momentum_90d"].iloc[-1] * 100, 2)
+            if not pd.isna(df["momentum_90d"].iloc[-1])
+            else None
+        ),
+        "volatility_30d": (
+            round(df["volatility_30d"].iloc[-1], 2)
+            if not pd.isna(df["volatility_30d"].iloc[-1])
+            else None
+        ),
+        "range_position_52w": (
+            round(range_position * 100, 2) if range_position is not None else None
+        ),
         "golden_cross": golden_cross,
         "death_cross": death_cross,
-        "stock_prices": df[["date", "close"]].dropna().to_dict(orient="records"),
-        "sma_short": df[["date", "sma_short"]].dropna().to_dict(orient="records"),
-        "sma_long": df[["date", "sma_long"]].dropna().to_dict(orient="records"),
+        "historical": historical,
     }
 
-
-    return clean_nan_dict(raw)
+    return clean_nan_dict(payload)

@@ -18,7 +18,7 @@ const FormCardGenerator = ({
   title,
   subtitle,
 }: FormCardGeneratorProps) => (
-  <Card className="w-full max-w-xl mx-auto bg-zinc-200 mt-4 mb-4 ">
+  <Card className="w-full max-w-2xl mx-auto bg-zinc-200 mt-4 mb-4 ">
     <CardHeader className="border-b border-slate-200 pb-4">
       <CardTitle className="flex items-center space-x-3 text-slate-800">
         <BarChart className="w-6 h-6 text-slate-600" />
