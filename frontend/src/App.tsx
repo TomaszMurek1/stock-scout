@@ -19,7 +19,7 @@ import { useAuth } from "./services/AuthContext";
 import PortfolioManagement from "./components/portfolio-management/portfolio-management";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
-import StockCompare from "./components/comapre-stocks-page/StockCompare";
+import { StockCompare } from "./components/comapre-stocks-page/StockCompare";
 
 
 function App() {
