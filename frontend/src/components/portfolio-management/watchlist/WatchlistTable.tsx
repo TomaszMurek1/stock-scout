@@ -4,18 +4,32 @@ import {
     TableHead,
     TableBody,
     TableRow,
-    TableCell,
 } from "@/components/ui/table"
-import { WatchlistStock } from "./types"
 import { WatchlistRow } from "./WatchlistRow"
+import { useEffect } from "react"
+import { FavoritesStock, useFavoritesStore } from "@/store/favoritesStore"
+import { fetchPortfolioData } from "@/services/api/portfolio"
 
-interface WatchlistTableProps {
-    data: WatchlistStock[]
-    onToggleFavorite: (id: number) => void
-}
 
-export function WatchlistTable({ data, onToggleFavorite }: WatchlistTableProps) {
-    debugger
+export function WatchlistTable() {
+    const favorites = useFavoritesStore(s => s.favorites)
+    const setFavorites = useFavoritesStore(s => s.setFavorites)
+    useEffect(() => {
+        if (favorites.length === 0) {
+            fetchPortfolioData().then((list: FavoritesStock[]) => {
+                setFavorites(list)
+            })
+        }
+    }, [favorites, setFavorites])
+
+    if (favorites.length === 0) {
+        return (
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
+                <p className="text-gray-600">No stocks in your watchlist. Please add some.</p>
+            </div>
+        )
+    }
+
     return (
         <Table>
             <TableHeader>
@@ -30,8 +44,8 @@ export function WatchlistTable({ data, onToggleFavorite }: WatchlistTableProps) 
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {data.map((stock) => (
-                    <WatchlistRow key={stock.company_id} stock={stock} onToggleFavorite={onToggleFavorite} />
+                {favorites.map((stock) => (
+                    <WatchlistRow key={stock.company_id} stock={stock} />
                 ))}
             </TableBody>
         </Table>

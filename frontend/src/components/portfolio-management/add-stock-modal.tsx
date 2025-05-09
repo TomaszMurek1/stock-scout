@@ -5,12 +5,12 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
-import type { Stock } from "./types"
+import type { PortfolioStock } from "./types"
 
 interface AddStockModalProps {
     isOpen: boolean
     onClose: () => void
-    onAdd: (stock: Omit<Stock, "id">) => void
+    onAdd: (stock: Omit<PortfolioStock, "id">) => void
 }
 
 export default function AddStockModal({ isOpen, onClose, onAdd }: AddStockModalProps) {
