@@ -4,13 +4,13 @@ from core.config import settings
 from api import (
     auth,
     compare,
-    favorites,
     portfolio_management,
     stocks,
     golden_cross,
     admin,
     fundamentals,
     fibonacci_elliott,
+    watchlist,
 )
 from database.base import Base, engine
 
@@ -37,7 +37,7 @@ app.include_router(
 app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(stocks.router, prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitations"])
-app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
+app.include_router(watchlist.router, prefix="/api/watchlist", tags=["Watchlist"])
 app.include_router(
     portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
 )

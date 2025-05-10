@@ -14,7 +14,6 @@ import CashBalanceTracker from "./cash-balance-tracker"
 import RiskAnalysis from "./risk-analysis"
 import PerformanceChart from "./performance-chart"
 import type { PortfolioStock } from "./types"
-import { fetchPortfolioData } from "@/services/api/portfolio"
 import { usePortfolioStore } from "@/store/portfolioStore"
 
 export default function PortfolioManagement() {
@@ -26,22 +25,9 @@ export default function PortfolioManagement() {
     const addHolding = usePortfolioStore((s: any) => s.addHolding)
     const removeHolding = usePortfolioStore((s: any) => s.removeHolding)
 
-    const favorites = usePortfolioStore((s: any) => s.favorites)
-    const setFavorites = usePortfolioStore((s: any) => s.setFavorites)
-
-    // only fetch if we have no favorites yet
-    useEffect(() => {
-        if (favorites.length === 0) {
-            fetchPortfolioData().then((list) => {
-                setFavorites(list)
-                console.log("Fetched watchlist:", list)
-            })
-        }
-    }, [favorites, setFavorites])
-
     // derived totals
-    const totalValue = holdings.reduce((sum, s) => sum + s.currentPrice * s.shares, 0)
-    const totalInvested = holdings.reduce((sum, s) => sum + s.purchasePrice * s.shares, 0)
+    const totalValue = holdings.reduce((sum: number, s: any) => sum + s.currentPrice * s.shares, 0)
+    const totalInvested = holdings.reduce((sum: number, s: any) => sum + s.purchasePrice * s.shares, 0)
     const totalGainLoss = totalValue - totalInvested
     const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0
 

@@ -3,14 +3,14 @@ import { Button } from '@/components/ui/button'
 import { Plus, RefreshCw } from 'lucide-react'
 import { fetchPortfolioData } from '@/services/api/portfolio'
 import type { WatchlistStock } from './types'
-import { useFavoritesStore } from '@/store/favoritesStore'
+import { useWatchlistStore } from '@/store/watchlistStore'
 import { WatchlistTable } from './WatchlistTable'
 
 export default function WatchlistSection() {
-    const setFavorites = useFavoritesStore(s => s.setFavorites)
+    const setWatchlist = useWatchlistStore(s => s.setWatchlist)
     const handleRefresh = () =>
         fetchPortfolioData().then((list: WatchlistStock[]) => {
-            setFavorites(list)
+            setWatchlist(list)
         })
 
 

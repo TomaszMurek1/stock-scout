@@ -8,10 +8,14 @@ import {
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
+import type { MouseEvent } from 'react'
 import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
-import { fetchFavorites, toggleFavorite } from "@/services/api/favorites";
+import { fetchWatchlist, toggleWatchlist } from "@/services/api/watchlist";
+import { useWatchlistStore, WatchlistStock } from "@/store/watchlistStore";
+import { apiClient } from "@/services/apiClient";
+import { string } from "zod";
+
 
 interface StockHeaderProps {
   ticker: string | undefined;
@@ -30,26 +34,44 @@ const StockHeader: FC<StockHeaderProps> = ({
   riskMetrics,
   sharesOutstanding,
 }) => {
-  debugger
+
   const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
-  const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const watchlist = useWatchlistStore(s => s.watchlist)
+  const setWatchlist = useWatchlistStore(s => s.setWatchlist)
+  const toggleWatchlist = useWatchlistStore(s => s.toggleWatchlist)
+  const isFavorite = watchlist.some(w => w.ticker === ticker)
 
   useEffect(() => {
-    if (!ticker) return;
-    fetchFavorites().then((list) => {
-      setIsFavorite(list.includes(ticker));
-    });
-  }, [ticker]);
+    if (!ticker) return
+    fetchWatchlist().then((list) => {
+      setWatchlist(list)
+    })
+  }, [ticker, setWatchlist])
 
-  const handleToggleFavorite = async () => {
-    try {
-      if (ticker) await toggleFavorite(ticker, isFavorite);
-      setIsFavorite(!isFavorite);
-    } catch (err) {
-      console.error("Failed to toggle favorite", err);
+  const handleWatchlistClick = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+    const stock: WatchlistStock = {
+      ticker: ticker as string,
+      name: executiveSummary.name as string,
     }
-  };
+
+    // Optimistically update UI + store
+    toggleWatchlist(stock)
+
+    try {
+      // Mirror it server-side
+      if (isFavorite) {
+        await apiClient.delete(`/watchlist/${ticker}`)
+      } else {
+        await apiClient.post(`/watchlist/${ticker}`)
+      }
+    } catch (err) {
+      console.error("Watchlist toggle failed:", err)
+      // Revert on error
+      toggleWatchlist(stock)
+    }
+  }
 
   // Use `close` property from historical
   const prices = technicalAnalysis.historical;
@@ -103,7 +125,7 @@ const StockHeader: FC<StockHeaderProps> = ({
                 variant="ghost"
                 size="icon"
                 className={isFavorite ? "text-green-700" : "text-gray-400"}
-                onClick={handleToggleFavorite}
+                onClick={handleWatchlistClick}
               >
                 <HeartIcon className={isFavorite ? "h-5 w-5 fill-current" : "h-5 w-5"} />
               </Button>
@@ -123,7 +145,7 @@ const StockHeader: FC<StockHeaderProps> = ({
               <div className="flex items-center gap-1">
                 <GlobeAltIcon className="h-4 w-4" />
                 <a
-                  href={companyOverview.website}
+                  href={companyOverview.website ? companyOverview.website : "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary"
