@@ -45,7 +45,7 @@ export function WatchlistTable() {
             </TableHeader>
             <TableBody>
                 {watchlist.map((stock) => (
-                    <WatchlistRow key={stock.company_id} stock={stock} />
+                    <WatchlistRow key={stock.ticker} stock={stock} />
                 ))}
             </TableBody>
         </Table>

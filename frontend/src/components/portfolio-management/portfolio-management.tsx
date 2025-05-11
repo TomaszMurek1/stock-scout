@@ -16,18 +16,48 @@ import PerformanceChart from "./performance-chart"
 import type { PortfolioStock } from "./types"
 import { usePortfolioStore } from "@/store/portfolioStore"
 
+
+
 export default function PortfolioManagement() {
     // local UI state still lives here
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
     // ===== zustand slices & actions =====
-    const holdings = usePortfolioStore((s: any) => s.holdings)
-    const addHolding = usePortfolioStore((s: any) => s.addHolding)
-    const removeHolding = usePortfolioStore((s: any) => s.removeHolding)
+    const {
+        holdings,
+        refresh: refreshHoldings,
+        buy,
+        sell
+    } = usePortfolioStore();
 
+    useEffect(() => {
+        refreshHoldings();
+    }, [refreshHoldings]);
+
+    const uiStocks: PortfolioStock[] = holdings.map((h) => ({
+
+        symbol: h.ticker,
+        name: h.ticker,              // (or pull real name if you need it)
+        purchasePrice: Number(h.average_cost),
+        currentPrice: h.market_price ? Number(h.market_price) : null,
+    }));
+
+    const removeHolding = async (symbol: string) => {
+        const target = holdings.find((h) => h.ticker === symbol);
+        if (!target) return;
+
+        /* sell ALL shares to zero out the position, fee = 0 */
+        await sell({
+            ticker: target.ticker,
+            shares: Number(target.shares),
+            price: Number(target.market_price ?? target.average_cost),
+            fee: 0,
+        });
+    };
     // derived totals
     const totalValue = holdings.reduce((sum: number, s: any) => sum + s.currentPrice * s.shares, 0)
-    const totalInvested = holdings.reduce((sum: number, s: any) => sum + s.purchasePrice * s.shares, 0)
+    const totalInvested = holdings.reduce((sum: number, s: any) => sum + s.average_price * s.shares, 0)
+    debugger
     const totalGainLoss = totalValue - totalInvested
     const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0
 
@@ -91,7 +121,7 @@ export default function PortfolioManagement() {
                             </Button>
                         </div>
 
-                        <StockList stocks={holdings} onRemove={removeHolding} />
+                        <StockList stocks={uiStocks} onRemove={removeHolding} />
                     </div>
                 </TabsContent>
 

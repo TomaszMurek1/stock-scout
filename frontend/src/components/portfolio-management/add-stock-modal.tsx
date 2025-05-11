@@ -1,131 +1,155 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, type FC } from "react";
+import { X, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { usePortfolioStore } from "@/store/portfolioStore";
+import { toast } from "react-toastify";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
-import type { PortfolioStock } from "./types"
 
 interface AddStockModalProps {
-    isOpen: boolean
-    onClose: () => void
-    onAdd: (stock: Omit<PortfolioStock, "id">) => void
+    isOpen: boolean;
+    onClose: () => void;
 }
 
-export default function AddStockModal({ isOpen, onClose, onAdd }: AddStockModalProps) {
-    const [symbol, setSymbol] = useState("")
-    const [name, setName] = useState("")
-    const [shares, setShares] = useState("")
-    const [purchasePrice, setPurchasePrice] = useState("")
+const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose }) => {
+    const [symbol, setSymbol] = useState("");
+    const [shares, setShares] = useState("");
+    const [price, setPrice] = useState("");
+    const [fee, setFee] = useState("0");
+    const [loading, setLoading] = useState(false);
 
-    if (!isOpen) return null
+    const buy = usePortfolioStore((s) => s.buy);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
+    if (!isOpen) return null;
 
-        onAdd({
-            symbol: symbol.toUpperCase(),
-            name,
-            shares: Number(shares),
-            purchasePrice: Number(purchasePrice),
-            currentPrice: Number(purchasePrice), // Default to purchase price, would be updated with real data
-        })
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!symbol || !shares || !price) return;
 
-        // Reset form
-        setSymbol("")
-        setName("")
-        setShares("")
-        setPurchasePrice("")
-    }
+        setLoading(true);
+        try {
+            debugger
+            await buy({
+                ticker: symbol.toUpperCase(),
+                shares: Number(shares),
+                price: Number(price),
+                fee: Number(fee || 0),
+            });
+            toast.success("Position added!");
+            /* reset + close */
+            setSymbol("");
+            setShares("");
+            setPrice("");
+            setFee("0");
+            onClose();
+        } catch (err: any) {
+            toast.error(err?.message ?? "Could not add position");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-xl font-semibold text-gray-800">Add Stock to Portfolio</h2>
-                    <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-500">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+                <div className="flex items-center justify-between border-b p-4">
+                    <h2 className="text-lg font-semibold">Buy stock / add position</h2>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={onClose}
+                        className="text-gray-500"
+                    >
                         <X className="h-5 w-5" />
                     </Button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-4">
-                    <div className="space-y-4">
-                        <div>
-                            <label htmlFor="symbol" className="block text-sm font-medium text-gray-700 mb-1">
-                                Stock Symbol
-                            </label>
-                            <input
-                                id="symbol"
-                                type="text"
-                                value={symbol}
-                                onChange={(e) => setSymbol(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                placeholder="e.g. AAPL"
-                                required
-                            />
-                        </div>
+                <form onSubmit={handleSubmit} className="space-y-5 p-4">
+                    {/* symbol */}
+                    <div>
+                        <label htmlFor="symbol" className="mb-1 block text-sm font-medium">
+                            Stock symbol
+                        </label>
+                        <input
+                            id="symbol"
+                            value={symbol}
+                            onChange={(e) => setSymbol(e.target.value)}
+                            placeholder="e.g. AAPL"
+                            required
+                            className="w-full rounded border p-2"
+                        />
+                    </div>
 
+                    {/* shares & price */}
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                                Company Name
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                placeholder="e.g. Apple Inc."
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="shares" className="block text-sm font-medium text-gray-700 mb-1">
-                                Number of Shares
+                            <label htmlFor="shares" className="mb-1 block text-sm font-medium">
+                                Shares
                             </label>
                             <input
                                 id="shares"
                                 type="number"
-                                min="0.01"
-                                step="0.01"
+                                min="0.0001"
+                                step="0.0001"
                                 value={shares}
                                 onChange={(e) => setShares(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                placeholder="e.g. 10"
                                 required
+                                className="w-full rounded border p-2"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="purchasePrice" className="block text-sm font-medium text-gray-700 mb-1">
-                                Purchase Price per Share ($)
+                            <label htmlFor="price" className="mb-1 block text-sm font-medium">
+                                Price / share ($)
                             </label>
                             <input
-                                id="purchasePrice"
+                                id="price"
                                 type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={purchasePrice}
-                                onChange={(e) => setPurchasePrice(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                placeholder="e.g. 150.75"
+                                min="0.0001"
+                                step="0.0001"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
                                 required
+                                className="w-full rounded border p-2"
                             />
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end space-x-3">
-                        <Button type="button" variant="outline" onClick={onClose} className="border-gray-300 text-gray-700">
+                    {/* optional fee */}
+                    <div>
+                        <label htmlFor="fee" className="mb-1 block text-sm font-medium">
+                            Broker fee (optional)
+                        </label>
+                        <input
+                            id="fee"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={fee}
+                            onChange={(e) => setFee(e.target.value)}
+                            className="w-full rounded border p-2"
+                        />
+                    </div>
+
+                    {/* actions */}
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button variant="outline" onClick={onClose}>
                             Cancel
                         </Button>
-                        <Button type="submit" className="bg-gray-800 text-white hover:bg-gray-700">
-                            Add Stock
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="bg-primary text-white hover:bg-primary/90"
+                        >
+                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Add position
                         </Button>
                     </div>
                 </form>
             </div>
         </div>
-    )
-}
+    );
+};
+
+export default AddStockModal;

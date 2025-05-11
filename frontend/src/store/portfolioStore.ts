@@ -1,45 +1,60 @@
-// src/stores/portfolioStore.ts
-import { PortfolioStock } from '@/components/portfolio-management/types'
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { apiClient } from "@/services/apiClient";
+import { create } from "zustand";
 
 
-interface PortfolioState {
-    holdings: PortfolioStock[]
-    // actions
-    addHolding: (stock: Omit<PortfolioStock, 'id'>) => void
-    removeHolding: (id: string) => void
+interface Holding {
+    company_id: number;
+    ticker: string;
+    shares: number;
+    average_cost: number;
+    market_price: number | null;
+    market_value: number | null;
+    unrealized: number | null;
 }
 
-export const usePortfolioStore = create<PortfolioState>()(
-    devtools(
-        persist(
-            (set) => ({
-                // initial state
-                holdings: [
-                    { id: '1', symbol: 'AAPL', name: 'Apple Inc.', shares: 10, purchasePrice: 150.75, currentPrice: 175.25 },
-                    { id: '2', symbol: 'MSFT', name: 'Microsoft Corporation', shares: 5, purchasePrice: 245.3, currentPrice: 280.15 },
-                    { id: '3', symbol: 'GOOGL', name: 'Alphabet Inc.', shares: 2, purchasePrice: 2750.0, currentPrice: 2850.5 },
-                    { id: '4', symbol: 'GOOGL2', name: 'Alphabet2 Inc.', shares: 2, purchasePrice: 222.0, currentPrice: 2222.5 },
-                ],
+interface PortfolioSlice {
+    holdings: Holding[];
+    refresh(): Promise<void>;
+    buy(data: {
+        ticker: string;
+        shares: number;
+        price: number;
+        fee?: number;
+    }): Promise<void>;
+    sell(data: {
+        ticker: string;
+        shares: number;
+        price: number;
+        fee?: number;
+    }): Promise<void>;
+}
 
-                // implementations
-                addHolding: (stock) =>
-                    set((state) => ({
-                        holdings: [
-                            ...state.holdings,
-                            { ...stock, id: Date.now().toString() },
-                        ],
-                    })),
-                removeHolding: (id) =>
-                    set((state) => ({
-                        holdings: state.holdings.filter((s) => s.id !== id),
-                    })),
-            }),
-            {
-                name: 'portfolio-storage', // localStorage key
-            }
-        ),
-        { name: 'PortfolioStore' }
-    )
-)
+export const usePortfolioStore = create<PortfolioSlice>((set, get) => ({
+    holdings: [],
+
+    async refresh() {
+        const { data } = await apiClient.get("/portfolio-management");
+        set({ holdings: data.holdings });
+    },
+
+    async buy({ ticker, shares, price, fee = 0 }) {
+        debugger
+        await apiClient.post("/portfolio-management/buy", {
+            ticker,
+            shares,
+            price,
+            fee,
+        });
+        await get().refresh();
+    },
+
+    async sell({ ticker, shares, price, fee = 0 }) {
+        await apiClient.post("/portfolio-management/sell", {
+            ticker,
+            shares,
+            price,
+            fee,
+        });
+        await get().refresh();
+    },
+}));

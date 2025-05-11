@@ -1,8 +1,10 @@
+from typing import List, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
 from database.base import get_db
-from database.portfolio import FavoriteStock
+from database.portfolio import FavoriteStock, PortfolioPosition
 from database.user import User
 from database.company import Company
 from sqlalchemy.orm import joinedload
@@ -47,6 +49,32 @@ def get_watchlist_companies_for_user(db: Session, user: User):
         }
         for item in watchlist
     ]
+
+
+def get_holdings_for_user(db: Session, user) -> List[dict]:
+    """
+    Returns a list of:
+      [{"ticker": ..., "name": ..., "shares": ..., "average_price": ...}, ...]
+    """
+    portfolio = get_or_create_portfolio(db, user.id)
+    positions = (
+        db.query(PortfolioPosition)
+        .filter(PortfolioPosition.portfolio_id == portfolio.id)
+        .all()
+    )
+
+    holdings = []
+    for pos in positions:
+        # pos.company gives you the Company ORM
+        holdings.append(
+            {
+                "ticker": pos.company.ticker,
+                "name": pos.company.name,
+                "shares": float(pos.quantity),
+                "average_price": float(pos.average_cost),
+            }
+        )
+    return holdings
 
 
 @router.get("")
