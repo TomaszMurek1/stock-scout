@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/services/AuthContext"
 import { BarChart3 } from "lucide-react"
 
-const PortfolioLink: React.FC = () => {
+export const LinkToPortfolio: React.FC = () => {
     const { isAuthenticated } = useAuth()
     const location = useLocation()
 
@@ -28,5 +28,3 @@ const PortfolioLink: React.FC = () => {
         </div>
     )
 }
-
-export default PortfolioLink

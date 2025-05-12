@@ -14,7 +14,7 @@ interface Alert {
     snoozed: boolean
 }
 
-export default function AlertsPanel() {
+export default function AlertsTab() {
     const [alerts, setAlerts] = useState<Alert[]>([
         {
             id: "1",

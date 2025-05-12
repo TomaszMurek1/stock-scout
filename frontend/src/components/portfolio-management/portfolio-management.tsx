@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle, RefreshCw, BarChart3, Bell, Clock, DollarSign, PieChart, TrendingUp } from "lucide-react"
 import PortfolioSummary from "./portfolio-summary"
-import StockList from "./stock-list"
-import AddStockModal from "./add-stock-modal"
-import WatchlistSection from "./watchlist/WatchlistSection"
-import AlertsPanel from "./alert-panel"
-import TransactionsHistory from "./transactions-history"
-import CashBalanceTracker from "./cash-balance-tracker"
-import RiskAnalysis from "./risk-analysis"
+import HoldingsTab from "./tabs/holdings/HoldingsTab"
+import AddStockModal from "./modals/AddStockModal"
+import WatchlistSection from "./tabs/watchlist/WatchlistSection"
+import AlertsPanel from "./tabs/alerts/AlertsTab"
+import TransactionsHistory from "./tabs/transactions/TransactionsTab"
+import CashBalanceTracker from "./tabs/cash/CashTab"
+import RiskAnalysis from "./tabs/risk/RiskTab"
 import PerformanceChart from "./performance-chart"
 import type { PortfolioStock } from "./types"
 import { usePortfolioStore } from "@/store/portfolioStore"
@@ -125,7 +125,7 @@ export default function PortfolioManagement() {
                             </Button>
                         </div>
 
-                        <StockList stocks={uiStocks} onRemove={removeHolding} />
+                        <HoldingsTab stocks={uiStocks} onRemove={removeHolding} />
                     </div>
                 </TabsContent>
 

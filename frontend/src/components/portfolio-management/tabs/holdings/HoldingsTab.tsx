@@ -2,14 +2,14 @@
 
 import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { PortfolioStock } from "./types"
+import type { PortfolioStock } from "../../types"
 
-interface StockListProps {
+interface HoldingsTabProps {
     stocks: PortfolioStock[]
     onRemove: (id: string) => void
 }
 
-export default function StockList({ stocks, onRemove }: StockListProps) {
+export default function HoldingsTab({ stocks, onRemove }: HoldingsTabProps) {
     if (stocks.length === 0) {
         return (
             <div className="p-8 text-center text-gray-500">No stocks in your portfolio. Add some stocks to get started.</div>

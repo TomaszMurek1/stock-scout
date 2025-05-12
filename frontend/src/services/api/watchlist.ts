@@ -1,4 +1,4 @@
-import { WatchlistStock } from "@/components/portfolio-management/watchlist/types";
+import { WatchlistStock } from "@/components/portfolio-management/tabs/watchlist/types";
 import { apiClient } from "../apiClient";
 
 export async function toggleWatchlist(ticker: string, isFav: boolean): Promise<void> {
