@@ -5,6 +5,7 @@ from api import (
     auth,
     compare,
     portfolio_management,
+    portfolio_performance,
     stocks,
     golden_cross,
     admin,
@@ -40,6 +41,11 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitation
 app.include_router(watchlist.router, prefix="/api/watchlist", tags=["Watchlist"])
 app.include_router(
     portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
+)
+app.include_router(
+    portfolio_performance.router,
+    prefix="/api/portfolio-performace",
+    tags=["Portfolio performance"],
 )
 app.include_router(
     fibonacci_elliott.router, prefix="/api/fibo-waves", tags=["Fibonacci & Elliott"]

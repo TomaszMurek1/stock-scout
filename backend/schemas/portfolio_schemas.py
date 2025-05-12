@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel, Field, condecimal
@@ -14,6 +15,8 @@ class TradeBase(BaseModel):
     shares: condecimal(gt=0)  # positive
     price: condecimal(gt=0)
     fee: Optional[condecimal(ge=0)] = 0
+    currency: str = "USD"
+    curency_rate: Optional[condecimal(gt=0)] = 1.0
 
 
 class TradeResponse(BaseModel):
@@ -79,3 +82,29 @@ class UserPortfolioResponse(BaseModel):
     holdings: List[HoldingItem]
     watchlist: List[WatchlistItem]
     currency_rates: List[RateItem]
+
+
+class TransactionItem(BaseModel):
+    ticker: str  # e.g. "AAPL"
+    quantity: Decimal  # number of shares
+    price: Decimal  # price per share at trade
+    fee: Decimal  # trade fee
+    total_value: Decimal  # quantity * price ± fee
+    timestamp: datetime  # when trade happened
+
+    class Config:
+        orm_mode = True
+
+
+class PriceHistoryItem(BaseModel):
+    ticker: str  # e.g. "AAPL"
+    date: date  # trading date
+    close: Decimal  # closing price
+
+    class Config:
+        orm_mode = True
+
+
+class PriceHistoryRequest(BaseModel):
+    tickers: List[str]
+    period: str = "1M"

@@ -55,7 +55,7 @@ export function WatchlistRow({ stock }: WatchlistRowProps) {
                     {'No'}
                 </span>
             </TableCell>
-            //TODO: extend Favorites Stock to include additional data
+            {/* //TODO: extend Favorites Stock to include additional data */}
             {/* <TableCell className={stock.percentFromATH < -20 ? 'text-red-600' : 'text-amber-600'}>
                 {stock.percentFromATH?.toFixed(1)}%
             </TableCell>

@@ -97,7 +97,8 @@ class Transaction(Base):
     price = Column(Numeric(precision=18, scale=4), nullable=True)
     fee = Column(Numeric(precision=18, scale=4), nullable=True, default=0)
     total_value = Column(Numeric(precision=18, scale=4), nullable=True)
-
+    currency = Column(String(3), nullable=False)
+    currency_rate = Column(Numeric(18, 6), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
     note = Column(String(500), nullable=True)
 

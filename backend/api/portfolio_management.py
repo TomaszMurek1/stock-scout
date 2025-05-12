@@ -89,6 +89,8 @@ def buy_stock(
         price=trade.price,
         fee=trade.fee,
         total_value=trade.shares * trade.price + trade.fee,
+        currency=trade.currency,
+        currency_rate=trade.curency_rate,
     )
 
     db.add(tx)
