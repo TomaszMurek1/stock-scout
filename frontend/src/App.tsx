@@ -16,7 +16,7 @@ import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admi
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
-import PortfolioManagement from "./components/portfolio-management/portfolio-management";
+import PortfolioManagement from "./components/portfolio-management/PortfolioManagement";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import { StockCompare } from "./components/comapre-stocks-page/StockCompare";
