@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import List, Optional
-from pydantic import BaseModel, condecimal
+from pydantic import BaseModel, Field, condecimal
 
 
 class TradeRequest(BaseModel):
@@ -46,6 +46,7 @@ class PortfolioInfo(BaseModel):
 class PortfolioSummary(BaseModel):
     id: int
     name: str
+    currency: str
 
 
 class HoldingItem(BaseModel):
@@ -53,6 +54,8 @@ class HoldingItem(BaseModel):
     name: str
     shares: float
     average_price: float
+    last_price: Optional[float] = None
+    currency: Optional[str] = None
 
 
 class WatchlistItem(BaseModel):
@@ -60,7 +63,19 @@ class WatchlistItem(BaseModel):
     name: str
 
 
+class RateItem(BaseModel):
+    from_: str = Field(..., alias="from")
+    to: str
+    rate: float
+
+    model_config = {
+        "populate_by_name": True,  # allow using `from_` in code
+        "json_encoders": {},
+    }
+
+
 class UserPortfolioResponse(BaseModel):
     portfolio: PortfolioSummary
     holdings: List[HoldingItem]
     watchlist: List[WatchlistItem]
+    currency_rates: List[RateItem]

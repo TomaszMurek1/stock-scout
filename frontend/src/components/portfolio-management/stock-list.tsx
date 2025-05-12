@@ -15,7 +15,7 @@ export default function StockList({ stocks, onRemove }: StockListProps) {
             <div className="p-8 text-center text-gray-500">No stocks in your portfolio. Add some stocks to get started.</div>
         )
     }
-
+    console.log("stocks", stocks)
     return (
         <div className="overflow-x-auto">
             <table className="w-full">

@@ -20,6 +20,7 @@ from database.portfolio import (
     TransactionType,
 )
 from schemas.portfolio_schemas import (
+    RateItem,
     TradeBase,
     TradeResponse,
     UserPortfolioResponse,
@@ -132,6 +133,13 @@ def sell_stock(
     return {"message": "Sell recorded"}
 
 
+# ← static for now, swap for real FX engine later
+EXCHANGE_RATES = [
+    {"from": "EUR", "to": "USD", "rate": 1.10},
+    {"from": "PLN", "to": "USD", "rate": 3.75},
+]
+
+
 @router.get(
     "",
     response_model=UserPortfolioResponse,  # ← tell FastAPI what shape to expect
@@ -147,10 +155,17 @@ def get_user_portfolio_data(
     # 2. Fetch your holdings and watchlist as lists of plain dicts
     holdings = get_holdings_for_user(db, user)  # -> List[HoldingItem]
     watchlist = get_watchlist_companies_for_user(db, user)  # -> List[WatchlistItem]
+    rates = [RateItem(**r) for r in EXCHANGE_RATES]
 
     # 3. Return a pure dict; FastAPI will coerce it into UserPortfolioResponse
     return {
-        "portfolio": {"id": portfolio.id, "name": portfolio.name},
+        "portfolio": {
+            "id": portfolio.id,
+            "name": portfolio.name,
+            "currency": portfolio.currency,
+        },
         "holdings": holdings,
         "watchlist": watchlist,
+        "currencies": portfolio.currency,
+        "currency_rates": rates,
     }
