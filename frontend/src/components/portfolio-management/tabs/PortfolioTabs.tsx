@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tabs"
 import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react"
 import type { PortfolioStock } from "../types"
+import WatchlistTab from "./watchlist/WatchlistTab"
 
 const HoldingsTab = lazy(() => import("../tabs/holdings/HoldingsTab"))
 // const WatchlistTab = lazy(() => import("../tabs/WatchlistTab"))
@@ -30,15 +31,15 @@ export default function PortfolioTabs({
 }: PortfolioTabsProps) {
     return (
         <Tabs defaultValue="holdings" className="w-full">
-            <TabsList className="grid grid-cols-5 mb-4">
+            <TabsList className="grid grid-cols-6 mb-4">
                 <TabsTrigger value="holdings" className="flex items-center">
                     <BarChart3 className="mr-2 h-4 w-4 text-primary" />
                     Your Stocks
                 </TabsTrigger>
-                {/* <TabsTrigger value="watchlist" className="flex items-center">
-          <BarChart3 className="mr-2 h-4 w-4 text-primary" />
-          Watchlist
-        </TabsTrigger> */}
+                <TabsTrigger value="watchlist" className="flex items-center">
+                    <BarChart3 className="mr-2 h-4 w-4 text-primary" />
+                    Watchlist
+                </TabsTrigger>
                 <TabsTrigger value="alerts" className="flex items-center">
                     <Bell className="mr-2 h-4 w-4 text-primary" />
                     Alerts
@@ -64,9 +65,9 @@ export default function PortfolioTabs({
                         onRemove={onRemove}
                     />
                 </TabsContent>
-                {/* <TabsContent value="watchlist">
-          <WatchlistTab />
-        </TabsContent> */}
+                <TabsContent value="watchlist">
+                    <WatchlistTab />
+                </TabsContent>
                 <TabsContent value="alerts">
                     <AlertsTab />
                 </TabsContent>

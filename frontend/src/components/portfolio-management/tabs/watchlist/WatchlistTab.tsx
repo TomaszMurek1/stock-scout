@@ -6,7 +6,7 @@ import type { WatchlistStock } from './types'
 import { useWatchlistStore } from '@/store/watchlistStore'
 import { WatchlistTable } from './WatchlistTable'
 
-export default function WatchlistSection() {
+export default function WatchlistTab() {
     const setWatchlist = useWatchlistStore(s => s.setWatchlist)
     const handleRefresh = () =>
         fetchPortfolioData().then((list: WatchlistStock[]) => {
