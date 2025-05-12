@@ -39,17 +39,17 @@ export default function StockList({ stocks, onRemove }: StockListProps) {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {stocks.map((stock) => {
-                        const value = stock.currentPrice * stock.shares
-                        const invested = stock.purchasePrice * stock.shares
+                        const value = stock.currentPrice * stock.shares_number
+                        const invested = stock.purchasePrice * stock.shares_number
                         const gainLoss = value - invested
                         const percentChange = invested > 0 ? (gainLoss / invested) * 100 : 0
                         const isPositive = gainLoss >= 0
 
                         return (
-                            <tr key={stock.id}>
-                                <td className="px-6 py-4 whitespace-nowrap font-medium">{stock?.symbol}</td>
+                            <tr key={stock.ticker}>
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{stock?.ticker}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{stock.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{stock.shares}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{stock.shares_number}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">${stock.purchasePrice?.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">${stock.currentPrice?.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">${value.toFixed(2)}</td>

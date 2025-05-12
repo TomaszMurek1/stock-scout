@@ -17,29 +17,32 @@ import type { PortfolioStock } from "./types"
 import { usePortfolioStore } from "@/store/portfolioStore"
 
 
-
 export default function PortfolioManagement() {
     // local UI state still lives here
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
     // ===== zustand slices & actions =====
     const {
+        portfolio,
         holdings,
-        refresh: refreshHoldings,
+        watchlist,
+        currencyRates,
+        refresh,
         buy,
-        sell
-    } = usePortfolioStore();
+        sell,
+    } = usePortfolioStore()
 
     useEffect(() => {
-        refreshHoldings();
-    }, [refreshHoldings]);
+        refresh();
+    }, [refresh]);
 
+    if (!portfolio) return <div>Loading…</div>
     const uiStocks: PortfolioStock[] = holdings.map((h) => ({
-
-        symbol: h.ticker,
-        name: h.ticker,              // (or pull real name if you need it)
-        purchasePrice: Number(h.average_cost),
-        currentPrice: h.market_price ? Number(h.market_price) : null,
+        shares_number: h.shares,
+        ticker: h.ticker,
+        name: h.name,              // (or pull real name if you need it)
+        purchasePrice: Number(h.average_price),
+        currentPrice: h.last_price
     }));
 
     const removeHolding = async (symbol: string) => {
@@ -50,16 +53,15 @@ export default function PortfolioManagement() {
         await sell({
             ticker: target.ticker,
             shares: Number(target.shares),
-            price: Number(target.market_price ?? target.average_cost),
+            price: Number(target.last_price ?? target.average_price),
             fee: 0,
         });
     };
     // derived totals
-    const totalValue = holdings.reduce((sum: number, s: any) => sum + s.currentPrice * s.shares, 0)
-    const totalInvested = holdings.reduce((sum: number, s: any) => sum + s.average_price * s.shares, 0)
-    debugger
+    const totalValue = holdings.reduce((sum, h) => sum + h.last_price * h.shares, 0)
+    const totalInvested = holdings.reduce((sum, h) => sum + h.average_price * h.shares, 0)
     const totalGainLoss = totalValue - totalInvested
-    const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0
+    const pctChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
@@ -75,7 +77,9 @@ export default function PortfolioManagement() {
                 totalValue={totalValue}
                 totalInvested={totalInvested}
                 totalGainLoss={totalGainLoss}
-                percentageChange={percentageChange}
+                percentageChange={pctChange}
+                currency={portfolio.currency}
+                currencyRates={currencyRates}
             />
 
             <PerformanceChart />
@@ -149,10 +153,6 @@ export default function PortfolioManagement() {
             <AddStockModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                onAdd={(stock: Omit<PortfolioStock, "id">) => {
-                    addHolding(stock)
-                    setIsAddModalOpen(false)
-                }}
             />
         </div>
     )

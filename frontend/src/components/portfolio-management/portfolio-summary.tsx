@@ -1,10 +1,13 @@
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { CurrencyRate, PortfolioInfo } from "./types"
 
-interface PortfolioSummaryProps {
+export interface PortfolioSummaryProps {
     totalValue: number
     totalInvested: number
     totalGainLoss: number
+    currency: string
     percentageChange: number
+    currencyRates: CurrencyRate[]
 }
 
 export default function PortfolioSummary({

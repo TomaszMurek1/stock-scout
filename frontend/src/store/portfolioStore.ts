@@ -1,60 +1,47 @@
-import { apiClient } from "@/services/apiClient";
-import { create } from "zustand";
+// store/portfolioStore.ts
+import { create } from 'zustand'
+import { apiClient } from '@/services/apiClient'
+import { CurrencyRate, HoldingItem, WatchlistItem } from '@/components/portfolio-management/types';
 
-
-interface Holding {
-    company_id: number;
-    ticker: string;
-    shares: number;
-    average_cost: number;
-    market_price: number | null;
-    market_value: number | null;
-    unrealized: number | null;
-}
-
-interface PortfolioSlice {
-    holdings: Holding[];
-    refresh(): Promise<void>;
-    buy(data: {
-        ticker: string;
-        shares: number;
-        price: number;
-        fee?: number;
-    }): Promise<void>;
-    sell(data: {
-        ticker: string;
-        shares: number;
-        price: number;
-        fee?: number;
-    }): Promise<void>;
+export interface PortfolioSlice {
+    portfolio: { id: number; name: string; currency: string } | null
+    holdings: HoldingItem[]
+    watchlist: WatchlistItem[]
+    currencyRates: CurrencyRate[]
+    refresh: () => Promise<void>
+    buy: (args: any) => Promise<void>
+    sell: (args: any) => Promise<void>
 }
 
 export const usePortfolioStore = create<PortfolioSlice>((set, get) => ({
+    portfolio: null,
     holdings: [],
+    watchlist: [],
+    currencyRates: [],
 
     async refresh() {
-        const { data } = await apiClient.get("/portfolio-management");
-        set({ holdings: data.holdings });
+        const { data } = await apiClient.get<{
+            portfolio: { id: number; name: string; currency: string }
+            holdings: HoldingItem[]
+            watchlist: WatchlistItem[]
+            currency_rates: CurrencyRate[]
+        }>('/portfolio-management')
+
+        set({
+            portfolio: data.portfolio,
+            holdings: data.holdings,
+            watchlist: data.watchlist,
+            currencyRates: data.currency_rates,
+        })
     },
 
-    async buy({ ticker, shares, price, fee = 0 }) {
-        debugger
-        await apiClient.post("/portfolio-management/buy", {
-            ticker,
-            shares,
-            price,
-            fee,
-        });
-        await get().refresh();
+    async buy(payload) {
+        await apiClient.post('/portfolio-management/buy', payload)
+        await get().refresh()
     },
 
-    async sell({ ticker, shares, price, fee = 0 }) {
-        await apiClient.post("/portfolio-management/sell", {
-            ticker,
-            shares,
-            price,
-            fee,
-        });
-        await get().refresh();
+    async sell(payload) {
+        await apiClient.post('/portfolio-management/sell', payload)
+        await get().refresh()
     },
-}));
+}))
