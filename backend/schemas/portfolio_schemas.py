@@ -97,14 +97,16 @@ class TransactionItem(BaseModel):
 
 
 class PriceHistoryItem(BaseModel):
-    ticker: str  # e.g. "AAPL"
-    date: date  # trading date
-    close: Decimal  # closing price
-
-    class Config:
-        orm_mode = True
+    ticker: str
+    date: datetime  # or `str` if you prefer
+    close: float
 
 
 class PriceHistoryRequest(BaseModel):
     tickers: List[str]
     period: str = "1M"
+    start_date: Optional[str] = None  # <-- add this line
+
+    class Config:
+        # allow extra if you want, but we don’t need it now
+        orm_mode = True

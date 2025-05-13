@@ -34,19 +34,16 @@ export default function Performance() {
     // load once (or whenever tickers change)
     const tickerKey = useMemo(() => tickers.join(","), [tickers])
     useEffect(() => {
-        if (tickers.length) {
-            fetchMaster(tickers)
-        }
-    }, [tickerKey, fetchMaster])
+        if (tickers.length) fetchMaster(tickers)
+    }, [tickers.join(","), fetchMaster])
 
     // slice for the current range
     const data = useMemo(() => {
         if (!master.length) return []
-        const cutoff = getCutoffDate(timeRange)
-        if (!cutoff) return master
-        return master.filter((p) => p.date >= cutoff)
+        if (timeRange === "All") return master
+        const cutoff = getCutoffDate(timeRange) // as before
+        return master.filter((p) => p.date >= cutoff!)
     }, [master, timeRange])
-
     return (
         <PerformanceChart
             data={data}

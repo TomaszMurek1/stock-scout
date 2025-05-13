@@ -19,11 +19,6 @@ router = APIRouter(prefix="", tags=["portfolio-performance"])
 
 
 def _parse_period(period: str) -> Optional[datetime]:
-    """
-    Convert a string like "1M", "3M", "6M", "1Y" to a datetime cutoff.
-    If period == "ALL" (case-insensitive), return None → no cutoff filter.
-    Defaults to 30 days if unrecognized.
-    """
     if period.upper() == "ALL":
         return None
     mapping = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365}
@@ -33,15 +28,11 @@ def _parse_period(period: str) -> Optional[datetime]:
 
 @router.get("/transactions", response_model=List[TransactionItem])
 def get_transactions(
-    period: str = Query(
-        "1M", description="Window like '1M', '3M', '6M', '1Y' or 'All'"
-    ),
+    period: str = Query("1M", description="Window like '1M','3M','6M','1Y' or 'All'"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    cutoff = _parse_period(
-        period
-    )  # None if "All", else a datetime :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
+    cutoff = _parse_period(period)
     portfolio = get_or_create_portfolio(db, user.id)
 
     query = (
@@ -54,7 +45,6 @@ def get_transactions(
             ),
         )
     )
-    # only apply timestamp filter if cutoff is set
     if cutoff:
         query = query.filter(Transaction.timestamp >= cutoff)
 
@@ -63,43 +53,44 @@ def get_transactions(
     return [
         TransactionItem(
             ticker=tx.company.ticker,
-            quantity=tx.quantity,
-            price=tx.price,
-            fee=tx.fee or 0,
-            total_value=tx.total_value,
+            quantity=float(tx.quantity),
+            price=float(tx.price),
+            fee=float(tx.fee or 0),
+            total_value=float(tx.total_value),
             timestamp=tx.timestamp,
         )
         for tx in txs
     ]
 
 
-@router.post(
-    "/price-history",
-    response_model=List[PriceHistoryItem],
-    summary="Get historical close prices for tickers",
-)
+@router.post("/price-history", response_model=List[PriceHistoryItem])
 def price_history(
     req: PriceHistoryRequest,
     db: Session = Depends(get_db),
 ):
-    # If period == "All", do not apply a date cutoff.
-    if req.period.upper() == "ALL":
+    # 1) Determine cutoff_date via start_date > period > All
+    if req.start_date:
+        try:
+            cutoff_date = datetime.fromisoformat(req.start_date).date()
+        except ValueError:
+            raise HTTPException(400, "start_date must be YYYY-MM-DD")
+    elif req.period.upper() == "ALL":
         cutoff_date = None
     else:
         mapping = {"1M": 30, "3M": 90, "6M": 180, "1Y": 365}
         days = mapping.get(req.period.upper(), 30)
         cutoff_date = (datetime.utcnow() - timedelta(days=days)).date()
-    # :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
 
-    # Map tickers → company_ids
+    # 2) Map tickers → company_ids
     companies = db.query(Company).filter(Company.ticker.in_(req.tickers)).all()
     if not companies:
         raise HTTPException(404, "No matching companies")
     id_map = {c.company_id: c.ticker for c in companies}
+    company_ids = list(id_map.keys())
 
-    # Build base query
+    # 3) Query price history from cutoff_date (if any)
     query = db.query(StockPriceHistory).filter(
-        StockPriceHistory.company_id.in_(id_map.keys())
+        StockPriceHistory.company_id.in_(company_ids)
     )
     if cutoff_date:
         query = query.filter(StockPriceHistory.date >= cutoff_date)
