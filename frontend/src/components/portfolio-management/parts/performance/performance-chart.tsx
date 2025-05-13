@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -18,7 +19,7 @@ import {
 } from "recharts"
 import { TrendingUp } from "lucide-react"
 
-export type TimeRange = "1M" | "3M" | "1Y" | "All"
+export type TimeRange = "1M" | "3M" | "6M" | "1Y" | "All"
 
 interface Props {
     data: { date: string; value: number }[]
@@ -35,12 +36,29 @@ export default function PerformanceChart({
         return <div className="py-10 text-center text-gray-500">No data</div>
     }
 
+    // Compute summary stats
     const initial = data[0].value
     const current = data[data.length - 1].value
     const change = ((current - initial) / initial) * 100
 
+    // Convert date strings to numeric timestamps for axis
+    const chartData = useMemo(
+        () =>
+            data.map((d) => ({ dateValue: new Date(d.date).getTime(), value: d.value })),
+        [data]
+    )
+
+    // Log chart domain values
+    useEffect(() => {
+        const dates = chartData.map((d) => d.dateValue)
+        const dataMin = Math.min(...dates)
+        const dataMax = Math.max(...dates)
+        console.log(`PerformanceChart: timeRange= ${timeRange}`, { dataMin, dataMax, chartData })
+    }, [chartData, timeRange])
+
     return (
-        <Card className="border-gray-200 shadow-sm">
+        // Key on Card forces full remount when timeRange changes
+        <Card key={timeRange} className="border-gray-200 shadow-sm">
             <CardHeader className="flex justify-between pb-2">
                 <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
@@ -65,7 +83,9 @@ export default function PerformanceChart({
                 <div className="flex justify-between mb-4">
                     <div>
                         <p className="text-sm text-gray-500">Portfolio Value</p>
-                        <p className="text-2xl font-bold">${current.toLocaleString()}</p>
+                        <p className="text-2xl font-bold">
+                            ${current.toLocaleString()}
+                        </p>
                         <p
                             className={`text-sm ${change >= 0 ? "text-green-600" : "text-red-600"
                                 }`}
@@ -79,15 +99,22 @@ export default function PerformanceChart({
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart
-                            data={data}
+                            data={chartData}
                             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                         >
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
+                            <XAxis
+                                dataKey="dateValue"
+                                type="number"
+                                domain={["dataMin", "dataMax"]}
+                                tickFormatter={(ts) => new Date(ts).toLocaleDateString()}
+                            />
+                            <YAxis domain={["auto", "auto"]} />
                             <Tooltip
                                 formatter={(val) => [`$${val.toLocaleString()}`, "Value"]}
-                                labelFormatter={(lbl) => `Date: ${lbl}`}
+                                labelFormatter={(ts) =>
+                                    `Date: ${new Date(ts).toLocaleDateString()}`
+                                }
                             />
                             <Line
                                 type="monotone"
