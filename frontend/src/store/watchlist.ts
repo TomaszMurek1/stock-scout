@@ -1,28 +1,36 @@
 
-import { WatchlistStock2 } from "@/components/portfolio-management/tabs/watchlist/types"
+import { WatchlistStock } from "@/components/portfolio-management/tabs/watchlist/types"
 
 
 
 export interface WatchlistSlice {
-    watchlist: WatchlistStock2[];
-    setWatchlist: (list: WatchlistStock2[]) => void;
-    toggleWatchlist: (stock: WatchlistStock2) => void;
+    watchlist: WatchlistStock[];
+    setWatchlist: (list: WatchlistStock[]) => void;
+    toggleWatchlist: (stock: WatchlistStock) => void;
 }
 
 export const createWatchlistSlice = (set: any): WatchlistSlice => ({
     watchlist: [],
+
+    // 2) replace entire list
     setWatchlist: (list) =>
-        set({ watchlist: list }, false, "setWatchlist"),
+        set(
+            { watchlist: list },
+            false,
+            "setWatchlist"
+        ),
+
+    // 3) add/remove a single ticker
     toggleWatchlist: (stock) =>
         set(
             (state: any) => {
                 const exists = state.watchlist.some(
-                    (w: WatchlistStock2) => w.ticker === stock.ticker
+                    (w: WatchlistStock) => w.ticker === stock.ticker
                 )
                 return {
                     watchlist: exists
                         ? state.watchlist.filter(
-                            (w: WatchlistStock2) => w.ticker !== stock.ticker
+                            (w: WatchlistStock) => w.ticker !== stock.ticker
                         )
                         : [...state.watchlist, stock],
                 }

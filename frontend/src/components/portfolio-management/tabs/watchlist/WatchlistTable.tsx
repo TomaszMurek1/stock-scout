@@ -8,26 +8,13 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { WatchlistRow } from "./WatchlistRow"
-import { useEffect } from "react"
-import { WatchlistStock } from "./types"
-import { fetchPortfolioData } from "@/services/api/portfolio"
 import { AppState, useAppStore } from "@/store/appStore"
 
 
 export function WatchlistTable() {
     const watchlist = useAppStore((state: AppState) => state.watchlist)
-    const setWatchlist = useAppStore(
-        (state: AppState) => state.setWatchlist
-    )
 
 
-    useEffect(() => {
-        if (watchlist.length === 0) {
-            fetchPortfolioData().then((list: WatchlistStock[]) => {
-                setWatchlist(list)
-            })
-        }
-    }, [watchlist, setWatchlist])
 
     if (watchlist.length === 0) {
         return (

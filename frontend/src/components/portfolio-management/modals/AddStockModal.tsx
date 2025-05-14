@@ -42,7 +42,6 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose }) => {
     const onSubmit: SubmitHandler<FormValues> = async (data) => {
         setLoading(true);
         try {
-            debugger
             await buy({
                 ticker: data.symbol.toUpperCase(),
                 shares: data.shares,

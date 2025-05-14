@@ -13,7 +13,9 @@ export default function WatchlistTab() {
     )
 
     const handleRefresh = () =>
+
         fetchPortfolioData().then((list: WatchlistStock[]) => {
+            console.log('list', list)
             setWatchlist(list)
         })
 

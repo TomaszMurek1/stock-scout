@@ -9,10 +9,10 @@ import { useNavigate } from "react-router-dom"
 import type { MouseEvent } from 'react'
 import { apiClient } from "@/services/apiClient"
 import { AppState, useAppStore } from "@/store/appStore"
-import { WatchlistStock2 } from "./types"
+import { WatchlistStock } from "./types"
 
 interface WatchlistRowProps {
-    stock: WatchlistStock2
+    stock: WatchlistStock
 }
 
 
