@@ -1,11 +1,16 @@
 import logging
 from database.company import Company
 from database.stock_data import CompanyMarketData
-from database.financials import  CompanyFinancials
+from database.financials import CompanyFinancials
 from services.utils.insights import build_financial_trends
 
-def build_valuation_metrics(company: Company, financials: CompanyFinancials, db) -> dict:
-    market_data = db.query(CompanyMarketData).filter_by(company_id=company.company_id).first()
+
+def build_valuation_metrics(
+    company: Company, financials: CompanyFinancials, db
+) -> dict:
+    market_data = (
+        db.query(CompanyMarketData).filter_by(company_id=company.company_id).first()
+    )
     if not market_data or not financials:
         return {}
 
@@ -33,13 +38,13 @@ def build_valuation_metrics(company: Company, financials: CompanyFinancials, db)
     if trends.get("eps") and len(trends["eps"]) >= 2:
         eps_latest = trends["eps"][0]["value"]
         eps_prev = trends["eps"][1]["value"]
-        if eps_latest and eps_prev and eps_latest > 0 and eps_prev > 0: 
+        if eps_latest and eps_prev and eps_latest > 0 and eps_prev > 0:
             logging.info(f"EPS latest: {eps_latest} ")
             logging.info(f"EPS previous: {eps_prev} ")
             logging.info(f"EPS growth: {eps_latest} - {eps_prev} = {eps_growth}")
             eps_growth = ((eps_latest - eps_prev) / eps_prev) * 100
 
-    peg_ratio = (pe_ratio / eps_growth)  if pe_ratio and eps_growth else None
+    peg_ratio = (pe_ratio / eps_growth) if pe_ratio and eps_growth else None
     dividend_yield = getattr(market_data, "dividend_yield", None)
 
     return {

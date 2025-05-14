@@ -13,10 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import type { MouseEvent } from 'react'
 import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
-import { fetchWatchlist, toggleWatchlist } from "@/services/api/watchlist";
-
+import { fetchWatchlist } from "@/services/api/watchlist";
 import { apiClient } from "@/services/apiClient";
-import { string } from "zod";
 import { AppState, useAppStore } from "@/store/appStore";
 
 

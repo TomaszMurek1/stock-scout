@@ -1,4 +1,5 @@
 # This module contains the core logic for fetching and saving financial data for a given company and market.
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 import logging
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
@@ -46,13 +47,29 @@ def get_most_recent_column(columns):
     return columns[date_columns.index(max(date_columns))]
 
 
+def _to_decimal_two_places(value):
+    """
+    Convert a float or string to Decimal with exactly two decimal places,
+    rounding half-up. Returns None if input is None or invalid.
+    """
+    if value is None:
+        return None
+    try:
+        d = Decimal(str(value))
+        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, ValueError):
+        return None
+
+
 def update_market_data(record, fast_info):
-    record.current_price = fast_info.get("lastPrice")
-    record.previous_close = fast_info.get("regularMarketPreviousClose")
-    record.day_high = fast_info.get("dayHigh")
-    record.day_low = fast_info.get("dayLow")
-    record.fifty_two_week_high = fast_info.get("yearHigh")
-    record.fifty_two_week_low = fast_info.get("yearLow")
+    record.current_price = _to_decimal_two_places(fast_info.get("lastPrice"))
+    record.previous_close = _to_decimal_two_places(
+        fast_info.get("regularMarketPreviousClose")
+    )
+    record.day_high = _to_decimal_two_places(fast_info.get("dayHigh"))
+    record.day_low = _to_decimal_two_places(fast_info.get("dayLow"))
+    record.fifty_two_week_high = _to_decimal_two_places(fast_info.get("yearHigh"))
+    record.fifty_two_week_low = _to_decimal_two_places(fast_info.get("yearLow"))
     record.market_cap = fast_info.get("marketCap")
     record.volume = fast_info.get("lastVolume")
     record.average_volume = fast_info.get("threeMonthAverageVolume")

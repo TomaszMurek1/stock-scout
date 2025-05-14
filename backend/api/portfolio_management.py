@@ -17,7 +17,7 @@ from database.base import get_db
 from database.user import User
 from database.portfolio import Transaction, TransactionType
 from database.company import Company
-from database.stock_data import CompanyMarketData
+from database.stock_data import StockPriceHistory
 
 router = APIRouter()
 
@@ -154,26 +154,29 @@ def get_user_portfolio_data(
             rec["total_buy_qty"] += tx.quantity
             rec["total_buy_cost"] += tx.quantity * tx.price
 
-    # 2) Build holdings list including latest price & currency
+    # 2) Build holdings list including latest price & currency from StockPriceHistory
     holdings: List[dict] = []
     for comp_id, data in agg.items():
         if data["net_shares"] <= 0:
             continue  # skip closed positions
+
         avg_price = (
             data["total_buy_cost"] / data["total_buy_qty"]
             if data["total_buy_qty"] > 0
             else Decimal("0")
         )
-        # get latest market data row
-        md = (
-            db.query(CompanyMarketData)
-            .filter(CompanyMarketData.company_id == comp_id)
-            .order_by(CompanyMarketData.last_updated.desc())
+
+        # get most recent StockPriceHistory row for this company
+        sph = (
+            db.query(StockPriceHistory)
+            .filter(StockPriceHistory.company_id == comp_id)
+            .order_by(StockPriceHistory.date.desc())
+            .join(StockPriceHistory.market)  # so we can get .market.currency
             .first()
         )
-        last_price = md.current_price if md and md.current_price is not None else None
+        last_price = sph.close if sph and sph.close is not None else None
         currency = (
-            md.market.currency if md and md.market and md.market.currency else None
+            sph.market.currency if sph and sph.market and sph.market.currency else None
         )
 
         holdings.append(
