@@ -1,20 +1,27 @@
+"use client"
+
 import { TableRow, TableCell } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Star } from "lucide-react"
 import { AlertsDialog } from "./AlertsDialog"
 import { useNavigate } from "react-router-dom"
-import { WatchlistStock, useWatchlistStore } from "@/store/watchlistStore"
+
 import type { MouseEvent } from 'react'
 import { apiClient } from "@/services/apiClient"
+import { AppState, useAppStore } from "@/store/appStore"
+import { WatchlistStock2 } from "./types"
 
 interface WatchlistRowProps {
-    stock: WatchlistStock
+    stock: WatchlistStock2
 }
 
 
 export function WatchlistRow({ stock }: WatchlistRowProps) {
     const navigate = useNavigate()
-    const toggleWatchlist = useWatchlistStore(s => s.toggleWatchlist)
+
+    const toggleWatchlist = useAppStore(
+        (state: AppState) => state.toggleWatchlist
+    )
 
     const handleWatchlistClick = async (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation()

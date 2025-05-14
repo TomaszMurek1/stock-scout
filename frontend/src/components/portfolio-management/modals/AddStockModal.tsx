@@ -4,8 +4,8 @@ import { FC, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { usePortfolioStore } from "@/store/portfolioStore";
 import { toast } from "react-toastify";
+import { AppState, useAppStore } from "@/store/appStore";
 
 interface AddStockModalProps {
     isOpen: boolean;
@@ -35,7 +35,7 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose }) => {
         },
     });
     const [loading, setLoading] = useState(false);
-    const buy = usePortfolioStore((state) => state.buy);
+    const buy = useAppStore((state: AppState) => state.buy);
 
     if (!isOpen) return null;
 

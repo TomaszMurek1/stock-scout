@@ -3,11 +3,15 @@ import { Button } from '@/components/ui/button'
 import { Plus, RefreshCw } from 'lucide-react'
 import { fetchPortfolioData } from '@/services/api/portfolio'
 import type { WatchlistStock } from './types'
-import { useWatchlistStore } from '@/store/watchlistStore'
 import { WatchlistTable } from './WatchlistTable'
+import { AppState, useAppStore } from '@/store/appStore'
 
 export default function WatchlistTab() {
-    const setWatchlist = useWatchlistStore(s => s.setWatchlist)
+
+    const setWatchlist = useAppStore(
+        (state: AppState) => state.setWatchlist
+    )
+
     const handleRefresh = () =>
         fetchPortfolioData().then((list: WatchlistStock[]) => {
             setWatchlist(list)

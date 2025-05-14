@@ -1,4 +1,3 @@
-"use client"
 
 import { useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -32,9 +31,6 @@ export default function PerformanceChart({
     timeRange,
     onTimeRangeChange,
 }: Props) {
-    if (data.length === 0) {
-        return <div className="py-10 text-center text-gray-500">No data</div>
-    }
 
     // Compute summary stats
     const initial = data[0].value
@@ -55,6 +51,7 @@ export default function PerformanceChart({
         const dataMax = Math.max(...dates)
         console.log(`PerformanceChart: timeRange= ${timeRange}`, { dataMin, dataMax, chartData })
     }, [chartData, timeRange])
+
 
     return (
         // Key on Card forces full remount when timeRange changes

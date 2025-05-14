@@ -6,3 +6,9 @@ export interface WatchlistStock {
     percentFromATH: number
     goldenCross: boolean
 }
+
+export interface WatchlistStock2 {
+    ticker: string
+    name: string
+
+}

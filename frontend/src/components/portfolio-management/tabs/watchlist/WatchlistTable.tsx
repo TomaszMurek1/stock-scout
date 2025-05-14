@@ -1,3 +1,5 @@
+"use client"
+
 import {
     Table,
     TableHeader,
@@ -7,13 +9,18 @@ import {
 } from "@/components/ui/table"
 import { WatchlistRow } from "./WatchlistRow"
 import { useEffect } from "react"
-import { WatchlistStock, useWatchlistStore } from "@/store/watchlistStore"
+import { WatchlistStock } from "./types"
 import { fetchPortfolioData } from "@/services/api/portfolio"
+import { AppState, useAppStore } from "@/store/appStore"
 
 
 export function WatchlistTable() {
-    const watchlist = useWatchlistStore(s => s.watchlist)
-    const setWatchlist = useWatchlistStore(s => s.setWatchlist)
+    const watchlist = useAppStore((state: AppState) => state.watchlist)
+    const setWatchlist = useAppStore(
+        (state: AppState) => state.setWatchlist
+    )
+
+
     useEffect(() => {
         if (watchlist.length === 0) {
             fetchPortfolioData().then((list: WatchlistStock[]) => {
