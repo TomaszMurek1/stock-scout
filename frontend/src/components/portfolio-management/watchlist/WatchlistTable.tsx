@@ -7,22 +7,22 @@ import {
 } from "@/components/ui/table"
 import { WatchlistRow } from "./WatchlistRow"
 import { useEffect } from "react"
-import { FavoritesStock, useFavoritesStore } from "@/store/favoritesStore"
+import { WatchlistStock, useWatchlistStore } from "@/store/watchlistStore"
 import { fetchPortfolioData } from "@/services/api/portfolio"
 
 
 export function WatchlistTable() {
-    const favorites = useFavoritesStore(s => s.favorites)
-    const setFavorites = useFavoritesStore(s => s.setFavorites)
+    const watchlist = useWatchlistStore(s => s.watchlist)
+    const setWatchlist = useWatchlistStore(s => s.setWatchlist)
     useEffect(() => {
-        if (favorites.length === 0) {
-            fetchPortfolioData().then((list: FavoritesStock[]) => {
-                setFavorites(list)
+        if (watchlist.length === 0) {
+            fetchPortfolioData().then((list: WatchlistStock[]) => {
+                setWatchlist(list)
             })
         }
-    }, [favorites, setFavorites])
+    }, [watchlist, setWatchlist])
 
-    if (favorites.length === 0) {
+    if (watchlist.length === 0) {
         return (
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
                 <p className="text-gray-600">No stocks in your watchlist. Please add some.</p>
@@ -44,7 +44,7 @@ export function WatchlistTable() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {favorites.map((stock) => (
+                {watchlist.map((stock) => (
                     <WatchlistRow key={stock.company_id} stock={stock} />
                 ))}
             </TableBody>

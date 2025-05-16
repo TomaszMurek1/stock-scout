@@ -3,27 +3,26 @@ import { Button } from "@/components/ui/button"
 import { Star } from "lucide-react"
 import { AlertsDialog } from "./AlertsDialog"
 import { useNavigate } from "react-router-dom"
-import { FavoritesStock, useFavoritesStore } from "@/store/favoritesStore"
+import { WatchlistStock, useWatchlistStore } from "@/store/watchlistStore"
 import type { MouseEvent } from 'react'
 import { apiClient } from "@/services/apiClient"
 
 interface WatchlistRowProps {
-    stock: FavoritesStock
+    stock: WatchlistStock
 }
 
 
 export function WatchlistRow({ stock }: WatchlistRowProps) {
     const navigate = useNavigate()
-    const toggleFavorite = useFavoritesStore(s => s.toggleFavorite)
+    const toggleWatchlist = useWatchlistStore(s => s.toggleWatchlist)
 
-    const handleFavoriteClick = async (e: MouseEvent<HTMLButtonElement>) => {
+    const handleWatchlistClick = async (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation()
-        // optimistic update
-        toggleFavorite(stock)
+        toggleWatchlist(stock)
         try {
-            await apiClient.delete(`/favorites/${stock.ticker}`)
+            await apiClient.delete(`/watchlist/${stock.ticker}`)
         } catch {
-            toggleFavorite(stock)
+            toggleWatchlist(stock)
         }
     }
     return (
@@ -35,7 +34,7 @@ export function WatchlistRow({ stock }: WatchlistRowProps) {
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={handleFavoriteClick}
+                    onClick={handleWatchlistClick}
                     className="text-amber-600"
                 >
                     <Star className="h-5 w-5 fill-current" />

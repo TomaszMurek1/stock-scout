@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/{ticker}")
-def add_to_favorites(
+def add_to_watchlist(
     ticker: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
     company = db.query(Company).filter(Company.ticker == ticker).first()
@@ -24,16 +24,16 @@ def add_to_favorites(
         .first()
     )
     if exists:
-        raise HTTPException(status_code=400, detail="Already in favorites")
+        raise HTTPException(status_code=400, detail="Already in watchlist")
 
     fav = FavoriteStock(user_id=user.id, company_id=company.company_id)
     db.add(fav)
     db.commit()
-    return {"message": "Added to favorites"}
+    return {"message": "Added to watchlist"}
 
 
-def get_favorite_companies_for_user(db: Session, user: User):
-    favorites = (
+def get_watchlist_companies_for_user(db: Session, user: User):
+    watchlist = (
         db.query(FavoriteStock)
         .options(joinedload(FavoriteStock.company))
         .filter(FavoriteStock.user_id == user.id)
@@ -42,11 +42,10 @@ def get_favorite_companies_for_user(db: Session, user: User):
 
     return [
         {
-            "company_id": fav.company_id,
-            "ticker": fav.company.ticker,
-            "name": fav.company.name,
+            "ticker": item.company.ticker,
+            "name": item.company.name,
         }
-        for fav in favorites
+        for item in watchlist
     ]
 
 
@@ -54,7 +53,7 @@ def get_favorite_companies_for_user(db: Session, user: User):
 def list_favorites(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
-    return get_favorite_companies_for_user(db, user)
+    return get_watchlist_companies_for_user(db, user)
 
 
 @router.delete("/{ticker}")
@@ -71,8 +70,8 @@ def remove_from_favorites(
         .first()
     )
     if not fav:
-        raise HTTPException(status_code=404, detail="Not in favorites")
+        raise HTTPException(status_code=404, detail="Not in watchlist")
 
     db.delete(fav)
     db.commit()
-    return {"message": "Removed from favorites"}
+    return {"message": "Removed from watchlist"}
