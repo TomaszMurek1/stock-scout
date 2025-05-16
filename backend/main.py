@@ -1,7 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from api import auth, favorites, stocks, golden_cross, admin, fundamentals
+from api import (
+    auth,
+    compare,
+    favorites,
+    portfolio_management,
+    stocks,
+    golden_cross,
+    admin,
+    fundamentals,
+    fibonacci_elliott,
+)
 from database.base import Base, engine
 
 # Initialize FastAPI
@@ -28,6 +38,13 @@ app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analy
 app.include_router(stocks.router, prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitations"])
 app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
+app.include_router(
+    portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
+)
+app.include_router(
+    fibonacci_elliott.router, prefix="/api/fibo-waves", tags=["Fibonacci & Elliott"]
+)
+app.include_router(compare.router, prefix="/api/compare", tags=["Comparison"])
 
 
 @app.get("/")

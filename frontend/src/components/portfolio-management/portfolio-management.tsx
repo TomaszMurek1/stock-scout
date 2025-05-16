@@ -1,19 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle, RefreshCw, BarChart3, Bell, Clock, DollarSign, PieChart, TrendingUp } from "lucide-react"
 import PortfolioSummary from "./portfolio-summary"
 import StockList from "./stock-list"
 import AddStockModal from "./add-stock-modal"
-import WatchlistSection from "./watchlist-section"
+import WatchlistSection from "./watchlist/WatchlistSection"
 import AlertsPanel from "./alert-panel"
 import TransactionsHistory from "./transactions-history"
 import CashBalanceTracker from "./cash-balance-tracker"
 import RiskAnalysis from "./risk-analysis"
 import PerformanceChart from "./performance-chart"
 import type { Stock } from "./types"
+import { fetchPortfolioData } from "@/services/api/portfolio"
 
 export default function PortfolioManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -23,6 +24,14 @@ export default function PortfolioManagement() {
         { id: "3", symbol: "GOOGL", name: "Alphabet Inc.", shares: 2, purchasePrice: 2750.0, currentPrice: 2850.5 },
         { id: "3", symbol: "GOOGL2", name: "Alphabet2 Inc.", shares: 2, purchasePrice: 222.0, currentPrice: 2222.5 },
     ])
+    const [watchlist, setWatchlist] = useState<any[]>([])
+
+    useEffect(() => {
+        fetchPortfolioData().then((list) => {
+            setWatchlist(list)
+            console.log("Fetched portfolio data:", list);
+        });
+    }, []);
 
     const addStock = (stock: Omit<Stock, "id">) => {
         const newStock = {
@@ -108,7 +117,7 @@ export default function PortfolioManagement() {
                 </TabsContent>
 
                 <TabsContent value="watchlist" className="mt-0">
-                    <WatchlistSection />
+                    <WatchlistSection watchlist={watchlist} />
                 </TabsContent>
 
                 <TabsContent value="alerts" className="mt-0">

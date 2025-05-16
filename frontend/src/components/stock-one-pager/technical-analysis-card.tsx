@@ -16,27 +16,23 @@ interface TechnicalAnalysisChartCardProps {
   technicalAnalysis: StockData["technical_analysis"];
   executiveSummary: StockData["executive_summary"];
   riskMetrics: StockData["risk_metrics"];
+  shortWindow?: number;
+  longWindow?: number;
 }
 
 const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
   technicalAnalysis,
   executiveSummary,
   riskMetrics,
+  shortWindow = 50,
+  longWindow = 200,
 }) => {
-  const chartData = technicalAnalysis.stock_prices.map((price) => {
-    const smaShortEntry = technicalAnalysis.sma_short.find(
-      (s) => s.date === price.date
-    );
-    const smaLongEntry = technicalAnalysis.sma_long.find(
-      (s) => s.date === price.date
-    );
-    return {
-      date: price.date,
-      price: price.close,
-      sma_short: smaShortEntry?.sma_short ?? undefined,
-      sma_long: smaLongEntry?.sma_long ?? undefined,
-    };
-  });
+  const chartData = technicalAnalysis.historical.map(point => ({
+    date: point.date,
+    price: point.close,
+    sma_short: point.sma_short,
+    sma_long: point.sma_long,
+  }))
 
   return (
     <Card className="border-gray-200 shadow-sm">
@@ -48,17 +44,17 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
           </CardTitle>
           <div className="flex gap-2">
             <Badge variant="outline" className="bg-blue-50 text-blue-700">
-              SMA 50
+              {`SMA ${shortWindow}`}
             </Badge>
             <Badge variant="outline" className="bg-purple-50 text-purple-700">
-              SMA 200
+              {`SMA ${longWindow}`}
             </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">
-          <StockChart historicalData={chartData} />
+          <StockChart historicalData={chartData} shortWindow={shortWindow} longWindow={longWindow} />
         </div>
       </CardContent>
       <CardFooter className="flex justify-between text-sm text-gray-500 border-t pt-4">

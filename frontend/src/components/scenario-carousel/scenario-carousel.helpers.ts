@@ -4,6 +4,7 @@ import {
   TrendingUp,
   DollarSign,
   Percent,
+  LineChart,
 } from "lucide-react";
 import { SVGAttributes } from "react";
 export type GenericIconType = React.FC<SVGAttributes<SVGElement>>;
@@ -25,6 +26,14 @@ export const scenarios: Scenario[] = [
     href: "/scenarios/golden-cross",
     color: "bg-slate-200 bg-opacity-50",
     type: "golden-cross",
+  },
+  {
+    title: "Fibonacci & Elliott",
+    description: "Analyze stocks using Fibonacci retracements and Elliott Wave theory",
+    icon: LineChart,
+    href: "/scenarios/fibonacci-elliott",
+    color: "bg-purple-200 bg-opacity-50",
+    type: "fibonacci-elliott",
   },
   {
     title: "EV to revenue",

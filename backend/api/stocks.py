@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database.base import get_db
 from datetime import datetime, timedelta, timezone
 import logging
-import pandas as pd
 from database.company import Company, CompanyOverview
 from database.market import Market
 from database.financials import CompanyFinancials
@@ -126,6 +125,7 @@ def get_company_financials(company: Company, db: Session) -> dict:
         "gross_margin": ratios["gross_margin"],
         "operating_margin": ratios["operating_margin"],
         "net_margin": ratios["net_margin"],
+        "shares_outstanding": financials.shares_outstanding,
     }
 
 
@@ -139,22 +139,13 @@ def build_executive_summary(company: Company, market: Market | None) -> dict:
     }
 
 
-def build_technical_analysis(
-    stock_history: list[tuple], window_50: int = 50, window_200: int = 200
-) -> dict:
-    df = pd.DataFrame(stock_history, columns=["date", "close"])
-    df["SMA_50"] = df["close"].rolling(window=window_50).mean()
-    df["SMA_200"] = df["close"].rolling(window=window_200).mean()
-
-    return {
-        "stock_prices": df[["date", "close"]].dropna().to_dict(orient="records"),
-        "sma_50": df[["date", "SMA_50"]].dropna().to_dict(orient="records"),
-        "sma_200": df[["date", "SMA_200"]].dropna().to_dict(orient="records"),
-    }
-
-
 @router.get("/{ticker}")
-def get_stock_details(ticker: str, db: Session = Depends(get_db)):
+def get_stock_details(
+    ticker: str,
+    short_window: int = Query(50, ge=1, description="Short MA window in days"),
+    long_window: int = Query(200, ge=1, description="Long MA window in days"),
+    db: Session = Depends(get_db),
+):
     company = get_company_by_ticker(ticker, db)
     market = get_company_market(company, db)
 
@@ -203,7 +194,7 @@ def get_stock_details(ticker: str, db: Session = Depends(get_db)):
     investor_metrics = build_investor_metrics(financials, trends)
     valuation_metrics = build_valuation_metrics(company, financials, db)
     raw_technical_analysis = build_extended_technical_analysis(
-        stock_history, short_window=50, long_window=200
+        stock_history, short_window=short_window, long_window=long_window
     )
     technical_analysis = clean_nan_values(raw_technical_analysis)
     risk_metrics = (

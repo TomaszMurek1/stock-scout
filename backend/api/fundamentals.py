@@ -9,7 +9,6 @@ from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanReq
 from services.fundamentals.break_even.break_even_companies import (
     find_companies_near_break_even,
 )
-from services.fundamentals.financial_data_service import fetch_and_save_financial_data
 from services.yfinance_data_update.data_update_service import ensure_fresh_data
 
 router = APIRouter()
@@ -19,8 +18,8 @@ logger = logging.getLogger(__name__)
 @router.post("/ev-to-revenue")
 def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)):
     """
-    Search for companies in the specified markets whose Enterprise Value to Revenue ratio
-    falls within a certain range.
+    Search for companies in the specified markets whose Enterprise Value to
+    Revenue ratio falls within a certain range.
     """
     if not request.markets:
         raise HTTPException(status_code=400, detail="No markets specified.")
@@ -49,7 +48,7 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
     logger.info(f"Scanning {len(companies)} companies in markets: {request.markets}")
 
     # 3) Fetch/update financial data if necessary
-    for c in companies[:400]:  # Limit for testing
+    for c in companies:
         for m in c.markets:
             if m.market_id in market_ids:
                 ensure_fresh_data(c.ticker, m.name, db)

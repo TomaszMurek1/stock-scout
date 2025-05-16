@@ -21,6 +21,8 @@ interface HistoricalData {
 
 interface StockChartProps {
   historicalData: HistoricalData[]
+  shortWindow?: number
+  longWindow?: number
   showLastYear?: boolean
 }
 
@@ -156,6 +158,8 @@ const fillHistoricalData = (data: HistoricalData[]): HistoricalData[] => {
 
 export default function StockChart({
   historicalData,
+  shortWindow = 50,
+  longWindow = 200,
   showLastYear = true,
 }: StockChartProps) {
 
@@ -200,7 +204,7 @@ export default function StockChart({
     return {
       ...item,
       bullish: crossover?.bullish || null,
-      bearish: crossover?.bearish || null, 
+      bearish: crossover?.bearish || null,
     };
   });
 
@@ -259,7 +263,7 @@ export default function StockChart({
             strokeDasharray="5 5"
             strokeWidth={1.5}
             fill="none"
-            name="SMA 50"
+            name={`SMA ${shortWindow}`}
             dot={false}
             activeDot={false}
           />
@@ -272,7 +276,7 @@ export default function StockChart({
             strokeDasharray="7 4"
             strokeWidth={1.5}
             fill="none"
-            name="SMA 200"
+            name={`SMA ${longWindow}`}
             dot={false}
             activeDot={false}
           />

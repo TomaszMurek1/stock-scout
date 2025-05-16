@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useSearchParams } from "react-router-dom"
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -14,8 +14,8 @@ import {
 import { MetricsCard } from "./metric-card"
 import { getMetricStatus } from "./metric-utils"
 import { formatPercentage } from "@/utils/formatting"
-import LoadingScreen from "./loading-screen"
-import ErrorScreen from "./error-screen"
+import LoadingScreen from "../shared/loading-screen"
+import ErrorScreen from "../shared/error-screen"
 import { useStockData } from "./useStockData"
 import StockHeader from "./stock-header"
 import CompanyOverviewCard from "./company-overview-card"
@@ -27,7 +27,15 @@ import TradePanel from "./trade-panel"
 
 export const StockOnePager: FC = () => {
   const { ticker } = useParams();
-  const { stock, isLoading, error } = useStockData(ticker);
+  const [searchParams] = useSearchParams();
+
+  const shortWindow = Number(searchParams.get("short_window") ?? 50);
+  const longWindow = Number(searchParams.get("long_window") ?? 200);
+  const { stock, isLoading, error } = useStockData(
+    ticker,
+    shortWindow,
+    longWindow
+  );
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={error} />;
@@ -43,7 +51,7 @@ export const StockOnePager: FC = () => {
     financial_trends,
     technical_analysis,
   } = stock;
-
+  console.log('q', financial_performance?.shares_outstanding)
   return (
     <div className="min-h-screen bg-gray-300">
       <div className="max-w-[1600px] mx-auto px-4 py-6">
@@ -53,6 +61,7 @@ export const StockOnePager: FC = () => {
           companyOverview={company_overview}
           technicalAnalysis={technical_analysis}
           riskMetrics={risk_metrics}
+          sharesOutstanding={financial_performance?.shares_outstanding}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -63,6 +72,8 @@ export const StockOnePager: FC = () => {
               technicalAnalysis={technical_analysis}
               executiveSummary={executive_summary}
               riskMetrics={risk_metrics}
+              shortWindow={shortWindow}
+              longWindow={longWindow}
             />
             <FinancialTrendsCard
               financialTrends={financial_trends}
@@ -215,7 +226,7 @@ export const StockOnePager: FC = () => {
 
             <TechnicalIndicatorsCard technicalAnalysis={technical_analysis} />
             {/*TODO: Pleceholder, not working yet */}
-            <TradePanel companyId={1} currentPrice={10}/>
+            <TradePanel companyId={1} currentPrice={10} />
 
           </div>
         </div>

@@ -1,5 +1,6 @@
 # dependencies/auth.py
 
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -14,8 +15,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -24,7 +24,9 @@ def get_current_user(
     )
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         user_email: str = payload.get("sub")
         if user_email is None:
             raise credentials_exception
@@ -45,5 +47,18 @@ def get_user_by_email(db: Session, email: str) -> User | None:
 def is_user_invitation_valid(user: User) -> bool:
     if not user.invitation:
         return False
-    valid_until = user.created_at + timedelta(days=user.invitation.duration_days)
-    return datetime.utcnow() <= valid_until
+
+    print("User's invitation:", user.invitation)
+
+    duration_days: Optional[int] = user.invitation.duration_days
+    if duration_days is None:
+        print("Invitation has no duration_days, treating as invalid.")
+        return False
+
+    try:
+        valid_until = user.created_at + timedelta(days=duration_days)
+        print("User's valid_until:", valid_until)
+        return datetime.utcnow() <= valid_until
+    except Exception as e:
+        print("Error calculating valid_until:", e)
+        return False

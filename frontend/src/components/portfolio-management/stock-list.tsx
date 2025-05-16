@@ -47,11 +47,11 @@ export default function StockList({ stocks, onRemove }: StockListProps) {
 
                         return (
                             <tr key={stock.id}>
-                                <td className="px-6 py-4 whitespace-nowrap font-medium">{stock.symbol}</td>
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{stock?.symbol}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{stock.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{stock.shares}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">${stock.purchasePrice.toFixed(2)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">${stock.currentPrice.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">${stock.purchasePrice?.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">${stock.currentPrice?.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">${value.toFixed(2)}</td>
                                 <td className={`px-6 py-4 whitespace-nowrap ${isPositive ? "text-green-600" : "text-red-600"}`}>
                                     {isPositive ? "+" : ""}

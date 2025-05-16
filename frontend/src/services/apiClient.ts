@@ -1,4 +1,4 @@
-import axios, {  InternalAxiosRequestConfig } from "axios";
+import axios, { InternalAxiosRequestConfig } from "axios";
 import { jwtDecode } from "jwt-decode";
 import { refreshTokenRequest } from "./authService";
 
@@ -24,7 +24,7 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 
   if (token) {
     try {
-        console.log("Token:", token);
+
       const decoded = jwtDecode<TokenPayload>(token);
       const isExpired = decoded.exp * 1000 < Date.now() + 60000; // 1 min buffer
 
@@ -45,39 +45,39 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
       throw error;
     }
   }
-  
+
   return config;
 });
 
 apiClient.interceptors.response.use(
-    response => response,
-    async (error) => {
-      const originalRequest = error.config;
-      
-      // Prevent infinite loop on refresh endpoint errors
-      if (error.response?.status === 401 && 
-          originalRequest.url?.includes("/auth/refresh")) {
-        clearAuth();
-        window.location.href = "/signin";
-        return Promise.reject(error);
-      }
-  
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        
-        try {
-          await handleTokenRefresh();
-          return apiClient(originalRequest);
-        } catch (refreshError) {
-          clearAuth();
-          window.location.href = "/signin";
-          return Promise.reject(refreshError);
-        }
-      }
-      
+  response => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Prevent infinite loop on refresh endpoint errors
+    if (error.response?.status === 401 &&
+      originalRequest.url?.includes("/auth/refresh")) {
+      clearAuth();
+      window.location.href = "/signin";
       return Promise.reject(error);
     }
-  );
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        await handleTokenRefresh();
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        clearAuth();
+        window.location.href = "/signin";
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 
 let failedRequests: Array<() => void> = [];
@@ -87,47 +87,47 @@ const MAX_REFRESH_ATTEMPTS = 2;
 const REFRESH_COOLDOWN_MS = 5000;
 
 async function handleTokenRefresh(): Promise<void> {
-    if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
-      clearAuth();
-      throw new Error("Maximum refresh attempts reached");
-    }
-  
-    const now = Date.now();
-    if (now - lastRefreshAttempt < REFRESH_COOLDOWN_MS) {
-      throw new Error("Refresh too frequent");
-    }
-  
-    refreshAttempts++;
-    lastRefreshAttempt = now;
-  
-    try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) throw new Error("No refresh token available");
-  
-      const { data } = await refreshTokenRequest(refreshToken);
-      
-      refreshAttempts = 0;
-      localStorage.setItem("authToken", data.access_token);
-      localStorage.setItem("refreshToken", data.refresh_token);
-      apiClient.defaults.headers.common["Authorization"] = `Bearer ${data.access_token}`;
-  
-      // Retry queued requests
-      while (failedRequests.length > 0) {
-        const retry = failedRequests.shift();
-        retry?.();
-      }
-    } catch (error) {
-      refreshAttempts = MAX_REFRESH_ATTEMPTS;
-      clearAuth();
-      
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.detail || "Refresh failed");
-      } else if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Unknown error during refresh");
-    }
+  if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+    clearAuth();
+    throw new Error("Maximum refresh attempts reached");
   }
+
+  const now = Date.now();
+  if (now - lastRefreshAttempt < REFRESH_COOLDOWN_MS) {
+    throw new Error("Refresh too frequent");
+  }
+
+  refreshAttempts++;
+  lastRefreshAttempt = now;
+
+  try {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) throw new Error("No refresh token available");
+
+    const { data } = await refreshTokenRequest(refreshToken);
+
+    refreshAttempts = 0;
+    localStorage.setItem("authToken", data.access_token);
+    localStorage.setItem("refreshToken", data.refresh_token);
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${data.access_token}`;
+
+    // Retry queued requests
+    while (failedRequests.length > 0) {
+      const retry = failedRequests.shift();
+      retry?.();
+    }
+  } catch (error) {
+    refreshAttempts = MAX_REFRESH_ATTEMPTS;
+    clearAuth();
+
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.detail || "Refresh failed");
+    } else if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Unknown error during refresh");
+  }
+}
 
 function clearAuth(): void {
   localStorage.removeItem("authToken");

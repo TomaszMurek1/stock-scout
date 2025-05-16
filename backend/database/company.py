@@ -1,4 +1,14 @@
-from sqlalchemy import Column, Float, ForeignKey, Integer, String, DateTime, Table, UniqueConstraint, Index
+from sqlalchemy import (
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    DateTime,
+    Table,
+    UniqueConstraint,
+    Index,
+)
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .base import Base
@@ -7,24 +17,25 @@ from .base import Base
 # Association Tables
 # ---------------------------
 company_stockindex_association = Table(
-    'company_stockindex_association',
+    "company_stockindex_association",
     Base.metadata,
-    Column('company_id', Integer, ForeignKey('companies.company_id'), primary_key=True),
-    Column('index_id', Integer, ForeignKey('stock_indexes.index_id'), primary_key=True)
+    Column("company_id", Integer, ForeignKey("companies.company_id"), primary_key=True),
+    Column("index_id", Integer, ForeignKey("stock_indexes.index_id"), primary_key=True),
 )
 
 company_market_association = Table(
-    'company_market_association',
+    "company_market_association",
     Base.metadata,
-    Column('company_id', Integer, ForeignKey('companies.company_id'), primary_key=True),
-    Column('market_id', Integer, ForeignKey('markets.market_id'), primary_key=True)
+    Column("company_id", Integer, ForeignKey("companies.company_id"), primary_key=True),
+    Column("market_id", Integer, ForeignKey("markets.market_id"), primary_key=True),
 )
 
+
 class CompanyESGData(Base):
-    __tablename__ = 'company_esg_data'
+    __tablename__ = "company_esg_data"
 
     esg_id = Column(Integer, primary_key=True, autoincrement=True)
-    company_id = Column(Integer, ForeignKey('companies.company_id'), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
 
     total_esg_score = Column(Float, nullable=True)
     environment_score = Column(Float, nullable=True)
@@ -40,8 +51,9 @@ class CompanyESGData(Base):
 
     company = relationship("Company", backref="esg_data")
 
+
 class Company(Base):
-    __tablename__ = 'companies'
+    __tablename__ = "companies"
 
     company_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
@@ -49,25 +61,40 @@ class Company(Base):
     sector = Column(String)
     industry = Column(String)
 
-    markets = relationship('Market', secondary=company_market_association, back_populates='companies')
-    stock_indexes = relationship('StockIndex', secondary=company_stockindex_association, back_populates='companies')
+    markets = relationship(
+        "Market", secondary=company_market_association, back_populates="companies"
+    )
+    stock_indexes = relationship(
+        "StockIndex",
+        secondary=company_stockindex_association,
+        back_populates="companies",
+    )
     analysis_results = relationship("AnalysisResult", back_populates="company")
-    financials = relationship("CompanyFinancials", back_populates="company", cascade="all, delete-orphan")
-    financial_history = relationship("CompanyFinancialHistory", back_populates="company", cascade="all, delete-orphan") 
-    market_data = relationship("CompanyMarketData", back_populates="company", cascade="all, delete-orphan")
+    financials = relationship(
+        "CompanyFinancials", back_populates="company", cascade="all, delete-orphan"
+    )
+    financial_history = relationship(
+        "CompanyFinancialHistory",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )
+    market_data = relationship(
+        "CompanyMarketData", back_populates="company", cascade="all, delete-orphan"
+    )
 
     # ✅ Added missing relationship to `CompanyOverview`
     overview = relationship("CompanyOverview", back_populates="company", uselist=False)
 
     __table_args__ = (
-        UniqueConstraint('ticker', name='_company_ticker_uc'),
-        Index('idx_companies_ticker', 'ticker'),
+        UniqueConstraint("ticker", name="_company_ticker_uc"),
+        Index("idx_companies_ticker", "ticker"),
     )
 
-class CompanyOverview(Base):
-    __tablename__ = 'company_overview'
 
-    company_id = Column(Integer, ForeignKey('companies.company_id'), primary_key=True)
+class CompanyOverview(Base):
+    __tablename__ = "company_overview"
+
+    company_id = Column(Integer, ForeignKey("companies.company_id"), primary_key=True)
     long_name = Column(String, nullable=False)
     short_name = Column(String, nullable=True)
     industry = Column(String, nullable=True)
