@@ -2,10 +2,10 @@
 
 import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { Stock } from "./types"
+import type { PortfolioStock } from "./types"
 
 interface StockListProps {
-    stocks: Stock[]
+    stocks: PortfolioStock[]
     onRemove: (id: string) => void
 }
 

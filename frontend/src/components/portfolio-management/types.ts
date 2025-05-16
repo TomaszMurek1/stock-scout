@@ -1,4 +1,4 @@
-export interface Stock {
+export interface PortfolioStock {
     id: string
     symbol: string
     name: string

@@ -13,41 +13,35 @@ import TransactionsHistory from "./transactions-history"
 import CashBalanceTracker from "./cash-balance-tracker"
 import RiskAnalysis from "./risk-analysis"
 import PerformanceChart from "./performance-chart"
-import type { Stock } from "./types"
+import type { PortfolioStock } from "./types"
 import { fetchPortfolioData } from "@/services/api/portfolio"
+import { usePortfolioStore } from "@/store/portfolioStore"
 
 export default function PortfolioManagement() {
+    // local UI state still lives here
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-    const [stocks, setStocks] = useState<Stock[]>([
-        { id: "1", symbol: "AAPL", name: "Apple Inc.", shares: 10, purchasePrice: 150.75, currentPrice: 175.25 },
-        { id: "2", symbol: "MSFT", name: "Microsoft Corporation", shares: 5, purchasePrice: 245.3, currentPrice: 280.15 },
-        { id: "3", symbol: "GOOGL", name: "Alphabet Inc.", shares: 2, purchasePrice: 2750.0, currentPrice: 2850.5 },
-        { id: "3", symbol: "GOOGL2", name: "Alphabet2 Inc.", shares: 2, purchasePrice: 222.0, currentPrice: 2222.5 },
-    ])
-    const [watchlist, setWatchlist] = useState<any[]>([])
 
+    // ===== zustand slices & actions =====
+    const holdings = usePortfolioStore((s: any) => s.holdings)
+    const addHolding = usePortfolioStore((s: any) => s.addHolding)
+    const removeHolding = usePortfolioStore((s: any) => s.removeHolding)
+
+    const favorites = usePortfolioStore((s: any) => s.favorites)
+    const setFavorites = usePortfolioStore((s: any) => s.setFavorites)
+
+    // only fetch if we have no favorites yet
     useEffect(() => {
-        fetchPortfolioData().then((list) => {
-            setWatchlist(list)
-            console.log("Fetched portfolio data:", list);
-        });
-    }, []);
-
-    const addStock = (stock: Omit<Stock, "id">) => {
-        const newStock = {
-            ...stock,
-            id: Date.now().toString(),
+        if (favorites.length === 0) {
+            fetchPortfolioData().then((list) => {
+                setFavorites(list)
+                console.log("Fetched watchlist:", list)
+            })
         }
-        setStocks([...stocks, newStock])
-        setIsAddModalOpen(false)
-    }
+    }, [favorites, setFavorites])
 
-    const removeStock = (id: string) => {
-        setStocks(stocks.filter((stock) => stock.id !== id))
-    }
-
-    const totalValue = stocks.reduce((sum, stock) => sum + stock.currentPrice * stock.shares, 0)
-    const totalInvested = stocks.reduce((sum, stock) => sum + stock.purchasePrice * stock.shares, 0)
+    // derived totals
+    const totalValue = holdings.reduce((sum, s) => sum + s.currentPrice * s.shares, 0)
+    const totalInvested = holdings.reduce((sum, s) => sum + s.purchasePrice * s.shares, 0)
     const totalGainLoss = totalValue - totalInvested
     const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0
 
@@ -68,7 +62,6 @@ export default function PortfolioManagement() {
                 percentageChange={percentageChange}
             />
 
-            {/* Portfolio Performance Chart */}
             <PerformanceChart />
 
             <Tabs defaultValue="watchlist" className="w-full">
@@ -112,14 +105,13 @@ export default function PortfolioManagement() {
                             </Button>
                         </div>
 
-                        <StockList stocks={stocks} onRemove={removeStock} />
+                        <StockList stocks={holdings} onRemove={removeHolding} />
                     </div>
                 </TabsContent>
 
                 <TabsContent value="watchlist" className="mt-0">
-                    <WatchlistSection watchlist={watchlist} />
+                    <WatchlistSection />
                 </TabsContent>
-
                 <TabsContent value="alerts" className="mt-0">
                     <AlertsPanel />
                 </TabsContent>
@@ -135,9 +127,17 @@ export default function PortfolioManagement() {
                 <TabsContent value="risk" className="mt-0">
                     <RiskAnalysis />
                 </TabsContent>
+
             </Tabs>
 
-            <AddStockModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onAdd={addStock} />
+            <AddStockModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onAdd={(stock: Omit<PortfolioStock, "id">) => {
+                    addHolding(stock)
+                    setIsAddModalOpen(false)
+                }}
+            />
         </div>
     )
 }
