@@ -94,7 +94,10 @@ def fetch_and_save_stock_price_history_data(
         if last_db_date and last_db_date >= today:
             return {
                 "status": "up_to_date",
-                "message": f"Latest record is already up to date ({last_db_date.isoformat()})",
+                "message": (
+                    f"Latest record is already up to date "
+                    f"({last_db_date.isoformat()})"
+                ),
             }
 
         # Re-fetch and replace the last DB record if not today

@@ -1,8 +1,13 @@
+from datetime import date
 from pydantic import BaseModel
 from typing import List
 
-class TickerRequest(BaseModel):
+
+class TickersRequest(BaseModel):
     tickers: List[str]
+    start_date: date
+    end_date: date
+
 
 class GoldenCrossRequest(BaseModel):
     short_window: int = 50
@@ -11,6 +16,7 @@ class GoldenCrossRequest(BaseModel):
     min_volume: int = 1_000_000
     adjusted: bool = True
     markets: List[str]
+
 
 class TickerRequestAdmin(BaseModel):
     country: str

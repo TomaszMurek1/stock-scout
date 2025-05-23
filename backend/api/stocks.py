@@ -30,7 +30,10 @@ logging.basicConfig(
 
 def fetch_company_overview_from_api(ticker: str) -> dict:
     api_key = os.getenv("FMP_API_KEY")
-    url = f"https://financialmodelingprep.com/stable/profile?symbol={ticker}&apikey={api_key}"
+    url = (
+        f"https://financialmodelingprep.com/stable/profile?symbol={ticker}"
+        f"&apikey={api_key}"
+    )
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -197,9 +200,9 @@ def get_stock_details(
         stock_history, short_window=short_window, long_window=long_window
     )
     technical_analysis = clean_nan_values(raw_technical_analysis)
-    risk_metrics = (
-        {}
-    )  # build_risk_metrics(company, stock_history, db)# refactor this at it always connects to yfinance
+    risk_metrics = {}
+    # build_risk_metrics(company, stock_history, db)
+
     peer_comparison = build_peer_comparisons(company, db)
 
     response = {
@@ -220,21 +223,3 @@ def get_stock_details(
         "peer_comparison": peer_comparison,
     }
     return sanitize_numpy_types(response)
-
-
-# @router.post("/fetch-stock-data")
-# async def fetch_stock_data(request: TickerRequest, db: Session = Depends(get_db)):
-#     tickers = request.tickers
-#     end_date = datetime.now()
-#     start_date = end_date - timedelta(days=360)
-
-#     results = []
-#     for ticker in tickers:
-#         try:
-#             result = fetch_and_save_stock_history_data(ticker, start_date, end_date, db)
-#             results.append({"ticker": ticker, "message": result["message"], "status": result["status"]})
-#         except Exception as e:
-#             logger.error(f"Error fetching {ticker}: {e}", exc_info=True)
-#             raise HTTPException(status_code=500, detail=f"Error processing {ticker}")
-
-#     return {"results": results}

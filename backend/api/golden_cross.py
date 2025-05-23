@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import time
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,11 +10,19 @@ from database.user import User
 from database.market import Market
 from database.company import Company, company_market_association
 from services.analysis_results.analysis_results import get_or_update_analysis_result
-from services.yfinance_data_update.data_update_service import ensure_fresh_data
+from services.yfinance_data_update.data_update_service import (
+    fetch_and_save_stock_price_history_data_batch,
+)
 from .security import get_current_user
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _chunked(seq, size):
+    """Yield successive size-chunks from seq."""
+    for i in range(0, len(seq), size):
+        yield seq[i : i + size]
 
 
 @router.post("/golden-cross")
@@ -46,7 +54,7 @@ def cached_golden_cross(
     start_time = time.time()
     golden_cross_results = []
 
-    # 1) Get Market IDs
+    # 1) Get all matching markets & companies
     market_ids = [
         m[0]
         for m in db.query(Market.market_id)
@@ -54,9 +62,10 @@ def cached_golden_cross(
         .all()
     ]
     if not market_ids:
-        raise HTTPException(status_code=404, detail="No matching markets found.")
+        raise HTTPException(
+            status_code=404, detail="No matching markets found."
+        )  # :contentReference[oaicite:0]{index=0}
 
-    # 2) Find all companies in those markets
     companies = (
         db.query(Company)
         .join(company_market_association)
@@ -68,79 +77,91 @@ def cached_golden_cross(
         raise HTTPException(
             status_code=404, detail="No companies found for these markets."
         )
-
-    logger.info(f"Found {len(companies)} companies to analyze in {request.markets}.")
-
-    # 3) Preload relevant AnalysisResult records
-    company_ids = [c.company_id for c in companies]
-    existing_results = (
+    # 2) Preload existing analysis so we only re-analyze stale/missing
+    existing = (
         db.query(AnalysisResult)
         .filter(AnalysisResult.analysis_type == "golden_cross")
         .filter(AnalysisResult.short_window == short_window)
         .filter(AnalysisResult.long_window == long_window)
         .filter(AnalysisResult.market_id.in_(market_ids))
-        .filter(AnalysisResult.company_id.in_(company_ids))
+        .filter(AnalysisResult.company_id.in_([c.company_id for c in companies]))
         .all()
     )
-
     now = datetime.utcnow().date()
-    analysis_map = {(res.company_id, res.market_id): res for res in existing_results}
+    analysis_map = {(r.company_id, r.market_id): r for r in existing}
 
-    # 4) Determine which company/market pairs need fresh analysis
-    company_market_pairs_to_check = []
-    for company in companies:
-        for market in company.markets:
-            if market.market_id not in market_ids:
+    # 3) Build list of (company,market) needing fresh analysis
+    pairs_to_check = []
+    for comp in companies:
+        for mkt in comp.markets:
+            if mkt.market_id not in market_ids:
                 continue
+            rec = analysis_map.get((comp.company_id, mkt.market_id))
+            if (
+                rec
+                and rec.cross_date
+                and (now - rec.cross_date).days <= 30
+                and rec.days_since_cross is not None
+                and rec.days_since_cross <= days_to_look_back
+            ):
+                golden_cross_results.append(
+                    {
+                        "ticker": comp.ticker,
+                        "data": {
+                            "ticker": comp.ticker,
+                            "name": comp.name,
+                            "date": rec.cross_date.strftime("%Y-%m-%d"),
+                            "days_since_cross": rec.days_since_cross,
+                            "close": rec.cross_price,
+                            "short_ma": short_window,
+                            "long_ma": long_window,
+                        },
+                    }
+                )
+                continue
+            if (
+                rec
+                and not rec.cross_date
+                and rec.last_updated
+                and rec.last_updated.date() == now
+            ):
+                continue
+            # otherwise need to fetch & analyze
+            pairs_to_check.append((comp, mkt))
 
-            key = (company.company_id, market.market_id)
-            existing = analysis_map.get(key)
+    if pairs_to_check:
+        # 4) Batch‐fetch price history for all needed tickers, chunked
+        today = now
+        # we need at least long_window + days_to_look_back days of history + buffer
+        lookback_days = long_window + days_to_look_back + 5
+        start_date = today - timedelta(days=lookback_days)
+        end_date = today
 
-            if existing:
-                if (
-                    existing.cross_date
-                    and (now - existing.cross_date).days <= 30
-                    and existing.days_since_cross is not None
-                    and existing.days_since_cross <= days_to_look_back
-                ):
-                    # ✅ Add immediately to results
-                    golden_cross_results.append(
-                        {
-                            "ticker": company.ticker,
-                            "data": {
-                                "ticker": company.ticker,
-                                "name": company.name,
-                                "date": existing.cross_date.strftime("%Y-%m-%d"),
-                                "days_since_cross": existing.days_since_cross,
-                                "close": existing.cross_price,
-                                "short_ma": short_window,
-                                "long_ma": long_window,
-                            },
-                        }
-                    )
-                    continue
+        # group tickers by market
+        tickers_by_market: dict[str, list[str]] = {}
+        for comp, mkt in pairs_to_check:
+            tickers_by_market.setdefault(mkt.name, []).append(comp.ticker)
 
-                elif (
-                    not existing.cross_date
-                    and existing.last_updated
-                    and existing.last_updated.date() == now
-                ):
-                    # ❌ Already checked today with no cross
-                    continue
+        BATCH_SIZE = 50
+        for market_name, tickers in tickers_by_market.items():
+            for chunk in _chunked(tickers, BATCH_SIZE):
+                resp = fetch_and_save_stock_price_history_data_batch(
+                    tickers=chunk,
+                    market_name=market_name,
+                    db=db,
+                    start_date=start_date,
+                    end_date=end_date,
+                    force_update=False,
+                )
+                logger.info(f"Batch fetch [{market_name}] {chunk[:5]}…: {resp}")
 
-            # Otherwise → needs fresh analysis
-            company_market_pairs_to_check.append((company, market))
-
-    # 5) Analyze only the required pairs
+    # 5) Run your existing analysis on each pair
     cross_type = "golden"
-    for company, market in company_market_pairs_to_check:
-        print(f"Analyzing golden-cross for {company.ticker}...")
-        ensure_fresh_data(company.ticker, market.name, db)
-
+    for comp, mkt in pairs_to_check:
         analysis_record = get_or_update_analysis_result(
             db=db,
-            company=company,
-            market=market,
+            company=comp,
+            market=mkt,
             cross_type=cross_type,
             short_window=short_window,
             long_window=long_window,
@@ -149,31 +170,31 @@ def cached_golden_cross(
             adjusted=adjusted,
             stale_after_days=1,
         )
-
         if (
             analysis_record
             and analysis_record.cross_date
             and analysis_record.days_since_cross is not None
             and analysis_record.days_since_cross <= days_to_look_back
         ):
-            this_result = {
-                "ticker": company.ticker,
-                "data": {
-                    "ticker": company.ticker,
-                    "name": company.name,
-                    "date": analysis_record.cross_date.strftime("%Y-%m-%d"),
-                    "days_since_cross": analysis_record.days_since_cross,
-                    "close": analysis_record.cross_price,
-                    "short_ma": short_window,
-                    "long_ma": long_window,
-                },
-            }
-            golden_cross_results.append(this_result)
+            golden_cross_results.append(
+                {
+                    "ticker": comp.ticker,
+                    "data": {
+                        "ticker": comp.ticker,
+                        "name": comp.name,
+                        "date": analysis_record.cross_date.strftime("%Y-%m-%d"),
+                        "days_since_cross": analysis_record.days_since_cross,
+                        "close": analysis_record.cross_price,
+                        "short_ma": short_window,
+                        "long_ma": long_window,
+                    },
+                }
+            )
 
-    processing_time = time.time() - start_time
+    elapsed = time.time() - start_time
     logger.info(
-        f"Processed golden cross check for {len(companies)} companies "
-        f"({len(company_market_pairs_to_check)} analyzed) in {processing_time:.2f}s"
+        f"Golden‐cross checked {len(companies)} companies "
+        f"({len(pairs_to_check)} fresh) in {elapsed:.2f}s"
     )
 
     if not golden_cross_results:
