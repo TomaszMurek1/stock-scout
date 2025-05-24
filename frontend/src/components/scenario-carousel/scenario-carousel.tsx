@@ -37,6 +37,11 @@ const ScenarioCarousel = () => {
         Choose a Scanning Scenario
       </h2>
       <div className="relative overflow-visible">
+        <DotsIndicator
+          total={scenarios.length}
+          activeIndex={activeIndex}
+          onClick={scrollToIndex}
+        />
         <ChevronButton
           direction="left"
           onClick={() => scroll("left")}
@@ -63,11 +68,7 @@ const ScenarioCarousel = () => {
           disabled={activeIndex === scenarios.length - 1}
         />
 
-        <DotsIndicator
-          total={scenarios.length}
-          activeIndex={activeIndex}
-          onClick={scrollToIndex}
-        />
+
       </div>
     </section>
   );
