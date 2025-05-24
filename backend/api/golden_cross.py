@@ -25,47 +25,13 @@ def _chunked(seq, size):
         yield seq[i : i + size]
 
 
-@router.post("/golden-cross")
-def cached_golden_cross(
-    request: GoldenCrossRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    This endpoint checks for a "golden cross" using the AnalysisResult cache
-    and returns the SAME JSON structure as the old code did.
-    """
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
-        )
-
-    if not request.markets:
-        raise HTTPException(
-            status_code=400, detail="No markets specified in the request."
-        )
-
-    short_window = request.short_window
-    long_window = request.long_window
-    days_to_look_back = request.days_to_look_back
-    min_volume = request.min_volume
-    adjusted = request.adjusted
-
-    start_time = time.time()
-    golden_cross_results = []
-
-    # 1) Get all matching markets & companies
+def get_markets_and_companies(db, market_names):
     market_ids = [
         m[0]
-        for m in db.query(Market.market_id)
-        .filter(Market.name.in_(request.markets))
-        .all()
+        for m in db.query(Market.market_id).filter(Market.name.in_(market_names)).all()
     ]
     if not market_ids:
-        raise HTTPException(
-            status_code=404, detail="No matching markets found."
-        )  # :contentReference[oaicite:0]{index=0}
-
+        raise HTTPException(status_code=404, detail="No matching markets found.")
     companies = (
         db.query(Company)
         .join(company_market_association)
@@ -77,7 +43,12 @@ def cached_golden_cross(
         raise HTTPException(
             status_code=404, detail="No companies found for these markets."
         )
-    # 2) Preload existing analysis so we only re-analyze stale/missing
+    return market_ids, companies
+
+
+def load_existing_golden_cross_analysis(
+    db, market_ids, companies, short_window, long_window
+):
     existing = (
         db.query(AnalysisResult)
         .filter(AnalysisResult.analysis_type == "golden_cross")
@@ -87,10 +58,20 @@ def cached_golden_cross(
         .filter(AnalysisResult.company_id.in_([c.company_id for c in companies]))
         .all()
     )
-    now = datetime.utcnow().date()
     analysis_map = {(r.company_id, r.market_id): r for r in existing}
+    return analysis_map
 
-    # 3) Build list of (company,market) needing fresh analysis
+
+def filter_pairs_needing_update(
+    companies,
+    market_ids,
+    analysis_map,
+    now,
+    days_to_look_back,
+    short_window,
+    long_window,
+    golden_cross_results,
+):
     pairs_to_check = []
     for comp in companies:
         for mkt in comp.markets:
@@ -126,45 +107,46 @@ def cached_golden_cross(
                 and rec.last_updated.date() == now
             ):
                 continue
-            # otherwise need to fetch & analyze
             pairs_to_check.append((comp, mkt))
+    return pairs_to_check
 
-    logger.info(
-        f"pairs_to_check: {len(pairs_to_check)} "
-        f"pairs (first 10): {[(comp.ticker, mkt.name) for comp, mkt in pairs_to_check[:10]]}"
-    )
 
-    if pairs_to_check:
-        # 4) Batch‐fetch price history for all needed tickers, chunked
-        today = now
-        # we need at least long_window + days_to_look_back days of history + buffer
-        lookback_days = long_window + days_to_look_back + 5
-        start_date = today - timedelta(days=lookback_days)
-        end_date = today
-
-        # group tickers by market
-        tickers_by_market: dict[str, list[str]] = {}
-        for comp, mkt in pairs_to_check:
-            tickers_by_market.setdefault(mkt.name, []).append(comp.ticker)
-
-        BATCH_SIZE = 50
-        for market_name, tickers in tickers_by_market.items():
-            logger.info(
-                f"Preparing batches for market: {market_name}, tickers: {tickers}"
+def fetch_price_history_for_pairs(
+    db, pairs_to_check, short_window, long_window, days_to_look_back
+):
+    today = datetime.utcnow().date()
+    lookback_days = long_window + days_to_look_back + 5
+    start_date = today - timedelta(days=lookback_days)
+    end_date = today
+    tickers_by_market = {}
+    for comp, mkt in pairs_to_check:
+        tickers_by_market.setdefault(mkt.name, []).append(comp.ticker)
+    BATCH_SIZE = 50
+    for market_name, tickers in tickers_by_market.items():
+        logger.info(f"Preparing batches for market: {market_name}, tickers: {tickers}")
+        for chunk in _chunked(tickers, BATCH_SIZE):
+            resp = fetch_and_save_stock_price_history_data_batch(
+                tickers=chunk,
+                market_name=market_name,
+                db=db,
+                start_date=start_date,
+                end_date=end_date,
+                force_update=False,
             )
-            for chunk in _chunked(tickers, BATCH_SIZE):
-                resp = fetch_and_save_stock_price_history_data_batch(
-                    tickers=chunk,
-                    market_name=market_name,
-                    db=db,
-                    start_date=start_date,
-                    end_date=end_date,
-                    force_update=False,
-                )
-                logger.info(f"Batch fetch [{market_name}] {chunk[:5]}…: {resp}")
+            logger.info(f"Batch fetch [{market_name}] {chunk[:5]}…: {resp}")
 
-    # 5) Run your existing analysis on each pair
-    cross_type = "golden"
+
+def analyze_and_build_results(
+    db,
+    pairs_to_check,
+    cross_type,
+    short_window,
+    long_window,
+    days_to_look_back,
+    min_volume,
+    adjusted,
+    golden_cross_results,
+):
     for comp, mkt in pairs_to_check:
         analysis_record = get_or_update_analysis_result(
             db=db,
@@ -198,6 +180,77 @@ def cached_golden_cross(
                     },
                 }
             )
+
+
+@router.post("/golden-cross")
+def cached_golden_cross(
+    request: GoldenCrossRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Refactored: checks for a "golden cross" using the AnalysisResult cache.
+    """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+        )
+    if not request.markets:
+        raise HTTPException(
+            status_code=400, detail="No markets specified in the request."
+        )
+
+    short_window = request.short_window
+    long_window = request.long_window
+    days_to_look_back = request.days_to_look_back
+    min_volume = request.min_volume
+    adjusted = request.adjusted
+
+    start_time = time.time()
+    golden_cross_results = []
+
+    # 1) Get all matching markets & companies
+    market_ids, companies = get_markets_and_companies(db, request.markets)
+    # 2) Preload existing analysis so we only re-analyze stale/missing
+    analysis_map = load_existing_golden_cross_analysis(
+        db, market_ids, companies, short_window, long_window
+    )
+    now = datetime.utcnow().date()
+    # 3) Build list of (company,market) needing fresh analysis
+    pairs_to_check = filter_pairs_needing_update(
+        companies,
+        market_ids,
+        analysis_map,
+        now,
+        days_to_look_back,
+        short_window,
+        long_window,
+        golden_cross_results,
+    )
+
+    logger.info(
+        f"pairs_to_check: {len(pairs_to_check)} "
+        f"pairs (first 10): {[(comp.ticker, mkt.name) for comp, mkt in pairs_to_check[:10]]}"
+    )
+
+    if pairs_to_check:
+        # 4) Batch‐fetch price history for all needed tickers, chunked
+        fetch_price_history_for_pairs(
+            db, pairs_to_check, short_window, long_window, days_to_look_back
+        )
+
+    # 5) Run your existing analysis on each pair
+    analyze_and_build_results(
+        db,
+        pairs_to_check,
+        cross_type="golden",
+        short_window=short_window,
+        long_window=long_window,
+        days_to_look_back=days_to_look_back,
+        min_volume=min_volume,
+        adjusted=adjusted,
+        golden_cross_results=golden_cross_results,
+    )
 
     elapsed = time.time() - start_time
     logger.info(
