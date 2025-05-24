@@ -100,7 +100,7 @@ def cached_golden_cross(
             if (
                 rec
                 and rec.cross_date
-                and (now - rec.cross_date).days <= 30
+                and (now - rec.cross_date).days <= days_to_look_back
                 and rec.days_since_cross is not None
                 and rec.days_since_cross <= days_to_look_back
             ):
@@ -129,6 +129,11 @@ def cached_golden_cross(
             # otherwise need to fetch & analyze
             pairs_to_check.append((comp, mkt))
 
+    logger.info(
+        f"pairs_to_check: {len(pairs_to_check)} "
+        f"pairs (first 10): {[(comp.ticker, mkt.name) for comp, mkt in pairs_to_check[:10]]}"
+    )
+
     if pairs_to_check:
         # 4) Batch‐fetch price history for all needed tickers, chunked
         today = now
@@ -144,6 +149,9 @@ def cached_golden_cross(
 
         BATCH_SIZE = 50
         for market_name, tickers in tickers_by_market.items():
+            logger.info(
+                f"Preparing batches for market: {market_name}, tickers: {tickers}"
+            )
             for chunk in _chunked(tickers, BATCH_SIZE):
                 resp = fetch_and_save_stock_price_history_data_batch(
                     tickers=chunk,

@@ -177,6 +177,16 @@ def build_financial_history_mappings(
     return mappings
 
 
+def is_missing_or_delisted_fast_info(fast_info: dict) -> bool:
+    """
+    Returns True if fast_info is empty, not a dict, or all values are None.
+    """
+    if not fast_info or not isinstance(fast_info, dict):
+        return True
+    # If all values are None, treat as missing/delisted as well:
+    return all(v is None for v in fast_info.values())
+
+
 @retry_on_db_lock
 def fetch_and_save_financial_data_for_list_of_tickers(
     tickers: List[str], market_name: str, db: Session
@@ -221,6 +231,18 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         md = market_data.get(comp.company_id) or CompanyMarketData(
             company_id=comp.company_id, market_id=market.market_id
         )
+
+        if is_missing_or_delisted_fast_info(fast_info):
+            logger.warning(
+                f"No valid fast_info for ticker {ticker} (may be delisted or invalid)"
+            )
+            md.current_price = None
+            md.last_updated = datetime.now(timezone.utc)
+            if hasattr(md, "is_delisted"):
+                md.is_delisted = True
+            db.add(md)
+            continue
+
         update_market_data(md, fast_info)
         db.add(md)
 
@@ -309,6 +331,7 @@ def update_financials_for_tickers(
     for comp in companies:
         last_dt = latest_reports.get(comp.company_id)
         if should_update_financials(last_dt, today):
+            logger.info(f"[{comp.ticker}] Needs financial data update. {last_dt}")
             eligible_tickers.append(comp.ticker)
         else:
             if log_skips:

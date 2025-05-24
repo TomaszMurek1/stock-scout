@@ -80,7 +80,7 @@ def get_or_fetch_stock_price_history(
     if not stock_price_history:
         logger.info(f"No stock history found for {ticker}, fetching from source...")
 
-        ensure_fresh_data(ticker, market_name, db)
+        ensure_fresh_data(ticker, market_name, False, db)
         db.expire_all()
 
         # Retry fetching
@@ -152,7 +152,7 @@ def get_stock_details(
     company = get_company_by_ticker(ticker, db)
     market = get_company_market(company, db)
 
-    ensure_fresh_data(company.ticker, market.name if market else "Unknown", db)
+    ensure_fresh_data(company.ticker, market.name if market else "Unknown", False, db)
 
     overview = company.overview
     if not overview:

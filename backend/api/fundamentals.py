@@ -9,7 +9,13 @@ from schemas.fundamentals_schemas import BreakEvenPointRequest, EVRevenueScanReq
 from services.fundamentals.break_even.break_even_companies import (
     find_companies_near_break_even,
 )
-from services.yfinance_data_update.data_update_service import ensure_fresh_data
+from services.fundamentals.financials_batch_update_service import (
+    update_financials_for_tickers,
+)
+from services.yfinance_data_update.data_update_service import (
+    ensure_fresh_data,
+    fetch_and_save_stock_price_history_data_batch,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -23,7 +29,7 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
     """
     if not request.markets:
         raise HTTPException(status_code=400, detail="No markets specified.")
-
+    markets = db.query(Market).filter(Market.name.in_(request.markets)).all()
     # 1) Find relevant markets
     market_ids = [
         m[0]
@@ -47,11 +53,39 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
 
     logger.info(f"Scanning {len(companies)} companies in markets: {request.markets}")
 
-    # 3) Fetch/update financial data if necessary
+    for market in markets:
+        companies = (
+            db.query(Company)
+            .join(company_market_association)
+            .join(Market)
+            .filter(Market.market_id == market.market_id)
+            .all()
+        )
+        if not companies:
+            continue
+
+        tickers = [company.ticker for company in companies]
+
+        # Batch fetch, which now returns info about delisted tickers
+        fetch_and_save_stock_price_history_data_batch(
+            tickers=tickers,
+            market_name=market.name,
+            db=db,
+            start_date=None,
+            end_date=None,
+            force_update=False,
+        )
+        db.commit()
+
+    # 3) Fetch/update financial data if necessary...
     for c in companies:
         for m in c.markets:
             if m.market_id in market_ids:
-                ensure_fresh_data(c.ticker, m.name, db)
+                update_financials_for_tickers(
+                    db=db,
+                    tickers=[c.ticker],
+                    market_name=m.name,
+                )
 
     # 4) Query `CompanyFinancials` table
     q = (
@@ -146,7 +180,7 @@ def get_break_even_companies(
     for comp in companies[146:147]:
         print(f"[DEBUG] {comp.ticker} ({comp.name})")
         for m in comp.markets:
-            ensure_fresh_data(comp.ticker, m.name if m else "Unknown", db)
+            ensure_fresh_data(comp.ticker, m.name if m else "Unknown", True, db)
 
     # break-even logic using the now-updated CompanyFinancialHistory
     results = find_companies_near_break_even(db, months, company_ids, threshold_pct=5.0)

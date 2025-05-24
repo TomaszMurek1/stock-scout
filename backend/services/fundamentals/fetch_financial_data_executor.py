@@ -78,11 +78,6 @@ def update_market_data(record, fast_info):
 def update_financial_snapshot(
     ticker, fin_record, income_stmt, cashflow, balance_sheet, info_dict, fast_info, col
 ):
-    logger.warning(
-        f"[{ticker}] Entered update_financial_snapshot. "
-        f"Price: {fast_info.get('lastPrice')}"
-    )
-
     fin_record.net_income = safe_get(income_stmt, "Net Income", col)
     fin_record.total_revenue = safe_get(income_stmt, "Total Revenue", col)
     fin_record.ebit = safe_get(income_stmt, "EBIT", col)
