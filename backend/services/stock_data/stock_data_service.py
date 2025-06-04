@@ -76,10 +76,8 @@ def fetch_and_save_stock_price_history_data(
 
         exchange_code_map = {
             "GSPC": "XNYS",
-            "DJI": "XNYS",
-            "WSE": "XWAR",
-            "CAC": "XPAR",
-            "NDX": "XNYS",
+            "XWAR": "XWAR",
+            "NDX": "XNAS",
         }
         exchange_code = exchange_code_map.get(market_name, "XNYS")
         calendar = mcal.get_calendar(exchange_code)

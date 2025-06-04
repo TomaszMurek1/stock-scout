@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 
 def main():
-    tickers = ["AAPL", "MSFT", "GOOG"]
+    tickers = ["RS1.L", "MSFT", "GOOG"]
     end_date = date.today()
     start_date = end_date - timedelta(days=14)
 

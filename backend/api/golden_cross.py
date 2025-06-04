@@ -215,6 +215,10 @@ def cached_golden_cross(
     analysis_map = load_existing_golden_cross_analysis(
         db, market_ids, companies, short_window, long_window
     )
+    logger.info(
+        f"companies_to_check: {len(companies)} "
+        f"companies_to_check (first 10): {[(comp.ticker) for comp in companies[:10]]}"
+    )
     now = datetime.utcnow().date()
     # 3) Build list of (company,market) needing fresh analysis
     pairs_to_check = filter_pairs_needing_update(

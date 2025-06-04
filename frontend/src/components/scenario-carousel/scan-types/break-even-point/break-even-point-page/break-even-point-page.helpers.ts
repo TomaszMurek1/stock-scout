@@ -8,17 +8,17 @@ export type BreakEvenPointValues = z.infer<typeof BreakEvenPointFormSchema>;
 
 export const BreakEvenPointFormFields: IFormGeneratorField<BreakEvenPointValues>[] =
   [
-   
+
     {
       name: "markets",
       label: "Select Markets",
       description: "Choose one or more markets to scan.",
       type: "checkbox",
       options: [
-        { label: "S&P 500", value: "GSPC" },
-        { label: "Nasdaq", value: "NDX" },
-        { label: "Dow Jones", value: "DJI" },
-        { label: "GPW", value: "WSE" },
+        { label: "Nasdaq", value: "XNYS" },
+        { label: "NYSE", value: "XNAS" },
+        { label: "GPW", value: "XWAR" },
+        { label: "London", value: "XLON" },
       ],
     },
 

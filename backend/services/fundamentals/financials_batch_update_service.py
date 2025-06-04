@@ -177,14 +177,30 @@ def build_financial_history_mappings(
     return mappings
 
 
-def is_missing_or_delisted_fast_info(fast_info: dict) -> bool:
+def is_missing_or_delisted_fast_info(
+    fast_info: dict, info_dict: dict = None, must_have=None, logger=None, ticker=None
+) -> bool:
     """
-    Returns True if fast_info is empty, not a dict, or all values are None.
+    Returns True if all fields in must_have are missing or None in BOTH fast_info and info_dict.
+    Logs what is present and what is missing.
     """
-    if not fast_info or not isinstance(fast_info, dict):
-        return True
-    # If all values are None, treat as missing/delisted as well:
-    return all(v is None for v in fast_info.values())
+    if must_have is None:
+        must_have = ["current_price", "regularMarketPrice", "lastPrice", "marketCap"]
+    missing = []
+    found = []
+    for key in must_have:
+        val = (fast_info or {}).get(key)
+        if val is not None:
+            found.append(key)
+        else:
+            # fallback to info_dict
+            if info_dict and info_dict.get(key) is not None:
+                found.append(key)
+            else:
+                missing.append(key)
+    if logger and ticker:
+        logger.info(f"{ticker}: Found fields: {found}, Missing fields: {missing}")
+    return len(found) == 0  # True if all are missing
 
 
 @retry_on_db_lock
@@ -221,11 +237,16 @@ def fetch_and_save_financial_data_for_list_of_tickers(
 
         # yfinance interaction:
         y_t = yf_batch.tickers.get(ticker) or yf.Ticker(ticker)
-        fast_info = getattr(y_t, "fast_info", {}) or {}
-        income_stmt = getattr(y_t, "income_stmt", None)
-        balance_sheet = getattr(y_t, "balance_sheet", None)
-        cashflow = getattr(y_t, "cashflow", None)
-        info_dict = getattr(y_t, "get_info", lambda: {})() or {}
+        try:
+            fast_info = getattr(y_t, "fast_info", {}) or {}
+            income_stmt = getattr(y_t, "income_stmt", None)
+            balance_sheet = getattr(y_t, "balance_sheet", None)
+            cashflow = getattr(y_t, "cashflow", None)
+            info_dict = getattr(y_t, "get_info", lambda: {})() or {}
+
+        except Exception as e:
+            logger.error(f"Failed to fetch yfinance data for {ticker}: {e}")
+            continue  # Skip this ticker if yfinance throws an error
 
         # Market data upsert
         md = market_data.get(comp.company_id) or CompanyMarketData(
@@ -315,6 +336,8 @@ def update_financials_for_tickers(
     - If report_end_date is in past and age < (1 year - 15 days): skip API call.
     - Else: fetch and upsert new data from yfinance, batching API calls for efficiency.
     """
+    logger.info("update_financials_for_tickers")
+
     market = get_market_by_name(db, market_name)
     if not market:
         return
