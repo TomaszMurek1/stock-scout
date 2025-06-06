@@ -11,7 +11,7 @@ export function SearchResultItem({
     company: Company
     onSelect: (c: Company) => void
 }) {
-    const primaryMarket = company.markets[0]?.name || ""
+    const primaryMarket = company.market?.name || ""
     const MarketIcon = getMarketIcon(primaryMarket)
     const colorClass = getMarketColor(primaryMarket)
 
@@ -35,7 +35,7 @@ export function SearchResultItem({
                             <span className="text-gray-700 truncate">{company.name}</span>
                             <span className="text-gray-400">•</span>
                             <span className="text-xs text-gray-500 flex-shrink-0">
-                                {company.markets.map((m) => m.name).join(", ")}
+                                {company.market.name}
                             </span>
                         </div>
                     </div>

@@ -115,13 +115,7 @@ def get_company_by_ticker(ticker: str, db: Session) -> Company:
 
 
 def get_company_market(company: Company, db: Session) -> Market | None:
-    if not company.markets:
-        return None
-    return (
-        db.query(Market)
-        .filter(Market.market_id == company.markets[0].market_id)
-        .first()
-    )
+    return company.market
 
 
 def get_company_financials(company: Company, db: Session) -> dict:

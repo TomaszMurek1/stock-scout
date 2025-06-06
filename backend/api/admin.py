@@ -46,8 +46,7 @@ def run_financials_batch_update(market_name: str, db: Session = Depends(get_db))
             tickers = [
                 c.ticker
                 for c in db.query(Company)
-                .join(Company.markets)
-                .filter(Market.market_id == market.market_id)
+                .filter(Company.market_id == market.market_id)
                 .all()
             ]
             if not tickers:

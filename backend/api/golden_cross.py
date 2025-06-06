@@ -8,7 +8,7 @@ from schemas.stock_schemas import GoldenCrossRequest
 from database.base import get_db
 from database.user import User
 from database.market import Market
-from database.company import Company, company_market_association
+from database.company import Company
 from services.analysis_results.analysis_results import get_or_update_analysis_result
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
@@ -26,19 +26,11 @@ def _chunked(seq, size):
 
 
 def get_markets_and_companies(db, market_names):
-    market_ids = [
-        m[0]
-        for m in db.query(Market.market_id).filter(Market.name.in_(market_names)).all()
-    ]
+    markets = db.query(Market).filter(Market.name.in_(market_names)).all()
+    market_ids = [m.market_id for m in markets]
     if not market_ids:
         raise HTTPException(status_code=404, detail="No matching markets found.")
-    companies = (
-        db.query(Company)
-        .join(company_market_association)
-        .join(Market)
-        .filter(Market.market_id.in_(market_ids))
-        .all()
-    )
+    companies = db.query(Company).filter(Company.market_id.in_(market_ids)).all()
     if not companies:
         raise HTTPException(
             status_code=404, detail="No companies found for these markets."
@@ -74,40 +66,40 @@ def filter_pairs_needing_update(
 ):
     pairs_to_check = []
     for comp in companies:
-        for mkt in comp.markets:
-            if mkt.market_id not in market_ids:
-                continue
-            rec = analysis_map.get((comp.company_id, mkt.market_id))
-            if (
-                rec
-                and rec.cross_date
-                and (now - rec.cross_date).days <= days_to_look_back
-                and rec.days_since_cross is not None
-                and rec.days_since_cross <= days_to_look_back
-            ):
-                golden_cross_results.append(
-                    {
+        mkt = comp.market
+        if not mkt or mkt.market_id not in market_ids:
+            continue
+        rec = analysis_map.get((comp.company_id, mkt.market_id))
+        if (
+            rec
+            and rec.cross_date
+            and (now - rec.cross_date).days <= days_to_look_back
+            and rec.days_since_cross is not None
+            and rec.days_since_cross <= days_to_look_back
+        ):
+            golden_cross_results.append(
+                {
+                    "ticker": comp.ticker,
+                    "data": {
                         "ticker": comp.ticker,
-                        "data": {
-                            "ticker": comp.ticker,
-                            "name": comp.name,
-                            "date": rec.cross_date.strftime("%Y-%m-%d"),
-                            "days_since_cross": rec.days_since_cross,
-                            "close": rec.cross_price,
-                            "short_ma": short_window,
-                            "long_ma": long_window,
-                        },
-                    }
-                )
-                continue
-            if (
-                rec
-                and not rec.cross_date
-                and rec.last_updated
-                and rec.last_updated.date() == now
-            ):
-                continue
-            pairs_to_check.append((comp, mkt))
+                        "name": comp.name,
+                        "date": rec.cross_date.strftime("%Y-%m-%d"),
+                        "days_since_cross": rec.days_since_cross,
+                        "close": rec.cross_price,
+                        "short_ma": short_window,
+                        "long_ma": long_window,
+                    },
+                }
+            )
+            continue
+        if (
+            rec
+            and not rec.cross_date
+            and rec.last_updated
+            and rec.last_updated.date() == now
+        ):
+            continue
+        pairs_to_check.append((comp, mkt))
     return pairs_to_check
 
 

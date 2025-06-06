@@ -77,7 +77,7 @@ export function CompanySearch() {
     }
 
     // For consistent icon on left side of input
-    const primaryMarket = selected?.markets[0]?.name || ""
+    const primaryMarket = selected?.markets?.name || ""
 
     return (
         <div className="mx-auto px-4 py-6">

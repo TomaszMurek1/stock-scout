@@ -17,7 +17,7 @@ def search_companies(
 ):
     query = db.query(Company)
     if market_id:
-        query = query.join(Company.markets).filter(Market.market_id == market_id)
+        query = query.filter(Company.market_id == market_id)
     if search:
         search = f"%{search}%"
         query = query.filter(
@@ -29,7 +29,11 @@ def search_companies(
             "company_id": c.company_id,
             "name": c.name,
             "ticker": c.ticker,
-            "markets": [{"market_id": m.market_id, "name": m.name} for m in c.markets],
+            "market": (
+                {"market_id": c.market.market_id, "name": c.market.name}
+                if c.market
+                else None
+            ),
         }
         for c in companies
     ]

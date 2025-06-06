@@ -50,7 +50,7 @@ def find_most_recent_crossover(
         return None
 
     # 3) Verify the company is actually in the specified market
-    if market_obj not in company_obj.markets:
+    if company_obj.market != market_obj:
         logger.error(f"Company {ticker} is not associated with market {market}.")
         return None
 

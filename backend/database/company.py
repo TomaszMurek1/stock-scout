@@ -23,13 +23,6 @@ company_stockindex_association = Table(
     Column("index_id", Integer, ForeignKey("stock_indexes.index_id"), primary_key=True),
 )
 
-company_market_association = Table(
-    "company_market_association",
-    Base.metadata,
-    Column("company_id", Integer, ForeignKey("companies.company_id"), primary_key=True),
-    Column("market_id", Integer, ForeignKey("markets.market_id"), primary_key=True),
-)
-
 
 class CompanyESGData(Base):
     __tablename__ = "company_esg_data"
@@ -60,10 +53,8 @@ class Company(Base):
     ticker = Column(String, nullable=False, index=True)
     sector = Column(String)
     industry = Column(String)
-
-    markets = relationship(
-        "Market", secondary=company_market_association, back_populates="companies"
-    )
+    market_id = Column(Integer, ForeignKey("markets.market_id"))
+    market = relationship("Market", back_populates="companies")  # <-- CHANGED HERE
     stock_indexes = relationship(
         "StockIndex",
         secondary=company_stockindex_association,
@@ -82,7 +73,6 @@ class Company(Base):
         "CompanyMarketData", back_populates="company", cascade="all, delete-orphan"
     )
 
-    # ✅ Added missing relationship to `CompanyOverview`
     overview = relationship("CompanyOverview", back_populates="company", uselist=False)
 
     __table_args__ = (

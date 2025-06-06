@@ -1,35 +1,41 @@
 from sqlalchemy.orm import Session
 from database.company import Company
-from database.financials import  CompanyFinancials
+from database.financials import CompanyFinancials
 from database.market import Market
 import numpy as np
+
 
 def safe_avg(vals):
     vals = [v for v in vals if v]
     return sum(vals) / len(vals) if vals else None
 
+
 def rounded_safe_avg(values: list[float] | None, decimals: int = 2) -> float | None:
     avg = safe_avg(values)
     return round(avg, decimals) if avg is not None else None
+
 
 def to_python(val):
     if isinstance(val, (np.generic,)):
         return val.item()
     return val
 
+
 def build_peer_comparisons(company: Company, db: Session) -> dict:
-    if not company.industry or not company.markets or len(company.markets) == 0:
+    # Adjust: check for company.market instead of company.market
+    if not company.industry or not company.market:
         return {}
 
-    market = company.markets[0]
+    market = company.market
 
+    # Adjust: filter by Company.market_id
     peers = (
         db.query(CompanyFinancials)
         .join(Company)
         .filter(
             Company.industry == company.industry,
-            Company.markets.any(Market.market_id == market.market_id),
-            Company.company_id != company.company_id
+            Company.market_id == market.market_id,
+            Company.company_id != company.company_id,
         )
         .all()
     )
@@ -51,13 +57,23 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
             )
             ev = peer.enterprise_value
             if ev is None:
-                ev = market_cap + (peer.total_debt or 0) - (peer.cash_and_cash_equivalents or 0)
+                ev = (
+                    market_cap
+                    + (peer.total_debt or 0)
+                    - (peer.cash_and_cash_equivalents or 0)
+                )
             ev_ebitda_list.append(ev / peer.ebitda)
 
     pb_list = []
     for peer in peers:
         price = peer.current_price
-        equity = peer.enterprise_value - (peer.total_debt or 0) + (peer.cash_and_cash_equivalents or 0) if peer.enterprise_value else None
+        equity = (
+            peer.enterprise_value
+            - (peer.total_debt or 0)
+            + (peer.cash_and_cash_equivalents or 0)
+            if peer.enterprise_value
+            else None
+        )
         if price is not None and equity and peer.shares_outstanding:
             book_value_per_share = equity / peer.shares_outstanding
             if book_value_per_share != 0:
@@ -75,7 +91,8 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
             div_list.append(dividend_yield)
 
     rev_growth_list = [
-        peer.revenue_growth for peer in peers
+        peer.revenue_growth
+        for peer in peers
         if hasattr(peer, "revenue_growth") and peer.revenue_growth is not None
     ]
 
@@ -84,5 +101,7 @@ def build_peer_comparisons(company: Company, db: Session) -> dict:
         "ev_ebitda": {"industry_avg": to_python(rounded_safe_avg(ev_ebitda_list))},
         "p_b_ratio": {"industry_avg": to_python(rounded_safe_avg(pb_list))},
         "dividend_yield": {"industry_avg": to_python(rounded_safe_avg(div_list))},
-        "revenue_growth": {"industry_avg": to_python(rounded_safe_avg(rev_growth_list))},
+        "revenue_growth": {
+            "industry_avg": to_python(rounded_safe_avg(rev_growth_list))
+        },
     }

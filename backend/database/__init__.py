@@ -5,7 +5,6 @@ from .company import (
     CompanyESGData,
     CompanyOverview,
     company_stockindex_association,
-    company_market_association,
 )
 from .financials import CompanyFinancials, CompanyFinancialHistory
 from .market import Market, StockIndex
