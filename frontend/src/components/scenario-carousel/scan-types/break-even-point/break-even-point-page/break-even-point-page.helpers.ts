@@ -15,8 +15,8 @@ export const BreakEvenPointFormFields: IFormGeneratorField<BreakEvenPointValues>
       description: "Choose one or more markets to scan.",
       type: "checkbox",
       options: [
-        { label: "Nasdaq", value: "XNYS" },
-        { label: "NYSE", value: "XNAS" },
+        { label: "Nasdaq", value: "XNAS" },
+        { label: "NYSE", value: "XNYS" },
         { label: "GPW", value: "XWAR" },
         { label: "London", value: "XLON" },
       ],

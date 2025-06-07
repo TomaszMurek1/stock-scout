@@ -17,8 +17,8 @@ export const EvToRevenueFormFields: IFormGeneratorField<EvToRevenueValues>[] =
       description: "Choose one or more markets to scan.",
       type: "checkbox", // Add this field
       options: [
-        { label: "Nasdaq", value: "XNYS" },
-        { label: "NYSE", value: "XNAS" },
+        { label: "Nasdaq", value: "XNAS" },
+        { label: "NYSE", value: "XNYS" },
         { label: "GPW", value: "XWAR" },
         { label: "London", value: "XLON" },
       ],

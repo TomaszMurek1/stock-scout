@@ -17,8 +17,8 @@ def find_most_recent_crossover(
     cross_type: str,  # "golden" or "death"
     short_window: int = 50,
     long_window: int = 200,
-    min_volume: int = 0,  # In this snippet, not heavily used, but included
-    adjusted: bool = True,
+    min_volume: int = 0,
+    adjusted: bool = False,
     start_date: datetime = None,
     end_date: datetime = None,
     max_days_since_cross: int = 30,
@@ -82,6 +82,8 @@ def find_most_recent_crossover(
 
     df = pd.read_sql_query(query, con=engine, parse_dates=["date"])
     df.set_index("date", inplace=True)
+    df = df[~df.index.duplicated(keep="first")]
+    df = df.sort_index()  # Ensure ascending order!
 
     if len(df) < long_window:
         logger.warning(
@@ -90,8 +92,12 @@ def find_most_recent_crossover(
         return None
 
     # 7) Calculate rolling averages
-    df["short_ma"] = df["close"].rolling(window=short_window, min_periods=1).mean()
-    df["long_ma"] = df["close"].rolling(window=long_window, min_periods=1).mean()
+    df["short_ma"] = (
+        df["close"].rolling(window=short_window, min_periods=short_window).mean()
+    )
+    df["long_ma"] = (
+        df["close"].rolling(window=long_window, min_periods=long_window).mean()
+    )
 
     # 8) Set up 'signal' for golden or death cross
     if cross_type == "golden":

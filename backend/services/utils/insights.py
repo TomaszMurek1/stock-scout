@@ -139,8 +139,8 @@ def build_extended_technical_analysis(
     df = df.dropna(subset=["close"]).copy()
 
     # 2) Compute rolling indicators
-    df["sma_short"] = df["close"].rolling(window=short_window).mean()
-    df["sma_long"] = df["close"].rolling(window=long_window).mean()
+    df["sma_short"] = df["close"].rolling(window=short_window, min_periods=1).mean()
+    df["sma_long"] = df["close"].rolling(window=long_window, min_periods=1).mean()
     df["volatility_30d"] = df["close"].rolling(window=30).std()
     df["momentum_30d"] = df["close"].pct_change(periods=30)
     df["momentum_90d"] = df["close"].pct_change(periods=90)
