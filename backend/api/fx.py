@@ -24,37 +24,32 @@ def get_fx_rates_batch(
     payload: FxBatchRequest = Body(...), db: Session = Depends(get_db)
 ):
     today = date.today()
-    start = payload.start or (today - timedelta(days=365))
-    end = payload.end or today
+    # Default range (only used for fetching new data)
 
     result = {}
 
     for base, quote in payload.pairs:
-        # Fill in missing data for each pair
+        # Ensure DB is filled up to today
         fetch_and_save_fx_rate(base, quote, db)
-        # Get the rates for the pair
+
+        # Return all historical records available for this pair
         rates = (
             db.query(FxRate)
             .filter_by(base_currency=base, quote_currency=quote)
-            .filter(FxRate.date >= start, FxRate.date <= end)
             .order_by(FxRate.date)
             .all()
         )
-        if rates:
-            result[f"{base}-{quote}"] = [
-                {
-                    "base": r.base_currency,
-                    "quote": r.quote_currency,
-                    "date": r.date,
-                    "open": r.open,
-                    "high": r.high,
-                    "low": r.low,
-                    "close": r.close,
-                }
-                for r in rates
-            ]
-        else:
-            # fallback to latest available
+        historical_data = [
+            {
+                "date": r.date.isoformat(),
+                "close": r.close,
+            }
+            for r in rates
+            if r.close is not None
+        ]
+        note = None
+        if not historical_data:
+            # fallback to most recent available data
             latest = (
                 db.query(FxRate)
                 .filter_by(base_currency=base, quote_currency=quote)
@@ -62,21 +57,21 @@ def get_fx_rates_batch(
                 .first()
             )
             if latest:
-                result[f"{base}-{quote}"] = [
+                historical_data = [
                     {
-                        "base": latest.base_currency,
-                        "quote": latest.quote_currency,
-                        "date": latest.date,
-                        "open": latest.open,
-                        "high": latest.high,
-                        "low": latest.low,
+                        "date": latest.date.isoformat(),
                         "close": latest.close,
-                        "note": (
-                            "Returned most recent available data; "
-                            "may be older than requested."
-                        ),
                     }
                 ]
-            else:
-                result[f"{base}-{quote}"] = []
+                note = (
+                    "Returned most recent available data; may be older than requested."
+                )
+
+        result[f"{base}-{quote}"] = {
+            "base": base,
+            "quote": quote,
+            "historicalData": historical_data,
+        }
+        if note:
+            result[f"{base}-{quote}"]["note"] = note
     return result

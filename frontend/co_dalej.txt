@@ -1,2 +1,3 @@
 1. Procent spółek notowanych powyżej SMA50, SMA200, wykres w czasie
+2. WYdzielic do soobnego hooka api calla zaciagajacego wspolne dane dla całej aplikacji (np. fx rates history)
 https://github.com/rreichel3/US-Stock-Symbols/blob/main/nyse/nyse_full_tickers.json
