@@ -14,11 +14,11 @@ import { AppState, useAppStore } from "@/store/appStore"
 
 export function usePortfolioData() {
     // useShallow wraps the selector to avoid unnecessary rerenders and infinite loops
-    const { portfolio, holdings, currencyRates, refreshPortfolio, sell } = useAppStore(
+    const { portfolio, holdings, fxRates, refreshPortfolio, sell } = useAppStore(
         useShallow((state: AppState) => ({
             portfolio: state.portfolio,
             holdings: state.holdings,
-            currencyRates: state.currencyRates,
+            fxRates: state.fxRates,
             refreshPortfolio: state.refreshPortfolio,
             sell: state.sell,
         }))
@@ -56,8 +56,9 @@ export function usePortfolioData() {
     }
 
     // Calculated totals
-    const totalValue = calculateTotalValue(holdings)
-    const totalInvested = calculateTotalInvested(holdings)
+    debugger
+    const totalValue = portfolio ? calculateTotalValue(holdings, portfolio.currency, fxRates) : 0;
+    const totalInvested = portfolio ? calculateTotalInvested(holdings, portfolio?.currency, fxRates) : 0;
     const totalGainLoss = calculateGainLoss(totalValue, totalInvested)
     const percentageChange = calculatePercentageChange(totalGainLoss, totalInvested)
     console.log("uiStocks", uiStocks)
@@ -65,7 +66,7 @@ export function usePortfolioData() {
     return {
         portfolio,
         uiStocks,
-        currencyRates,
+        fxRates,
         totals: { totalValue, totalInvested, totalGainLoss, percentageChange },
         removeHolding,
         refresh: refreshPortfolio,

@@ -22,8 +22,6 @@ export interface FxRatesSlice {
 export const createFxRatesSlice = (set: any, get: any): FxRatesSlice => ({
     fxRates: {},
     fxRatesLastUpdated: {},
-
-
     getFxRatesBatch: async (pairs: [string, string][]) => {
         const today = new Date().toISOString().slice(0, 10);
         const { data } = await apiClient.post<Record<string, CurrencyRate[]>>(

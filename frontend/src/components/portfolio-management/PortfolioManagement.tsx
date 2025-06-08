@@ -14,7 +14,7 @@ export default function PortfolioManagement() {
     const {
         portfolio,
         uiStocks,
-        currencyRates,
+        fxRates,
         totals: { totalValue, totalInvested, totalGainLoss, percentageChange },
         removeHolding,
         refresh,
@@ -42,7 +42,7 @@ export default function PortfolioManagement() {
                 totalGainLoss={totalGainLoss}
                 percentageChange={percentageChange}
                 currency={portfolio.currency}
-                currencyRates={currencyRates}
+                fxRates={fxRates}
             />
             <Performance />
             <PortfolioTabs
