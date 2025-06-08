@@ -42,7 +42,10 @@ def buy_stock(
         price=trade.price,
         fee=trade.fee or Decimal("0"),
         total_value=trade.shares * trade.price + (trade.fee or Decimal("0")),
+        currency=trade.currency,
+        currency_rate=trade.currency_rate,
     )
+
     db.add(tx)
     db.commit()
     return {"message": "Buy recorded"}

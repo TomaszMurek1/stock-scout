@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Header from "./parts/Header"
 import Summary from "./parts/summary/Summary"
 import Performance from "./parts/performance/Performance"
 import AddStockModal from "./modals/AddStockModal"
 import { usePortfolioData } from "./hooks/usePortfolioData"
 import PortfolioTabs from "./tabs/PortfolioTabs"
+import { useEnsureFxRatesUpToDate } from "./hooks/useEnsureFxRatesUpToDate"
 
 export default function PortfolioManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -18,6 +19,17 @@ export default function PortfolioManagement() {
         removeHolding,
         refresh,
     } = usePortfolioData()
+
+    const ensureFxRatesUpToDate = useEnsureFxRatesUpToDate(
+        uiStocks,
+        portfolio?.currency
+    );
+
+    useEffect(() => {
+        if (portfolio && uiStocks.length) {
+            ensureFxRatesUpToDate();
+        }
+    }, [portfolio, uiStocks, ensureFxRatesUpToDate]);
 
     if (!portfolio) return <div>Loading…</div>
 

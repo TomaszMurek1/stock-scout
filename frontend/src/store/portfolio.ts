@@ -16,7 +16,6 @@ export interface PortfolioSlice {
     sell: (payload: any) => Promise<void>
 }
 
-
 export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
     portfolio: null as { id: number; name: string; currency: string } | null,
     holdings: [] as HoldingItem[],

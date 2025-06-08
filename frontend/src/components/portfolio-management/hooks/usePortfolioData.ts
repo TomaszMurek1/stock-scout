@@ -38,6 +38,7 @@ export function usePortfolioData() {
                 name: h.name,
                 purchasePrice: Number(h.average_price),
                 currentPrice: h.last_price,
+                currency: h.currency,
             })),
         [holdings]
     )
@@ -59,6 +60,7 @@ export function usePortfolioData() {
     const totalInvested = calculateTotalInvested(holdings)
     const totalGainLoss = calculateGainLoss(totalValue, totalInvested)
     const percentageChange = calculatePercentageChange(totalGainLoss, totalInvested)
+    console.log("uiStocks", uiStocks)
 
     return {
         portfolio,

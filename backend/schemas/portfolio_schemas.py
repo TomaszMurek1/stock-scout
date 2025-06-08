@@ -16,7 +16,7 @@ class TradeBase(BaseModel):
     price: condecimal(gt=0)
     fee: Optional[condecimal(ge=0)] = 0
     currency: str = "USD"
-    curency_rate: Optional[condecimal(gt=0)] = 1.0
+    currency_rate: Optional[condecimal(gt=0)] = 1.0
 
 
 class TradeResponse(BaseModel):

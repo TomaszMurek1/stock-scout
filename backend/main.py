@@ -5,6 +5,7 @@ from api import (
     auth,
     company_search,
     compare,
+    fx,
     portfolio_management,
     portfolio_performance,
     stocks,
@@ -55,6 +56,7 @@ app.include_router(compare.router, prefix="/api/compare", tags=["Comparison"])
 app.include_router(
     company_search.router, prefix="/api/companies", tags=["Company Search"]
 )
+app.include_router(fx.router, prefix="/api/fx-rate", tags=["FX Rates"])
 
 
 @app.get("/")

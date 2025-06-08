@@ -4,6 +4,7 @@ export interface PortfolioStock {
     name: string
     purchasePrice: number
     currentPrice: number
+    currency: string
 }
 
 
