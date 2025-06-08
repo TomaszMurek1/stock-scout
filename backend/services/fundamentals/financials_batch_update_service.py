@@ -181,8 +181,8 @@ def is_missing_or_delisted_fast_info(
     fast_info: dict, info_dict: dict = None, must_have=None, logger=None, ticker=None
 ) -> bool:
     """
-    Returns True if all fields in must_have are missing or None in BOTH fast_info and info_dict.
-    Logs what is present and what is missing.
+    Returns True if all fields in must_have are missing or None in BOTH fast_info
+    and info_dict. Logs what is present and what is missing.
     """
     if must_have is None:
         must_have = ["current_price", "regularMarketPrice", "lastPrice", "marketCap"]

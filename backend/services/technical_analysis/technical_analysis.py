@@ -143,7 +143,10 @@ def find_most_recent_crossover(
     result = {k: convert_value(v) for k, v in result.items()}
 
     logger.info(
-        f"{cross_type.capitalize()} cross found for {ticker} on {most_recent_date.date()}, "
-        f"{days_since_cross} day(s) ago. close={result['close_price']}"
+        (
+            f"{cross_type.capitalize()} cross found for {ticker} on "
+            f"{most_recent_date.date()}, {days_since_cross} day(s) ago. "
+            f"close={result['close_price']}"
+        )
     )
     return result

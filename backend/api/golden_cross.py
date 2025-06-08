@@ -226,7 +226,8 @@ def cached_golden_cross(
 
     logger.info(
         f"pairs_to_check: {len(pairs_to_check)} "
-        f"pairs (first 10): {[(comp.ticker, mkt.name) for comp, mkt in pairs_to_check[:10]]}"
+        f"pairs (first 10): "
+        f"{[(comp.ticker, mkt.name) for comp, mkt in pairs_to_check[:10]]}"
     )
 
     if pairs_to_check:

@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from database.base import get_db
 from database.company import Company
-from database.market import Market
 from typing import Optional
 
 router = APIRouter()

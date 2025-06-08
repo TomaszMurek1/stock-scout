@@ -128,7 +128,10 @@ def get_company_financials(company: Company, db: Session) -> dict:
         logger.warning(f"Financial data not found for {company.ticker}")
         raise HTTPException(
             status_code=404,
-            detail="Financial data not found for this ticker. The company may be delisted or there is no recent financial report.",
+            detail=(
+                "Financial data not found for this ticker. "
+                "The company may be delisted or there is no recent financial report."
+            ),
         )
     ratios = calculate_financial_ratios(financials)
     return {
@@ -162,7 +165,10 @@ def get_stock_details(
         logger.warning(f"Market not found for ticker {ticker}")
         raise HTTPException(
             status_code=404,
-            detail="Market not found for this company. The ticker may be delisted or market data unavailable.",
+            detail=(
+                "Market not found for this company. "
+                "The ticker may be delisted or market data unavailable."
+            ),
         )
 
     ensure_fresh_data(company.ticker, market.name, False, db)
@@ -201,7 +207,10 @@ def get_stock_details(
         logger.warning(f"Financials not found for ticker {ticker}")
         raise HTTPException(
             status_code=404,
-            detail="Financial data not found for this ticker. The company may be delisted or there is no recent financial report.",
+            detail=(
+                "Financial data not found for this ticker. "
+                "The company may be delisted or there is no recent financial report."
+            ),
         )
 
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=730)

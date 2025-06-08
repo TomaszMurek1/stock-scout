@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy.orm import Session
 from database.analysis import AnalysisResult
 from database.company import Company
@@ -22,7 +22,8 @@ def get_or_update_analysis_result(
     stale_after_days: int = 1,
 ) -> AnalysisResult:
     """
-    Efficiently fetches or refreshes AnalysisResult, avoiding recomputation when not needed.
+    Efficiently fetches or refreshes AnalysisResult,
+    avoiding recomputation when not needed.
     """
     existing = (
         db.query(AnalysisResult)

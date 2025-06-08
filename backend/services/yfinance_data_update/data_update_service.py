@@ -70,8 +70,12 @@ def fetch_and_save_stock_price_history_data_batch(
         start_date = end_date - timedelta(days=100)
     t0 = time.time()
     logger.info(
-        f"fetch_and_save_stock_price_history_data_batch called with {len(tickers)} tickers: {tickers}, "
-        f"market: {market_name}, start: {start_date}, end: {end_date}, force_update={force_update}"
+        (
+            "fetch_and_save_stock_price_history_data_batch called with "
+            f"{len(tickers)} tickers: {tickers}, "
+            f"market: {market_name}, start: {start_date}, end: {end_date}, "
+            f"force_update={force_update}"
+        )
     )
 
     # 1) Resolve companies + market
@@ -88,13 +92,17 @@ def fetch_and_save_stock_price_history_data_batch(
         return {"status": "error", "message": f"Unknown market: {market_name}"}
 
     t1 = time.time()
-    logger.info(f"[TIMER] Company/market resolution: {t1-t0:.3f}s")
+    logger.info(f"[TIMER] Company/market resolution: {t1 - t0:.3f}s")
 
     # 2) Delete existing if forced
     if force_update:
         comp_ids = [c.company_id for c in companies]
         logger.info(
-            f"Force update ON: Deleting any existing price history for these companies: {comp_ids}"
+            (
+                "Force update ON: Deleting any existing price history for these "
+                "companies: "
+                f"{comp_ids}"
+            )
         )
         deleted = db.query(StockPriceHistory).filter(
             StockPriceHistory.company_id.in_(comp_ids),
@@ -106,7 +114,8 @@ def fetch_and_save_stock_price_history_data_batch(
             )
         num_deleted = deleted.delete(synchronize_session=False)
         logger.info(
-            f"Deleted {num_deleted} old StockPriceHistory rows for force update in range."
+            f"Deleted {num_deleted} old StockPriceHistory rows "
+            f"for force update in range."
         )
         db.flush()
 
@@ -130,7 +139,10 @@ def fetch_and_save_stock_price_history_data_batch(
         existing_keys = set()
     preload_end = time.time()
     logger.info(
-        f"[TIMER] Preloaded {len(existing_keys)} existing keys in {preload_end-preload_start:.3f}s."
+        (
+            f"[TIMER] Preloaded {len(existing_keys)} existing keys in "
+            f"{preload_end - preload_start:.3f}s."
+        )
     )
 
     # 4) Download all tickers' data at once (yfinance)
@@ -146,7 +158,7 @@ def fetch_and_save_stock_price_history_data_batch(
     if not isinstance(raw.columns, pd.MultiIndex):
         raw = pd.concat({tickers[0]: raw}, axis=1)
     t3 = time.time()
-    logger.info(f"[TIMER] Batch yfinance download: {t3-t2:.3f}s")
+    logger.info(f"[TIMER] Batch yfinance download: {t3 - t2:.3f}s")
 
     # 5) Process and prepare mappings
     mappings = []
@@ -187,7 +199,9 @@ def fetch_and_save_stock_price_history_data_batch(
                 }
             )
     prep_end = time.time()
-    logger.info(f"[TIMER] Processing & existence checking: {prep_end-prep_start:.3f}s")
+    logger.info(
+        f"[TIMER] Processing & existence checking: {prep_end - prep_start:.3f}s"
+    )
 
     logger.info(
         f"Attempted to build {total_rows_attempted} row(s) from yfinance data, "
@@ -203,12 +217,12 @@ def fetch_and_save_stock_price_history_data_batch(
         logger.info(
             f"Batch inserted {len(mappings)} StockPriceHistory rows for {tickers}."
         )
-        logger.info(f"[TIMER] Bulk insert + commit: {insert_end-insert_start:.3f}s")
+        logger.info(f"[TIMER] Bulk insert + commit: {insert_end - insert_start:.3f}s")
         return {"status": "success", "inserted": len(mappings)}
     else:
         insert_end = time.time()
         logger.info("Batch insert: no new rows to add...")
-        logger.info(f"[TIMER] No rows to insert: {insert_end-insert_start:.3f}s")
+        logger.info(f"[TIMER] No rows to insert: {insert_end - insert_start:.3f}s")
         return {"status": "success", "inserted": 0}
 
 
