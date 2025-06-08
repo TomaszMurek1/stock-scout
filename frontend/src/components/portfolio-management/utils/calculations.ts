@@ -21,12 +21,12 @@ export function calculateTotalValue(
     return holdings.reduce((sum, h) => {
         // If holding is already in portfolio currency, no conversion needed
         if (h.currency === portfolioCurrency) {
-            return sum + h.last_price * h.shares;
+            return sum + h.currentPrice * h.shares;
         }
         // Else, convert using latest FX rate
         const fxRate = getLatestFxRate(h.currency, portfolioCurrency, fxRates);
         if (fxRate) {
-            return sum + (h.last_price * h.shares * fxRate);
+            return sum + (h.currentPrice * h.shares * fxRate);
         }
         // If no FX rate, skip or fallback to 0 (could log/warn here)
         return sum;
@@ -40,11 +40,11 @@ export function calculateTotalInvested(
 ) {
     return holdings.reduce((sum, h) => {
         if (h.currency === portfolioCurrency) {
-            return sum + h.average_price * h.shares;
+            return sum + h.purchasePrice * h.shares;
         }
         const fxRate = getLatestFxRate(h.currency, portfolioCurrency, fxRates);
         if (fxRate) {
-            return sum + (h.average_price * h.shares * fxRate);
+            return sum + (h.purchasePrice * h.shares * fxRate);
         }
         return sum;
     }, 0);

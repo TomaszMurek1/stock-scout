@@ -1,74 +1,120 @@
-import { useEffect, useMemo } from "react"
-import type { PortfolioStock, HoldingItem } from "../types"
+// src/hooks/usePortfolioData.ts
+import { useEffect, useMemo } from "react";
+import type { PortfolioStock } from "../types";
 import {
     calculateTotalValue,
     calculateTotalInvested,
     calculateGainLoss,
     calculatePercentageChange,
-} from "../utils/calculations"
-
-// Switched to centralized store and memoized selector using useShallow
-
-import { useShallow } from "zustand/react/shallow"
-import { AppState, useAppStore } from "@/store/appStore"
+} from "../utils/calculations";
+import { useShallow } from "zustand/react/shallow";
+import { AppState, useAppStore } from "@/store/appStore";
 
 export function usePortfolioData() {
-    // useShallow wraps the selector to avoid unnecessary rerenders and infinite loops
-    const { portfolio, holdings, fxRates, refreshPortfolio, sell } = useAppStore(
+    // 1) pull portfolio, transactions, fxRates, etc. out of your store
+    const {
+        portfolio,
+        transactions = [],    // ← default to [] so .map never blows up
+        currency_rates = [],         // also safe-guard fxRates
+        refreshPortfolio,
+        sell,
+    } = useAppStore(
         useShallow((state: AppState) => ({
             portfolio: state.portfolio,
-            holdings: state.holdings,
-            fxRates: state.fxRates,
+            transactions: state.transactions,
+            currencyRates: state.currency_rates,
             refreshPortfolio: state.refreshPortfolio,
             sell: state.sell,
         }))
-    )
+    );
 
-    // Refresh portfolio on mount
+    // 2) on mount, load your portfolio
     useEffect(() => {
-        refreshPortfolio()
-    }, [refreshPortfolio])
+        refreshPortfolio();
+    }, [refreshPortfolio]);
 
-    // Map holdings to UI-friendly shape, memoized for performance
-    const uiStocks: PortfolioStock[] = useMemo(
-        () =>
-            holdings.map((h: HoldingItem) => ({
-                shares_number: h.shares,
-                ticker: h.ticker,
-                name: h.name,
-                purchasePrice: Number(h.average_price),
-                currentPrice: h.last_price,
-                currency: h.currency,
-            })),
-        [holdings]
-    )
+    // 3) roll up transactions into per-ticker “holdings”
+    const uiStocks: PortfolioStock[] = useMemo(() => {
+        type Acc = {
+            ticker: string;
+            name: string;
+            currency: string;
+            totalShares: number;
+            totalCost: number;
+        };
+        const acc: Record<string, Acc> = {};
 
-    // Handler to remove a holding
+
+        for (const t of transactions) {
+            if (!acc[t.ticker]) {
+                acc[t.ticker] = {
+                    ticker: t.ticker,
+                    name: t.name,
+                    currency: t.currency,
+                    totalShares: 0,
+                    totalCost: 0,
+                };
+            }
+            const e = acc[t.ticker];
+            const shares = Number(t.shares);
+            const price = Number(t.price);
+            const fee = Number(t.fee);
+
+            if (t.transaction_type === "buy") {
+                e.totalShares += shares;
+                e.totalCost += shares * price + fee;
+            } else {
+                e.totalShares -= shares;
+                // subtract cost basis proportionally, fee reduces proceeds
+                e.totalCost -= shares * price - fee;
+            }
+        }
+        const stocks = Object.values(acc)
+            .filter((e) => e.totalShares > 0)
+            .map((e) => ({
+                ticker: e.ticker,
+                name: e.name,
+                shares_number: e.totalShares,
+                // average cost
+                purchasePrice: e.totalCost / e.totalShares,
+                // placeholder — until you wire up real quotes, fall back to cost
+                currentPrice: e.totalCost / e.totalShares,
+                currency: e.currency,
+            }));
+        debugger
+        return stocks
+    }, [transactions]);
+
+    // 4) “sell” handler works off of that uiStocks array
     const removeHolding = async (ticker: string) => {
-        const target = holdings.find((h) => h.ticker === ticker)
-        if (!target) return
+        const h = uiStocks.find((s) => s.ticker === ticker);
+        if (!h) return;
         await sell({
-            ticker: target.ticker,
-            shares: Number(target.shares),
-            price: Number(target.last_price ?? target.average_price),
+            ticker: h.ticker,
+            shares: h.shares_number,
+            price: h.currentPrice,
             fee: 0,
-        })
-    }
+        });
+    };
 
-    // Calculated totals
-    debugger
-    const totalValue = portfolio ? calculateTotalValue(holdings, portfolio.currency, fxRates) : 0;
-    const totalInvested = portfolio ? calculateTotalInvested(holdings, portfolio?.currency, fxRates) : 0;
-    const totalGainLoss = calculateGainLoss(totalValue, totalInvested)
-    const percentageChange = calculatePercentageChange(totalGainLoss, totalInvested)
-    console.log("uiStocks", uiStocks)
+    // 5) compute your totals exactly as before
+    const totalValue =
+        portfolio != null
+            ? calculateTotalValue(uiStocks, portfolio.currency, currency_rates)
+            : 0;
+    const totalInvested =
+        portfolio != null
+            ? calculateTotalInvested(uiStocks, portfolio.currency, currency_rates)
+            : 0;
+    const totalGainLoss = calculateGainLoss(totalValue, totalInvested);
+    const percentageChange = calculatePercentageChange(totalGainLoss, totalInvested);
 
     return {
         portfolio,
         uiStocks,
-        fxRates,
+        currency_rates,
         totals: { totalValue, totalInvested, totalGainLoss, percentageChange },
         removeHolding,
         refresh: refreshPortfolio,
-    }
+    };
 }

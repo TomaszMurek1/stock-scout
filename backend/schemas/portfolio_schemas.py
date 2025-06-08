@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
-from typing import List, Optional
-from pydantic import BaseModel, Field, condecimal
+from typing import List, Literal, Optional
+from pydantic import BaseModel, ConfigDict, condecimal
 
 
 class TradeRequest(BaseModel):
@@ -41,11 +41,6 @@ class PortfolioData(BaseModel):
     watchlist: List[str]
 
 
-class PortfolioInfo(BaseModel):
-    id: int
-    name: str
-
-
 class PortfolioSummary(BaseModel):
     id: int
     name: str
@@ -66,36 +61,6 @@ class WatchlistItem(BaseModel):
     name: str
 
 
-class RateItem(BaseModel):
-    from_: str = Field(..., alias="from")
-    to: str
-    rate: float
-
-    model_config = {
-        "populate_by_name": True,  # allow using `from_` in code
-        "json_encoders": {},
-    }
-
-
-class UserPortfolioResponse(BaseModel):
-    portfolio: PortfolioSummary
-    holdings: List[HoldingItem]
-    watchlist: List[WatchlistItem]
-    currency_rates: List[RateItem]
-
-
-class TransactionItem(BaseModel):
-    ticker: str  # e.g. "AAPL"
-    quantity: Decimal  # number of shares
-    price: Decimal  # price per share at trade
-    fee: Decimal  # trade fee
-    total_value: Decimal  # quantity * price ± fee
-    timestamp: datetime  # when trade happened
-
-    class Config:
-        orm_mode = True
-
-
 class PriceHistoryItem(BaseModel):
     ticker: str
     date: datetime  # or `str` if you prefer
@@ -110,3 +75,54 @@ class PriceHistoryRequest(BaseModel):
     class Config:
         # allow extra if you want, but we don’t need it now
         orm_mode = True
+
+
+class PortfolioInfo(BaseModel):
+    id: int
+    name: str
+    currency: str
+
+
+class WatchItem(BaseModel):
+    ticker: str
+    name: str
+
+
+class RateItem(BaseModel):
+    base: str  # e.g. "USD"
+    quote: str  # e.g. "PLN"
+    rate: Decimal  # e.g. 3.7599
+    date: date  # the date of the FX quote
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionItem(BaseModel):
+    id: int
+    ticker: str
+    name: str
+    transaction_type: Literal["buy", "sell"]
+    shares: Decimal
+    price: Decimal
+    fee: Decimal
+    timestamp: datetime
+    currency: str
+    currency_rate: Decimal
+
+
+class FxHistoricalItem(BaseModel):
+    date: date
+    close: Decimal
+
+
+class FxBatch(BaseModel):
+    base: str
+    quote: str
+    historicalData: list[FxHistoricalItem]
+
+
+class UserPortfolioResponse(BaseModel):
+    portfolio: PortfolioInfo
+    transactions: List[TransactionItem]
+    watchlist: List[WatchItem]
+    currency_rates: dict[str, FxBatch]

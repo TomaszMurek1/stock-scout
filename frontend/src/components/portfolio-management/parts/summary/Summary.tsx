@@ -1,5 +1,5 @@
 // src/components/Summary.tsx
-import React from "react";
+import React, { useMemo } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { CurrencyRate } from "../../types";
 
@@ -9,12 +9,11 @@ interface SummaryProps {
     totalGainLoss: number;
     percentageChange: number;
     currency: CurrencyCode;
-    fxRates: CurrencyRate[];
+    fxRates?: CurrencyRate[];   // now optional
 }
 
 type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
 
-// map each currency to its “canonical” locale
 const currencyLocaleMap: Record<CurrencyCode, string> = {
     USD: "en-US",
     EUR: "de-DE",
@@ -34,12 +33,7 @@ export const Price: React.FC<PriceProps> = ({ value, currency }) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
-
-    return (
-        <div className="text-2xl font-bold text-gray-900">
-            {formatted}
-        </div>
-    );
+    return <div className="text-2xl font-bold text-gray-900">{formatted}</div>;
 };
 
 export const formatCurrency = (
@@ -69,7 +63,6 @@ const GainLoss: React.FC<GainLossProps> = ({
 }) => {
     const cls = `text-2xl font-bold flex items-center justify-center ${isPositive ? "text-green-600" : "text-red-600"
         }`;
-
     return (
         <div className={cls}>
             {isPositive ? (
@@ -92,7 +85,6 @@ const PercentageChange: React.FC<PercentageChangeProps> = ({
 }) => {
     const cls = `text-2xl font-bold flex items-center justify-center ${isPositive ? "text-green-600" : "text-red-600"
         }`;
-
     return (
         <div className={cls}>
             {isPositive ? (
@@ -111,45 +103,70 @@ export const Summary: React.FC<SummaryProps> = ({
     totalGainLoss,
     percentageChange,
     currency,
-    fxRates,
+    fxRates = [],           // default to empty array
 }) => {
-    const isPositive = totalGainLoss >= 0;
+    const isPositiveGL = totalGainLoss >= 0;
+
+    // build lookup of base → rate (quote === portfolio currency)
+    const fxLookup: Record<string, number> = useMemo(() => {
+        const lookup: Record<string, number> = {};
+        for (const { base, quote, rate } of fxRates) {
+            if (quote === currency) {
+                lookup[base] = typeof rate === "number" ? rate : parseFloat(rate);
+            }
+        }
+        return lookup;
+    }, [fxRates, currency]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="text-sm text-gray-600 mb-1">
-                    Total Portfolio Value
+        <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div className="text-sm text-gray-600 mb-1">
+                        Total Portfolio Value
+                    </div>
+                    <Price value={totalValue} currency={currency} />
                 </div>
-                <Price value={totalValue} currency={currency} />
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div className="text-sm text-gray-600 mb-1">Total Invested</div>
+                    <Price value={totalInvested} currency={currency} />
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div className="text-sm text-gray-600 mb-1">Total Gain/Loss</div>
+                    <GainLoss
+                        totalGainLoss={totalGainLoss}
+                        currency={currency}
+                        isPositive={isPositiveGL}
+                    />
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div className="text-sm text-gray-600 mb-1">
+                        Percentage Change
+                    </div>
+                    <PercentageChange
+                        percentageChange={percentageChange}
+                        isPositive={percentageChange >= 0}
+                    />
+                </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="text-sm text-gray-600 mb-1">
-                    Total Invested
+                <div className="text-sm text-gray-600 mb-2">
+                    FX Rates (to {currency})
                 </div>
-                <Price value={totalInvested} currency={currency} />
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="text-sm text-gray-600 mb-1">
-                    Total Gain/Loss
-                </div>
-                <GainLoss
-                    totalGainLoss={totalGainLoss}
-                    currency={currency}
-                    isPositive={isPositive}
-                />
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="text-sm text-gray-600 mb-1">
-                    Percentage Change
-                </div>
-                <PercentageChange
-                    percentageChange={percentageChange}
-                    isPositive={percentageChange >= 0}
-                />
+                {Object.keys(fxLookup).length > 0 ? (
+                    Object.entries(fxLookup).map(([base, rate]) => (
+                        <div key={base} className="text-base">
+                            <span className="font-medium">{base}</span>: {rate.toFixed(4)}{" "}
+                            {currency}
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-gray-500">No FX data available</div>
+                )}
             </div>
         </div>
     );

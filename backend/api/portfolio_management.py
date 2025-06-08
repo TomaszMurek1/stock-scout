@@ -1,28 +1,34 @@
+# api/portfolio_management.py
+
 from decimal import Decimal
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, case
 
 from api.portfolio_crud import get_or_create_portfolio
 from api.security import get_current_user
-from api.watchlist import get_watchlist_companies_for_user
+from database.base import get_db
+from database.user import User
+from database.portfolio import (
+    Portfolio,
+    Transaction,
+    TransactionType,
+    FavoriteStock,
+)
+from database.company import Company
+from database.fx import FxRate
 from schemas.portfolio_schemas import (
-    RateItem,
     TradeBase,
     TradeResponse,
     UserPortfolioResponse,
 )
-from database.base import get_db
-from database.user import User
-from database.portfolio import Transaction, TransactionType
-from database.company import Company
-from database.stock_data import StockPriceHistory
 
 router = APIRouter()
 
 
-@router.post("/buy", response_model=TradeResponse, tags=["Portfolio"])
+@router.post("/buy", response_model=TradeResponse)
 def buy_stock(
     trade: TradeBase,
     db: Session = Depends(get_db),
@@ -45,13 +51,12 @@ def buy_stock(
         currency=trade.currency,
         currency_rate=trade.currency_rate,
     )
-
     db.add(tx)
     db.commit()
     return {"message": "Buy recorded"}
 
 
-@router.post("/sell", response_model=TradeResponse, tags=["Portfolio"])
+@router.post("/sell", response_model=TradeResponse)
 def sell_stock(
     trade: TradeBase,
     db: Session = Depends(get_db),
@@ -62,7 +67,7 @@ def sell_stock(
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    # compute net shares owned via transactions
+    # calculate net owned shares
     owned = (
         db.query(
             func.coalesce(
@@ -100,112 +105,93 @@ def sell_stock(
         price=trade.price,
         fee=trade.fee or Decimal("0"),
         total_value=trade.shares * trade.price - (trade.fee or Decimal("0")),
+        currency=trade.currency,
+        currency_rate=trade.currency_rate,
     )
     db.add(tx)
     db.commit()
     return {"message": "Sell recorded"}
 
 
-# ← static for now, swap for real FX engine later
-EXCHANGE_RATES = [
-    {"from": "EUR", "to": "USD", "rate": 1.10},
-    {"from": "PLN", "to": "USD", "rate": 3.75},
-]
-
-
-@router.get(
-    "",
-    response_model=UserPortfolioResponse,
-    tags=["Portfolio"],
-)
+@router.get("", response_model=UserPortfolioResponse)
 def get_user_portfolio_data(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    portfolio = get_or_create_portfolio(db, user.id)
+    # 1) get or create portfolio
+    portfolio = db.query(Portfolio).filter(Portfolio.user_id == user.id).first()
+    if not portfolio:
+        portfolio = Portfolio(user_id=user.id, name="Default", currency="PLN")
+        db.add(portfolio)
+        db.commit()
+        db.refresh(portfolio)
 
-    # 1) Aggregate all BUY/SELL transactions into per‐ticker stats
-    txs = (
+    # 2) serialize transactions
+    raw_txs: List[Transaction] = (
         db.query(Transaction)
         .filter(Transaction.portfolio_id == portfolio.id)
-        .filter(
-            Transaction.transaction_type.in_(
-                [TransactionType.BUY, TransactionType.SELL]
-            )
-        )
+        .order_by(Transaction.timestamp)
+        .options(joinedload(Transaction.company))
         .all()
     )
-    agg: Dict[int, Dict[str, Any]] = {}
-    for tx in txs:
-        rec = agg.setdefault(
-            tx.company_id,
+    transactions = [
+        {
+            "id": tx.id,
+            "ticker": tx.company.ticker,
+            "name": tx.company.name,
+            "transaction_type": tx.transaction_type.value,
+            "shares": float(tx.quantity),
+            "price": float(tx.price),
+            "fee": float(tx.fee or 0),
+            "timestamp": tx.timestamp.isoformat(),
+            "currency": tx.currency,
+            "currency_rate": float(tx.currency_rate),
+        }
+        for tx in raw_txs
+    ]
+
+    # 3) watchlist
+    wl = (
+        db.query(FavoriteStock)
+        .options(joinedload(FavoriteStock.company))
+        .filter(FavoriteStock.user_id == user.id)
+        .all()
+    )
+    watchlist = [{"ticker": w.company.ticker, "name": w.company.name} for w in wl]
+
+    # 4) build currency_rates exactly like /fx-rate/batch
+    fx_rows: List[FxRate] = (
+        db.query(FxRate)
+        .order_by(FxRate.base_currency, FxRate.quote_currency, FxRate.date)
+        .all()
+    )
+    grouped: Dict[str, List[Dict[str, Union[str, float]]]] = {}
+    for r in fx_rows:
+        key = f"{r.base_currency}-{r.quote_currency}"
+        grouped.setdefault(key, []).append(
             {
-                "ticker": tx.company.ticker,
-                "name": tx.company.name,
-                "net_shares": Decimal("0"),
-                "total_buy_qty": Decimal("0"),
-                "total_buy_cost": Decimal("0"),
-            },
-        )
-        sign = (
-            Decimal("1")
-            if tx.transaction_type == TransactionType.BUY
-            else Decimal("-1")
-        )
-        rec["net_shares"] += sign * tx.quantity
-        if tx.transaction_type == TransactionType.BUY:
-            rec["total_buy_qty"] += tx.quantity
-            rec["total_buy_cost"] += tx.quantity * tx.price
-
-    # 2) Build holdings list including latest price & currency from StockPriceHistory
-    holdings: List[dict] = []
-    for comp_id, data in agg.items():
-        if data["net_shares"] <= 0:
-            continue  # skip closed positions
-
-        avg_price = (
-            data["total_buy_cost"] / data["total_buy_qty"]
-            if data["total_buy_qty"] > 0
-            else Decimal("0")
-        )
-
-        # get most recent StockPriceHistory row for this company
-        sph = (
-            db.query(StockPriceHistory)
-            .filter(StockPriceHistory.company_id == comp_id)
-            .order_by(StockPriceHistory.date.desc())
-            .join(StockPriceHistory.market)  # so we can get .market.currency
-            .first()
-        )
-        last_price = sph.close if sph and sph.close is not None else None
-        currency = (
-            sph.market.currency if sph and sph.market and sph.market.currency else None
-        )
-
-        holdings.append(
-            {
-                "ticker": data["ticker"],
-                "name": data["name"],
-                "shares": float(data["net_shares"]),
-                "average_price": float(avg_price),
-                "last_price": (
-                    round(float(last_price), 2) if last_price is not None else None
-                ),
-                "currency": currency,
+                "date": r.date.isoformat(),
+                "close": r.close,
             }
         )
 
-    # 3) Watchlist & FX rates remain the same
-    watchlist = get_watchlist_companies_for_user(db, user)
-    rates = [RateItem(**r) for r in EXCHANGE_RATES]
+    currency_rates: Dict[str, Any] = {}
+    for pair, hist in grouped.items():
+        base, quote = pair.split("-")
+        currency_rates[pair] = {
+            "base": base,
+            "quote": quote,
+            "historicalData": hist,
+        }
 
+    # 5) final payload
     return {
         "portfolio": {
             "id": portfolio.id,
             "name": portfolio.name,
             "currency": portfolio.currency,
         },
-        "holdings": holdings,
+        "transactions": transactions,
         "watchlist": watchlist,
-        "currency_rates": rates,
+        "currency_rates": currency_rates,
     }

@@ -18,6 +18,7 @@ export default function PortfolioManagement() {
         totals: { totalValue, totalInvested, totalGainLoss, percentageChange },
         removeHolding,
         refresh,
+        fxLookup
     } = usePortfolioData()
 
     const ensureFxRatesUpToDate = useEnsureFxRatesUpToDate(
@@ -26,6 +27,7 @@ export default function PortfolioManagement() {
     );
 
     useEffect(() => {
+        debugger
         if (portfolio && uiStocks.length) {
             ensureFxRatesUpToDate();
         }
@@ -43,6 +45,8 @@ export default function PortfolioManagement() {
                 percentageChange={percentageChange}
                 currency={portfolio.currency}
                 fxRates={fxRates}
+                fxRates={fxRates}     // for your historical‐chart component
+                fxLookup={fxLookup}   // for your instant conversion in summary
             />
             <Performance />
             <PortfolioTabs
