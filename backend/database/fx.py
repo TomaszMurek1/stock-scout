@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, Date, Float, Integer, UniqueConstraint
+from datetime import datetime, timezone
+from sqlalchemy import Column, DateTime, String, Date, Float, Integer, UniqueConstraint
 from .base import Base
 
 
@@ -12,6 +13,9 @@ class FxRate(Base):
     high = Column(Float)
     low = Column(Float)
     close = Column(Float)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
     __table_args__ = (
         UniqueConstraint("base_currency", "quote_currency", "date", name="_fxrate_uc"),

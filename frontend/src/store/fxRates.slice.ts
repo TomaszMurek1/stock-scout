@@ -16,7 +16,7 @@ export interface CurrencyRate {
 export interface FxRatesSlice {
     fxRates: Record<string, CurrencyRate[]>; // "PLN-USD" -> array of rates
     fxRatesLastUpdated: Record<string, string>; // "PLN-USD" -> last ISO date
-    getFxRates: (base: string, quote: string) => Promise<CurrencyRate[]>;
+    getFxRatesBatch: (pairs: [string, string][]) => Promise<CurrencyRate[]>;
 
 }
 export const createFxRatesSlice = (set: any, get: any): FxRatesSlice => ({
@@ -24,19 +24,28 @@ export const createFxRatesSlice = (set: any, get: any): FxRatesSlice => ({
     fxRatesLastUpdated: {},
 
 
-    getFxRates: async (base, quote) => {
-        const pairKey = `${base}-${quote}`;
+    getFxRatesBatch: async (pairs: [string, string][]) => {
         const today = new Date().toISOString().slice(0, 10);
-        const stored = get().fxRates[pairKey];
-        if (stored && get().fxRatesLastUpdated[pairKey] === today) {
-            return stored;
-        }
-        // This GET will both update (if missing) and fetch
-        const { data } = await apiClient.get<CurrencyRate[]>(`/fx-rate/${base}/${quote}?start=${today}&end=${today}`);
-        set((state: any) => ({
-            fxRates: { ...state.fxRates, [pairKey]: data },
-            fxRatesLastUpdated: { ...state.fxRatesLastUpdated, [pairKey]: today },
-        }));
+        const { data } = await apiClient.post<Record<string, CurrencyRate[]>>(
+            '/fx-rate/batch',
+            {
+                pairs,
+                start: today,
+                end: today,
+            }
+        );
+        set((state: any) => {
+            const updatedFxRates = { ...state.fxRates };
+            const updatedFxRatesLastUpdated = { ...state.fxRatesLastUpdated };
+            for (const pairKey in data) {
+                updatedFxRates[pairKey] = data[pairKey];
+                updatedFxRatesLastUpdated[pairKey] = today;
+            }
+            return {
+                fxRates: updatedFxRates,
+                fxRatesLastUpdated: updatedFxRatesLastUpdated,
+            };
+        });
         return data;
     },
 

@@ -6,34 +6,34 @@ export function useEnsureFxRatesUpToDate(
     holdings: PortfolioStock[] = [],
     portfolioCurrency?: string | null
 ) {
-    const getFxRates = useAppStore(state => state.getFxRates);
+    const getFxRatesBatch = useAppStore(state => state.getFxRatesBatch);
 
     const fetchNeededRates = useCallback(async () => {
         if (!portfolioCurrency || !holdings.length) return;
-        debugger
 
-        const pairs = new Set<string>();
+        const pairs: [string, string][] = [];
+        const seen = new Set<string>();
         holdings.forEach(holding => {
             if (
                 holding.currency &&
                 holding.currency !== portfolioCurrency
             ) {
                 const pairKey = `${holding.currency}-${portfolioCurrency}`;
-                pairs.add(pairKey);
+                if (!seen.has(pairKey)) {
+                    pairs.push([holding.currency, portfolioCurrency]);
+                    seen.add(pairKey);
+                }
             }
         });
 
-        await Promise.all(
-            Array.from(pairs).map(async (pair) => {
-                const [base, quote] = pair.split("-");
-                try {
-                    await getFxRates(base, quote);
-                } catch (e) {
-                    console.error(`Error fetching FX rate for ${base}/${quote}`, e);
-                }
-            })
-        );
-    }, [holdings, portfolioCurrency, getFxRates]);
+        if (pairs.length) {
+            try {
+                await getFxRatesBatch(pairs);
+            } catch (e) {
+                console.error(`Error fetching batch FX rates`, e);
+            }
+        }
+    }, [holdings, portfolioCurrency, getFxRatesBatch]);
 
     return fetchNeededRates;
 }
