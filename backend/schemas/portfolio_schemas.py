@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from decimal import Decimal
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, condecimal
 
 
@@ -121,8 +121,14 @@ class FxBatch(BaseModel):
     historicalData: list[FxHistoricalItem]
 
 
+class PriceHistoryEntry(BaseModel):
+    date: str  # or datetime if you want, but use str if you .isoformat() it
+    close: float
+
+
 class UserPortfolioResponse(BaseModel):
     portfolio: PortfolioInfo
     transactions: List[TransactionItem]
     watchlist: List[WatchItem]
     currency_rates: dict[str, FxBatch]
+    price_history: Dict[str, List[PriceHistoryEntry]]

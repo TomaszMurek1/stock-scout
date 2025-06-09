@@ -5,12 +5,11 @@ import Header from "./parts/Header"
 import Summary from "./parts/summary/Summary"
 import Performance from "./parts/performance/Performance"
 import AddStockModal from "./modals/AddStockModal"
-import { usePortfolioBaseData, usePortfolioData } from "./hooks/usePortfolioBaseData"
-import PortfolioTabs from "./tabs/PortfolioTabs"
-import { useEnsureFxRatesUpToDate } from "./hooks/useEnsureFxRatesUpToDate"
+import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData"
 import { AppState, useAppStore } from "@/store/appStore";
 import { TimeRange } from "./parts/performance/performance-chart"
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals"
+import PortfolioTabs from "./tabs/PortfolioTabs"
 
 const rangeDays: Record<Exclude<TimeRange, "All">, number> = {
     "1M": 30,
@@ -46,22 +45,8 @@ export default function PortfolioManagement() {
         refreshPortfolio();
     }, [refreshPortfolio]);
 
-    function getCutoffDate(range: TimeRange): string | null {
-        if (range === "All") return null
-        const d = new Date()
-        d.setUTCDate(d.getUTCDate() - rangeDays[range])
-        return d.toISOString().slice(0, 10) // "YYYY-MM-DD"
-    }
 
-    const activeTickers = Object.keys(holdings)
-        .filter(ticker => holdings[ticker].quantity > 0);
-    const getPriceHistory = useAppStore((state: AppState) => state.getPriceHistory)
 
-    useEffect(() => {
-        if (activeTickers.length) {
-            getPriceHistory(activeTickers, getCutoffDate(timeRange)!)
-        }
-    }, [transactions.length, timeRange])
 
     if (!portfolio || !totals) return <div>Loading…</div>
 
@@ -76,10 +61,10 @@ export default function PortfolioManagement() {
                 currency={portfolio.currency}
             />
             <Performance />
-            {/* <PortfolioTabs
-                stocks={uiStocks} onRemove={removeHolding}
-                onRefresh={refreshPortfolio}
-            /> */}
+            <PortfolioTabs
+                onRemove={sell}
+                onRefresh={refreshPortfolio} byHolding={totals.byHolding}
+            />
             <AddStockModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
-import { calculateTotalInvested, calculateTotalValue, Transaction } from "../utils/calculations";
+import { calculateInvestedPerHolding, calculateTotalInvested, calculateTotalValue, Transaction } from "../utils/calculations";
 import { PricePoint } from "@/store/portfolioPerformance";
-
 export function usePortfolioTotals({
     transactions,
     holdings,
@@ -16,27 +15,39 @@ export function usePortfolioTotals({
     portfolioCurrency: string;
 }) {
     const isPriceHistoryReady = priceHistory && Object.keys(priceHistory).length > 0;
-
     const totals = useMemo(() => {
         if (!isPriceHistoryReady) return null;
 
-        const totalInvested = calculateTotalInvested(transactions);
-        const totalValue = calculateTotalValue(
+        const investedPerHolding = calculateInvestedPerHolding(transactions);
+        const { totalValueBase, byHolding } = calculateTotalValue(
             holdings,
             priceHistory,
             currencyRates,
-            portfolioCurrency
+            portfolioCurrency,
+            investedPerHolding
         );
-        const totalGainLoss = totalValue - totalInvested;
+        const totalInvested: number = Object.values(investedPerHolding).reduce(
+            (a, b) => a + b.investedInPortfolio, 0
+        ) || 0;
+
+        const totalGainLoss = totalValueBase - totalInvested;
         const percentageChange =
             totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
         return {
-            totalValue,
+            totalValue: totalValueBase,
             totalInvested,
             totalGainLoss,
             percentageChange,
+            byHolding, // Now includes both currencies!
         };
-    }, [transactions, holdings, priceHistory, currencyRates, portfolioCurrency, isPriceHistoryReady]);
+    }, [
+        transactions,
+        holdings,
+        priceHistory,
+        currencyRates,
+        portfolioCurrency,
+        isPriceHistoryReady,
+    ]);
 
     return totals;
 }

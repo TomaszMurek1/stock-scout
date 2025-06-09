@@ -20,12 +20,14 @@ const RiskTab = lazy(() => import("../tabs/risk/RiskTab"))
 
 interface PortfolioTabsProps {
     stocks: PortfolioStock[]
+    byHolding?: any
     onRemove: (ticker: string) => void
     onRefresh: () => void
 }
 
 export default function PortfolioTabs({
-    stocks,
+
+    byHolding,
     onRemove,
     onRefresh,
 }: PortfolioTabsProps) {
@@ -61,7 +63,8 @@ export default function PortfolioTabs({
             <Suspense fallback={<div>Loading tab…</div>}>
                 <TabsContent value="holdings">
                     <HoldingsTab
-                        stocks={stocks}
+
+                        byHolding={byHolding}
                         onRemove={onRemove}
                     />
                 </TabsContent>

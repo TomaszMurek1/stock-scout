@@ -11,7 +11,7 @@ interface SummaryProps {
     currency: CurrencyCode;
 }
 
-type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
+export type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
 
 const currencyLocaleMap: Record<CurrencyCode, string> = {
     USD: "en-US",

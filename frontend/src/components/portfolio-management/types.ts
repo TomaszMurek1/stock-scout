@@ -1,3 +1,5 @@
+export type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
+
 export interface PortfolioStock {
     shares_number: number
     ticker: string
@@ -51,7 +53,7 @@ export interface AddStockPayload {
 export interface Portfolio {
     id: number
     name: string
-    currency: string // "PLN", "USD", etc.
+    currency: CurrencyCode
 }
 
 export interface Transaction {

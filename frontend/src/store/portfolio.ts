@@ -54,12 +54,14 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
             watchlist: WatchlistStock[]
             transactions: Transaction[]
             currency_rates: Record<string, CurrencyRate>
+            price_history?: Record<string, { date: string; close: number }[]>
         }>("/portfolio-management")
         set(
             {
                 portfolio: data.portfolio,
                 transactions: data.transactions,
                 currencyRates: data.currency_rates,
+                priceHistory: data.price_history || {}
             },
             false,
             "refreshPortfolio"

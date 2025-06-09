@@ -3,7 +3,7 @@ import { TimeRange } from "@/components/portfolio-management/parts/performance/p
 import { apiClient } from "@/services/apiClient"
 export interface PricePoint {
     date: string             // YYYY-MM-DD
-    value: number
+    close: number
 }
 
 

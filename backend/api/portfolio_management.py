@@ -24,6 +24,7 @@ from schemas.portfolio_schemas import (
     TradeResponse,
     UserPortfolioResponse,
 )
+from database.stock_data import StockPriceHistory
 
 router = APIRouter()
 
@@ -184,6 +185,32 @@ def get_user_portfolio_data(
             "historicalData": hist,
         }
 
+    # === New: get tickers for price history ===
+    tickers = list({tx["ticker"] for tx in transactions if tx["ticker"]})
+
+    # Query price history for all tickers (like in price-history route)
+    companies = db.query(Company).filter(Company.ticker.in_(tickers)).all()
+    id_map = {c.company_id: c.ticker for c in companies}
+    company_ids = list(id_map.keys())
+    query = db.query(StockPriceHistory).filter(
+        StockPriceHistory.company_id.in_(company_ids)
+    )
+    records = query.order_by(StockPriceHistory.company_id, StockPriceHistory.date).all()
+
+    from collections import defaultdict
+
+    price_history = defaultdict(list)
+    for r in records:
+        ticker = id_map[r.company_id]
+        price_history[ticker].append(
+            {
+                "date": r.date.isoformat(),
+                "close": r.close,
+            }
+        )
+    # Convert to regular dict for serialization
+    price_history = dict(price_history)
+
     # 5) final payload
     return {
         "portfolio": {
@@ -194,4 +221,5 @@ def get_user_portfolio_data(
         "transactions": transactions,
         "watchlist": watchlist,
         "currency_rates": currency_rates,
+        "price_history": price_history,  # <-- add this
     }
