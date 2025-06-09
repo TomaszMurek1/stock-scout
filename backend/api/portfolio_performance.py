@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, selectinload
 from database.base import get_db
 from database.portfolio import Transaction, TransactionType
@@ -12,8 +14,8 @@ from database.user import User
 from schemas.portfolio_schemas import (
     PriceHistoryRequest,
     TransactionItem,
-    PriceHistoryItem,
 )
+from collections import defaultdict
 
 router = APIRouter(prefix="", tags=["portfolio-performance"])
 
@@ -52,18 +54,27 @@ def get_transactions(
 
     return [
         TransactionItem(
-            ticker=tx.company.ticker,
-            quantity=float(tx.quantity),
-            price=float(tx.price),
-            fee=float(tx.fee or 0),
-            total_value=float(tx.total_value),
+            id=tx.id,
+            ticker=tx.company.ticker if tx.company else "",
+            name=tx.company.name if tx.company else "",
+            transaction_type=tx.transaction_type.value,
+            shares=Decimal(
+                str(tx.quantity)
+            ),  # If tx.quantity is already Decimal, you can just use tx.quantity
+            price=Decimal(str(tx.price)),
+            fee=Decimal(str(tx.fee or 0)),
             timestamp=tx.timestamp,
+            currency="PLN",  # Replace with actual currency if you have it on company/market
+            currency_rate=Decimal(
+                "1.0"
+            ),  # Replace with the correct rate if you have multi-currency support
         )
         for tx in txs
     ]
 
 
-@router.post("/price-history", response_model=List[PriceHistoryItem])
+# TODO: investigate do we need  still need start_date here to be used
+@router.post("/price-history")
 def price_history(
     req: PriceHistoryRequest,
     db: Session = Depends(get_db),
@@ -97,7 +108,11 @@ def price_history(
 
     records = query.order_by(StockPriceHistory.company_id, StockPriceHistory.date).all()
 
-    return [
-        PriceHistoryItem(ticker=id_map[r.company_id], date=r.date, close=r.close)
-        for r in records
-    ]
+    # --- NEW: group results by ticker ---
+    data = defaultdict(list)
+    for r in records:
+        ticker = id_map[r.company_id]
+        data[ticker].append({"date": r.date.isoformat(), "close": r.close})
+
+    # Convert defaultdict to normal dict for JSON serialization
+    return JSONResponse(content=data)

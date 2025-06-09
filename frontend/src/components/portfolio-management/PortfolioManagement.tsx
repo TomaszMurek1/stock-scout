@@ -13,25 +13,27 @@ export default function PortfolioManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const {
         portfolio,
-        uiStocks,
-        fxRates,
         totals: { totalValue, totalInvested, totalGainLoss, percentageChange },
-        removeHolding,
-        refresh,
-        fxLookup
+        sell: removeHolding,
+        refreshPortfolio,
+
     } = usePortfolioData()
 
-    const ensureFxRatesUpToDate = useEnsureFxRatesUpToDate(
-        uiStocks,
-        portfolio?.currency
-    );
-
     useEffect(() => {
-        debugger
-        if (portfolio && uiStocks.length) {
-            ensureFxRatesUpToDate();
-        }
-    }, [portfolio, uiStocks, ensureFxRatesUpToDate]);
+        refreshPortfolio();
+    }, [refreshPortfolio]);
+
+    // const ensureFxRatesUpToDate = useEnsureFxRatesUpToDate(
+    //     uiStocks,
+    //     portfolio?.currency
+    // );
+
+    // useEffect(() => {
+    //     debugger
+    //     if (portfolio && uiStocks.length) {
+    //         ensureFxRatesUpToDate();
+    //     }
+    // }, [portfolio, uiStocks, ensureFxRatesUpToDate]);
 
     if (!portfolio) return <div>Loading…</div>
 
@@ -44,15 +46,12 @@ export default function PortfolioManagement() {
                 totalGainLoss={totalGainLoss}
                 percentageChange={percentageChange}
                 currency={portfolio.currency}
-                fxRates={fxRates}
-                fxRates={fxRates}     // for your historical‐chart component
-                fxLookup={fxLookup}   // for your instant conversion in summary
             />
             <Performance />
-            <PortfolioTabs
+            {/* <PortfolioTabs
                 stocks={uiStocks} onRemove={removeHolding}
-                onRefresh={refresh}
-            />
+                onRefresh={refreshPortfolio}
+            /> */}
             <AddStockModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}

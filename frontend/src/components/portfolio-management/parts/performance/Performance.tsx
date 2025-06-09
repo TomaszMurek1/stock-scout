@@ -18,20 +18,22 @@ function getCutoffDate(range: TimeRange): string | null {
 }
 
 export default function Performance() {
-    const [timeRange, setTimeRange] = useState<TimeRange>("1M")
+    const [timeRange, setTimeRange] = useState<TimeRange>("All")
 
     // raw holdings
-    const holdings = useAppStore((state: AppState) => state.holdings)
-    const masterPerformance = useAppStore((state: AppState) => state.masterPerformance)
-    const getPerformance = useAppStore((state: AppState) => state.getPerformance)
+    const transactions = useAppStore((state: AppState) => state.transactions)
+
+    const getPerformance = useAppStore((state: AppState) => state.getPriceHistory)
 
     // load performance when holdings exist or range changes
     useEffect(() => {
-        if (holdings.length) {
-            getPerformance(timeRange)
+        if (transactions.length) {
+            getPerformance(["AAPL", "GOOG", "MSFT"], getCutoffDate(timeRange)!)
         }
-    }, [holdings.length, getPerformance, timeRange])
+    }, [transactions.length, timeRange])
 
+    //TODO: the way chart is created must be redisgned based on new api response
+    let masterPerformance: any[] = []
     // slice data for current range
     const data = useMemo(() => {
         if (!masterPerformance.length) return []

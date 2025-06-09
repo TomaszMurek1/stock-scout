@@ -9,7 +9,6 @@ interface SummaryProps {
     totalGainLoss: number;
     percentageChange: number;
     currency: CurrencyCode;
-    fxRates?: CurrencyRate[];   // now optional
 }
 
 type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
@@ -103,20 +102,9 @@ export const Summary: React.FC<SummaryProps> = ({
     totalGainLoss,
     percentageChange,
     currency,
-    fxRates = [],           // default to empty array
 }) => {
     const isPositiveGL = totalGainLoss >= 0;
 
-    // build lookup of base → rate (quote === portfolio currency)
-    const fxLookup: Record<string, number> = useMemo(() => {
-        const lookup: Record<string, number> = {};
-        for (const { base, quote, rate } of fxRates) {
-            if (quote === currency) {
-                lookup[base] = typeof rate === "number" ? rate : parseFloat(rate);
-            }
-        }
-        return lookup;
-    }, [fxRates, currency]);
 
     return (
         <div className="space-y-8">
@@ -153,21 +141,7 @@ export const Summary: React.FC<SummaryProps> = ({
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="text-sm text-gray-600 mb-2">
-                    FX Rates (to {currency})
-                </div>
-                {Object.keys(fxLookup).length > 0 ? (
-                    Object.entries(fxLookup).map(([base, rate]) => (
-                        <div key={base} className="text-base">
-                            <span className="font-medium">{base}</span>: {rate.toFixed(4)}{" "}
-                            {currency}
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-gray-500">No FX data available</div>
-                )}
-            </div>
+
         </div>
     );
 };

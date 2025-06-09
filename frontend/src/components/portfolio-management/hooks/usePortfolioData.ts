@@ -1,120 +1,108 @@
 // src/hooks/usePortfolioData.ts
 import { useEffect, useMemo } from "react";
-import type { PortfolioStock } from "../types";
+
 import {
     calculateTotalValue,
     calculateTotalInvested,
-    calculateGainLoss,
-    calculatePercentageChange,
+
+    Transaction,
+    buildHoldings,
 } from "../utils/calculations";
 import { useShallow } from "zustand/react/shallow";
 import { AppState, useAppStore } from "@/store/appStore";
 
+function getTickerToCurrency(transactions: Transaction[]): Record<string, string> {
+    const map: Record<string, string> = {};
+    transactions.forEach(tx => { map[tx.ticker] = tx.currency; });
+    return map;
+}
+
 export function usePortfolioData() {
-    // 1) pull portfolio, transactions, fxRates, etc. out of your store
     const {
         portfolio,
-        transactions = [],    // ← default to [] so .map never blows up
-        currency_rates = [],         // also safe-guard fxRates
+        transactions = [],
+        currencyRates = {},       // { USD: 3.85, PLN: 1, GBP: 5.1, ... }
+        latestPrices = {},        // { AAPL: 203.2, "11B.WA": 123, ... } <- ensure you have this in store!
         refreshPortfolio,
         sell,
     } = useAppStore(
         useShallow((state: AppState) => ({
             portfolio: state.portfolio,
             transactions: state.transactions,
-            currencyRates: state.currency_rates,
+            currencyRates: state.currencyRates,
+            latestPrices: state.latestPrices,
             refreshPortfolio: state.refreshPortfolio,
             sell: state.sell,
         }))
     );
 
-    // 2) on mount, load your portfolio
-    useEffect(() => {
-        refreshPortfolio();
-    }, [refreshPortfolio]);
+    debugger
 
-    // 3) roll up transactions into per-ticker “holdings”
-    const uiStocks: PortfolioStock[] = useMemo(() => {
-        type Acc = {
-            ticker: string;
-            name: string;
-            currency: string;
-            totalShares: number;
-            totalCost: number;
-        };
-        const acc: Record<string, Acc> = {};
+    // Calculate derived data
+    const tickerToCurrency = useMemo(
+        () => getTickerToCurrency(transactions),
+        [transactions]
+    );
+
+    const holdings = useMemo(
+        () => buildHoldings(transactions),
+        [transactions]
+    );
+
+    const totalInvested = useMemo(
+        () => calculateTotalInvested(transactions),
+        [transactions]
+    );
 
 
-        for (const t of transactions) {
-            if (!acc[t.ticker]) {
-                acc[t.ticker] = {
-                    ticker: t.ticker,
-                    name: t.name,
-                    currency: t.currency,
-                    totalShares: 0,
-                    totalCost: 0,
-                };
-            }
-            const e = acc[t.ticker];
-            const shares = Number(t.shares);
-            const price = Number(t.price);
-            const fee = Number(t.fee);
-
-            if (t.transaction_type === "buy") {
-                e.totalShares += shares;
-                e.totalCost += shares * price + fee;
-            } else {
-                e.totalShares -= shares;
-                // subtract cost basis proportionally, fee reduces proceeds
-                e.totalCost -= shares * price - fee;
-            }
-        }
-        const stocks = Object.values(acc)
-            .filter((e) => e.totalShares > 0)
-            .map((e) => ({
-                ticker: e.ticker,
-                name: e.name,
-                shares_number: e.totalShares,
-                // average cost
-                purchasePrice: e.totalCost / e.totalShares,
-                // placeholder — until you wire up real quotes, fall back to cost
-                currentPrice: e.totalCost / e.totalShares,
-                currency: e.currency,
-            }));
-        debugger
-        return stocks
-    }, [transactions]);
-
-    // 4) “sell” handler works off of that uiStocks array
-    const removeHolding = async (ticker: string) => {
-        const h = uiStocks.find((s) => s.ticker === ticker);
-        if (!h) return;
-        await sell({
-            ticker: h.ticker,
-            shares: h.shares_number,
-            price: h.currentPrice,
-            fee: 0,
+    // This is the new way:
+    function getNetSharesByTicker(transactions: Transaction[]): Record<string, number> {
+        const netShares: Record<string, number> = {};
+        transactions.forEach(tx => {
+            const shares = Number(tx.shares);
+            if (!netShares[tx.ticker]) netShares[tx.ticker] = 0;
+            if (tx.transaction_type === "buy") netShares[tx.ticker] += shares;
+            else if (tx.transaction_type === "sell") netShares[tx.ticker] -= shares;
         });
+        return netShares;
+    }
+    const CURRENT_FX_RATES = {
+        PLN: 1,
+        USD: 3.8,
+        GBP: 5.2
     };
 
-    // 5) compute your totals exactly as before
-    const totalValue =
-        portfolio != null
-            ? calculateTotalValue(uiStocks, portfolio.currency, currency_rates)
-            : 0;
-    const totalInvested =
-        portfolio != null
-            ? calculateTotalInvested(uiStocks, portfolio.currency, currency_rates)
-            : 0;
-    const totalGainLoss = calculateGainLoss(totalValue, totalInvested);
-    const percentageChange = calculatePercentageChange(totalGainLoss, totalInvested);
+    const totalValue = useMemo(() => {
+        const netShares = getNetSharesByTicker(transactions);
+        let sum = 0;
+        for (const ticker in netShares) {
+            const shares = netShares[ticker];
+            if (shares <= 0) continue;
+            const price = latestPrices[ticker] ?? 0;
+            const currency = tickerToCurrency[ticker] ?? "PLN";
+            const fx = (currencyRates[currency]?.rate ?? CURRENT_FX_RATES[currency] ?? 1);
+            sum += shares * price * fx;
+        }
+        return sum;
+    }, [transactions, latestPrices, tickerToCurrency, currencyRates]);
+
+
+
+    const totalGainLoss = totalValue - totalInvested;
+    const percentageChange =
+        totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
 
     return {
         portfolio,
-        uiStocks,
-        currency_rates,
-        totals: { totalValue, totalInvested, totalGainLoss, percentageChange },
-        removeHolding,
-        refresh: refreshPortfolio,
+        transactions,
+        holdings,
+        totals: {
+            totalValue,
+            totalInvested,
+            totalGainLoss,
+            percentageChange,
+        },
+        refreshPortfolio,
+        sell,
     };
 }
