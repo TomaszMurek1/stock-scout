@@ -58,7 +58,7 @@ export interface Transaction {
     id: number
     ticker: string
     name: string
-    transaction_type: "buy" | "sell" | string
+    transaction_type: "buy" | "sell"
     shares: number // always use number for calculations!
     price: number
     fee: number

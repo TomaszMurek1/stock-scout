@@ -103,6 +103,8 @@ export const Summary: React.FC<SummaryProps> = ({
     percentageChange,
     currency,
 }) => {
+
+
     const isPositiveGL = totalGainLoss >= 0;
 
 
