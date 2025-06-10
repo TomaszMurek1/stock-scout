@@ -2,11 +2,11 @@
 
 import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { PortfolioStock } from "../../types"
+import { IByHolding } from "../../types"
 
 interface HoldingsTabProps {
 
-    byHolding?: any
+    byHolding?: IByHolding
     onRemove: (id: string) => void
 }
 

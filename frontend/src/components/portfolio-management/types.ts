@@ -56,18 +56,18 @@ export interface Portfolio {
     currency: CurrencyCode
 }
 
-export interface Transaction {
-    id: number
-    ticker: string
-    name: string
-    transaction_type: "buy" | "sell"
-    shares: number // always use number for calculations!
-    price: number
-    fee: number
-    timestamp: string
-    currency: string
-    currency_rate: number
-}
+// export interface Transaction {
+//     id: number
+//     ticker: string
+//     name: string
+//     transaction_type: "buy" | "sell"
+//     shares: number // always use number for calculations!
+//     price: number
+//     fee: number
+//     timestamp: string
+//     currency: string
+//     currency_rate: number
+// }
 
 
 export interface WatchlistStock {
@@ -80,3 +80,68 @@ export interface CurrencyRate {
     rate: number // e.g. 3.95
     last_updated: string // ISO date
 }
+
+export type Transaction = {
+    ticker: string;
+    transaction_type: "buy" | "sell";
+    shares: string | number;
+    price: string | number;
+    currency: string;
+    currency_rate: string | number; // rate used when transaction was made
+};
+
+export type Holding = {
+    ticker: string;
+    shares: number;
+    avg_cost: number; // in portfolio currency
+};
+
+export type LatestPriceMap = Record<string, number>; // latest price in native currency
+
+export type LatestFXMap = Record<string, number>; // e.g. { USD: 3.95, PLN: 1, GBP: 5.1 }
+
+export type HistoricalRate = {
+    date: string;
+    close: string | number;
+};
+
+export type PriceHistoryEntry = {
+    date: string;
+    close: number;
+};
+
+export type CurrencyRates = Record<
+    string,
+    {
+        historicalData: HistoricalRate[];
+    }
+>;
+
+export type InvestedPerHolding = Record<
+    string,
+    {
+        investedInHolding: number;
+        investedInPortfolio: number;
+    }
+>;
+
+export type IByHolding = Record<string, HoldingValuation>
+
+export type HoldingValuation = {
+    currentValueInHolding: number;
+    currentValueInPortfolio: number;
+    investedValueInHolding: number;
+    investedValueInPortfolio: number;
+    gainLossInHolding: number;
+    gainLossInPortfolio: number;
+    isPositive: boolean;
+    quantity: number;
+    price: number | undefined;
+    fx: number;
+    holdingCurrency: string;
+};
+
+export type TotalValueResult = {
+    totalValueBase: number;
+    byHolding: IByHolding;
+};

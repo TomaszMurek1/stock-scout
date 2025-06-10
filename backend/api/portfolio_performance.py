@@ -64,7 +64,8 @@ def get_transactions(
             price=Decimal(str(tx.price)),
             fee=Decimal(str(tx.fee or 0)),
             timestamp=tx.timestamp,
-            currency="PLN",  # Replace with actual currency if you have it on company/market
+            # Replace with actual currency if you have it on company/market
+            currency="PLN",
             currency_rate=Decimal(
                 "1.0"
             ),  # Replace with the correct rate if you have multi-currency support

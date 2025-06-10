@@ -6,7 +6,6 @@ import Summary from "./parts/summary/Summary"
 import Performance from "./parts/performance/Performance"
 import AddStockModal from "./modals/AddStockModal"
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData"
-import { AppState, useAppStore } from "@/store/appStore";
 import { TimeRange } from "./parts/performance/performance-chart"
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals"
 import PortfolioTabs from "./tabs/PortfolioTabs"
@@ -21,7 +20,6 @@ const rangeDays: Record<Exclude<TimeRange, "All">, number> = {
 
 export default function PortfolioManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-    const [timeRange, setTimeRange] = useState<TimeRange>("All")
     const {
         portfolio,
         holdings,

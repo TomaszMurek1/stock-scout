@@ -8,19 +8,18 @@ import {
     TabsContent,
 } from "@/components/ui/tabs"
 import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react"
-import type { PortfolioStock } from "../types"
-import WatchlistTab from "./watchlist/WatchlistTab"
+import { IByHolding } from "../types"
+
 
 const HoldingsTab = lazy(() => import("../tabs/holdings/HoldingsTab"))
-// const WatchlistTab = lazy(() => import("../tabs/WatchlistTab"))
+const WatchlistTab = lazy(() => import("../tabs/watchlist/WatchlistTab"))
 const AlertsTab = lazy(() => import("../tabs/alerts/AlertsTab"))
 const TransactionsTab = lazy(() => import("../tabs/transactions/TransactionsTab"))
 const CashTab = lazy(() => import("../tabs/cash/CashTab"))
 const RiskTab = lazy(() => import("../tabs/risk/RiskTab"))
 
 interface PortfolioTabsProps {
-    stocks: PortfolioStock[]
-    byHolding?: any
+    byHolding?: IByHolding
     onRemove: (ticker: string) => void
     onRefresh: () => void
 }
@@ -63,7 +62,6 @@ export default function PortfolioTabs({
             <Suspense fallback={<div>Loading tab…</div>}>
                 <TabsContent value="holdings">
                     <HoldingsTab
-
                         byHolding={byHolding}
                         onRemove={onRemove}
                     />

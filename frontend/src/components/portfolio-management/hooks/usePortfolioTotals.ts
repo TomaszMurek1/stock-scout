@@ -1,6 +1,8 @@
 import { useMemo } from "react";
-import { calculateInvestedPerHolding, calculateTotalInvested, calculateTotalValue, Transaction } from "../utils/calculations";
+import { calculateInvestedPerHolding, calculateTotalInvested, calculateTotalValue } from "../utils/calculations";
 import { PricePoint } from "@/store/portfolioPerformance";
+import { Transaction } from "../types";
+
 export function usePortfolioTotals({
     transactions,
     holdings,
@@ -14,6 +16,9 @@ export function usePortfolioTotals({
     currencyRates: any;
     portfolioCurrency: string;
 }) {
+    console.log("usePortfolioTotals called holdings", {
+        holdings,
+    })
     const isPriceHistoryReady = priceHistory && Object.keys(priceHistory).length > 0;
     const totals = useMemo(() => {
         if (!isPriceHistoryReady) return null;
@@ -38,7 +43,7 @@ export function usePortfolioTotals({
             totalInvested,
             totalGainLoss,
             percentageChange,
-            byHolding, // Now includes both currencies!
+            byHolding,
         };
     }, [
         transactions,
