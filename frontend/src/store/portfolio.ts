@@ -1,12 +1,17 @@
 import { Portfolio } from "@/components/portfolio-management/types"
 import { apiClient } from "@/services/apiClient"
 import { HoldingItem, Transaction, CurrencyRate, WatchlistStock } from "@/components/portfolio-management/types"
+import { string } from "zod";
 type Holding = { quantity: number; currency: string };
 type Holdings = Record<string, Holding>;
+
+export type CurrencyPoint = { date: string; close: number };
+type CurrencyPair = Record<string, CurrencyPoint[]>;
+
 export interface PortfolioSlice {
     portfolio: Portfolio | null
     transactions: Transaction[]
-    currencyRates: Record<string, CurrencyRate>
+    currencyRates: Record<string, CurrencyPair>
     holdings: Holdings
     refreshPortfolio: () => Promise<void>
     buy: (payload: any) => Promise<void>

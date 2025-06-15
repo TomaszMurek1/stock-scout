@@ -16,23 +16,43 @@ const getDateRange = (start: Date, end: Date) => {
 };
 
 // Utility: get rate for date, fallback to previous if missing
-function getRateOnDate(rates: { date: string, rate: number }[], date: string): number | null {
+function getRateOnDate(
+    rates: { date: string, close: number }[],
+    date: string
+): number | null {
     if (!rates?.length) return null;
+    // Find the latest rate <= date
     let best = rates[0];
     for (const r of rates) {
         if (r.date <= date && r.date > best.date) best = r;
     }
-    return best.rate;
+    return best.close;
 }
 
 // Utility: get price for date, fallback to previous if missing
-function getPriceOnDate(prices: { date: string, close: number }[], date: string): number | null {
+function getPriceOnDate(
+    prices: { date: string; close: number }[] = [],
+    date: string
+): number | null {
     if (!prices?.length) return null;
     let best = prices[0];
     for (const p of prices) {
         if (p.date <= date && p.date > best.date) best = p;
     }
     return best.close;
+}
+
+// Find the currency of a holding by latest transaction up to date
+function getHoldingCurrency(
+    ticker: string,
+    txs: any[],
+    date: string,
+    fallbackCurrency: string
+): string {
+    const relevantTxs = txs
+        .filter(tx => tx.ticker === ticker && tx.timestamp.slice(0, 10) <= date)
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return relevantTxs[0]?.currency || fallbackCurrency;
 }
 
 // Supported periods
@@ -54,14 +74,14 @@ export const Performance: React.FC = () => {
         transactions,
         currencyRates,
         priceHistory
-    } = usePortfolioBaseData(); // adjust if you pass as props
+    } = usePortfolioBaseData();
 
     const [period, setPeriod] = useState("all");
     const portfolioCurrency = portfolio?.currency || "PLN";
 
     // --- MEMOIZED CALCULATION ---
-    const { perfSeries, benchmarkSeries, dateRange } = useMemo(() => {
-        if (!transactions?.length) return { perfSeries: [], benchmarkSeries: [], dateRange: [] };
+    const { perfSeries, benchmarkSeries } = useMemo(() => {
+        if (!transactions?.length) return { perfSeries: [], benchmarkSeries: [] };
 
         // sort transactions
         const txs = [...transactions].sort((a, b) =>
@@ -72,64 +92,59 @@ export const Performance: React.FC = () => {
 
         const fullDates = getDateRange(new Date(firstDate), new Date(lastDate));
 
-        // Map: companyId -> [{date, close, currency}]
-        // Map: "USDPLN" -> [{date, rate}]
         // For each day, walk through transactions and build positions
         let positions: Record<string, number> = {};
-        let cash: number = 0; // optional, you can extend to cash flows
-
         let txIdx = 0;
         const dailyValue: number[] = [];
         const dates: string[] = [];
 
-        // for currency conversions: rates[USDPLN], rates[EURPLN], etc.
+        // --- Currency Conversion ---
         function convert(val: number, from: string, to: string, date: string) {
             if (from === to) return val;
-            const pair = from + to;
-            const invPair = to + from;
-            // direct pair
-            debugger
+            const pair = from + '-' + to;
+            const invPair = to + '-' + from;
             if (currencyRates[pair]) {
-                const r = getRateOnDate(currencyRates[pair], date);
+                const r = getRateOnDate(currencyRates[pair].historicalData, date);
                 return r ? val * r : val;
             }
-            // inverse pair
             if (currencyRates[invPair]) {
-                const r = getRateOnDate(currencyRates[invPair], date);
+                const r = getRateOnDate(currencyRates[invPair].historicalData, date);
                 return r ? val / r : val;
             }
-            // fallback: no rate available, assume 1:1 (shouldn't happen)
             return val;
         }
 
         for (let d = 0; d < fullDates.length; ++d) {
             const date = fullDates[d];
-            // apply all txs for today
+            // Apply all txs for today (accumulate positions)
             while (txIdx < txs.length && txs[txIdx].timestamp.slice(0, 10) <= date) {
                 const tx = txs[txIdx];
                 switch (tx.transaction_type) {
                     case "buy":
                         positions[tx.ticker] = (positions[tx.ticker] || 0) + Number(tx.shares);
-                        // Cash is ignored unless you want to show cash drag
                         break;
                     case "sell":
                         positions[tx.ticker] = (positions[tx.ticker] || 0) - Number(tx.shares);
                         break;
-                    // add dividends, deposits etc. as needed
+                    // handle dividends, deposits, withdrawals, etc. if needed
                 }
                 txIdx++;
             }
             // For each position, get price for date, convert to portfolioCurrency
             let portfolioValue = 0;
-            for (const companyId in positions) {
-                const qty = positions[companyId];
+            for (const ticker in positions) {
+                const qty = positions[ticker];
                 if (!qty) continue;
-                const prices = priceHistory[companyId];
+                const prices = priceHistory[ticker];
                 const price = getPriceOnDate(prices, date);
                 if (price === null) continue;
-                // Find currency for this company (take from first price)
-                const cc = prices?.[0]?.currency || portfolioCurrency;
-                const priceInPortfolioCurrency = convert(price, cc, portfolioCurrency, date);
+                const holdingCurrency = getHoldingCurrency(
+                    ticker,
+                    txs,
+                    date,
+                    portfolioCurrency
+                );
+                const priceInPortfolioCurrency = convert(price, holdingCurrency, portfolioCurrency, date);
                 portfolioValue += qty * priceInPortfolioCurrency;
             }
             dailyValue.push(portfolioValue);
@@ -150,7 +165,7 @@ export const Performance: React.FC = () => {
             value: (i / arr.length) * 10, // +10% over period
         }));
 
-        return { perfSeries, benchmarkSeries, dateRange: dates };
+        return { perfSeries, benchmarkSeries };
     }, [transactions, priceHistory, currencyRates, portfolioCurrency]);
 
     // --- PERIOD FILTER ---
@@ -203,7 +218,14 @@ export const Performance: React.FC = () => {
                 startIdx = 0;
         }
         if (startIdx < 0) startIdx = 0;
-        return series.slice(startIdx);
+        const sliced = series.slice(startIdx);
+        if (!sliced.length) return [];
+        const baseValue = sliced[0].value;
+        // Reset to zero
+        return sliced.map(pt => ({
+            ...pt,
+            value: pt.value - baseValue
+        }));
     };
 
     const filteredPerf = filterSeries(perfSeries);

@@ -1,14 +1,11 @@
 "use client"
-import { TimeRange } from "@/components/portfolio-management/parts/performance/performance-chart";
 import { apiClient } from "@/services/apiClient"
-export interface PricePoint {
-    date: string             // YYYY-MM-DD
-    close: number
-}
+import { CurrencyPoint } from "./portfolio";
+
 
 
 export interface PerformanceSlice {
-    priceHistory: Record<string, PricePoint[]>; // { ticker: PerformancePoint[] }
+    priceHistory: Record<string, CurrencyPoint[]>;
     getPriceHistory: any;
 }
 
