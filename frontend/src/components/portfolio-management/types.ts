@@ -82,10 +82,14 @@ export interface CurrencyRate {
 }
 
 export type Transaction = {
+    id: number; // unique identifier for the transaction
     ticker: string;
+    name: string;
     transaction_type: "buy" | "sell";
     shares: string | number;
     price: string | number;
+    fee?: string | number; // optional, can be 0
+    timestamp: string; // ISO date
     currency: string;
     currency_rate: string | number; // rate used when transaction was made
 };

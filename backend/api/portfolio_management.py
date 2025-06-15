@@ -172,7 +172,7 @@ def get_user_portfolio_data(
         grouped.setdefault(key, []).append(
             {
                 "date": r.date.isoformat(),
-                "close": r.close,
+                "close": float(r.close),
             }
         )
 
@@ -205,7 +205,7 @@ def get_user_portfolio_data(
         price_history[ticker].append(
             {
                 "date": r.date.isoformat(),
-                "close": r.close,
+                "close": float(r.close),
             }
         )
     # Convert to regular dict for serialization

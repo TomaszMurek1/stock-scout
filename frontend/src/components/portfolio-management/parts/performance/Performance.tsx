@@ -20,11 +20,9 @@ export default function Performance() {
 
     return (
         <Suspense fallback={<div className="py-10 text-center">Loading chart…</div>}>
-            {/* <PerformanceChart
-                data={data}
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-            /> */}
+            <PerformanceChart
+
+            />
         </Suspense>
     )
 }

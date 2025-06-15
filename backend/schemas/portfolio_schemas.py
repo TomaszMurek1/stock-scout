@@ -1,13 +1,13 @@
 from datetime import datetime, date
-from decimal import Decimal
+
 from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, condecimal
 
 
 class TradeRequest(BaseModel):
     company_id: int
-    quantity: Decimal
-    price: Decimal
+    quantity: float
+    price: float
 
 
 class TradeBase(BaseModel):
@@ -26,11 +26,11 @@ class TradeResponse(BaseModel):
 class PositionOut(BaseModel):
     ticker: str
     company_id: int
-    shares: Decimal
-    average_cost: Decimal
-    market_price: Optional[Decimal]
-    market_value: Optional[Decimal]
-    unrealized: Optional[Decimal]
+    shares: float
+    average_cost: float
+    market_price: Optional[float]
+    market_value: Optional[float]
+    unrealized: Optional[float]
 
     class Config:
         orm_mode = True
@@ -91,7 +91,7 @@ class WatchItem(BaseModel):
 class RateItem(BaseModel):
     base: str  # e.g. "USD"
     quote: str  # e.g. "PLN"
-    rate: Decimal  # e.g. 3.7599
+    rate: float  # e.g. 3.7599
     date: date  # the date of the FX quote
 
     model_config = ConfigDict(from_attributes=True)
@@ -102,17 +102,17 @@ class TransactionItem(BaseModel):
     ticker: str
     name: str
     transaction_type: Literal["buy", "sell"]
-    shares: Decimal
-    price: Decimal
-    fee: Decimal
+    shares: float
+    price: float
+    fee: float
     timestamp: datetime
     currency: str
-    currency_rate: Decimal
+    currency_rate: float
 
 
 class FxHistoricalItem(BaseModel):
     date: date
-    close: Decimal
+    close: float
 
 
 class FxBatch(BaseModel):

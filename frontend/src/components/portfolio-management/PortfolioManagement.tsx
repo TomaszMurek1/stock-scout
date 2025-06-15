@@ -20,6 +20,7 @@ const rangeDays: Record<Exclude<TimeRange, "All">, number> = {
 
 export default function PortfolioManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState<'portfolio' | 'performance'>('portfolio');
     const {
         portfolio,
         holdings,
@@ -51,22 +52,50 @@ export default function PortfolioManagement() {
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
             <Header onAdd={() => setIsAddModalOpen(true)} />
-            <Summary
-                totalValue={totals.totalValue}
-                totalInvested={totals.totalInvested}
-                totalGainLoss={totals.totalGainLoss}
-                percentageChange={totals.percentageChange}
-                currency={portfolio.currency}
-            />
-            <Performance />
-            <PortfolioTabs
-                onRemove={sell}
-                onRefresh={refreshPortfolio} byHolding={totals.byHolding}
-            />
+            <div className="space-y-4">
+                {/* Tab Switcher */}
+                <div className="flex space-x-4 border-b pb-2">
+                    <button
+                        onClick={() => setActiveTab('portfolio')}
+                        className={`px-4 py-2 font-medium ${activeTab === 'portfolio' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
+                    >
+                        Portfolio
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('performance')}
+                        className={`px-4 py-2 font-medium ${activeTab === 'performance' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
+                    >
+                        Performance
+                    </button>
+                </div>
+
+                {/* Conditional Rendering */}
+                {activeTab === 'portfolio' && (
+                    <>
+                        <Summary
+                            totalValue={totals.totalValue}
+                            totalInvested={totals.totalInvested}
+                            totalGainLoss={totals.totalGainLoss}
+                            percentageChange={totals.percentageChange}
+                            currency={portfolio.currency}
+                        />
+                        <PortfolioTabs
+                            onRemove={sell}
+                            onRefresh={refreshPortfolio}
+                            byHolding={totals.byHolding}
+                        />
+                    </>
+                )}
+
+                {activeTab === 'performance' && (
+                    <Performance />
+                )}
+            </div>
+
             <AddStockModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
             />
         </div>
-    )
+    );
 }
