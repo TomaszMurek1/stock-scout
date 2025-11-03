@@ -11,17 +11,15 @@ from database.base import Base
 # Alembic config object
 config = context.config
 
-# Build DB URL from env
-db_user = os.getenv("DB_USER")
-db_password = os.getenv("DB_PASSWORD")
-db_host = os.getenv("DB_HOST_DEV", "localhost")
-db_port = os.getenv("DB_PORT", "5432")
-db_name = os.getenv("DB_NAME")
 
+<<<<<<< Updated upstream
 config.set_main_option(
     "sqlalchemy.url",
     f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 )
+=======
+config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+>>>>>>> Stashed changes
 
 # Logging config
 if config.config_file_name is not None:
