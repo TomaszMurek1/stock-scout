@@ -15,11 +15,15 @@ from api import (
     fibonacci_elliott,
     watchlist,
 )
+from api.positions_read import router as positions_router
 from api.accounts import router as accounts_router
 from database.base import Base, engine
+from core.openapi_overrides import add_bearer_auth
+
 
 # Initialize FastAPI
 app = FastAPI(title="Stock Scout API")
+add_bearer_auth(app)
 
 # CORS configuration
 app.add_middleware(
@@ -58,6 +62,8 @@ app.include_router(
     company_search.router, prefix="/api/companies", tags=["Company Search"]
 )
 app.include_router(fx.router, prefix="/api/fx-rate", tags=["FX Rates"])
+
+app.include_router(positions_router)
 app.include_router(accounts_router)
 
 @app.get("/")

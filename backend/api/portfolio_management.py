@@ -9,6 +9,7 @@ from sqlalchemy import func, case
 
 from api.portfolio_crud import get_or_create_portfolio
 from api.security import get_current_user
+from api.positions_service import apply_transaction_to_position, get_default_account_id
 from database.base import get_db
 from database.user import User
 from database.portfolio import (
@@ -40,9 +41,12 @@ def buy_stock(
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
+    account_id = get_default_account_id(db, portfolio.id)  # NEW
+
     tx = Transaction(
         user_id=user.id,
         portfolio_id=portfolio.id,
+        account_id=account_id,              # NEW
         company_id=company.company_id,
         transaction_type=TransactionType.BUY,
         quantity=trade.shares,
@@ -53,8 +57,13 @@ def buy_stock(
         currency_rate=trade.currency_rate,
     )
     db.add(tx)
+    db.flush()                               # NEW: get tx persisted without commit
+
+    apply_transaction_to_position(db, tx)    # NEW: update positions
+
     db.commit()
     return {"message": "Buy recorded"}
+
 
 
 @router.post("/sell", response_model=TradeResponse)
@@ -75,14 +84,8 @@ def sell_stock(
                 func.sum(
                     case(
                         [
-                            (
-                                Transaction.transaction_type == TransactionType.BUY,
-                                Transaction.quantity,
-                            ),
-                            (
-                                Transaction.transaction_type == TransactionType.SELL,
-                                -Transaction.quantity,
-                            ),
+                            (Transaction.transaction_type == TransactionType.BUY,  Transaction.quantity),
+                            (Transaction.transaction_type == TransactionType.SELL, -Transaction.quantity),
                         ],
                         else_=0,
                     )
@@ -97,9 +100,12 @@ def sell_stock(
     if owned < trade.shares:
         raise HTTPException(status_code=400, detail="Insufficient shares to sell")
 
+    account_id = get_default_account_id(db, portfolio.id)  # NEW
+
     tx = Transaction(
         user_id=user.id,
         portfolio_id=portfolio.id,
+        account_id=account_id,               # NEW
         company_id=company.company_id,
         transaction_type=TransactionType.SELL,
         quantity=trade.shares,
@@ -110,9 +116,12 @@ def sell_stock(
         currency_rate=trade.currency_rate,
     )
     db.add(tx)
+    db.flush()                                # NEW
+
+    apply_transaction_to_position(db, tx)     # NEW
+
     db.commit()
     return {"message": "Sell recorded"}
-
 
 @router.get("", response_model=UserPortfolioResponse)
 def get_user_portfolio_data(

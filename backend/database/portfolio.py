@@ -148,11 +148,6 @@ class FavoriteStock(Base):
 
     user = relationship("User", back_populates="favorite_stocks")
     company = relationship("Company")
-    accounts = relationship(
-    "Account",
-    back_populates="portfolio",
-    cascade="all, delete-orphan",
-)
 
     def __repr__(self):
         return (
