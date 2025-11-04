@@ -1,11 +1,13 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database.base import Base  # adjust import to your Base location
 
 class Account(Base):
     __tablename__ = "accounts"
-
+    __table_args__ = (
+        UniqueConstraint("portfolio_id", "name", name="uq_account_portfolio_name"),
+    )
     id = Column(Integer, primary_key=True)
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False, index=True)
 

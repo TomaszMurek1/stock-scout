@@ -15,6 +15,7 @@ from api import (
     fibonacci_elliott,
     watchlist,
 )
+from api.accounts import router as accounts_router
 from database.base import Base, engine
 
 # Initialize FastAPI
@@ -57,7 +58,7 @@ app.include_router(
     company_search.router, prefix="/api/companies", tags=["Company Search"]
 )
 app.include_router(fx.router, prefix="/api/fx-rate", tags=["FX Rates"])
-
+app.include_router(accounts_router)
 
 @app.get("/")
 async def root():

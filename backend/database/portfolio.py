@@ -60,6 +60,11 @@ class Portfolio(Base):
         back_populates="portfolio",
         cascade="all, delete-orphan",
     )
+    accounts = relationship(
+        "Account",
+        back_populates="portfolio",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<Portfolio(id={self.id}, name={self.name}, user_id={self.user_id})>"
@@ -117,6 +122,9 @@ class Transaction(Base):
     user = relationship("User")
     portfolio = relationship("Portfolio", back_populates="transactions")
     company = relationship("Company", backref=backref("transactions", lazy="dynamic"))
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    account = relationship("Account")
+
 
     def __repr__(self):
         return (
