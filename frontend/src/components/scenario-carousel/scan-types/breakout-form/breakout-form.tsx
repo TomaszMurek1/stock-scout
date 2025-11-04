@@ -68,7 +68,7 @@ const BreakoutForm: React.FC = () => {
         disabled={isLoading}
         className="w-full bg-green-600 text-white hover:bg-green-700"
       >
-        {isLoading ? "Loading..." : "Run Breakout Scan"}
+        {isLoading ? "Loading breakout..." : "Run Breakout Scan"}
       </Button>
     </form>
   );

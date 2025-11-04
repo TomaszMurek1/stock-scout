@@ -21,7 +21,6 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import { StockCompare } from "./components/comapre-stocks-page/StockCompare";
 
-
 function App() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -58,11 +57,7 @@ function App() {
               <Route
                 path="/signin"
                 element={
-                  <SignIn
-                    onClose={() => { }}
-                    onSignIn={handleSignIn}
-                    onError={handleError}
-                  />
+                  <SignIn onClose={() => {}} onSignIn={handleSignIn} onError={handleError} />
                 }
               />
               <Route path="/" element={<PrivateRoute element={<Home />} />} />
@@ -92,7 +87,6 @@ function App() {
                 element={<PrivateRoute element={<FiboWaveScenario />} />}
               />
               <Route path="/compare/:tickerA/:tickerB" element={<StockCompare />} />
-
             </Routes>
           </main>
           <Footer />
