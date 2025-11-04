@@ -5,6 +5,7 @@ import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+
 def print_yfinance_summary(ticker: str):
     logging.info(f"\n==============================")
     logging.info(f"📊 YFinance Summary for {ticker}")
@@ -18,7 +19,9 @@ def print_yfinance_summary(ticker: str):
         fast_info = yticker.fast_info
         info = yticker.info
         logging.info(f"Fast Info: {fast_info}")
-        logging.info(f"General Info (deprecated): {info.get('longName', 'N/A')} - {info.get('sector', 'N/A')} ({info.get('industry', 'N/A')})")
+        logging.info(
+            f"General Info (deprecated): {info.get('longName', 'N/A')} - {info.get('sector', 'N/A')} ({info.get('industry', 'N/A')})"
+        )
     except Exception as e:
         logging.error(f"Error fetching basic info: {e}")
 
@@ -71,7 +74,9 @@ def print_yfinance_summary(ticker: str):
             logging.info(f"Available Expiration Dates: {yticker.options}")
             opt_date = yticker.options[0]
             option_chain = yticker.option_chain(opt_date)
-            logging.info(f"Option Chain for {opt_date}:\nCalls:\n{option_chain.calls.head()}\nPuts:\n{option_chain.puts.head()}")
+            logging.info(
+                f"Option Chain for {opt_date}:\nCalls:\n{option_chain.calls.head()}\nPuts:\n{option_chain.puts.head()}"
+            )
         else:
             logging.info("No options data available.")
     except Exception as e:
@@ -82,7 +87,9 @@ def print_yfinance_summary(ticker: str):
     try:
         logging.info(f"\nEarnings Calendar:\n{yticker.calendar}")
         logging.info(f"\nMajor Holders:\n{yticker.major_holders}")
-        logging.info(f"\nInstitutional Holders:\n{yticker.institutional_holders.head()}")
+        logging.info(
+            f"\nInstitutional Holders:\n{yticker.institutional_holders.head()}"
+        )
         logging.info(f"\nMutual Fund Holders:\n{yticker.mutualfund_holders.head()}")
         logging.info(f"\nSustainability (ESG):\n{yticker.sustainability}")
     except Exception as e:
@@ -121,7 +128,6 @@ def print_yfinance_summary(ticker: str):
         logging.error(f"Error fetching news: {e}")
 
 
-
 def print_financial_statements(ticker: str):
     pd.set_option("display.max_rows", None)  # Show all rows
     pd.set_option("display.max_columns", None)  # Show all columns (if needed)
@@ -132,8 +138,6 @@ def print_financial_statements(ticker: str):
     logging.info(f"==============================")
 
     yticker = yf.Ticker(ticker)
-
-   
 
     # SECTION: Financial Statements
     logging.info("\n🔹 Financial Statements")
@@ -146,7 +150,7 @@ def print_financial_statements(ticker: str):
     except Exception as e:
         logging.error(f"Error fetching financial statements: {e}")
 
-   
+
 def print_fast_info(ticker: str):
     logging.info(f"\n==============================")
     logging.info(f"📊 YFinance fast info for {ticker}")
@@ -154,12 +158,13 @@ def print_fast_info(ticker: str):
 
     yticker = yf.Ticker(ticker)
 
-    fast_info = yticker.fast_info
+    fast_info = yticker.get_info()
 
     # SECTION: Financial Statements
     logging.info(f"Fast Info: {fast_info}")
     logging.info(f"Fast Info: {fast_info['shares']}")
-   
+
+
 def save_all_financial_data_to_excel(ticker: str, output_dir="financial_data"):
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"{ticker}_financial_data.xlsx")
@@ -172,7 +177,7 @@ def save_all_financial_data_to_excel(ticker: str, output_dir="financial_data"):
         cash_flow = yticker.cashflow
         fast_info = pd.DataFrame([yticker.fast_info])
 
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+        with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
             if not income_statement.empty:
                 income_statement.to_excel(writer, sheet_name="Income Statement")
             if not balance_sheet.empty:
@@ -195,23 +200,28 @@ def save_all_financial_data_to_excel(ticker: str, output_dir="financial_data"):
 
     try:
         # Get financials safely
-        income_statement = yticker.financials if yticker.financials is not None else pd.DataFrame()
-        balance_sheet = yticker.balance_sheet if yticker.balance_sheet is not None else pd.DataFrame()
+        income_statement = (
+            yticker.financials if yticker.financials is not None else pd.DataFrame()
+        )
+        balance_sheet = (
+            yticker.balance_sheet
+            if yticker.balance_sheet is not None
+            else pd.DataFrame()
+        )
         cash_flow = yticker.cashflow if yticker.cashflow is not None else pd.DataFrame()
         fast_info = yticker.fast_info if yticker.fast_info is not None else {}
 
         # Convert fast_info dictionary to a two-column DataFrame
-        fast_info_df = pd.DataFrame({
-            "Metric": list(fast_info.keys()),
-            "Value": list(fast_info.values())
-        })
+        fast_info_df = pd.DataFrame(
+            {"Metric": list(fast_info.keys()), "Value": list(fast_info.values())}
+        )
 
         print(f"Income Statement shape: {income_statement.shape}")
         print(f"Balance Sheet shape: {balance_sheet.shape}")
         print(f"Cash Flow shape: {cash_flow.shape}")
         print(f"Fast Info shape: {fast_info_df.shape}")
 
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+        with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
             income_statement.to_excel(writer, sheet_name="Income Statement")
             balance_sheet.to_excel(writer, sheet_name="Balance Sheet")
             cash_flow.to_excel(writer, sheet_name="Cash Flow")
@@ -221,6 +231,8 @@ def save_all_financial_data_to_excel(ticker: str, output_dir="financial_data"):
     except Exception as e:
         print(f"❌ Error fetching or saving data for {ticker}: {e}")
 
+
 if __name__ == "__main__":
-    print_financial_statements("ALE.WA")
-    save_all_financial_data_to_excel("ALE.WA")
+    print_fast_info("ALE.WA")
+# print_financial_statements("ALE.WA")
+# save_all_financial_data_to_excel("ALE.WA")

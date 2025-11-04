@@ -1,11 +1,14 @@
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
 from database.base import get_db
-from database.portfolio import FavoriteStock
+from database.portfolio import FavoriteStock, PortfolioPosition
 from database.user import User
 from database.company import Company
 from sqlalchemy.orm import joinedload
+from database.stock_data import CompanyMarketData
 
 router = APIRouter()
 
@@ -47,6 +50,49 @@ def get_watchlist_companies_for_user(db: Session, user: User):
         }
         for item in watchlist
     ]
+
+
+def get_holdings_for_user(db: Session, user) -> List[dict]:
+    """
+    Returns a list of:
+      [{"ticker": ..., "name": ..., "shares": ..., "average_price": ...}, ...]
+    """
+    portfolio = get_or_create_portfolio(db, user.id)
+    positions = (
+        db.query(PortfolioPosition)
+        .filter(PortfolioPosition.portfolio_id == portfolio.id)
+        .all()
+    )
+
+    holdings = []
+    for pos in positions:
+        # fetch the latest market data row, ordered by last_updated
+        latest_md: Optional[CompanyMarketData] = (
+            db.query(CompanyMarketData)
+            .filter_by(company_id=pos.company_id)
+            .order_by(CompanyMarketData.last_updated.desc())
+            .first()
+        )
+
+        last_price = None
+        if latest_md and latest_md.current_price is not None:
+            last_price = round(float(latest_md.current_price), 2)
+        holdings.append(
+            {
+                "ticker": pos.company.ticker,
+                "name": pos.company.name,
+                "shares": float(pos.quantity),
+                "average_price": float(pos.average_cost),
+                "last_price": last_price,
+                "currency": (
+                    latest_md.market.currency
+                    if (latest_md and latest_md.market and latest_md.market.currency)
+                    else None
+                ),
+            }
+        )
+
+    return holdings
 
 
 @router.get("")

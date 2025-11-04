@@ -1,0 +1,214 @@
+{
+    "portfolio": {
+        "id": 3,
+        "name": "Default",
+        "currency": "PLN"
+    },
+    "transactions": [
+        {
+            "id": 13,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "59.0",
+            "price": "100.0",
+            "fee": "0.0",
+            "timestamp": "2025-02-13T08:05:14.058000",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 1,
+            "ticker": "AAPL",
+            "name": "Apple Inc.",
+            "transaction_type": "buy",
+            "shares": "1.0",
+            "price": "200.0",
+            "fee": "0.0",
+            "timestamp": "2025-02-16T16:08:26.377000",
+            "currency": "USD",
+            "currency_rate": "3.75"
+        },
+        {
+            "id": 3,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "1.0",
+            "price": "200.0",
+            "fee": "0.0",
+            "timestamp": "2025-03-01T05:31:06.363000",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 4,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "8.0",
+            "price": "200.0",
+            "fee": "0.0",
+            "timestamp": "2025-03-01T05:31:42.192000",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 7,
+            "ticker": "AAPL",
+            "name": "Apple Inc.",
+            "transaction_type": "buy",
+            "shares": "10.0",
+            "price": "200.0",
+            "fee": "0.0",
+            "timestamp": "2025-03-12T06:19:37.387000",
+            "currency": "USD",
+            "currency_rate": "3.66"
+        },
+        {
+            "id": 5,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "10.0",
+            "price": "200.0",
+            "fee": "0.0",
+            "timestamp": "2025-04-11T05:32:03.287000",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 6,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "20.0",
+            "price": "300.0",
+            "fee": "0.0",
+            "timestamp": "2025-04-11T08:33:28.509000",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 2,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "1.0",
+            "price": "100.0",
+            "fee": "0.0",
+            "timestamp": "2025-04-16T16:18:26.377000",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 8,
+            "ticker": "AAPL",
+            "name": "Apple Inc.",
+            "transaction_type": "buy",
+            "shares": "10.0",
+            "price": "200.0",
+            "fee": "0.0",
+            "timestamp": "2025-05-12T06:43:10.625468",
+            "currency": "USD",
+            "currency_rate": "3.8"
+        },
+        {
+            "id": 12,
+            "ticker": "11B.WA",
+            "name": "11 bit studios S.A.",
+            "transaction_type": "buy",
+            "shares": "1.0",
+            "price": "100.0",
+            "fee": "0.0",
+            "timestamp": "2025-05-12T15:21:09.399630",
+            "currency": "PLN",
+            "currency_rate": "1.0"
+        },
+        {
+            "id": 17,
+            "ticker": "KIE.L",
+            "name": "Kier Group plc",
+            "transaction_type": "buy",
+            "shares": "1.0",
+            "price": "100.0",
+            "fee": "1.0",
+            "timestamp": "2025-06-08T09:49:53.523482",
+            "currency": "GBP",
+            "currency_rate": "5.2"
+        }
+    ],
+    "watchlist": [
+        {
+            "ticker": "AAPL",
+            "name": "Apple Inc."
+        },
+        {
+            "ticker": "BIP.WA",
+            "name": "Bio Planet S.A."
+        },
+        {
+            "ticker": "KIE.L",
+            "name": "Kier Group plc"
+        },
+        {
+            "ticker": "SVE.WA",
+            "name": "Synthaverse S.A."
+        }
+    ],
+    "currency_rates": {
+        "GBP-PLN": {
+            "base": "GBP",
+            "quote": "PLN",
+            "historicalData": [
+                {
+                    "date": "2024-06-10",
+                    "close": "5.0857"
+                },
+                ...,
+                {
+                    "date": "2025-06-09",
+                    "close": "5.0914"
+                }
+            ]
+        },
+        "USD-PLN": {
+            "base": "USD",
+            "quote": "PLN",
+            "historicalData": [
+                {
+                    "date": "2024-06-10",
+                    "close": "3.9943"
+                },
+                {
+                    "date": "2025-06-09",
+                    "close": "3.7565"
+                }
+            ]
+        }
+    },
+    "price_history": {
+        "AAPL": [
+            {
+                "date": "2021-12-14",
+                "close": 174.33
+            },
+            ...,
+            {
+                "date": "2025-06-06",
+                "close": 169.0
+            }
+        ],
+        "KIE.L": [
+            {
+                "date": "2021-08-02",
+                "close": 124.0
+            },
+            ...
+            {
+                "date": "2025-06-06",
+                "close": 100.0
+            }
+        ]
+    }
+}

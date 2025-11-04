@@ -3,8 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api import (
     auth,
+    company_search,
     compare,
+    fx,
     portfolio_management,
+    portfolio_performance,
     stocks,
     golden_cross,
     admin,
@@ -42,9 +45,18 @@ app.include_router(
     portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
 )
 app.include_router(
+    portfolio_performance.router,
+    prefix="/api/portfolio-performace",
+    tags=["Portfolio performance"],
+)
+app.include_router(
     fibonacci_elliott.router, prefix="/api/fibo-waves", tags=["Fibonacci & Elliott"]
 )
 app.include_router(compare.router, prefix="/api/compare", tags=["Comparison"])
+app.include_router(
+    company_search.router, prefix="/api/companies", tags=["Company Search"]
+)
+app.include_router(fx.router, prefix="/api/fx-rate", tags=["FX Rates"])
 
 
 @app.get("/")

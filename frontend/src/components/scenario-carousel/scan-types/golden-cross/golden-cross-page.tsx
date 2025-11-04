@@ -26,6 +26,7 @@ export default function GoldenCrossScanPage() {
     },
   });
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
     try {
@@ -36,7 +37,7 @@ export default function GoldenCrossScanPage() {
           long_window: data.longPeriod,
           days_to_look_back: data.daysToLookBack,
           min_volume: 1000000,
-          adjusted: true,
+          adjusted: false, //use true iof you want adjusted_close be used for caalculations instead of close
           markets: data.markets,
         }
       );

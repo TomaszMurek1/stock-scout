@@ -21,3 +21,5 @@ __pycache__/
 *.db
 
 *.dump
+backend/nyse_full_tickers.json
+backend/skipped_companies.log

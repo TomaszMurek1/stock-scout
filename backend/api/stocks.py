@@ -30,41 +30,57 @@ logging.basicConfig(
 
 def fetch_company_overview_from_api(ticker: str) -> dict:
     api_key = os.getenv("FMP_API_KEY")
-    url = f"https://financialmodelingprep.com/stable/profile?symbol={ticker}&apikey={api_key}"
+    url = (
+        f"https://financialmodelingprep.com/stable/profile?symbol={ticker}"
+        f"&apikey={api_key}"
+    )
     response = requests.get(url)
-
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch data from external API."
+        # You might want to log this!
+        logger.warning(
+            f"FMP API fetch failed for {ticker} with code {response.status_code}"
         )
-
+        return _empty_overview(ticker)
     data = response.json()
     if not data:
-        raise HTTPException(
-            status_code=404, detail="No data found for this ticker from external API."
-        )
-
+        logger.info(f"No data from FMP for {ticker}")
+        return _empty_overview(ticker)
     profile = data[0]
     return {
-        "long_name": profile.get("companyName"),
-        "short_name": profile.get("symbol"),
-        "industry": profile.get("industry"),
-        "sector": profile.get("sector"),
-        "full_time_employees": profile.get("fullTimeEmployees"),  # Not available in API
-        "website": profile.get("website"),
-        "headquarters_address": profile.get("address"),
-        "headquarters_city": profile.get("city"),
-        "headquarters_country": profile.get("country"),
-        "phone": profile.get("phone"),
-        "description": profile.get("description"),
+        "long_name": profile.get("companyName") or ticker,
+        "short_name": profile.get("symbol") or ticker,
+        "industry": profile.get("industry") or "N/A",
+        "sector": profile.get("sector") or "N/A",
+        "full_time_employees": profile.get("fullTimeEmployees") or None,
+        "website": profile.get("website") or "",
+        "headquarters_address": profile.get("address") or "",
+        "headquarters_city": profile.get("city") or "",
+        "headquarters_country": profile.get("country") or "",
+        "phone": profile.get("phone") or "",
+        "description": profile.get("description") or "No overview available.",
+    }
+
+
+def _empty_overview(ticker: str) -> dict:
+    return {
+        "long_name": ticker,
+        "short_name": ticker,
+        "industry": "N/A",
+        "sector": "N/A",
+        "full_time_employees": None,
+        "website": "",
+        "headquarters_address": "",
+        "headquarters_city": "",
+        "headquarters_country": "",
+        "phone": "",
+        "description": "No overview available.",
     }
 
 
 def get_or_fetch_stock_price_history(
     ticker: str, market_name: str, company_id: int, cutoff_date: datetime, db: Session
 ):
-    # Try fetching from DB
-    print(f"cutoff_date {cutoff_date}...")
+    logger.info(f"cutoff_date {cutoff_date} for {ticker}")
     stock_price_history = (
         db.query(StockPriceHistory.date, StockPriceHistory.close)
         .filter(StockPriceHistory.company_id == company_id)
@@ -72,14 +88,11 @@ def get_or_fetch_stock_price_history(
         .order_by(StockPriceHistory.date)
         .all()
     )
-
     # If not found, fetch new data
     if not stock_price_history:
-        logger.info(f"No stock history found for {ticker}, fetching from source...")
-
-        ensure_fresh_data(ticker, market_name, db)
+        logger.warning(f"No stock history found for {ticker}, fetching from source...")
+        ensure_fresh_data(ticker, market_name, False, db)
         db.expire_all()
-
         # Retry fetching
         stock_price_history = (
             db.query(StockPriceHistory.date, StockPriceHistory.close)
@@ -88,25 +101,21 @@ def get_or_fetch_stock_price_history(
             .order_by(StockPriceHistory.date)
             .all()
         )
-
     return stock_price_history
 
 
 def get_company_by_ticker(ticker: str, db: Session) -> Company:
     company = db.query(Company).filter(Company.ticker == ticker).first()
     if not company:
-        raise HTTPException(status_code=404, detail="Company not found...")
+        logger.error(f"Company not found for ticker {ticker}")
+        raise HTTPException(
+            status_code=404, detail="Company not found for this ticker."
+        )
     return company
 
 
 def get_company_market(company: Company, db: Session) -> Market | None:
-    if not company.markets:
-        return None
-    return (
-        db.query(Market)
-        .filter(Market.market_id == company.markets[0].market_id)
-        .first()
-    )
+    return company.market
 
 
 def get_company_financials(company: Company, db: Session) -> dict:
@@ -115,12 +124,16 @@ def get_company_financials(company: Company, db: Session) -> dict:
         .filter(CompanyFinancials.company_id == company.company_id)
         .first()
     )
-
     if not financials:
-        raise HTTPException(status_code=404, detail="Financial data not found.")
-
+        logger.warning(f"Financial data not found for {company.ticker}")
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Financial data not found for this ticker. "
+                "The company may be delisted or there is no recent financial report."
+            ),
+        )
     ratios = calculate_financial_ratios(financials)
-
     return {
         "gross_margin": ratios["gross_margin"],
         "operating_margin": ratios["operating_margin"],
@@ -148,12 +161,25 @@ def get_stock_details(
 ):
     company = get_company_by_ticker(ticker, db)
     market = get_company_market(company, db)
+    if not market:
+        logger.warning(f"Market not found for ticker {ticker}")
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Market not found for this company. "
+                "The ticker may be delisted or market data unavailable."
+            ),
+        )
 
-    ensure_fresh_data(company.ticker, market.name if market else "Unknown", db)
+    ensure_fresh_data(company.ticker, market.name, False, db)
 
     overview = company.overview
     if not overview:
-        overview_data = fetch_company_overview_from_api(ticker)
+        try:
+            overview_data = fetch_company_overview_from_api(ticker)
+        except HTTPException as ex:
+            logger.error(f"Failed to fetch overview for {ticker}: {ex.detail}")
+            raise
         existing = db.query(CompanyOverview).get(company.company_id)
         if existing:
             for key, value in overview_data.items():
@@ -177,17 +203,26 @@ def get_stock_details(
         .filter(CompanyFinancials.company_id == company.company_id)
         .first()
     )
+    if not financials:
+        logger.warning(f"Financials not found for ticker {ticker}")
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Financial data not found for this ticker. "
+                "The company may be delisted or there is no recent financial report."
+            ),
+        )
 
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=730)
     stock_history = get_or_fetch_stock_price_history(
         ticker,
-        market.name if market else "Unknown",
+        market.name,
         company.company_id,
         cutoff_date,
         db,
     )
-
     if not stock_history:
+        logger.warning(f"Stock price history not found for ticker {ticker}")
         raise HTTPException(status_code=404, detail="Stock price history not found.")
 
     trends = build_financial_trends(db, company.company_id, market.market_id)
@@ -197,9 +232,7 @@ def get_stock_details(
         stock_history, short_window=short_window, long_window=long_window
     )
     technical_analysis = clean_nan_values(raw_technical_analysis)
-    risk_metrics = (
-        {}
-    )  # build_risk_metrics(company, stock_history, db)# refactor this at it always connects to yfinance
+    risk_metrics = {}  # build_risk_metrics(company, stock_history, db)  # Placeholder
     peer_comparison = build_peer_comparisons(company, db)
 
     response = {
@@ -220,21 +253,3 @@ def get_stock_details(
         "peer_comparison": peer_comparison,
     }
     return sanitize_numpy_types(response)
-
-
-# @router.post("/fetch-stock-data")
-# async def fetch_stock_data(request: TickerRequest, db: Session = Depends(get_db)):
-#     tickers = request.tickers
-#     end_date = datetime.now()
-#     start_date = end_date - timedelta(days=360)
-
-#     results = []
-#     for ticker in tickers:
-#         try:
-#             result = fetch_and_save_stock_history_data(ticker, start_date, end_date, db)
-#             results.append({"ticker": ticker, "message": result["message"], "status": result["status"]})
-#         except Exception as e:
-#             logger.error(f"Error fetching {ticker}: {e}", exc_info=True)
-#             raise HTTPException(status_code=500, detail=f"Error processing {ticker}")
-
-#     return {"results": results}

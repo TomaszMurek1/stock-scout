@@ -1,7 +1,8 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
-from datetime import datetime, timezone
+from datetime import datetime
 from .base import Base
 from sqlalchemy.orm import relationship
+
 
 class User(Base):
     __tablename__ = "users"
@@ -16,8 +17,10 @@ class User(Base):
     invitation = relationship("Invitation", back_populates="users")
 
     portfolios = relationship("Portfolio", back_populates="user")
-    favorite_stocks = relationship("FavoriteStock", back_populates="user", cascade="all, delete-orphan")
-    portfolio_positions = relationship("Position", back_populates="user", cascade="all, delete-orphan")
+    favorite_stocks = relationship(
+        "FavoriteStock", back_populates="user", cascade="all, delete-orphan"
+    )
+
 
 class Invitation(Base):
     __tablename__ = "invitations"

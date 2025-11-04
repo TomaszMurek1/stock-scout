@@ -1,6 +1,3 @@
-Start production with attaching .env:
+This project includes third-party software:
 
-docker-compose -f docker-compose.prod.yml --env-file .env.prod build frontend
-docker-compose -f docker-compose.prod.yml --env-file .env.prod up --build
-
-docker-compose -f docker-compose.dev.yml --env-file .env build backend --no-cache
+- Apache ECharts (https://echarts.apache.org/), licensed under Apache License 2.0

@@ -42,10 +42,10 @@ export const goldenCrossFormFields: IFormGeneratorField<GoldenCrossFormValues>[]
       description: "Choose one or more markets to scan.",
       type: "checkbox", // Add this field
       options: [
-        { label: "S&P 500", value: "GSPC" },
-        { label: "Nasdaq", value: "NDX" },
-        { label: "Dow Jones", value: "DJI" },
-        { label: "GPW", value: "WSE" },
+        { label: "Nasdaq", value: "XNAS" },
+        { label: "NYSE", value: "XNYS" },
+        { label: "GPW", value: "XWAR" },
+        { label: "London", value: "XLON" },
       ],
     },
   ];

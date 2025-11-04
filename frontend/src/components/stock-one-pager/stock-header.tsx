@@ -1,4 +1,6 @@
+"use client"
 import { FC, useEffect, useState } from "react";
+
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -11,10 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import type { MouseEvent } from 'react'
 import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
-import { fetchWatchlist, toggleWatchlist } from "@/services/api/watchlist";
-import { useWatchlistStore, WatchlistStock } from "@/store/watchlistStore";
+import { fetchWatchlist } from "@/services/api/watchlist";
 import { apiClient } from "@/services/apiClient";
-import { string } from "zod";
+import { AppState, useAppStore } from "@/store/appStore";
 
 
 interface StockHeaderProps {
@@ -37,9 +38,14 @@ const StockHeader: FC<StockHeaderProps> = ({
 
   const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
-  const watchlist = useWatchlistStore(s => s.watchlist)
-  const setWatchlist = useWatchlistStore(s => s.setWatchlist)
-  const toggleWatchlist = useWatchlistStore(s => s.toggleWatchlist)
+  const watchlist = useAppStore((state: AppState) => state.watchlist)
+  const setWatchlist = useAppStore(
+    (state: AppState) => state.setWatchlist
+  )
+  const toggleWatchlist = useAppStore(
+    (state: AppState) => state.toggleWatchlist
+  )
+
   const isFavorite = watchlist.some(w => w.ticker === ticker)
 
   useEffect(() => {
@@ -51,7 +57,7 @@ const StockHeader: FC<StockHeaderProps> = ({
 
   const handleWatchlistClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    const stock: WatchlistStock = {
+    const stock: any = {
       ticker: ticker as string,
       name: executiveSummary.name as string,
     }

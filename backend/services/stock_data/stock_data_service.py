@@ -76,10 +76,8 @@ def fetch_and_save_stock_price_history_data(
 
         exchange_code_map = {
             "GSPC": "XNYS",
-            "DJI": "XNYS",
-            "WSE": "XWAR",
-            "CAC": "XPAR",
-            "NDX": "XNYS",
+            "XWAR": "XWAR",
+            "NDX": "XNAS",
         }
         exchange_code = exchange_code_map.get(market_name, "XNYS")
         calendar = mcal.get_calendar(exchange_code)
@@ -94,7 +92,10 @@ def fetch_and_save_stock_price_history_data(
         if last_db_date and last_db_date >= today:
             return {
                 "status": "up_to_date",
-                "message": f"Latest record is already up to date ({last_db_date.isoformat()})",
+                "message": (
+                    f"Latest record is already up to date "
+                    f"({last_db_date.isoformat()})"
+                ),
             }
 
         # Re-fetch and replace the last DB record if not today
@@ -193,11 +194,11 @@ def process_updates(
                 company_id=company.company_id,
                 market_id=market.market_id,
                 date=date_obj,
-                open=round(float(row["Open"]), 3),
-                high=round(float(row["High"]), 3),
-                low=round(float(row["Low"]), 3),
-                close=round(float(row["Close"]), 3),
-                adjusted_close=round(float(row.get("Adj Close", row["Close"])), 3),
+                open=round(float(row["Open"]), 2),
+                high=round(float(row["High"]), 2),
+                low=round(float(row["Low"]), 2),
+                close=round(float(row["Close"]), 2),
+                adjusted_close=round(float(row.get("Adj Close", row["Close"])), 2),
                 volume=int(row["Volume"]),
                 created_at=datetime.now(timezone.utc),
             )

@@ -17,8 +17,8 @@ def find_most_recent_crossover(
     cross_type: str,  # "golden" or "death"
     short_window: int = 50,
     long_window: int = 200,
-    min_volume: int = 0,  # In this snippet, not heavily used, but included
-    adjusted: bool = True,
+    min_volume: int = 0,
+    adjusted: bool = False,
     start_date: datetime = None,
     end_date: datetime = None,
     max_days_since_cross: int = 30,
@@ -50,7 +50,7 @@ def find_most_recent_crossover(
         return None
 
     # 3) Verify the company is actually in the specified market
-    if market_obj not in company_obj.markets:
+    if company_obj.market != market_obj:
         logger.error(f"Company {ticker} is not associated with market {market}.")
         return None
 
@@ -82,6 +82,8 @@ def find_most_recent_crossover(
 
     df = pd.read_sql_query(query, con=engine, parse_dates=["date"])
     df.set_index("date", inplace=True)
+    df = df[~df.index.duplicated(keep="first")]
+    df = df.sort_index()  # Ensure ascending order!
 
     if len(df) < long_window:
         logger.warning(
@@ -90,8 +92,12 @@ def find_most_recent_crossover(
         return None
 
     # 7) Calculate rolling averages
-    df["short_ma"] = df["close"].rolling(window=short_window, min_periods=1).mean()
-    df["long_ma"] = df["close"].rolling(window=long_window, min_periods=1).mean()
+    df["short_ma"] = (
+        df["close"].rolling(window=short_window, min_periods=short_window).mean()
+    )
+    df["long_ma"] = (
+        df["close"].rolling(window=long_window, min_periods=long_window).mean()
+    )
 
     # 8) Set up 'signal' for golden or death cross
     if cross_type == "golden":
@@ -137,7 +143,10 @@ def find_most_recent_crossover(
     result = {k: convert_value(v) for k, v in result.items()}
 
     logger.info(
-        f"{cross_type.capitalize()} cross found for {ticker} on {most_recent_date.date()}, "
-        f"{days_since_cross} day(s) ago. close={result['close_price']}"
+        (
+            f"{cross_type.capitalize()} cross found for {ticker} on "
+            f"{most_recent_date.date()}, {days_since_cross} day(s) ago. "
+            f"close={result['close_price']}"
+        )
     )
     return result
