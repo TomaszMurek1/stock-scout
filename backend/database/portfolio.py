@@ -15,7 +15,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .base import Base
 
-
+#old one
 class TransactionType(PyEnum):
     BUY = "buy"
     SELL = "sell"
@@ -24,6 +24,18 @@ class TransactionType(PyEnum):
     DIVIDEND = "dividend"
     INTEREST = "interest"
 
+# new one
+class TxType(PyEnum):
+    BUY = "buy"
+    SELL = "sell"
+    DEPOSIT = "deposit"
+    WITHDRAWAL = "withdrawal"
+    DIVIDEND = "dividend"
+    INTEREST = "interest"     # cash/bonds
+    FEE = "fee"
+    TAX = "tax"
+    TRANSFER_IN = "transfer_in"
+    TRANSFER_OUT ="transfer_out"
 
 class Portfolio(Base):
     __tablename__ = "portfolios"
@@ -113,24 +125,6 @@ class Transaction(Base):
         )
 
 
-class CashBalance(Base):
-    __tablename__ = "cash_balances"
-
-    id = Column(Integer, primary_key=True, index=True)
-    portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
-    balance = Column(Numeric(precision=18, scale=2), nullable=False, default=0)
-    last_updated = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
-
-    portfolio = relationship("Portfolio")
-
-    def __repr__(self):
-        return (
-            f"<CashBalance(portfolio_id={self.portfolio_id}, balance={self.balance})>"
-        )
-
-
 class FavoriteStock(Base):
     __tablename__ = "favorite_stocks"
     __table_args__ = (
@@ -146,6 +140,11 @@ class FavoriteStock(Base):
 
     user = relationship("User", back_populates="favorite_stocks")
     company = relationship("Company")
+    accounts = relationship(
+    "Account",
+    back_populates="portfolio",
+    cascade="all, delete-orphan",
+)
 
     def __repr__(self):
         return (

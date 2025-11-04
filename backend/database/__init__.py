@@ -13,7 +13,6 @@ from .portfolio import (
     PortfolioPosition,
     Transaction,
     TransactionType,
-    CashBalance,
 )
 from .stock_data import CompanyMarketData, StockPriceHistory
 from .token_mgmt import RevokedToken
