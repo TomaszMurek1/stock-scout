@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, case
 
 from api.portfolio_crud import get_or_create_portfolio
-from api.security import get_current_user
 from api.positions_service import apply_transaction_to_position, get_default_account_id
+from services.auth.auth import get_current_user
 from database.base import get_db
 from database.user import User
 from database.portfolio import (

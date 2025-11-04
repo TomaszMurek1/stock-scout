@@ -3,6 +3,7 @@ import logging
 import time
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from services.auth.auth import get_current_user
 from database.analysis import AnalysisResult
 from schemas.stock_schemas import GoldenCrossRequest
 from database.base import get_db
@@ -13,7 +14,6 @@ from services.analysis_results.analysis_results import get_or_update_analysis_re
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
-from .security import get_current_user
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

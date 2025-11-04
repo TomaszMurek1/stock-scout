@@ -4,12 +4,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, selectinload
+from services.auth.auth import get_current_user
 from database.base import get_db
 from database.portfolio import Transaction, TransactionType
 from database.stock_data import StockPriceHistory
 from database.company import Company
 from api.portfolio_crud import get_or_create_portfolio
-from api.security import get_current_user
 from database.user import User
 from schemas.portfolio_schemas import (
     PriceHistoryRequest,

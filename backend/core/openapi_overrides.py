@@ -3,7 +3,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 
 def add_bearer_auth(app: FastAPI):
-    """Attach a manual BearerAuth (JWT) security scheme to Swagger UI."""
+    """Attach HTTP BearerAuth (JWT) security scheme to Swagger UI."""
     def custom_openapi():
         if app.openapi_schema:
             return app.openapi_schema
@@ -13,17 +13,17 @@ def add_bearer_auth(app: FastAPI):
             description="Stock Scout API documentation",
             routes=app.routes,
         )
-        # Add a simple bearer auth scheme
+        # Name must match what FastAPI uses ("HTTPBearer")
         openapi_schema["components"]["securitySchemes"] = {
-            "BearerAuth": {
+            "HTTPBearer": {  # ← changed from "BearerAuth"
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "description": "Paste your access token here. Example: **Bearer eyJhbGciOiJI...**",
+                "description": "Paste your access token here (no 'Bearer ' prefix).",
             }
         }
-        # Apply BearerAuth globally
-        openapi_schema["security"] = [{"BearerAuth": []}]
+        # Apply globally
+        openapi_schema["security"] = [{"HTTPBearer": []}]
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 
