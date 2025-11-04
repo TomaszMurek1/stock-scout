@@ -13,11 +13,12 @@ services:
     volumes:
       - db_prod_data:/var/lib/postgresql/data
     healthcheck:
-        test: ["CMD", "pg_isready", "-U", "stockscout_user", "-d", "stock_scout_db"]
-        interval: 5s
-        timeout: 3s
-        retries: 5
-        start_period: 10s
+      test:
+        ["CMD", "pg_isready", "-U", "stockscout_user", "-d", "stock_scout_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   backend:
     build:
@@ -28,6 +29,7 @@ services:
     environment:
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      ENV: production
     depends_on:
       db:
         condition: service_healthy
@@ -39,7 +41,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        - VITE_API_URL=${VITE_API_URL} 
+        - VITE_API_URL=${VITE_API_URL}
     container_name: prod_frontend
     depends_on:
       - backend

@@ -22,7 +22,11 @@ from core.openapi_overrides import add_bearer_auth
 
 
 # Initialize FastAPI
-app = FastAPI(title="Stock Scout API")
+app = FastAPI(
+    title="Stock Scout API",
+    docs_url=None if settings.ENV == "production" else "/docs",
+    redoc_url=None,
+)
 add_bearer_auth(app)
 
 # CORS configuration

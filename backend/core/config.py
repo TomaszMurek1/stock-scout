@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256" 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALLOWED_ORIGINS: list = ["http://localhost:5173", "http://localhost"]
+    ENV: str = "development"
 
     class Config:
         env_file = ".env"
