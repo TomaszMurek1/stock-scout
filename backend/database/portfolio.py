@@ -17,12 +17,14 @@ from .base import Base
 
 #old one
 class TransactionType(PyEnum):
-    BUY = "buy"
-    SELL = "sell"
-    DEPOSIT = "deposit"
-    WITHDRAWAL = "withdrawal"
-    DIVIDEND = "dividend"
-    INTEREST = "interest"
+    BUY = "BUY"
+    SELL = "SELL"
+    DEPOSIT = "DEPOSIT"
+    WITHDRAWAL = "WITHDRAWAL"
+    DIVIDEND = "DIVIDEND"
+    INTEREST = "INTEREST"
+    FEE = "FEE"
+    TAX = "TAX"
 
 # new one
 class TxType(PyEnum):
