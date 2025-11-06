@@ -12,10 +12,9 @@ from sqlalchemy import (
 )
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship, backref
-
 from .base import Base
 
-#old one
+
 class TransactionType(PyEnum):
     BUY = "BUY"
     SELL = "SELL"
@@ -25,19 +24,9 @@ class TransactionType(PyEnum):
     INTEREST = "INTEREST"
     FEE = "FEE"
     TAX = "TAX"
+    TRANSFER_IN = "TRANSFER_IN"
+    TRANSFER_OUT ="TRANSFER_OUT"
 
-# new one
-class TxType(PyEnum):
-    BUY = "buy"
-    SELL = "sell"
-    DEPOSIT = "deposit"
-    WITHDRAWAL = "withdrawal"
-    DIVIDEND = "dividend"
-    INTEREST = "interest"     # cash/bonds
-    FEE = "fee"
-    TAX = "tax"
-    TRANSFER_IN = "transfer_in"
-    TRANSFER_OUT ="transfer_out"
 
 class Portfolio(Base):
     __tablename__ = "portfolios"
@@ -52,11 +41,6 @@ class Portfolio(Base):
     )
 
     user = relationship("User", back_populates="portfolios")
-    positions = relationship(
-        "PortfolioPosition",
-        back_populates="portfolio",
-        cascade="all, delete-orphan",
-    )
     transactions = relationship(
         "Transaction",
         back_populates="portfolio",
@@ -72,37 +56,6 @@ class Portfolio(Base):
         return f"<Portfolio(id={self.id}, name={self.name}, user_id={self.user_id})>"
 
 
-class PortfolioPosition(Base):
-    __tablename__ = "portfolio_positions"
-    __table_args__ = (
-        UniqueConstraint(
-            "portfolio_id",
-            "company_id",
-            name="uq_portfolio_positions_portfolio_company",
-        ),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-    portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
-    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
-
-    quantity = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
-    average_cost = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
-    last_updated = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
-
-    portfolio = relationship("Portfolio", back_populates="positions")
-    company = relationship("Company")
-
-    def __repr__(self):
-        return (
-            f"<PortfolioPosition("
-            f"id={self.id}, portfolio_id={self.portfolio_id}, company_id={self.company_id}"
-            f")>"
-        )
-
-
 class Transaction(Base):
     __tablename__ = "transactions"
 
@@ -111,7 +64,7 @@ class Transaction(Base):
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
 
-    transaction_type = Column(SQLAlchemyEnum(TransactionType), nullable=False)
+    transaction_type = Column(SQLAlchemyEnum(TransactionType, name="transactiontype"), nullable=False)
     quantity = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
     price = Column(Numeric(precision=18, scale=4), nullable=True)
     fee = Column(Numeric(precision=18, scale=4), nullable=True, default=0)
@@ -154,5 +107,5 @@ class FavoriteStock(Base):
     def __repr__(self):
         return (
             f"<FavoriteStock(id={self.id}, user_id={self.user_id}, "
-            f"company_id={self.company_id})>"
+            f"company_id={self.company_id})>" 
         )

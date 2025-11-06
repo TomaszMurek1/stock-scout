@@ -10,7 +10,6 @@ from .financials import CompanyFinancials, CompanyFinancialHistory
 from .market import Market, StockIndex
 from .portfolio import (
     Portfolio,
-    PortfolioPosition,
     Transaction,
     TransactionType,
 )
