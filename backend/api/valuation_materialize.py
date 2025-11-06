@@ -2,15 +2,24 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 
 from database.base import get_db
-from database.portfolio import Portfolio
+from database.portfolio import Portfolio, Transaction
 from database.valuation import PortfolioValuationDaily  # your existing model
 from api.valuation_preview import preview_day_value     # reuse the working calc
 
 router = APIRouter(prefix="/api/valuation", tags=["valuation"])
+
+def _first_tx_date(db, portfolio_id: int):
+    dt = (
+        db.query(func.min(Transaction.timestamp))
+        .filter(Transaction.portfolio_id == portfolio_id)
+        .scalar()
+    )
+    return dt.date() if dt else None
 
 @router.post("/materialize-day")
 def materialize_day(portfolio_id: int, as_of: date, db: Session = Depends(get_db)):
@@ -68,6 +77,7 @@ def materialize_day(portfolio_id: int, as_of: date, db: Session = Depends(get_db
     }
 
 
+
 @router.post("/materialize-range")
 def materialize_range(
     portfolio_id: int,
@@ -78,12 +88,17 @@ def materialize_range(
     if end < start:
         raise HTTPException(status_code=400, detail="end < start")
 
-    d = start
+    first_dt = _first_tx_date(db, portfolio_id)
+    if not first_dt:
+        # no transactions at all → nothing to do
+        return {"portfolio_id": portfolio_id, "points": []}
+
+    # clamp start so we don't write zeros before first trade
+    cur = max(start, first_dt)
     out = []
-    while d <= end:
-        # call the same function we already wrote
-        res = materialize_day(portfolio_id=portfolio_id, as_of=d, db=db)
+    while cur <= end:
+        res = materialize_day(portfolio_id=portfolio_id, as_of=cur, db=db)
         out.append({"date": res["date"], "total_value": res["total_value"]})
-        d += timedelta(days=1)
+        cur += timedelta(days=1)
 
     return {"portfolio_id": portfolio_id, "points": out}
