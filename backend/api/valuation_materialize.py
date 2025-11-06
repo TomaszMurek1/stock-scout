@@ -1,7 +1,7 @@
 # api/valuation_materialize.py
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 
@@ -66,3 +66,24 @@ def materialize_day(portfolio_id: int, as_of: date, db: Session = Depends(get_db
         "date": as_of.isoformat(),
         "total_value": str(total),
     }
+
+
+@router.post("/materialize-range")
+def materialize_range(
+    portfolio_id: int,
+    start: date = Query(...),
+    end: date = Query(...),
+    db: Session = Depends(get_db),
+):
+    if end < start:
+        raise HTTPException(status_code=400, detail="end < start")
+
+    d = start
+    out = []
+    while d <= end:
+        # call the same function we already wrote
+        res = materialize_day(portfolio_id=portfolio_id, as_of=d, db=db)
+        out.append({"date": res["date"], "total_value": res["total_value"]})
+        d += timedelta(days=1)
+
+    return {"portfolio_id": portfolio_id, "points": out}
