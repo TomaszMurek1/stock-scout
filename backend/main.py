@@ -22,6 +22,7 @@ from api.valuation_preview import router as valuation_preview_router
 from api.valuation_materialize import router as valuation_writer_router
 from api.valuation_debug import router as valuation_debug_router
 from api.valuation_series import router as valuation_series_router
+from api.transactions_transfer import router as transfer_router
 from database.base import Base, engine
 from core.openapi_overrides import add_bearer_auth
 
@@ -81,6 +82,7 @@ app.include_router(valuation_preview_router)
 app.include_router(valuation_writer_router)
 app.include_router(valuation_debug_router)
 app.include_router(valuation_series_router)
+app.include_router(transfer_router)
 
 @app.get("/")
 async def root():
