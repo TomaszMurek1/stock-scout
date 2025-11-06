@@ -1,7 +1,20 @@
 from datetime import datetime, date
-
+from enum import Enum as PyEnum
 from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, condecimal
+
+
+class TransactionType(PyEnum):
+    BUY = "BUY"
+    SELL = "SELL"
+    DEPOSIT = "DEPOSIT"
+    WITHDRAWAL = "WITHDRAWAL"
+    DIVIDEND = "DIVIDEND"
+    INTEREST = "INTEREST"
+    FEE = "FEE"
+    TAX = "TAX"
+    TRANSFER_IN = "TRANSFER_IN"
+    TRANSFER_OUT ="TRANSFER_OUT"
 
 
 class TradeRequest(BaseModel):
@@ -12,11 +25,11 @@ class TradeRequest(BaseModel):
 
 class TradeBase(BaseModel):
     ticker: str
-    shares: condecimal(gt=0)  # positive
-    price: condecimal(gt=0)
-    fee: Optional[condecimal(ge=0)] = 0
-    currency: str = "USD"
-    currency_rate: Optional[condecimal(gt=0)] = 1.0
+    shares: float
+    price: float
+    fee: Optional[float] = 0
+    currency: str
+    currency_rate: float
 
 
 class TradeResponse(BaseModel):
@@ -125,10 +138,21 @@ class PriceHistoryEntry(BaseModel):
     date: str  # or datetime if you want, but use str if you .isoformat() it
     close: float
 
+class TransactionOut(BaseModel):
+    id: int
+    ticker: str
+    name: str
+    transaction_type: TransactionType
+    shares: float
+    price: float | None
+    fee: float
+    timestamp: str
+    currency: str
+    currency_rate: float
 
 class UserPortfolioResponse(BaseModel):
-    portfolio: PortfolioInfo
-    transactions: List[TransactionItem]
-    watchlist: List[WatchItem]
-    currency_rates: dict[str, FxBatch]
-    price_history: Dict[str, List[PriceHistoryEntry]]
+    portfolio: dict
+    transactions: List[TransactionOut]
+    watchlist: List[dict]
+    currency_rates: dict
+    price_history: dict

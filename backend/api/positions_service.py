@@ -2,10 +2,11 @@
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from database.portfolio import Transaction, TransactionType
+from database.portfolio import Transaction
 from database.account import Account
 from database.company import Company
-from database.position import Position  # you created this model earlier
+from database.position import Position
+from schemas.portfolio_schemas import TransactionType  # you created this model earlier
 
 
 def get_default_account_id(db: Session, portfolio_id: int) -> int:

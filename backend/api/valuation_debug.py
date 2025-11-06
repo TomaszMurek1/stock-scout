@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from database.base import get_db
-from database.portfolio import Transaction, TransactionType
+from database.portfolio import Transaction
 from database.company import Company
 from database.market import Market
+from schemas.portfolio_schemas import TransactionType
 
 router = APIRouter(prefix="/api/valuation/debug", tags=["valuation-debug"])
 

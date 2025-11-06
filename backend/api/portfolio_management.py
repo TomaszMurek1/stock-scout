@@ -15,7 +15,6 @@ from database.user import User
 from database.portfolio import (
     Portfolio,
     Transaction,
-    TransactionType,
     FavoriteStock,
 )
 from database.company import Company
@@ -23,6 +22,7 @@ from database.fx import FxRate
 from schemas.portfolio_schemas import (
     TradeBase,
     TradeResponse,
+    TransactionType,
     UserPortfolioResponse,
 )
 from database.stock_data import StockPriceHistory

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 from typing import List
 from database.base import get_db
-from database.portfolio import Transaction, TransactionType
+from database.portfolio import Transaction
 from api.positions_service import (
     reverse_transaction_from_position,
     apply_transaction_to_position,

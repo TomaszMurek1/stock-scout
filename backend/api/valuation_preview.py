@@ -4,11 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, and_
 from database.base import get_db
-from database.portfolio import Portfolio, Transaction, TransactionType
+from database.portfolio import Portfolio, Transaction
 from database.company import Company
 from database.market import Market
 from database.stock_data import StockPriceHistory
 from database.fx import FxRate
+from schemas.portfolio_schemas import TransactionType
 
 router = APIRouter(prefix="/api/valuation", tags=["valuation"])
 
@@ -33,13 +34,16 @@ def preview_day_value(
     qty_expr = func.coalesce(
         func.sum(
             case(
-                (Transaction.transaction_type == TransactionType.BUY,  Transaction.quantity),
-                (Transaction.transaction_type == TransactionType.SELL, -Transaction.quantity),
+                (Transaction.transaction_type == TransactionType.BUY,          Transaction.quantity),
+                (Transaction.transaction_type == TransactionType.TRANSFER_IN,  Transaction.quantity),
+                (Transaction.transaction_type == TransactionType.SELL,        -Transaction.quantity),
+                (Transaction.transaction_type == TransactionType.TRANSFER_OUT,-Transaction.quantity),
                 else_=0,
             )
         ),
         0,
     )
+
 
     rows = (
         db.query(

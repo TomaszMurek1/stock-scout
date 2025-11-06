@@ -1,6 +1,4 @@
 from datetime import datetime
-from enum import Enum as PyEnum
-
 from sqlalchemy import (
     Column,
     DateTime,
@@ -12,20 +10,11 @@ from sqlalchemy import (
 )
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship, backref
+
+from schemas.portfolio_schemas import TransactionType
 from .base import Base
 
 
-class TransactionType(PyEnum):
-    BUY = "BUY"
-    SELL = "SELL"
-    DEPOSIT = "DEPOSIT"
-    WITHDRAWAL = "WITHDRAWAL"
-    DIVIDEND = "DIVIDEND"
-    INTEREST = "INTEREST"
-    FEE = "FEE"
-    TAX = "TAX"
-    TRANSFER_IN = "TRANSFER_IN"
-    TRANSFER_OUT ="TRANSFER_OUT"
 
 
 class Portfolio(Base):
