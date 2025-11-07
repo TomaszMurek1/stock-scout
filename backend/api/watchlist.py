@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
 from database.base import get_db
-from database.portfolio import FavoriteStock, PortfolioPosition
+from database.portfolio import FavoriteStock
+from database.position import Position
 from database.user import User
 from database.company import Company
 from sqlalchemy.orm import joinedload
@@ -58,31 +59,35 @@ def get_holdings_for_user(db: Session, user) -> List[dict]:
       [{"ticker": ..., "name": ..., "shares": ..., "average_price": ...}, ...]
     """
     portfolio = get_or_create_portfolio(db, user.id)
+    # Use all accounts for this portfolio, then positions for those accounts
+    account_ids = [a.id for a in portfolio.accounts]
+    if not account_ids:
+        return []
+
     positions = (
-        db.query(PortfolioPosition)
-        .filter(PortfolioPosition.portfolio_id == portfolio.id)
+        db.query(Position)
+        .filter(Position.account_id.in_(account_ids))
         .all()
     )
 
     holdings = []
     for pos in positions:
-        # fetch the latest market data row, ordered by last_updated
         latest_md: Optional[CompanyMarketData] = (
             db.query(CompanyMarketData)
             .filter_by(company_id=pos.company_id)
             .order_by(CompanyMarketData.last_updated.desc())
             .first()
         )
-
         last_price = None
         if latest_md and latest_md.current_price is not None:
             last_price = round(float(latest_md.current_price), 2)
+
         holdings.append(
             {
                 "ticker": pos.company.ticker,
                 "name": pos.company.name,
                 "shares": float(pos.quantity),
-                "average_price": float(pos.average_cost),
+                "average_price": float(pos.avg_cost),     # field name changed
                 "last_price": last_price,
                 "currency": (
                     latest_md.market.currency
@@ -91,7 +96,6 @@ def get_holdings_for_user(db: Session, user) -> List[dict]:
                 ),
             }
         )
-
     return holdings
 
 
@@ -120,4 +124,4 @@ def remove_from_favorites(
 
     db.delete(fav)
     db.commit()
-    return {"message": "Removed from watchlist"}
+    return {"message": "Removed from watchlist"} 

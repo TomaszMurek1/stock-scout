@@ -1,6 +1,4 @@
 from datetime import datetime
-from enum import Enum as PyEnum
-
 from sqlalchemy import (
     Column,
     DateTime,
@@ -13,16 +11,10 @@ from sqlalchemy import (
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship, backref
 
+from schemas.portfolio_schemas import TransactionType
 from .base import Base
 
 
-class TransactionType(PyEnum):
-    BUY = "buy"
-    SELL = "sell"
-    DEPOSIT = "deposit"
-    WITHDRAWAL = "withdrawal"
-    DIVIDEND = "dividend"
-    INTEREST = "interest"
 
 
 class Portfolio(Base):
@@ -38,50 +30,19 @@ class Portfolio(Base):
     )
 
     user = relationship("User", back_populates="portfolios")
-    positions = relationship(
-        "PortfolioPosition",
+    transactions = relationship(
+        "Transaction",
         back_populates="portfolio",
         cascade="all, delete-orphan",
     )
-    transactions = relationship(
-        "Transaction",
+    accounts = relationship(
+        "Account",
         back_populates="portfolio",
         cascade="all, delete-orphan",
     )
 
     def __repr__(self):
         return f"<Portfolio(id={self.id}, name={self.name}, user_id={self.user_id})>"
-
-
-class PortfolioPosition(Base):
-    __tablename__ = "portfolio_positions"
-    __table_args__ = (
-        UniqueConstraint(
-            "portfolio_id",
-            "company_id",
-            name="uq_portfolio_positions_portfolio_company",
-        ),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-    portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
-    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
-
-    quantity = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
-    average_cost = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
-    last_updated = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
-
-    portfolio = relationship("Portfolio", back_populates="positions")
-    company = relationship("Company")
-
-    def __repr__(self):
-        return (
-            f"<PortfolioPosition("
-            f"id={self.id}, portfolio_id={self.portfolio_id}, company_id={self.company_id}"
-            f")>"
-        )
 
 
 class Transaction(Base):
@@ -92,7 +53,7 @@ class Transaction(Base):
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
 
-    transaction_type = Column(SQLAlchemyEnum(TransactionType), nullable=False)
+    transaction_type = Column(SQLAlchemyEnum(TransactionType, name="transactiontype"), nullable=False)
     quantity = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
     price = Column(Numeric(precision=18, scale=4), nullable=True)
     fee = Column(Numeric(precision=18, scale=4), nullable=True, default=0)
@@ -101,33 +62,19 @@ class Transaction(Base):
     currency_rate = Column(Numeric(18, 6), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
     note = Column(String(500), nullable=True)
-
+    transfer_group_id = Column(String(36), nullable=True, index=True)
+    
     user = relationship("User")
     portfolio = relationship("Portfolio", back_populates="transactions")
     company = relationship("Company", backref=backref("transactions", lazy="dynamic"))
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    account = relationship("Account")
+
 
     def __repr__(self):
         return (
             f"<Transaction(id={self.id}, type={self.transaction_type}, "
             f"user_id={self.user_id}, fee={self.fee})>"
-        )
-
-
-class CashBalance(Base):
-    __tablename__ = "cash_balances"
-
-    id = Column(Integer, primary_key=True, index=True)
-    portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
-    balance = Column(Numeric(precision=18, scale=2), nullable=False, default=0)
-    last_updated = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
-
-    portfolio = relationship("Portfolio")
-
-    def __repr__(self):
-        return (
-            f"<CashBalance(portfolio_id={self.portfolio_id}, balance={self.balance})>"
         )
 
 
@@ -150,5 +97,5 @@ class FavoriteStock(Base):
     def __repr__(self):
         return (
             f"<FavoriteStock(id={self.id}, user_id={self.user_id}, "
-            f"company_id={self.company_id})>"
+            f"company_id={self.company_id})>" 
         )

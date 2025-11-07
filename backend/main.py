@@ -15,10 +15,29 @@ from api import (
     fibonacci_elliott,
     watchlist,
 )
+from api.positions_read import router as positions_router
+from api.accounts import router as accounts_router
+from api.transactions import router as transactions_router
+from api.valuation_preview import router as valuation_preview_router
+from api.valuation_materialize import router as valuation_writer_router
+from api.valuation_debug import router as valuation_debug_router
+from api.valuation_series import router as valuation_series_router
+from api.transactions_transfer import router as transfer_router
+from api.transactions_transfer_cash import router as transfer_cash_router
+from api.account_snapshot import router as account_snapshot_router
 from database.base import Base, engine
+from core.openapi_overrides import add_bearer_auth
+
+
+
 
 # Initialize FastAPI
-app = FastAPI(title="Stock Scout API")
+app = FastAPI(
+    title="Stock Scout API",
+    docs_url=None if settings.ENV == "production" else "/docs",
+    redoc_url=None,
+)
+add_bearer_auth(app)
 
 # CORS configuration
 app.add_middleware(
@@ -58,6 +77,16 @@ app.include_router(
 )
 app.include_router(fx.router, prefix="/api/fx-rate", tags=["FX Rates"])
 
+app.include_router(positions_router)
+app.include_router(accounts_router)
+app.include_router(transactions_router)
+app.include_router(valuation_preview_router)
+app.include_router(valuation_writer_router)
+app.include_router(valuation_debug_router)
+app.include_router(valuation_series_router)
+app.include_router(transfer_router)
+app.include_router(transfer_cash_router)
+app.include_router(account_snapshot_router)
 
 @app.get("/")
 async def root():

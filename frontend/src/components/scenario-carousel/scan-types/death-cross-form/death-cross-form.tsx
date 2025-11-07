@@ -68,7 +68,7 @@ const DeathCrossForm: React.FC = () => {
         disabled={isLoading}
         className="w-full bg-red-600 text-white hover:bg-red-700"
       >
-        {isLoading ? "Loading..." : "Run Death Cross Scan"}
+        {isLoading ? "Loading death cross scan..." : "Run Death Cross Scan"}
       </Button>
     </form>
   );

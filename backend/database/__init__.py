@@ -10,10 +10,8 @@ from .financials import CompanyFinancials, CompanyFinancialHistory
 from .market import Market, StockIndex
 from .portfolio import (
     Portfolio,
-    PortfolioPosition,
     Transaction,
     TransactionType,
-    CashBalance,
 )
 from .stock_data import CompanyMarketData, StockPriceHistory
 from .token_mgmt import RevokedToken

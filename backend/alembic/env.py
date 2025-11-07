@@ -12,14 +12,7 @@ from database.base import Base
 config = context.config
 
 
-<<<<<<< Updated upstream
-config.set_main_option(
-    "sqlalchemy.url",
-    f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}",
-)
-=======
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
->>>>>>> Stashed changes
 
 # Logging config
 if config.config_file_name is not None:

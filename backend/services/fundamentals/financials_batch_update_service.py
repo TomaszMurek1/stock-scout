@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from typing import List, Dict
 
+from services.utils.sanitize import sanitize_numpy_types
 from database.financials import CompanyFinancialHistory, CompanyFinancials
 from database.company import Company
 from database.market import Market
@@ -297,6 +298,10 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         )
         total_mappings += len(mappings)
         history_mappings.extend(mappings)
+        
+        for obj in db.new.union(db.dirty):
+            if hasattr(obj, "__dict__"):
+                obj.__dict__.update(sanitize_numpy_types(obj.__dict__))
 
     db.commit()
 
