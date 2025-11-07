@@ -17,8 +17,9 @@ router = APIRouter(prefix="/api/valuation", tags=["valuation"])
 def _tx_key(tt) -> str:
     return (tt.value if hasattr(tt, "value") else str(tt)).upper()
 
-CASH_IN = {"DEPOSIT", "DIVIDEND", "INTEREST"}
-CASH_OUT = {"WITHDRAWAL", "FEE", "TAX"}
+EXTERNAL_CASH_IN  = {TransactionType.DEPOSIT, TransactionType.DIVIDEND, TransactionType.INTEREST}
+EXTERNAL_CASH_OUT = {TransactionType.WITHDRAWAL, TransactionType.FEE, TransactionType.TAX}
+INTERNAL_XFER     = {TransactionType.TRANSFER_IN, TransactionType.TRANSFER_OUT}
 
 def _eod(d: date) -> datetime:
     return datetime.combine(d, time.max.replace(microsecond=0))
@@ -83,10 +84,8 @@ def preview_day_value(
     qty_expr = func.coalesce(
         func.sum(
             case(
-                (Transaction.transaction_type == TransactionType.BUY,           Transaction.quantity),
-                (Transaction.transaction_type == TransactionType.TRANSFER_IN,   Transaction.quantity),
-                (Transaction.transaction_type == TransactionType.SELL,         -Transaction.quantity),
-                (Transaction.transaction_type == TransactionType.TRANSFER_OUT, -Transaction.quantity),
+                (Transaction.transaction_type == TransactionType.BUY,  Transaction.quantity),
+                (Transaction.transaction_type == TransactionType.SELL, -Transaction.quantity),
                 else_=0,
             )
         ),
@@ -154,6 +153,8 @@ def preview_day_value(
         .filter(Transaction.portfolio_id == portfolio_id)
         .filter(Transaction.company_id == None)  # cash-like rows (no instrument)
         .filter(Transaction.timestamp <= cutoff)
+        # exclude internal transfers entirely at portfolio level
+        .filter(~Transaction.transaction_type.in_(INTERNAL_XFER))
         .group_by(Transaction.transaction_type, Transaction.currency)
         .all()
     )
@@ -162,11 +163,19 @@ def preview_day_value(
     cash_components = []
     for tx_type, ccy, amt, _last_ts in cash_rows:
         amt = Decimal(str(amt or 0))
-        sign = Decimal("1") if _tx_key(tx_type) in CASH_IN else Decimal("-1")
+        key = _tx_key(tx_type)
+        if key in {_tx_key(t) for t in EXTERNAL_CASH_IN}:
+            sign = Decimal("1")
+        elif key in {_tx_key(t) for t in EXTERNAL_CASH_OUT}:
+            sign = Decimal("-1")
+        else:
+            # should not happen since we filtered internal transfers above, but be safe
+            continue
+
         rate = fx_to_base_for_currency(db, as_of, ccy or base_ccy, base_ccy, portfolio_id, None)
         if rate is None:
-            # If absolutely no FX, skip this component rather than breaking valuation
             continue
+
         base_amt = sign * amt * rate
         cash_total_base += base_amt
         cash_components.append({

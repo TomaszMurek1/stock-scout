@@ -62,7 +62,8 @@ class Transaction(Base):
     currency_rate = Column(Numeric(18, 6), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
     note = Column(String(500), nullable=True)
-
+    transfer_group_id = Column(String(36), nullable=True, index=True)
+    
     user = relationship("User")
     portfolio = relationship("Portfolio", back_populates="transactions")
     company = relationship("Company", backref=backref("transactions", lazy="dynamic"))
