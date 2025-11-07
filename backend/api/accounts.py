@@ -6,7 +6,7 @@ from database.base import get_db  # your session dependency
 from database.account import Account
 from database.portfolio import Portfolio
 
-router = APIRouter(prefix="/api/accounts", tags=["accounts"])
+router = APIRouter(prefix="/api/accounts", tags=["Accounts"])
 
 class AccountCreate(BaseModel):
     portfolio_id: int
@@ -24,7 +24,7 @@ class AccountRead(BaseModel):
     class Config:
         from_attributes = True
 
-@router.get("/by-portfolio/{portfolio_id}", response_model=List[AccountRead])
+@router.get("/by-portfolio/{portfolio_id}", response_model=List[AccountRead], operation_id="accounts_listByPortfolio")
 def list_accounts_by_portfolio(portfolio_id: int, db: Session = Depends(get_db)):
     return db.query(Account).filter(Account.portfolio_id == portfolio_id).order_by(Account.name).all()
 

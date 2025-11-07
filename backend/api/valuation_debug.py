@@ -9,7 +9,7 @@ from database.company import Company
 from database.market import Market
 from schemas.portfolio_schemas import TransactionType
 
-router = APIRouter(prefix="/api/valuation/debug", tags=["valuation-debug"])
+router = APIRouter(prefix="/api/valuation/debug", tags=["Snapshots"])
 
 def _eod(d: date) -> datetime:
     return datetime.combine(d, time.max.replace(microsecond=0))

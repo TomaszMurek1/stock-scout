@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Dict, Iterable
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
@@ -17,7 +18,20 @@ from database.valuation import PortfolioValuationDaily
 from database.company import Company
 from api.valuation_preview import preview_day_value
 
-router = APIRouter(prefix="/api/valuation", tags=["valuation"])
+router = APIRouter(prefix="/api/valuation", tags=["Valuation"])
+
+class MaterializeRangeRequest(BaseModel):
+    portfolio_id: int = Field(..., description="Portfolio to materialize")
+    start: date = Field(..., description="Start date (YYYY-MM-DD)")
+    end: date = Field(..., description="End date (YYYY-MM-DD)")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"portfolio_id": 2, "start": "2025-10-22", "end": "2025-11-07"}
+            ]
+        }
+    }
 
 
 # ---------- helpers ----------
@@ -94,7 +108,7 @@ def _day_net_contributions(
 
 # ---------- endpoints ----------
 
-@router.post("/materialize-day")
+@router.post("/materialize-day", operation_id="valuation_materializeDay")
 def materialize_day(
     portfolio_id: int,
     as_of: date,
@@ -209,7 +223,7 @@ def materialize_day(
     }
 
 
-@router.post("/materialize-range")
+@router.post("/materialize-range", operation_id="valuation_materializeRange")
 def materialize_range(
     portfolio_id: int,
     start: date = Query(..., description="YYYY-MM-DD"),
@@ -244,3 +258,13 @@ def materialize_range(
         cur += timedelta(days=1)
 
     return {"portfolio_id": portfolio_id, "points": out}
+
+@router.post("/materialize-range-body", operation_id="valuation_materializeRangeBody")
+def materialize_range_body(payload: MaterializeRangeRequest, db: Session = Depends(get_db)):
+    """Materialize daily valuations for a range using a JSON body."""
+    return materialize_range(
+        portfolio_id=payload.portfolio_id,
+        start=payload.start,
+        end=payload.end,
+        db=db,
+    )

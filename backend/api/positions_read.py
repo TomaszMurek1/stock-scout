@@ -17,7 +17,10 @@ def force_recompute_position(account_id: int, company_id: int, db: Session = Dep
     return {"message": "recomputed", "account_id": account_id, "company_id": company_id}
 
 
-@router.get("/by-account/{account_id}")
+@router.get("/by-account/{account_id}",
+            operation_id="positions_listByAccount",
+            summary="List positions by account",
+            description="Returns current positions snapshot for a specific account.")
 def list_positions_by_account(
     account_id: int,
     hide_zero: bool = Query(False, description="If true, hide zero-quantity positions"),

@@ -1,5 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from api import valuation_preview
+from api import valuation_materialize
+from api import valuation_series
+from api import accounts
+from api import positions_read
+from api import transactions
+from api import transactions_transfer
+from api import transactions_transfer_cash
+from api import account_snapshot
+from api import valuation_debug
 from core.config import settings
 from api import (
     auth,
@@ -15,21 +25,8 @@ from api import (
     fibonacci_elliott,
     watchlist,
 )
-from api.positions_read import router as positions_router
-from api.accounts import router as accounts_router
-from api.transactions import router as transactions_router
-from api.valuation_preview import router as valuation_preview_router
-from api.valuation_materialize import router as valuation_writer_router
-from api.valuation_debug import router as valuation_debug_router
-from api.valuation_series import router as valuation_series_router
-from api.transactions_transfer import router as transfer_router
-from api.transactions_transfer_cash import router as transfer_cash_router
-from api.account_snapshot import router as account_snapshot_router
 from database.base import Base, engine
 from core.openapi_overrides import add_bearer_auth
-
-
-
 
 # Initialize FastAPI
 app = FastAPI(
@@ -52,41 +49,28 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # Register routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(
-    golden_cross.router, prefix="/api/technical-analysis", tags=["Analysis"]
-)
-app.include_router(fundamentals.router, prefix="/api/fundamentals", tags=["Analysis"])
-app.include_router(stocks.router, prefix="/api/stock-details", tags=["Stock Data"])
-app.include_router(admin.router, prefix="/api/admin", tags=["Admin", "Invitations"])
-app.include_router(watchlist.router, prefix="/api/watchlist", tags=["Watchlist"])
-app.include_router(
-    portfolio_management.router, prefix="/api/portfolio-management", tags=["Portfolio"]
-)
-app.include_router(
-    portfolio_performance.router,
-    prefix="/api/portfolio-performace",
-    tags=["Portfolio performance"],
-)
-app.include_router(
-    fibonacci_elliott.router, prefix="/api/fibo-waves", tags=["Fibonacci & Elliott"]
-)
-app.include_router(compare.router, prefix="/api/compare", tags=["Comparison"])
-app.include_router(
-    company_search.router, prefix="/api/companies", tags=["Company Search"]
-)
-app.include_router(fx.router, prefix="/api/fx-rate", tags=["FX Rates"])
-
-app.include_router(positions_router)
-app.include_router(accounts_router)
-app.include_router(transactions_router)
-app.include_router(valuation_preview_router)
-app.include_router(valuation_writer_router)
-app.include_router(valuation_debug_router)
-app.include_router(valuation_series_router)
-app.include_router(transfer_router)
-app.include_router(transfer_cash_router)
-app.include_router(account_snapshot_router)
+app.include_router(accounts.router,                   prefix="/api/accounts",     tags=["Accounts"])
+app.include_router(golden_cross.router,               prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(fundamentals.router,               prefix="/api/fundamentals", tags=["Analysis"])
+app.include_router(compare.router,                    prefix="/api/compare",      tags=["Comparison"])
+app.include_router(company_search.router,             prefix="/api/companies",    tags=["Company Search"])
+app.include_router(fibonacci_elliott.router,          prefix="/api/fibo-waves",   tags=["Fibonacci & Elliott"])
+app.include_router(fx.router,                         prefix="/api/fx-rate",              tags=["FX Rates"])
+app.include_router(portfolio_management.router,       prefix="/api/portfolio-management", tags=["Portfolio"])
+app.include_router(portfolio_performance.router,      prefix="/api/portfolio-performace", tags=["Portfolio performance"],)
+app.include_router(positions_read.router,             prefix="/api/positions",     tags=["Positions"])
+app.include_router(stocks.router,                     prefix="/api/stock-details", tags=["Stock Data"])
+app.include_router(valuation_preview.router,          prefix="/api/valuation",     tags=["Valuation"])
+app.include_router(valuation_materialize.router,      prefix="/api/valuation",     tags=["Valuation"])
+app.include_router(valuation_series.router,           prefix="/api/valuation",     tags=["Valuation"])
+app.include_router(transactions.router,               prefix="/api/transactions",  tags=["Transactions"])
+app.include_router(transactions_transfer.router,      prefix="/api/transactions",  tags=["Transactions"])
+app.include_router(transactions_transfer_cash.router, prefix="/api/transactions",  tags=["Transactions"])
+app.include_router(watchlist.router,                  prefix="/api/watchlist",     tags=["Watchlist"])
+app.include_router(account_snapshot.router,           prefix="/api/snapshot",      tags=["Snapshots"])
+app.include_router(valuation_debug.router,            prefix="/api/snapshot",      tags=["Snapshots"])
+app.include_router(admin.router,                      prefix="/api/admin",         tags=["Admin", "Invitations"])
+app.include_router(auth.router,                       prefix="/api/auth",          tags=["Authentication"])
 
 @app.get("/")
 async def root():

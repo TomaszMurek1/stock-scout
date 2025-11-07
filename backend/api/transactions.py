@@ -11,12 +11,12 @@ from api.positions_service import (
 )
 from database.company import Company
 
-router = APIRouter(prefix="/api/transactions", tags=["transactions"])
+router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
 
 # --------------------------------------------------------------------
 # PATCH /transactions/{id}
 # --------------------------------------------------------------------
-@router.patch("/{transaction_id}")
+@router.patch("/{transaction_id}",  operation_id="transaction_edit")
 def edit_transaction(transaction_id: int, payload: dict, db: Session = Depends(get_db)):
     """
     Edits a transaction and keeps positions consistent.
@@ -51,7 +51,7 @@ def edit_transaction(transaction_id: int, payload: dict, db: Session = Depends(g
 # --------------------------------------------------------------------
 # DELETE /transactions/{id}
 # --------------------------------------------------------------------
-@router.delete("/{transaction_id}")
+@router.delete("/{transaction_id}",  operation_id="transactions_delete")
 def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
     """
     Deletes a transaction and reverses its effect on positions.
@@ -69,7 +69,7 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
 # --------------------------------------------------------------------
 # POST /transactions
 # --------------------------------------------------------------------
-@router.post("", status_code=201)
+@router.post("", status_code=201, operation_id="transactions_create")
 def create_transaction(payload: dict, db: Session = Depends(get_db)):
     """
     Generic transaction creator — supports DEPOSIT, WITHDRAWAL, DIVIDEND, INTEREST, FEE, TAX, TRANSFER_IN, TRANSFER_OUT, etc.

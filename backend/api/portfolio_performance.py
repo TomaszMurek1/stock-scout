@@ -18,7 +18,7 @@ from schemas.portfolio_schemas import (
 )
 from collections import defaultdict
 
-router = APIRouter(prefix="", tags=["portfolio-performance"])
+router = APIRouter(prefix="", tags=["Portfolio performance"])
 
 
 def _parse_period(period: str) -> Optional[datetime]:
