@@ -1,7 +1,8 @@
-from datetime import datetime, date
+from datetime import datetime, date, time
+from decimal import Decimal
 from enum import Enum as PyEnum
-from typing import Dict, List, Literal, Optional
-from pydantic import BaseModel, ConfigDict, condecimal
+from typing import  List, Optional
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class TransactionType(PyEnum):
@@ -27,9 +28,18 @@ class TradeBase(BaseModel):
     ticker: str
     shares: float
     price: float
-    fee: Optional[float] = 0
+    fee: Optional[float] = None
     currency: str
-    currency_rate: float
+    currency_rate: Optional[float] = None
+
+    # NEW
+    trade_date: date
+
+    def to_timestamp(self) -> datetime:
+        # tolerate older versions missing the field to avoid AttributeError
+        tt = getattr(self, "trade_time", None)
+        t = tt or time(23, 59, 59)
+        return datetime.combine(self.trade_date, t)
 
 
 class TradeResponse(BaseModel):
@@ -45,8 +55,7 @@ class PositionOut(BaseModel):
     market_value: Optional[float]
     unrealized: Optional[float]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortfolioData(BaseModel):
@@ -114,7 +123,7 @@ class TransactionItem(BaseModel):
     id: int
     ticker: str
     name: str
-    transaction_type: Literal["buy", "sell"]
+    transaction_type: TransactionType
     shares: float
     price: float
     fee: float
@@ -140,8 +149,8 @@ class PriceHistoryEntry(BaseModel):
 
 class TransactionOut(BaseModel):
     id: int
-    ticker: str
-    name: str
+    ticker: Optional[str] = None
+    name: Optional[str] = None
     transaction_type: TransactionType
     shares: float
     price: float | None
@@ -150,9 +159,19 @@ class TransactionOut(BaseModel):
     currency: str
     currency_rate: float
 
-class UserPortfolioResponse(BaseModel):
-    portfolio: dict
-    transactions: List[TransactionOut]
-    watchlist: List[dict]
-    currency_rates: dict
-    price_history: dict
+class PortfolioMgmtTotals(BaseModel):
+    total_portfolio_value: Decimal
+    total_invested_value: Decimal
+    total_gain_loss: Decimal
+    percentage_change: float | None  # None if invested = 0
+
+class PortfolioMgmtSeriesItem(BaseModel):
+    date: date
+    total_value: Decimal
+    net_contributions: Decimal
+
+class PortfolioMgmtResponse(BaseModel):
+    portfolio: dict  # { id, name, base_currency }
+    as_of: date
+    totals: PortfolioMgmtTotals
+    series: list[PortfolioMgmtSeriesItem]

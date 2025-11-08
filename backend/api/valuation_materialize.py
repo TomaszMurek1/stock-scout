@@ -20,6 +20,7 @@ from api.valuation_preview import preview_day_value
 
 router = APIRouter(prefix="/api/valuation", tags=["Valuation"])
 
+
 class MaterializeRangeRequest(BaseModel):
     portfolio_id: int = Field(..., description="Portfolio to materialize")
     start: date = Field(..., description="Start date (YYYY-MM-DD)")
@@ -36,13 +37,52 @@ class MaterializeRangeRequest(BaseModel):
 
 # ---------- helpers ----------
 
-def _first_tx_date(db: Session, portfolio_id: int) -> date | None:
+
+def delete_range(db: Session, portfolio_id: int, start: date, end: date):
+    db.query(PortfolioValuationDaily)\
+      .filter(
+          PortfolioValuationDaily.portfolio_id == portfolio_id,
+          and_(PortfolioValuationDaily.date >= start,
+               PortfolioValuationDaily.date <= end)
+      ).delete(synchronize_session=False)
+    db.commit()
+
+
+def get_last_pvd_date(db: Session, portfolio_id: int) -> date | None:
+    return (
+        db.query(func.max(PortfolioValuationDaily.date))
+        .filter(PortfolioValuationDaily.portfolio_id == portfolio_id)
+        .scalar()
+    )
+
+
+def get_first_tx_date(db: Session, portfolio_id: int) -> date | None:
+    """Return the FIRST transaction date (date, not datetime) for a portfolio."""
     dt = (
         db.query(func.min(Transaction.timestamp))
         .filter(Transaction.portfolio_id == portfolio_id)
         .scalar()
     )
     return dt.date() if dt else None
+
+
+# IMPORTANT!
+# Call rematerialize_from_tx(...) right after insert/update/delete a transaction.
+def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date):
+    today = date.today()
+    last_pvd = get_last_pvd_date(db, portfolio_id)
+
+    if last_pvd is None:
+        first_tx = get_first_tx_date(db, portfolio_id)
+        if not first_tx:
+            return  # nothing to do
+        start = first_tx
+    else:
+        start = tx_day if tx_day <= last_pvd else (last_pvd + timedelta(days=1))
+
+    # Overwrite existing rows in [start..today] to fix cash carry-forward
+    delete_range(db, portfolio_id, start, today)
+    materialize_range(portfolio_id=portfolio_id, start=start, end=today, db=db)
 
 
 def _dec(x) -> Decimal:
@@ -54,6 +94,24 @@ def _dec(x) -> Decimal:
         return Decimal("0")
 
 
+def _prev_by_cash(db: Session, portfolio_id: int, before: date) -> Decimal:
+    prev = (
+        db.query(PortfolioValuationDaily.by_cash)
+        .filter(
+            PortfolioValuationDaily.portfolio_id == portfolio_id,
+            PortfolioValuationDaily.date < before,
+        )
+        .order_by(PortfolioValuationDaily.date.desc())
+        .first()
+    )
+    if prev and prev[0] is not None:
+        try:
+            return Decimal(prev[0])
+        except InvalidOperation:
+            return Decimal("0")
+    return Decimal("0")
+
+
 def _same_day(ts, d: date) -> bool:
     return ts.date() == d
 
@@ -62,22 +120,35 @@ def _day_net_contributions(
     db: Session, portfolio_id: int, day: date, base_ccy: str
 ) -> Decimal:
     """
-    deposits - withdrawals - fees - taxes for that *day*,
-    converted to portfolio base currency using stored tx.currency_rate.
-    (Transfer_in/out are internal, excluded.)
+    Daily net external cash flow in base currency.
+
+    Includes:
+      + DEPOSIT
+      - WITHDRAWAL
+      - FEE (standalone)
+      - TAX
+      - BUY      -> cash OUT:  (qty * price * fx) + (fee * fx)
+      + SELL     -> cash IN :  (qty * price * fx) - (fee * fx)
+      + DIVIDEND -> cash IN :  amount * fx
+      + INTEREST -> cash IN :  amount * fx
+
+    Transfer_in/out are internal and excluded.
     """
     contributing_types: tuple[TransactionType, ...] = (
         TransactionType.DEPOSIT,
         TransactionType.WITHDRAWAL,
         TransactionType.FEE,
         TransactionType.TAX,
+        TransactionType.BUY,
+        TransactionType.SELL,
+        TransactionType.DIVIDEND,
+        TransactionType.INTEREST,
     )
 
     rows: Iterable[Transaction] = (
         db.query(Transaction)
         .filter(
             Transaction.portfolio_id == portfolio_id,
-            # compare by day (assumes naive timestamps are portfolio-local or UTC consistently)
             and_(
                 func.date(Transaction.timestamp) >= day,
                 func.date(Transaction.timestamp) <= day,
@@ -89,24 +160,40 @@ def _day_net_contributions(
 
     total = Decimal("0")
     for tx in rows:
-        amt = _dec(tx.quantity)  # cash amount in tx.currency
-        # sign: +deposit, else negative
-        if tx.transaction_type == TransactionType.DEPOSIT:
-            sign = Decimal("1")
-        else:
-            sign = Decimal("-1")
-        # convert to base ccy
+        # FX for this transaction: tx.currency -> base_ccy
         if (tx.currency or "").upper() == (base_ccy or "").upper():
             fx = Decimal("1")
         else:
             fx = _dec(tx.currency_rate) if tx.currency_rate is not None else Decimal("1")
 
-        total += sign * amt * fx
+        ttype = tx.transaction_type
+
+        if ttype == TransactionType.DEPOSIT:
+            total += _dec(tx.quantity) * fx
+        elif ttype == TransactionType.WITHDRAWAL:
+            total -= _dec(tx.quantity) * fx
+        elif ttype == TransactionType.FEE:
+            total -= _dec(tx.quantity) * fx
+        elif ttype == TransactionType.TAX:
+            total -= _dec(tx.quantity) * fx
+        elif ttype == TransactionType.BUY:
+            gross = _dec(tx.price) * _dec(tx.quantity) * fx
+            fee   = _dec(getattr(tx, "fee", 0)) * fx
+            total -= (gross + fee)
+        elif ttype == TransactionType.SELL:
+            gross = _dec(tx.price) * _dec(tx.quantity) * fx
+            fee   = _dec(getattr(tx, "fee", 0)) * fx
+            total += (gross - fee)
+        elif ttype == TransactionType.DIVIDEND:
+            total += _dec(tx.quantity) * fx   # or tx.total_value if you store it there
+        elif ttype == TransactionType.INTEREST:
+            total += _dec(tx.quantity) * fx
 
     return total.quantize(Decimal("0.0001"))
 
 
 # ---------- endpoints ----------
+
 
 @router.post("/materialize-day", operation_id="valuation_materializeDay")
 def materialize_day(
@@ -120,20 +207,19 @@ def materialize_day(
         raise HTTPException(status_code=404, detail="Portfolio not found")
     base_ccy = (pf.currency or "").upper()
 
-    # compute preview for the day
+    # === 1) Securities preview (positions only — we won't trust its cash/total) ===
     preview = preview_day_value(portfolio_id=portfolio_id, as_of=as_of, db=db)
 
-    # total portfolio value (already in base ccy)
-    total_value = _dec(preview.get("total", "0"))
+    # === 2) Cash via rolling balance (correct for BUY/SELL and other flows) ===
+    net_contributions = _day_net_contributions(db, portfolio_id, as_of, base_ccy)
+    prev_cash = _prev_by_cash(db, portfolio_id, as_of)   # yesterday's cash
+    by_cash = (prev_cash + net_contributions).quantize(Decimal("0.0001"))
 
-    # cash subtotal (already in base ccy)
-    by_cash = _dec(preview.get("cash", {}).get("total_base", "0"))
-
-    # securities breakdown: bucket by company instrument_type
+    # === 3) Build buckets from preview "securities" ===
     lines = preview.get("securities", {}).get("lines", [])
     company_ids = [int(l["company_id"]) for l in lines] if lines else []
 
-     # Default buckets
+    # Default buckets
     bucket = {
         "stock": Decimal("0"),
         "etf": Decimal("0"),
@@ -143,11 +229,10 @@ def materialize_day(
     }
 
     types_map: Dict[int, str] = {}
-     # If Company.instrument_type doesn't exist, just sum everything as stock.
     has_instr_type = hasattr(Company, "instrument_type")
 
     if company_ids and has_instr_type:
-        # Build a map company_id -> instrument_type (lowercased, default 'stock')
+        # Map company_id -> instrument_type
         types_map = {
             int(cid): (itype or "stock").lower()
             for cid, itype in db.query(Company.company_id, Company.instrument_type)
@@ -164,7 +249,7 @@ def materialize_day(
             else:
                 bucket["stock"] += val_base
     else:
-        # No instrument_type column: everything treated as stock
+        # No instrument_type column: treat everything as stock
         for l in lines:
             bucket["stock"] += _dec(l.get("value_base", "0"))
 
@@ -174,10 +259,17 @@ def materialize_day(
     by_crypto = bucket["crypto"].quantize(Decimal("0.0001"))
     by_commodity = bucket["commodity"].quantize(Decimal("0.0001"))
 
-    # net external cash flows for that specific day in base ccy
-    net_contributions = _day_net_contributions(db, portfolio_id, as_of, base_ccy)
+    # === 4) TOTAL = our cash + buckets (consistent) ===
+    total_value = (
+        by_cash
+        + by_stock
+        + by_etf
+        + by_bond
+        + by_crypto
+        + by_commodity
+    ).quantize(Decimal("0.0001"))
 
-    # upsert into portfolio_valuation_daily
+    # === 5) Upsert into portfolio_valuation_daily ===
     stmt = insert(PortfolioValuationDaily).values(
         portfolio_id=portfolio_id,
         date=as_of,
@@ -233,11 +325,12 @@ def materialize_range(
     if end < start:
         raise HTTPException(status_code=400, detail="end < start")
 
-    first_dt = _first_tx_date(db, portfolio_id)
+    first_dt = get_first_tx_date(db, portfolio_id)
     if not first_dt:
         # no transactions at all
         return {"portfolio_id": portfolio_id, "points": []}
 
+    # both are 'date', safe to compare
     cur = max(start, first_dt)
     out = []
     while cur <= end:
@@ -258,6 +351,7 @@ def materialize_range(
         cur += timedelta(days=1)
 
     return {"portfolio_id": portfolio_id, "points": out}
+
 
 @router.post("/materialize-range-body", operation_id="valuation_materializeRangeBody")
 def materialize_range_body(payload: MaterializeRangeRequest, db: Session = Depends(get_db)):

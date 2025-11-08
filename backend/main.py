@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import valuation_preview
+from api import stocks_price_data, valuation_preview
 from api import valuation_materialize
 from api import valuation_series
 from api import accounts
@@ -60,6 +60,7 @@ app.include_router(portfolio_management.router,       prefix="/api/portfolio-man
 app.include_router(portfolio_performance.router,      prefix="/api/portfolio-performace", tags=["Portfolio performance"],)
 app.include_router(positions_read.router,             prefix="/api/positions",     tags=["Positions"])
 app.include_router(stocks.router,                     prefix="/api/stock-details", tags=["Stock Data"])
+app.include_router(stocks_price_data.router,          prefix="/api/stock", tags=["Stock Data"])
 app.include_router(valuation_preview.router,          prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_materialize.router,      prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_series.router,           prefix="/api/valuation",     tags=["Valuation"])
