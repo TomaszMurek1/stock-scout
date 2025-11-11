@@ -4,42 +4,51 @@ from __future__ import annotations
 import calendar
 import math
 import logging
-from decimal import Decimal, getcontext, InvalidOperation
+from decimal import Decimal, getcontext
 from datetime import date, datetime, timedelta
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Optional, Dict
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, literal
-from sqlalchemy.inspection import inspect as sa_inspect
 
 from database.portfolio import Transaction, TransactionType
 from database.valuation import PortfolioValuationDaily
 
-# Precision for Decimal
+# High precision for Decimal math
 getcontext().prec = 28
 D = Decimal
 
-# Logger
-logger = logging.getLogger("stockscout.metrics.mwrr")
+logger = logging.getLogger("stockscout.metrics")
 
 
 class PortfolioMetricsService:
+    """
+    Implementation bound to your schema.
+
+    transactions columns used:
+      - transaction_type (enum TransactionType)
+      - quantity (Decimal)
+      - price (Decimal)
+      - currency_rate (Decimal)
+      - timestamp (datetime)
+      - portfolio_id (int)
+
+    amount(base ccy) rule:
+      base_amount = (quantity * price if price != 0 else quantity) * COALESCE(currency_rate, 1)
+
+    TTWR (portfolio): external flows = +DEPOSIT, -WITHDRAWAL
+    TTWR (invested): trade flows = +BUY, -SELL; value uses invested MV (sum of asset buckets if present)
+    MWRR (XIRR): investor sign (+ inflow to investor, - outflow):
+      DEPOSIT -> negative, WITHDRAWAL -> positive,
+      DIVIDEND/INTEREST -> positive, FEE/TAX -> negative
+    """
+
     def __init__(self, db: Session):
         self.db = db
 
     # ---------------------------
-    # Generic helpers
+    # Period helpers
     # ---------------------------
-    @staticmethod
-    def _dec(x) -> Decimal:
-        if isinstance(x, Decimal):
-            return x
-        try:
-            return D(str(x))
-        except (InvalidOperation, TypeError, ValueError):
-            return D("0")
-
-    # ========== Period helpers ==========
     @staticmethod
     def _subtract_months(d: date, months: int) -> date:
         y = d.year
@@ -85,10 +94,11 @@ class PortfolioMetricsService:
             )
             return first_tx[0].date() if first_tx else None
 
-        # default when unknown
         return end_date - timedelta(days=30)
 
-    # ========== Valuation helpers ==========
+    # ---------------------------
+    # Valuation helpers
+    # ---------------------------
     def _last_valuation_on_or_before(self, portfolio_id: int, day: date) -> Optional[date]:
         row = (
             self.db.query(PortfolioValuationDaily.date)
@@ -111,75 +121,55 @@ class PortfolioMetricsService:
             .order_by(PortfolioValuationDaily.date.desc())
             .first()
         )
-        return self._dec(row[0]) if row else None
+        if not row:
+            return None
+        v = row[0]
+        return v if isinstance(v, Decimal) else D(str(v))
 
-    # ---------- SQL expression helpers ----------
-    
-    def _sql_amount_expr(self, t_alias=None):
+    # ---------------------------
+    # Amount expressions (SQL + Python) — strictly your schema
+    # ---------------------------
+    def _amount_sql(self, t_alias=None):
         """
-        Build amount * rate in SQL with a wide COALESCE, **skipping zeros** so that
-        deposits recorded as quantity with price=0 fall through to `quantity`.
+        SQL expression: base_amount = (CASE WHEN price != 0 THEN quantity*price ELSE quantity END) * COALESCE(currency_rate, 1)
         """
-        from sqlalchemy import literal
-        from sqlalchemy import func
-
         t = t_alias or Transaction
+        qty = func.coalesce(getattr(t, "quantity"), literal(0))
+        price = func.coalesce(getattr(t, "price"), literal(0))
+        rate = func.coalesce(getattr(t, "currency_rate"), literal(1))
 
-        # helper: treat 0 as NULL so COALESCE can fall through
-        def nz(expr):
-            return func.nullif(expr, literal(0))
-
-        # ---- amount candidates (first non-NULL/non-zero wins) ----
-        amount_expr = func.coalesce(
-            nz(getattr(t, "total_value", literal(None))),
-            nz(getattr(t, "amount", literal(None))),
-            nz(getattr(t, "value", literal(None))),
-            nz(getattr(t, "gross_amount", literal(None))),
-            nz(getattr(t, "net_amount", literal(None))),
-            nz(getattr(t, "cash_amount", literal(None))),
-            nz(getattr(t, "proceeds", literal(None))),
-            nz(getattr(t, "notional", literal(None))),
-            nz(getattr(t, "money", literal(None))),
-            nz(getattr(t, "total", literal(None))),
-            nz(getattr(t, "sum", literal(None))),
-            nz(getattr(t, "base_amount", literal(None))),
-            nz(getattr(t, "amount_base", literal(None))),
-            nz(getattr(t, "value_base", literal(None))),
-            # quantity*price only if not zero
-            nz(
-                func.coalesce(getattr(t, "quantity", literal(0)), literal(0))
-                * func.coalesce(getattr(t, "price", literal(0)), literal(0))
-            ),
-            # finally, fall back to raw quantity (works for deposits w/ price=0)
-            nz(getattr(t, "quantity", literal(None))),
-            literal(0),
+        amt_local = case(
+            (price != 0, qty * price),
+            else_=qty,
         )
+        return amt_local * rate
 
-        # ---- FX side (no need to nullif 0; a 0 FX rate would be invalid anyway) ----
-        rate_expr = func.coalesce(
-            getattr(t, "currency_rate", literal(None)),
-            getattr(t, "exchange_rate", literal(None)),
-            getattr(t, "fx_rate", literal(None)),
-            getattr(t, "rate", literal(None)),
-            getattr(t, "fx", literal(None)),
-            literal(1),
-        )
+    @staticmethod
+    def _amount_py(quantity, price, currency_rate) -> Decimal:
+        q = quantity if isinstance(quantity, Decimal) else D(str(quantity or 0))
+        p = price if isinstance(price, Decimal) else D(str(price or 0))
+        r = currency_rate if isinstance(currency_rate, Decimal) else D(str(currency_rate or 1))
+        base = (q * p) if p != 0 else q
+        return base * r
 
-        return amount_expr * rate_expr
-
-    # ========== TTWR (portfolio level) ==========
+    # ---------------------------
+    # TTWR (portfolio-level): external flows = +DEPOSIT, -WITHDRAWAL
+    # ---------------------------
     def _daily_external_flows_map(self, portfolio_id: int, start_date: date, end_date: date) -> Dict[date, Decimal]:
-        """
-        External flows for portfolio-level TTWR: ONLY DEPOSIT/WITHDRAWAL.
-        Sign convention (TWR flow_t): net_contrib_t = +deposit - withdrawal
-        """
         t = Transaction
-        amount_rate_expr = self._sql_amount_expr(t)
+        amt = self._amount_sql(t)
+
+        # Use amt and -1 * amt (no unary + on SQLAlchemy expressions)
+        signed_amt = case(
+            (t.transaction_type == TransactionType.DEPOSIT, amt),
+            (t.transaction_type == TransactionType.WITHDRAWAL, -1 * amt),
+            else_=literal(0),
+        )
 
         q = (
             self.db.query(
                 func.date(t.timestamp).label("d"),
-                func.sum(amount_rate_expr),
+                func.sum(signed_amt),
             )
             .filter(
                 t.portfolio_id == portfolio_id,
@@ -192,9 +182,9 @@ class PortfolioMetricsService:
         )
 
         flows: Dict[date, Decimal] = {}
-        for d, amt in q:
-            amt = self._dec(amt or 0)
-            flows[d] = flows.get(d, D("0")) + amt
+        for d, val in q:
+            val = val if isinstance(val, Decimal) else D(str(val or 0))
+            flows[d] = flows.get(d, D("0")) + val
         return flows
 
     def _rows_from_pvd_portfolio(self, portfolio_id: int, start_date: date, end_date: date) -> List[Tuple[date, Decimal, Decimal]]:
@@ -212,13 +202,18 @@ class PortfolioMetricsService:
             .all()
         )
         flow_map = self._daily_external_flows_map(portfolio_id, start_date, end_date)
+
         out: List[Tuple[date, Decimal, Decimal]] = []
         for d, tot in rows:
-            out.append((d, self._dec(tot), flow_map.get(d, D("0"))))
+            tot_dec = tot if isinstance(tot, Decimal) else D(str(tot or 0))
+            out.append((d, tot_dec, flow_map.get(d, D("0"))))
         return out
 
-    # ========== TTWR (invested-only) ==========
+    # ---------------------------
+    # TTWR (invested-only): trade flows BUY(+), SELL(-)
+    # ---------------------------
     def _invested_expression(self):
+        # Prefer: sum of asset buckets if present
         cols = []
         for c in ("by_stock", "by_etf", "by_bond", "by_crypto", "by_commodity"):
             if hasattr(PortfolioValuationDaily, c):
@@ -229,15 +224,16 @@ class PortfolioMetricsService:
                 expr = expr + c
             return expr.label("invested_mv")
 
+        # Fallback: total_value - cash_balance, if exists
         if hasattr(PortfolioValuationDaily, "cash_balance"):
             return (func.coalesce(PortfolioValuationDaily.total_value, literal(0)) -
-                    func.coalesce(PortfolioValuationDaily.cash_balance, literal(0))).label("invested_mv")
+                    func.coalesce(getattr(PortfolioValuationDaily, "cash_balance"), literal(0))).label("invested_mv")
 
+        # Last resort: use total_value
         return func.coalesce(PortfolioValuationDaily.total_value, literal(0)).label("invested_mv")
 
     def _rows_from_pvd_invested(self, portfolio_id: int, start_date: date, end_date: date) -> List[Tuple[date, Decimal, Decimal]]:
         invested_expr = self._invested_expression()
-
         rows = (
             self.db.query(
                 PortfolioValuationDaily.date,
@@ -253,17 +249,17 @@ class PortfolioMetricsService:
         )
 
         t = Transaction
-        amount_rate_expr = self._sql_amount_expr(t)
-        sign = case(
-            (t.transaction_type == TransactionType.BUY, literal(1)),
-            (t.transaction_type == TransactionType.SELL, literal(-1)),
+        amt = self._amount_sql(t)
+        trade_signed = case(
+            (t.transaction_type == TransactionType.BUY, amt),
+            (t.transaction_type == TransactionType.SELL, -1 * amt),
             else_=literal(0),
         )
 
         q = (
             self.db.query(
                 func.date(t.timestamp).label("d"),
-                func.sum(sign * amount_rate_expr),
+                func.sum(trade_signed),
             )
             .filter(
                 t.portfolio_id == portfolio_id,
@@ -275,22 +271,23 @@ class PortfolioMetricsService:
             .all()
         )
 
-        trade_flow_map: Dict[date, Decimal] = {d: self._dec(v or 0) for d, v in q}
+        flow_map: Dict[date, Decimal] = {d: (v if isinstance(v, Decimal) else D(str(v or 0))) for d, v in q}
 
         out: List[Tuple[date, Decimal, Decimal]] = []
         for d, inv_mv in rows:
-            out.append((d, self._dec(inv_mv), trade_flow_map.get(d, D("0"))))
+            inv_mv_dec = inv_mv if isinstance(inv_mv, Decimal) else D(str(inv_mv or 0))
+            out.append((d, inv_mv_dec, flow_map.get(d, D("0"))))
         return out
 
-    # ----- Chain function for TWR -----
+    # ---------------------------
+    # Chain function
+    # ---------------------------
     @staticmethod
     def _chain_twr(rows: List[Tuple[date, Decimal, Decimal]]) -> Optional[Decimal]:
         if len(rows) < 2:
             return None
-
         product = D("1")
         prev_mv = rows[0][1]
-
         for i in range(1, len(rows)):
             _, mv_t, flow_t = rows[i]
             if prev_mv == 0:
@@ -299,9 +296,11 @@ class PortfolioMetricsService:
             r_t = (mv_t - (prev_mv + flow_t)) / prev_mv
             product *= (D("1") + r_t)
             prev_mv = mv_t
-
         return product - D("1")
 
+    # ---------------------------
+    # Public: TTWR
+    # ---------------------------
     def calculate_ttwr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
         effective_end = self._last_valuation_on_or_before(portfolio_id, end_date) or end_date
         rows = self._rows_from_pvd_portfolio(portfolio_id, start_date, effective_end)
@@ -314,117 +313,58 @@ class PortfolioMetricsService:
         twr = self._chain_twr(rows)
         return twr if twr is not None else D("0")
 
-    # ========== DEBUG UTIL ==========
-    def _debug_dump_transactions(self, portfolio_id: int, start_date: date, end_date: date):
-        """
-        Dump ALL columns for transactions in window, for quick schema discovery.
-        """
-        t = Transaction
-        txs = (
-            self.db.query(t)
-            .filter(
-                t.portfolio_id == portfolio_id,
-                t.timestamp >= datetime.combine(start_date, datetime.min.time()),
-                t.timestamp <= datetime.combine(end_date, datetime.max.time()),
-                t.transaction_type.in_(
-                    [
-                        TransactionType.DEPOSIT,
-                        TransactionType.WITHDRAWAL,
-                        TransactionType.DIVIDEND,
-                        TransactionType.INTEREST,
-                        getattr(TransactionType, "FEE", TransactionType.INTEREST),
-                        getattr(TransactionType, "TAX", TransactionType.INTEREST),
-                    ]
-                ),
-            )
-            .order_by(t.timestamp.asc())
-            .all()
-        )
-
-        mapper = sa_inspect(Transaction)
-        col_names = [c.key for c in mapper.columns]
-        logger.info("[MWRR] DEBUG columns in `transactions`: %s", col_names)
-
-        rows_dump = []
-        for tx in txs:
-            row = {}
-            for name in col_names:
-                try:
-                    row[name] = getattr(tx, name)
-                except Exception:
-                    row[name] = "<error>"
-            rows_dump.append(row)
-
-        # Log compactly; FastAPI/Uvicorn will truncate if too long
-        logger.info("[MWRR] DEBUG raw tx rows (%d): %s", len(rows_dump), rows_dump)
-
-    # ========== MWRR / XIRR ==========
+    # ---------------------------
+    # MWRR / XIRR (investor sign convention)
+    # ---------------------------
     @staticmethod
-    def _xnpv_float(rate: float, flows: List[Tuple[date, Decimal]]) -> float:
+    def _xnpv(rate: float, flows: List[Tuple[date, Decimal]]) -> float:
         t0 = flows[0][0]
         acc = 0.0
-        base = 1.0 + float(rate)
+        base = 1.0 + rate
         for d, cf in flows:
             days = (d - t0).days
             acc += float(cf) / (base ** (days / 365.0))
         return acc
 
-    def _try_bracket(self, flows: List[Tuple[date, Decimal]]) -> Optional[Tuple[float, float, float, float]]:
-        f = lambda r: self._xnpv_float(r, flows)
+    def _xirr(self, flows: List[Tuple[date, Decimal]]) -> Optional[float]:
+        f = lambda r: self._xnpv(r, flows)
 
+        # bracket phase
         low, high = -0.999, 0.10
         f_low, f_high = f(low), f(high)
-        logger.debug("[MWRR] initial bracket: low=%.6f NPV=%.6f, high=%.6f NPV=%.6f", low, f_low, high, f_high)
 
-        steps = 0
-        while f_low * f_high > 0 and steps < 50:
+        tries = 0
+        while f_low * f_high > 0 and tries < 50:
             high = high * 2.0 + 0.10
             if high > 1e6:
                 break
             f_high = f(high)
-            steps += 1
-            logger.debug("[MWRR] expand up: high=%.6f NPV=%.6f", high, f_high)
+            tries += 1
 
-        steps_down = 0
-        while f_low * f_high > 0 and steps_down < 50:
+        tries = 0
+        while f_low * f_high > 0 and tries < 50:
             low = -0.999999 + (low + 1.0) / 2.0
             f_low = f(low)
-            steps_down += 1
-            logger.debug("[MWRR] expand down: low=%.9f NPV=%.6f", low, f_low)
+            tries += 1
 
         if f_low * f_high <= 0:
-            logger.debug("[MWRR] bracket found: [%.9f, %.6f]", low, high)
-            return low, high, f_low, f_high
-
-        logger.debug("[MWRR] bracket not found")
-        return None
-
-    def _xirr_bisect_or_newton(self, flows: List[Tuple[date, Decimal]]) -> Optional[float]:
-        br = self._try_bracket(flows)
-        f = lambda r: self._xnpv_float(r, flows)
-
-        if br is not None:
-            low, high, f_low, f_high = br
             for _ in range(120):
                 mid = (low + high) / 2.0
                 f_mid = f(mid)
                 if abs(f_mid) < 1e-12:
-                    logger.debug("[MWRR] bisection converged: r=%.12f", mid)
                     return mid
                 if f_low * f_mid <= 0:
                     high, f_high = mid, f_mid
                 else:
                     low, f_low = mid, f_mid
-            mid = (low + high) / 2.0
-            logger.debug("[MWRR] bisection max iters: r=%.12f (NPV=%.6f)", mid, f(mid))
-            return mid
+            return (low + high) / 2.0
 
+        # newton fallback
         def newton(seed: float) -> Optional[float]:
             r = seed
             for _ in range(80):
                 f_r = f(r)
                 if abs(f_r) < 1e-12:
-                    logger.debug("[MWRR] newton converged: seed=%.4f r=%.12f", seed, r)
                     return r
                 h = 1e-6
                 slope = (f(r + h) - f_r) / h
@@ -432,7 +372,6 @@ class PortfolioMetricsService:
                     return None
                 r2 = r - f_r / slope
                 if abs(r2 - r) < 1e-12:
-                    logger.debug("[MWRR] newton epsilon: seed=%.4f r=%.12f", seed, r2)
                     return r2
                 r = r2
             return None
@@ -441,83 +380,50 @@ class PortfolioMetricsService:
             out = newton(seed)
             if out is not None and -0.9999 < out < 1e6:
                 return out
-
-        logger.debug("[MWRR] newton failed for all seeds")
         return None
 
     def _external_cash_flows_for_xirr(self, portfolio_id: int, start_date: date, end_date: date) -> List[Tuple[date, Decimal]]:
-        """
-        Build investor cash flows using a SQL-computed amount:
-          COALESCE( ...many amount columns..., quantity*price, quantity) *
-          COALESCE(currency_rate, exchange_rate, fx_rate, rate, fx, 1)
-        Signs (investor convention):
-          DEPOSIT -> negative
-          WITHDRAWAL -> positive
-          DIVIDEND/INTEREST -> positive
-          FEE/TAX -> negative
-        """
         t = Transaction
-        amount_rate_expr = self._sql_amount_expr(t)
+        amt = self._amount_sql(t)
+
+        # Investor signs
+        sign = case(
+            (t.transaction_type == TransactionType.DEPOSIT, literal(-1)),
+            (t.transaction_type == TransactionType.WITHDRAWAL, literal(+1)),
+            (t.transaction_type == TransactionType.DIVIDEND, literal(+1)),
+            (t.transaction_type == TransactionType.INTEREST, literal(+1)),
+            (t.transaction_type == getattr(TransactionType, "FEE", TransactionType.DEPOSIT), literal(-1)),
+            (t.transaction_type == getattr(TransactionType, "TAX", TransactionType.DEPOSIT), literal(-1)),
+            else_=literal(0),
+        )
 
         rows = (
             self.db.query(
                 func.date(t.timestamp).label("d"),
-                amount_rate_expr.label("amt"),
-                t.transaction_type.label("tt"),
-                getattr(t, "id", literal(None)).label("tx_id"),
+                (sign * amt).label("signed_amt"),
             )
             .filter(
                 t.portfolio_id == portfolio_id,
                 t.timestamp >= datetime.combine(start_date, datetime.min.time()),
                 t.timestamp <= datetime.combine(end_date, datetime.max.time()),
-                t.transaction_type.in_(
-                    [
-                        TransactionType.DEPOSIT,
-                        TransactionType.WITHDRAWAL,
-                        TransactionType.DIVIDEND,
-                        TransactionType.INTEREST,
-                        getattr(TransactionType, "FEE", TransactionType.INTEREST),
-                        getattr(TransactionType, "TAX", TransactionType.INTEREST),
-                    ]
-                ),
+                t.transaction_type.in_([
+                    TransactionType.DEPOSIT,
+                    TransactionType.WITHDRAWAL,
+                    TransactionType.DIVIDEND,
+                    TransactionType.INTEREST,
+                    getattr(TransactionType, "FEE", TransactionType.DEPOSIT),
+                    getattr(TransactionType, "TAX", TransactionType.DEPOSIT),
+                ]),
             )
-            .order_by(func.date(t.timestamp).asc(), getattr(t, "id", literal(0)).asc())
+            .order_by(func.date(t.timestamp).asc())
             .all()
         )
 
         flows: List[Tuple[date, Decimal]] = []
-        debug_dump = []
-        for d, amt, tt, tx_id in rows:
-            amt_dec = self._dec(amt or 0)
+        for d, signed in rows:
+            signed_dec = signed if isinstance(signed, Decimal) else D(str(signed or 0))
+            flows.append((d, signed_dec))
 
-            if tt == TransactionType.DEPOSIT:
-                signed = -amt_dec
-                sign_label = "- (deposit)"
-            elif tt == TransactionType.WITHDRAWAL:
-                signed = +amt_dec
-                sign_label = "+ (withdrawal)"
-            elif tt in (TransactionType.DIVIDEND, TransactionType.INTEREST):
-                signed = +amt_dec
-                sign_label = "+ (income)"
-            else:
-                if str(tt).lower().endswith("fee") or str(tt).lower().endswith("tax"):
-                    signed = -amt_dec
-                    sign_label = "- (expense)"
-                else:
-                    signed = amt_dec
-                    sign_label = "~ (other)"
-
-            flows.append((d, signed))
-            debug_dump.append((d.isoformat(), float(amt_dec), str(tt), int(tx_id) if tx_id is not None else None, sign_label))
-
-        # Log what SQL actually returned; if amounts are 0, we will dump raw rows too
-        logger.info("[MWRR] SQL flow rows=%d -> %s", len(debug_dump), debug_dump)
-
-        # If amounts are still 0.0, dump the raw tx rows with all columns for schema discovery
-        if any(val == 0.0 for _, val, *_ in debug_dump) and rows:
-            self._debug_dump_transactions(portfolio_id, start_date, end_date)
-
-        flows.sort(key=lambda x: x[0])
         return flows
 
     def calculate_mwrr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
@@ -525,45 +431,36 @@ class PortfolioMetricsService:
             flows = self._external_cash_flows_for_xirr(portfolio_id, start_date, end_date)
             end_mv = self._valuation_as_of(portfolio_id, end_date)
 
-            logger.info("[MWRR] window=%s..%s portfolio_id=%s", start_date, end_date, portfolio_id)
-            logger.info("[MWRR] flows(before terminal) count=%d: %s", len(flows), [(d.isoformat(), float(v)) for d, v in flows])
+            logger.info("MWRR window=%s..%s pid=%s flows=%s", start_date, end_date, portfolio_id,
+                        [(d.isoformat(), float(v)) for d, v in flows])
 
             if end_mv is None:
-                logger.warning("[MWRR] no valuation for end_date=%s -> return 0", end_date)
                 return D("0")
-
             if not flows:
-                logger.info("[MWRR] no external flows in window -> return 0")
                 return D("0")
 
-            flows = list(flows) + [(end_date, self._dec(end_mv))]
-            logger.info("[MWRR] terminal MV at %s = %.6f", end_date, float(end_mv))
-
+            flows = list(flows) + [(end_date, end_mv if isinstance(end_mv, Decimal) else D(str(end_mv)))]
             neg = any(cf < 0 for _, cf in flows)
             pos = any(cf > 0 for _, cf in flows)
             if not (neg and pos):
-                logger.info("[MWRR] flows do not have both signs -> return 0; flows=%s", [(d.isoformat(), float(v)) for d, v in flows])
                 return D("0")
 
-            irr_float = self._xirr_bisect_or_newton(flows)
-            if irr_float is None or math.isnan(irr_float) or math.isinf(irr_float):
-                logger.info("[MWRR] solver returned None/NaN/Inf -> return 0")
+            irr = self._xirr(flows)
+            if irr is None or math.isnan(irr) or math.isinf(irr):
                 return D("0")
-
-            logger.info("[MWRR] result r=%.12f (fraction)", irr_float)
-            return D(str(irr_float))
-
-        except Exception as e:
-            logger.exception("[MWRR] exception -> return 0: %s", e)
+            return D(str(irr))
+        except Exception:
+            logger.exception("MWRR failed")
             return D("0")
 
-    # ========== Components & Breakdown ==========
-    def _sum_amount_for_types(self, portfolio_id: int, start_date: date, end_date: date, types: List[TransactionType]) -> Decimal:
+    # ---------------------------
+    # Breakdown (reconciliation)
+    # ---------------------------
+    def _sum_signed(self, portfolio_id: int, start_date: date, end_date: date, types: List[TransactionType], sign_factor: int) -> Decimal:
         t = Transaction
-        amount_rate_expr = self._sql_amount_expr(t)
-
+        amt = self._amount_sql(t)
         val = (
-            self.db.query(func.coalesce(func.sum(amount_rate_expr), literal(0)))
+            self.db.query(func.coalesce(func.sum(sign_factor * amt), literal(0)))
             .filter(
                 t.portfolio_id == portfolio_id,
                 t.timestamp >= datetime.combine(start_date, datetime.min.time()),
@@ -572,7 +469,7 @@ class PortfolioMetricsService:
             )
             .scalar()
         )
-        return self._dec(val or 0)
+        return val if isinstance(val, Decimal) else D(str(val or 0))
 
     def calculate_returns_breakdown(self, portfolio_id: int, start_date: date, end_date: date) -> Dict:
         start_val = self._valuation_as_of(portfolio_id, start_date)
@@ -580,20 +477,22 @@ class PortfolioMetricsService:
         if start_val is None or end_val is None:
             return {}
 
-        deposits = self._sum_amount_for_types(portfolio_id, start_date, end_date, [TransactionType.DEPOSIT])
-        withdrawals = self._sum_amount_for_types(portfolio_id, start_date, end_date, [TransactionType.WITHDRAWAL])
+        deposits = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.DEPOSIT], +1)
+        withdrawals = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.WITHDRAWAL], +1)
         net_external = deposits - withdrawals  # +deposit -withdrawal (TWR convention)
 
-        dividends = self._sum_amount_for_types(portfolio_id, start_date, end_date, [TransactionType.DIVIDEND])
-        interest = self._sum_amount_for_types(portfolio_id, start_date, end_date, [TransactionType.INTEREST])
-        fee_type = getattr(TransactionType, "FEE", None)
-        tax_type = getattr(TransactionType, "TAX", None)
-        fees = self._sum_amount_for_types(portfolio_id, start_date, end_date, [fee_type]) if fee_type else D("0")
-        taxes = self._sum_amount_for_types(portfolio_id, start_date, end_date, [tax_type]) if tax_type else D("0")
+        dividends = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.DIVIDEND], +1)
+        interest = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.INTEREST], +1)
+        fees = self._sum_signed(
+            portfolio_id, start_date, end_date, [getattr(TransactionType, "FEE", TransactionType.DEPOSIT)], +1
+        )
+        taxes = self._sum_signed(
+            portfolio_id, start_date, end_date, [getattr(TransactionType, "TAX", TransactionType.DEPOSIT)], +1
+        )
 
-        total_pnl = end_val - start_val - net_external
+        total_pnl = (end_val - start_val) - net_external
 
-        realized_approx = D("0")  # until lot engine in place
+        realized_approx = D("0")  # no lot engine here
         currency_effects = D("0")
         unrealized_residual = total_pnl - (realized_approx + dividends + interest - fees - taxes + currency_effects)
 
@@ -620,7 +519,9 @@ class PortfolioMetricsService:
             },
         }
 
-    # ========== Aggregated ==========
+    # ---------------------------
+    # Aggregated for one period
+    # ---------------------------
     def calculate_period_returns(self, portfolio_id: int, end_date: date, period: str) -> Dict:
         start_date = self.get_period_start_date(portfolio_id, end_date, period)
         if not start_date:
