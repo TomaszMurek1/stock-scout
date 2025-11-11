@@ -1,293 +1,181 @@
 # api/portfolio_metrics.py
+from __future__ import annotations
+
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Dict, List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import date, datetime, timedelta
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
 
-from database.base import get_db
-from database.portfolio import Portfolio
 from services.portfolio_metrics_service import PortfolioMetricsService
+from database.base import get_db  # adjust import if your dependency is elsewhere
 
-router = APIRouter(prefix="/api/portfolio-metrics", tags=["Portfolio Metrics"])
+router = APIRouter(prefix="/api/portfolio-metrics", tags=["portfolio-metrics"])
 
-@router.get("/{portfolio_id}/returns")
-def get_portfolio_returns(
-    portfolio_id: int,
-    period: str = Query("ytd", description="Time period: daily, weekly, monthly, quarterly, yearly, ytd, qtd, mtd, wtd, itd"),
-    end_date: Optional[date] = Query(None, description="End date (default: today)"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get portfolio returns with breakdown for specified period
-    """
-    # Validate portfolio exists
-    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio not found")
-    
-    # Set end date to today if not provided
-    end_date = end_date or date.today()
-    
-    # Validate period
-    valid_periods = ["daily", "weekly", "monthly", "quarterly", "yearly", "ytd", "qtd", "mtd", "wtd", "itd"]
-    if period not in valid_periods:
-        raise HTTPException(status_code=400, detail=f"Invalid period. Must be one of: {', '.join(valid_periods)}")
-    
-    # Calculate metrics
-    metrics_service = PortfolioMetricsService(db)
-    period_data = metrics_service.calculate_period_returns(portfolio_id, end_date, period)
-    
-    if not period_data:
-        raise HTTPException(status_code=400, detail="Could not calculate returns for the specified period")
-    
-    # Convert to percentages for display and handle edge cases
-    ttwr_percent = float(period_data['ttwr'] * 100) if period_data['ttwr'] is not None else 0.0
-    mwrr_percent = float(period_data['mwrr'] * 100) if period_data['mwrr'] is not None else 0.0
-    
-    response = {
-        "portfolio_id": portfolio_id,
-        "period": period,
-        "start_date": period_data['start_date'].isoformat(),
-        "end_date": period_data['end_date'].isoformat(),
-        "returns": {
-            "ttwr": ttwr_percent,
-            "mwrr": mwrr_percent,
-        },
-        "breakdown": {
-            "unrealized_gains": float(period_data['breakdown'].get('unrealized_gains', 0)),
-            "realized_gains": float(period_data['breakdown'].get('realized_gains', 0)),
-            "dividend_income": float(period_data['breakdown'].get('dividend_income', 0)),
-            "interest_income": float(period_data['breakdown'].get('interest_income', 0)),
-            "currency_effects": float(period_data['breakdown'].get('currency_effects', 0)),
-            "fees_paid": float(period_data['breakdown'].get('fees_paid', 0)),
-            "total_return": float(period_data['breakdown'].get('total_return', 0)),
-        },
-        "values": {
-            "beginning_value": float(period_data['breakdown'].get('beginning_value', 0)),
-            "ending_value": float(period_data['breakdown'].get('ending_value', 0)),
-        }
-    }
-    
-    return response
+# Periods we compute
+PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
 
 
+# ---- helpers ----
+def _to_float(v):
+    if v is None:
+        return None
+    if isinstance(v, Decimal):
+        return float(v)
+    if isinstance(v, (int, float)):
+        return float(v)
+    return v
+
+
+def _serialize_breakdown(breakdown: Dict):
+    """Convert all Decimals in the breakdown dict to floats, preserve structure."""
+    if breakdown is None:
+        return {}
+    if isinstance(breakdown, dict):
+        out = {}
+        for k, v in breakdown.items():
+            out[k] = _serialize_breakdown(v)
+        return out
+    if isinstance(breakdown, list):
+        return [_serialize_breakdown(x) for x in breakdown]
+    return _to_float(breakdown)
+
+
+def _parse_as_of_date(as_of: Optional[str]) -> date:
+    if not as_of:
+        return date.today()
+    try:
+        # accept YYYY-MM-DD
+        return datetime.strptime(as_of, "%Y-%m-%d").date()
+    except ValueError:
+        # accept ISO datetime and take date part
+        try:
+            return datetime.fromisoformat(as_of).date()
+        except Exception:
+            raise HTTPException(status_code=400, detail=f"Invalid as_of_date: {as_of}")
+
+
+# ===========================
+# GET /{portfolio_id}/performance  (summary)
+# ===========================
 @router.get("/{portfolio_id}/performance")
 def get_portfolio_performance(
     portfolio_id: int,
-    end_date: Optional[date] = Query(None, description="End date (default: today)"),
+    as_of_date: Optional[str] = Query(None, description="Defaults to today (server date)"),
+    as_percent: bool = Query(False, description="Kept for backward compatibility; ignored, returns fraction."),
+    include_breakdown: bool = Query(False, description="If true, include per-period breakdown + dates in response."),
     db: Session = Depends(get_db),
 ):
     """
-    Returns fraction-based performance for standard windows in a structured payload:
-    {
-      unit: "fraction",
-      performance: {
-        "ttwr": {...},              # whole-portfolio TTWR (cash included)
-        "ttwr_invested": {...},     # 'true investment performance' (invested-only TTWR; trades neutralized)
-        "mwrr": {...}               # investor money-weighted XIRR
-      }
-    }
+    Returns performance summary (ttwr, ttwr_invested, mwrr) as fractions.
+    If include_breakdown=true, also returns start_date/end_date per period and breakdowns.
     """
-    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio not found")
-
-    end_date = end_date or date.today()
     svc = PortfolioMetricsService(db)
+    end_date = _parse_as_of_date(as_of_date)
 
-    frames = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
-    ttwr: Dict[str, float] = {}
-    ttwr_invested: Dict[str, float] = {}
-    mwrr: Dict[str, float] = {}
+    # main blocks
+    ttwr_map: Dict[str, float] = {}
+    inv_map: Dict[str, float] = {}
+    mwrr_map: Dict[str, float] = {}
 
-    for f in frames:
-        data = svc.calculate_period_returns(portfolio_id, end_date, f)
-        if not data:
-            ttwr[f] = 0.0
-            ttwr_invested[f] = 0.0
-            mwrr[f] = 0.0
+    # Optional period meta / breakdowns
+    start_dates: Dict[str, str] = {}
+    end_dates: Dict[str, str] = {}
+    breakdowns: Dict[str, dict] = {}
+
+    for p in PERIODS:
+        start = svc.get_period_start_date(portfolio_id, end_date, p)
+        if not start:
+            # skip if portfolio has no history yet
             continue
 
-        ttwr[f] = float(data["ttwr"])
-        ttwr_invested[f] = float(data["ttwr_invested"])
-        mwrr[f] = float(data["mwrr"])
+        ttwr = svc.calculate_ttwr(portfolio_id, start, end_date)
+        ttwr_invested = svc.calculate_ttwr_invested_only(portfolio_id, start, end_date)
+        mwrr = svc.calculate_mwrr(portfolio_id, start, end_date)
 
-    return {
+        ttwr_map[p] = _to_float(ttwr or 0)
+        inv_map[p] = _to_float(ttwr_invested or 0)
+        mwrr_map[p] = _to_float(mwrr or 0)
+
+        if include_breakdown:
+            bd = svc.calculate_returns_breakdown(portfolio_id, start, end_date)
+            breakdowns[p] = _serialize_breakdown(bd)
+            start_dates[p] = start.isoformat()
+            end_dates[p] = end_date.isoformat()
+
+    response = {
         "portfolio_id": portfolio_id,
         "as_of_date": end_date.isoformat(),
         "unit": "fraction",
         "performance": {
-            "ttwr": ttwr,
-            "ttwr_invested": ttwr_invested,
-            "mwrr": mwrr,
+            "ttwr": ttwr_map,
+            "ttwr_invested": inv_map,
+            "mwrr": mwrr_map,
         },
         "notes": {
             "ttwr": "Whole-portfolio time-weighted return (includes cash). External flows (deposits/withdrawals) are neutralized daily.",
             "ttwr_invested": "Invested-only time-weighted return (excludes cash). Treats BUY as +flow and SELL as -flow to neutralize trading; reflects pure market performance of held assets.",
-            "mwrr": "Money-weighted XIRR (investor IRR) using deposits(-), withdrawals(+), dividends(+), interest(+), fees/taxes(-), and terminal market value (+)."
+            "mwrr": "Money-weighted XIRR (investor IRR) using deposits(-), withdrawals(+), dividends(+), interest(+), fees/taxes(-), and terminal market value (+).",
         },
     }
 
-
-def _to_float(o: Any):
-    """
-    Recursively convert Decimals (and other numeric types) to float, leave dict/list structure intact.
-    """
-    # Avoid importing Decimal here; compare by duck-typing
-    try:
-        from decimal import Decimal
-        if isinstance(o, Decimal):
-            return float(o)
-    except Exception:
-        pass
-
-    if isinstance(o, dict):
-        return {k: _to_float(v) for k, v in o.items()}
-    if isinstance(o, (list, tuple)):
-        return type(o)(_to_float(x) for x in o)
-    if isinstance(o, (int, float)) or o is None:
-        return o
-    # Fallback: try cast, else return as-is (strings, notes)
-    try:
-        return float(o)
-    except Exception:
-        return o
-
-
-@router.get("/{portfolio_id}/performance/details")
-def get_portfolio_performance_details(
-    portfolio_id: int,
-    period: str = Query("ytd", description="1d,1w,1m,3m,6m,1y,ytd,itd,qtd,mtd,wtd"),
-    end_date: Optional[date] = Query(None, description="End date (default: today)"),
-    db: Session = Depends(get_db),
-):
-    """
-    Detailed view for a single period, including valuations, cash-flow summary, and a reconciling P&L.
-    All figures are returned as fractions (e.g., 0.025 = 2.5%).
-    """
-    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio not found")
-
-    end_date = end_date or date.today()
-    svc = PortfolioMetricsService(db)
-
-    data = svc.calculate_period_returns(portfolio_id, end_date, period)
-    if not data:
-        raise HTTPException(status_code=400, detail="Could not calculate returns for the specified period")
-
-    # Flatten Decimals to floats safely but preserve nested structure:
-    br = _to_float(data.get("breakdown", {}))
-
-    return {
-        "portfolio_id": portfolio_id,
-        "period": period,
-        "unit": "fraction",
-        "start_date": data["start_date"].isoformat(),
-        "end_date": data["end_date"].isoformat(),
-        "returns": _to_float({
-            "ttwr": data["ttwr"],
-            "ttwr_invested": data["ttwr_invested"],
-            "mwrr": data["mwrr"],
-        }),
-        "valuations": {
-            "beginning_value": br.get("beginning_value", 0.0),
-            "ending_value": br.get("ending_value", 0.0),
-        },
-        "cash_flows": br.get("cash_flows", {}),
-        "income_expenses": br.get("income_expenses", {}),
-        "pnl": br.get("pnl", {}),
-        "notes": {
-            "performance_fields": "All performance figures are fractions (e.g., 0.025 = 2.5%).",
-            "reconciliation": "EndingValue - BeginningValue - NetExternalFlows = TotalPnL (allocated across dividends, interest, fees, taxes, realized (approx), unrealized (residual), currency effects)."
+    if include_breakdown:
+        response["period_meta"] = {
+            "start_date": start_dates,
+            "end_date": end_dates,
         }
-    }
+        response["breakdowns"] = breakdowns
 
+    return response
+
+
+# ===========================
+# GET /{portfolio_id}/performance/details  (rich per-period objects)
+# ===========================
 @router.get("/{portfolio_id}/performance/details")
 def get_portfolio_performance_details(
     portfolio_id: int,
-    end_date: Optional[date] = Query(None, description="End date (default: today)"),
+    as_of_date: Optional[str] = Query(None, description="Defaults to today (server date)"),
+    periods: Optional[str] = Query(None, description="Comma-separated list; default: 1d,1w,1m,3m,6m,1y,ytd,itd"),
     db: Session = Depends(get_db),
 ):
-    end_date = end_date or date.today()
+    """
+    Verbose endpoint: for each period return:
+      - start_date, end_date
+      - ttwr, ttwr_invested, mwrr
+      - breakdown block (reconciliation)
+    """
     svc = PortfolioMetricsService(db)
-    frames = ["1d","1w","1m","3m","6m","1y","ytd","itd"]
+    end_date = _parse_as_of_date(as_of_date)
+    requested = [p.strip().lower() for p in (periods.split(",") if periods else PERIODS)]
 
-    details = {}
-    for f in frames:
-        start = svc.get_period_start_date(portfolio_id, end_date, f)
+    out: Dict[str, dict] = {}
+
+    for p in requested:
+        start = svc.get_period_start_date(portfolio_id, end_date, p)
         if not start:
+            # If no data to anchor this period, skip
             continue
-        ttwr = svc.calculate_ttwr(portfolio_id, start, end_date)
-        mwrr = svc.calculate_mwrr(portfolio_id, start, end_date)
-        breakdown = svc.calculate_returns_breakdown(portfolio_id, start, end_date)
 
-        details[f] = {
-            "start_date": start.isoformat(),
-            "end_date": end_date.isoformat(),
-            "ttwr_fraction": float(ttwr),
-            "mwrr_fraction": float(mwrr),
-            "ttwr_percent": float(ttwr * 100),
-            "mwrr_percent": float(mwrr * 100),
-            "breakdown": {k: float(v) for k,v in breakdown.items()},
+        data = svc.calculate_period_returns(portfolio_id, end_date, p)
+        # data includes: start_date, end_date, ttwr, ttwr_invested, mwrr, breakdown
+
+        out[p] = {
+            "start_date": data.get("start_date").isoformat() if data.get("start_date") else None,
+            "end_date": data.get("end_date").isoformat() if data.get("end_date") else None,
+            "ttwr": _to_float(data.get("ttwr")),
+            "ttwr_invested": _to_float(data.get("ttwr_invested")),
+            "mwrr": _to_float(data.get("mwrr")),
+            "breakdown": _serialize_breakdown(data.get("breakdown")),
         }
 
-    return {
-        "portfolio_id": portfolio_id,
-        "as_of_date": end_date.isoformat(),
-        "details": details,
-    }
+    if not out:
+        raise HTTPException(status_code=404, detail="No periods available for this portfolio")
 
-@router.get("/{portfolio_id}/returns/multiple")
-def get_multiple_period_returns(
-    portfolio_id: int,
-    periods: str = Query("1m,3m,6m,1y,ytd", description="Comma-separated periods"),
-    end_date: Optional[date] = Query(None, description="End date (default: today)"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get returns for multiple periods in one request
-    """
-    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio not found")
-    
-    end_date = end_date or date.today()
-    period_list = [p.strip() for p in periods.split(",")]
-    
-    metrics_service = PortfolioMetricsService(db)
-    results = {}
-    
-    for period in period_list:
-        try:
-            period_data = metrics_service.calculate_period_returns(portfolio_id, end_date, period)
-            
-            if period_data:
-                results[period] = {
-                    "ttwr": float(period_data['ttwr'] * 100) if period_data['ttwr'] else 0.0,
-                    "mwrr": float(period_data['mwrr'] * 100) if period_data['mwrr'] else 0.0,
-                    "start_date": period_data['start_date'].isoformat(),
-                    "end_date": period_data['end_date'].isoformat()
-                }
-            else:
-                results[period] = {
-                    "ttwr": 0.0,
-                    "mwrr": 0.0,
-                    "start_date": end_date.isoformat(),
-                    "end_date": end_date.isoformat()
-                }
-                
-        except Exception:
-            results[period] = {
-                "ttwr": 0.0,
-                "mwrr": 0.0,
-                "start_date": end_date.isoformat(),
-                "end_date": end_date.isoformat()
-            }
-    
     return {
         "portfolio_id": portfolio_id,
         "as_of_date": end_date.isoformat(),
-        "returns": results
+        "unit": "fraction",
+        "periods": out,
     }
