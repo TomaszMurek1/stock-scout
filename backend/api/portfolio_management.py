@@ -69,6 +69,51 @@ router = APIRouter()
 from database.portfolio import Portfolio
 
 
+# ---------- Request models ----------
+
+class _CashFlowBase(BaseModel):
+    amount: Decimal = Field(..., gt=0, description="Cash amount in the transaction currency")
+    currency: Optional[str] = Field(None, description="3-letter currency code (defaults to portfolio base)")
+    currency_rate: Optional[Decimal] = Field(
+        None, description="FX rate to convert amount->base (omit or 1.0 if same as base)"
+    )
+    event_date: date = Field(..., description="Effective date (YYYY-MM-DD)")
+    event_time: Optional[time] = Field(None, description="Optional time, default end of day")
+    note: Optional[str] = None
+
+    @field_validator("currency")
+    @classmethod
+    def _norm_currency(cls, v):
+        if v is None:
+            return v
+        v = v.strip().upper()
+        if len(v) != 3:
+            raise ValueError("currency must be a 3-letter code")
+        return v
+
+    def to_timestamp(self) -> datetime:
+        return datetime.combine(self.event_date, self.event_time or time(23, 59, 59))
+
+
+class DividendIn(_CashFlowBase):
+    ticker: str = Field(..., description="Ticker receiving the dividend")
+
+    @field_validator("ticker")
+    @classmethod
+    def _norm_ticker(cls, v):
+        v = (v or "").strip().upper()
+        if not v:
+            raise ValueError("ticker is required")
+        return v
+
+
+class InterestIn(_CashFlowBase):
+    # For now we tie interest to the default cash account of the portfolio.
+    # If you add multi-account support later, accept account_id here.
+    pass
+
+
+
 # If you have a StockPriceHistory model and want to use it elsewhere, you can import it:
 # from database.stock_price_history import StockPriceHistory
 

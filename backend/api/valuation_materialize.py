@@ -65,6 +65,51 @@ def get_first_tx_date(db: Session, portfolio_id: int) -> date | None:
     )
     return dt.date() if dt else None
 
+def _calculate_cash_balance(db: Session, portfolio_id: int, as_of: date, base_ccy: str) -> Decimal:
+    """
+    Calculate actual cash balance by processing ALL cash-affecting transactions
+    """
+    cash_balance = Decimal("0")
+    
+    # Get all transactions that affect cash
+    cash_transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.portfolio_id == portfolio_id,
+            func.date(Transaction.timestamp) <= as_of
+        )
+        .order_by(Transaction.timestamp)
+        .all()
+    )
+    
+    for tx in cash_transactions:
+        amount_base = tx.quantity * tx.currency_rate
+        
+        if tx.transaction_type == TransactionType.DEPOSIT:
+            cash_balance += amount_base
+        elif tx.transaction_type == TransactionType.WITHDRAWAL:
+            cash_balance -= amount_base
+        elif tx.transaction_type == TransactionType.DIVIDEND:
+            cash_balance += amount_base
+        elif tx.transaction_type == TransactionType.INTEREST:
+            cash_balance += amount_base
+        elif tx.transaction_type == TransactionType.FEE:
+            cash_balance -= amount_base
+        elif tx.transaction_type == TransactionType.TAX:
+            cash_balance -= amount_base
+        elif tx.transaction_type == TransactionType.BUY:
+            # BUY reduces cash by total cost
+            total_cost = (tx.quantity * tx.price + (tx.fee or 0)) * tx.currency_rate
+            cash_balance -= total_cost
+        elif tx.transaction_type == TransactionType.SELL:
+            # SELL increases cash by total proceeds
+            total_proceeds = (tx.quantity * tx.price - (tx.fee or 0)) * tx.currency_rate
+            cash_balance += total_proceeds
+    
+    return cash_balance
+
+
+
 
 # IMPORTANT!
 # Call rematerialize_from_tx(...) right after insert/update/delete a transaction.
@@ -120,29 +165,18 @@ def _day_net_contributions(
     db: Session, portfolio_id: int, day: date, base_ccy: str
 ) -> Decimal:
     """
-    Daily net external cash flow in base currency.
-
-    Includes:
-      + DEPOSIT
-      - WITHDRAWAL
-      - FEE (standalone)
-      - TAX
-      - BUY      -> cash OUT:  (qty * price * fx) + (fee * fx)
-      + SELL     -> cash IN :  (qty * price * fx) - (fee * fx)
-      + DIVIDEND -> cash IN :  amount * fx
-      + INTEREST -> cash IN :  amount * fx
-
-    Transfer_in/out are internal and excluded.
+    CORRECTED: Daily net EXTERNAL cash flow in base currency.
+    
+    Only includes true external cash flows, not internal portfolio movements.
     """
-    contributing_types: tuple[TransactionType, ...] = (
-        TransactionType.DEPOSIT,
-        TransactionType.WITHDRAWAL,
-        TransactionType.FEE,
-        TransactionType.TAX,
-        TransactionType.BUY,
-        TransactionType.SELL,
-        TransactionType.DIVIDEND,
-        TransactionType.INTEREST,
+    # ONLY external cash flows that move money in/out of portfolio
+    external_types = (
+        TransactionType.DEPOSIT,    # Money IN
+        TransactionType.WITHDRAWAL, # Money OUT  
+        TransactionType.FEE,        # Money OUT (external fees)
+        TransactionType.TAX,        # Money OUT (external taxes)
+        TransactionType.DIVIDEND,   # Money IN (from external source)
+        TransactionType.INTEREST    # Money IN (from external source)
     )
 
     rows: Iterable[Transaction] = (
@@ -153,7 +187,7 @@ def _day_net_contributions(
                 func.date(Transaction.timestamp) >= day,
                 func.date(Transaction.timestamp) <= day,
             ),
-            Transaction.transaction_type.in_(contributing_types),
+            Transaction.transaction_type.in_(external_types),
         )
         .all()
     )
@@ -176,16 +210,8 @@ def _day_net_contributions(
             total -= _dec(tx.quantity) * fx
         elif ttype == TransactionType.TAX:
             total -= _dec(tx.quantity) * fx
-        elif ttype == TransactionType.BUY:
-            gross = _dec(tx.price) * _dec(tx.quantity) * fx
-            fee   = _dec(getattr(tx, "fee", 0)) * fx
-            total -= (gross + fee)
-        elif ttype == TransactionType.SELL:
-            gross = _dec(tx.price) * _dec(tx.quantity) * fx
-            fee   = _dec(getattr(tx, "fee", 0)) * fx
-            total += (gross - fee)
         elif ttype == TransactionType.DIVIDEND:
-            total += _dec(tx.quantity) * fx   # or tx.total_value if you store it there
+            total += _dec(tx.quantity) * fx
         elif ttype == TransactionType.INTEREST:
             total += _dec(tx.quantity) * fx
 
@@ -212,8 +238,7 @@ def materialize_day(
 
     # === 2) Cash via rolling balance (correct for BUY/SELL and other flows) ===
     net_contributions = _day_net_contributions(db, portfolio_id, as_of, base_ccy)
-    prev_cash = _prev_by_cash(db, portfolio_id, as_of)   # yesterday's cash
-    by_cash = (prev_cash + net_contributions).quantize(Decimal("0.0001"))
+    by_cash = _calculate_cash_balance(db, portfolio_id, as_of, base_ccy)
 
     # === 3) Build buckets from preview "securities" ===
     lines = preview.get("securities", {}).get("lines", [])

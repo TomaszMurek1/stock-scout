@@ -16,7 +16,6 @@ from .base import Base
 
 
 
-
 class Portfolio(Base):
     __tablename__ = "portfolios"
 
@@ -40,10 +39,11 @@ class Portfolio(Base):
         back_populates="portfolio",
         cascade="all, delete-orphan",
     )
+    valuations = relationship("PortfolioValuationDaily", back_populates="portfolio")
+    returns = relationship("PortfolioReturns", back_populates="portfolio")
 
     def __repr__(self):
         return f"<Portfolio(id={self.id}, name={self.name}, user_id={self.user_id})>"
-
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -51,7 +51,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
-    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=True)  # CHANGED: nullable=True
 
     transaction_type = Column(SQLAlchemyEnum(TransactionType, name="transactiontype"), nullable=False)
     quantity = Column(Numeric(precision=18, scale=4), nullable=False, default=0)
@@ -70,13 +70,49 @@ class Transaction(Base):
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     account = relationship("Account")
 
+    # Helper properties
+    @property
+    def is_external_cash_flow(self):
+        """Identify transactions that represent external money moving in/out of portfolio"""
+        external_types = {
+            TransactionType.DEPOSIT,    # Money IN
+            TransactionType.WITHDRAWAL, # Money OUT  
+            TransactionType.FEE,        # Money OUT
+            TransactionType.TAX,        # Money OUT
+            TransactionType.DIVIDEND,   # Money IN (from external source)
+            TransactionType.INTEREST    # Money IN (from external source)
+        }
+        return self.transaction_type in external_types
+
+    @property
+    def is_internal_transfer(self):
+        """Identify transactions that move money within portfolio"""
+        internal_types = {
+            TransactionType.BUY,
+            TransactionType.SELL,
+            TransactionType.TRANSFER_IN,
+            TransactionType.TRANSFER_OUT
+        }
+        return self.transaction_type in internal_types
+
+    @property
+    def cash_flow_amount_base(self):
+        """Get the cash flow amount in base currency for external flows"""
+        if not self.is_external_cash_flow:
+            return 0
+            
+        amount = self.quantity * self.currency_rate
+        # Withdrawals, fees, and taxes are negative cash flows
+        if self.transaction_type in [TransactionType.WITHDRAWAL, TransactionType.FEE, TransactionType.TAX]:
+            amount = -amount
+            
+        return amount
 
     def __repr__(self):
         return (
             f"<Transaction(id={self.id}, type={self.transaction_type}, "
             f"user_id={self.user_id}, fee={self.fee})>"
         )
-
 
 class FavoriteStock(Base):
     __tablename__ = "favorite_stocks"
