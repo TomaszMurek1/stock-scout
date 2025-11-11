@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 
 SECRET_KEY = "f9bf78b9a18ce6d46a0cd2b0b86df9da"  # Use env var in production
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 2
+ACCESS_TOKEN_EXPIRE_MINUTES = 240
 REFRESH_TOKEN_EXPIRE_DAYS = 1
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")

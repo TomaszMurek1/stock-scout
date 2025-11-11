@@ -9,7 +9,6 @@ from api.positions_service import (
     reverse_transaction_from_position,
     apply_transaction_to_position,
 )
-from database.company import Company
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
 

@@ -1,3 +1,4 @@
+import sys, logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import stocks_price_data, valuation_preview
@@ -27,6 +28,12 @@ from api import (
 )
 from database.base import Base, engine
 from core.openapi_overrides import add_bearer_auth
+
+logging.basicConfig(
+    level=logging.DEBUG,  # <-- makes root logger DEBUG
+    format="[%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stdout,
+)
 
 # Initialize FastAPI
 app = FastAPI(

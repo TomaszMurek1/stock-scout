@@ -11,7 +11,6 @@ from .security import (
     ALGORITHM,
     create_access_token,
     create_refresh_token,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
     get_password_hash,
     verify_password,
 )

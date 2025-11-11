@@ -1,8 +1,8 @@
 from datetime import datetime, date, time
 from decimal import Decimal
 from enum import Enum as PyEnum
-from typing import  List, Optional
-from pydantic import BaseModel, ConfigDict, field_validator
+from typing import  Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TransactionType(PyEnum):
@@ -159,19 +159,63 @@ class TransactionOut(BaseModel):
     currency: str
     currency_rate: float
 
+
+class PortfolioMini(BaseModel):
+    id: int
+    name: str
+    base_currency: str
+
+
 class PortfolioMgmtTotals(BaseModel):
-    total_portfolio_value: Decimal
-    total_invested_value: Decimal
-    total_gain_loss: Decimal
-    percentage_change: float | None  # None if invested = 0
+    # Point-in-time, whole portfolio
+    total_portfolio_value: Decimal                       # MV_open + cash (as_of)
+    cash_balance: Decimal                                # by_cash (as_of)
+    market_value_open: Decimal                           # MV of open positions (as_of)
+
+    # Snapshot metrics on OPEN positions only
+    cost_basis_open: Decimal                             # FIFO cost of open lots (txn-based)
+    percentage_change_open: Optional[float]              # (MV_open - cost_basis_open)/cost_basis_open
+
+    # Snapshot total return for OPEN positions (income added)
+    dividends_interest_total: Decimal                    # total dividends + interest (all time to as_of)
+    total_return_open: Optional[float]                   # ((MV_open - cost_basis_open) + income)/cost_basis_open
+
+    # Snapshot after-costs total return for OPEN positions (income - costs)
+    fees_standalone_total: Decimal                       # sum of standalone FEE/TAX transactions
+    buy_sell_fees_total: Decimal                         # sum of fees on BUY/SELL transactions
+    taxes_total: Decimal                                 # TAX total if you keep it separately
+    total_costs: Decimal                                 # buy_sell_fees_total + fees_standalone_total + taxes_total
+    total_return_open_after_costs: Optional[float]       # ((MV_open - cost_basis_open) + income - costs)/cost_basis_open
+
+    # Cash-flow view (external)
+    net_external_cash: Decimal                           # Σ net external flows to date (deposits - withdrawals +/- transfers etc.)
+
+
 
 class PortfolioMgmtSeriesItem(BaseModel):
     date: date
     total_value: Decimal
-    net_contributions: Decimal
+    net_contributions: Decimal  # daily PVD external+internal cash effect stored in your table
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PeriodReturns(BaseModel):
+    YTD: Optional[float] = None
+    one_year: Optional[float] = Field(default=None, alias="1Y")
+    two_years: Optional[float] = Field(default=None, alias="2Y")
+
+    # allow populating by field name; FastAPI will serialize using aliases
+    model_config = ConfigDict(populate_by_name=True)
+    
+class PortfolioHeader(BaseModel):
+    id: int
+    name: str
+    base_currency: str
 
 class PortfolioMgmtResponse(BaseModel):
-    portfolio: dict  # { id, name, base_currency }
+    portfolio: PortfolioHeader
     as_of: date
     totals: PortfolioMgmtTotals
-    series: list[PortfolioMgmtSeriesItem]
+    period_returns: PeriodReturns
+    series: List[Dict]   
