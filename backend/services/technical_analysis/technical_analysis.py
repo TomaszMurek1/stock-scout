@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from database.company import Company
 from database.market import Market
 from database.stock_data import StockPriceHistory
-from services.utils.sanitize import convert_value
+from utils.sanitize import convert_value
 
 logger = logging.getLogger(__name__)
 

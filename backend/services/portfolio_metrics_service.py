@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 from sqlalchemy import case, func, literal
 from sqlalchemy.orm import Session
 
+from utils.portfolio_utils import  serialize_breakdown
 from database.portfolio import Transaction, TransactionType
 from database.valuation import PortfolioValuationDaily
 
@@ -21,6 +22,8 @@ from services.metrics_rules import (
     TWR_SIGN_TRADES,
 )
 
+
+PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
 # High precision for Decimal math
 getcontext().prec = 28
 D = Decimal
@@ -539,3 +542,56 @@ class PortfolioMetricsService:
             "mwrr": mwrr,
             "breakdown": breakdown,
         }
+    
+    def build_performance_summary(
+        self,
+        portfolio_id: int,
+        end_date: date,
+        include_breakdown: bool = False
+    ):
+        ttwr_map = {}
+        inv_map = {}
+        mwrr_map = {}
+        start_dates = {}
+        end_dates = {}
+        breakdowns = {}
+
+        for p in PERIODS:
+            start = self.get_period_start_date(portfolio_id, end_date, p)
+            if not start:
+                continue
+
+            ttwr = self.calculate_ttwr(portfolio_id, start, end_date)
+            ttwr_invested = self.calculate_ttwr_invested_only(portfolio_id, start, end_date)
+            mwrr = self.calculate_mwrr(portfolio_id, start, end_date)
+
+            ttwr_map[p] = float(ttwr or 0)
+            inv_map[p] = float(ttwr_invested or 0)
+            mwrr_map[p] = float(mwrr or 0)
+
+            if include_breakdown:
+                bd = self.calculate_returns_breakdown(portfolio_id, start, end_date)
+                breakdowns[p] = serialize_breakdown(bd)
+                start_dates[p] = start.isoformat()
+                end_dates[p] = end_date.isoformat()
+
+        result = {
+            "portfolio_id": portfolio_id,
+            "as_of_date": end_date.isoformat(),
+            "unit": "fraction",
+            "performance": {
+                "ttwr": ttwr_map,
+                "ttwr_invested": inv_map,
+                "mwrr": mwrr_map,
+            }
+        }
+
+        if include_breakdown:
+            result["period_meta"] = {
+                "start_date": start_dates,
+                "end_date": end_dates,
+            }
+            result["breakdowns"] = breakdowns
+
+        return result
+

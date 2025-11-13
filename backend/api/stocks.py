@@ -9,16 +9,16 @@ from database.financials import CompanyFinancials
 from database.stock_data import StockPriceHistory
 import requests
 import os
-from services.utils.cleaning import clean_nan_values
-from services.utils.comparables import build_peer_comparisons
-from services.utils.financial_utils import calculate_financial_ratios
-from services.utils.insights import (
+from utils.cleaning import clean_nan_values
+from utils.comparables import build_peer_comparisons
+from utils.financial_utils import calculate_financial_ratios
+from utils.insights import (
     build_extended_technical_analysis,
     build_financial_trends,
     build_investor_metrics,
 )
-from services.utils.sanitize import sanitize_numpy_types
-from services.utils.valuation import build_valuation_metrics
+from utils.sanitize import sanitize_numpy_types
+from utils.valuation import build_valuation_metrics
 from services.yfinance_data_update.data_update_service import ensure_fresh_data
 
 router = APIRouter()

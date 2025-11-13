@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from typing import List, Dict
 
-from services.utils.sanitize import sanitize_numpy_types
+from utils.sanitize import sanitize_numpy_types
 from database.financials import CompanyFinancialHistory, CompanyFinancials
 from database.company import Company
 from database.market import Market
@@ -18,7 +18,7 @@ from services.fundamentals.fetch_financial_data_executor import (
     get_first_valid_row,
     safe_get,
 )
-from services.utils.db_retry import retry_on_db_lock
+from utils.db_retry import retry_on_db_lock
 
 logger = logging.getLogger(__name__)
 
