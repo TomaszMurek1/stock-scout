@@ -3,15 +3,16 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from api.dependencies.portfolio import get_user_portfolio
 from services.portfolio_metrics_service import PortfolioMetricsService
-from database.base import get_db  # adjust import if your dependency is elsewhere
+from database.base import get_db
 
-router = APIRouter(prefix="/api/portfolio-metrics", tags=["Portfolio"])
+router = APIRouter()
 
 # Periods we compute
 PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
@@ -57,11 +58,11 @@ def _parse_as_of_date(as_of: Optional[str]) -> date:
 
 
 # ===========================
-# GET /{portfolio_id}/performance  (summary)
+# GET /performance  (summary)
 # ===========================
-@router.get("/{portfolio_id}/performance")
+@router.get("/performance")
 def get_portfolio_performance(
-    portfolio_id: int,
+    portfolio = Depends(get_user_portfolio),
     as_of_date: Optional[str] = Query(None, description="Defaults to today (server date)"),
     as_percent: bool = Query(False, description="Kept for backward compatibility; ignored, returns fraction."),
     include_breakdown: bool = Query(False, description="If true, include per-period breakdown + dates in response."),
@@ -71,6 +72,7 @@ def get_portfolio_performance(
     Returns performance summary (ttwr, ttwr_invested, mwrr) as fractions.
     If include_breakdown=true, also returns start_date/end_date per period and breakdowns.
     """
+    portfolio_id = portfolio.id
     svc = PortfolioMetricsService(db)
     end_date = _parse_as_of_date(as_of_date)
 

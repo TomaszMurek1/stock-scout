@@ -1,24 +1,20 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session, selectinload
 from services.auth.auth import get_current_user
 from database.base import get_db
 from database.portfolio import Transaction
-from database.stock_data import StockPriceHistory
-from database.company import Company
+
 from api.portfolio_crud import get_or_create_portfolio
 from database.user import User
 from schemas.portfolio_schemas import (
-    PriceHistoryRequest,
     TransactionItem,
     TransactionType,
 )
-from collections import defaultdict
 
-router = APIRouter(prefix="", tags=["Portfolio performance"])
+router = APIRouter(prefix="", tags=["Portfolio"])
 
 
 def _parse_period(period: str) -> Optional[datetime]:
@@ -31,7 +27,7 @@ def _parse_period(period: str) -> Optional[datetime]:
 
 @router.get("/transactions", response_model=List[TransactionItem])
 def get_transactions(
-    period: str = Query("1M", description="Window like '1M','3M','6M','1Y' or 'All'"),
+    period: str = Query("All", description="Window like '1M','3M','6M','1Y' or 'All' which is default"),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):

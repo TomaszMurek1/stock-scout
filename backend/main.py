@@ -1,7 +1,7 @@
 import sys, logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import portfolio_metrics, stocks_price_data, valuation_preview
+from api import portfolio_dashboard, portfolio_metrics, portfolio_transactions, stocks_price_data, valuation_preview
 from api import valuation_materialize
 from api import valuation_series
 from api import accounts
@@ -18,7 +18,6 @@ from api import (
     compare,
     fx,
     portfolio_management,
-    portfolio_performance,
     stocks,
     golden_cross,
     admin,
@@ -65,7 +64,8 @@ app.include_router(fibonacci_elliott.router,          prefix="/api/fibo-waves", 
 app.include_router(fx.router,                         prefix="/api/fx-rate",              tags=["FX Rates"])
 app.include_router(portfolio_management.router,       prefix="/api/portfolio-management", tags=["Portfolio"])
 app.include_router(portfolio_metrics.router,          prefix="/api/portfolio-metrics", tags=["Portfolio"])
-app.include_router(portfolio_performance.router,      prefix="/api/portfolio-performace", tags=["Portfolio performance"],)
+app.include_router(portfolio_transactions.router,     prefix="/api/portfolio", tags=["Portfolio"])
+app.include_router(portfolio_dashboard.router,     prefix="/api/portfolio", tags=["Portfolio"],)
 app.include_router(positions_read.router,             prefix="/api/positions",     tags=["Positions"])
 app.include_router(stocks.router,                     prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(stocks_price_data.router,          prefix="/api/stock", tags=["Stock Data"])
