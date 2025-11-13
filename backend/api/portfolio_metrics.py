@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from services.portfolio_metrics_service import PortfolioMetricsService
 from database.base import get_db  # adjust import if your dependency is elsewhere
 
-router = APIRouter(prefix="/api/portfolio-metrics", tags=["portfolio-metrics"])
+router = APIRouter(prefix="/api/portfolio-metrics", tags=["Portfolio"])
 
 # Periods we compute
 PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
