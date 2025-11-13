@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, Date, Numeric, DateTime, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import Column, Integer, Date, Numeric, DateTime, ForeignKey, String, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from database.base import Base
 
@@ -30,3 +30,36 @@ class PortfolioValuationDaily(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     portfolio = relationship("Portfolio")
+
+
+class PortfolioReturns(Base):
+    __tablename__ = "portfolio_returns"
+    
+    id = Column(Integer, primary_key=True)
+    portfolio_id = Column(Integer, ForeignKey("portfolios.id"), nullable=False)
+    date = Column(Date, nullable=False)
+    period = Column(String(10), nullable=False)  # 'daily', 'weekly', 'monthly', 'ytd', 'qtd', 'itd'
+    
+    # Core metrics
+    ttwr = Column(Numeric(10, 6))  # Time-Weighted Return
+    mwrr = Column(Numeric(10, 6))  # Money-Weighted Return
+    
+    # Returns breakdown
+    unrealized_gains = Column(Numeric(18, 4), default=0)
+    realized_gains = Column(Numeric(18, 4), default=0)
+    dividend_income = Column(Numeric(18, 4), default=0)
+    interest_income = Column(Numeric(18, 4), default=0)
+    currency_effects = Column(Numeric(18, 4), default=0)
+    fees_paid = Column(Numeric(18, 4), default=0)
+    total_return = Column(Numeric(18, 4), default=0)
+    
+    # Denormalized for performance
+    beginning_value = Column(Numeric(18, 4))
+    ending_value = Column(Numeric(18, 4))
+    net_cash_flows = Column(Numeric(18, 4))
+    
+    portfolio = relationship("Portfolio")
+    __table_args__ = (
+        UniqueConstraint("portfolio_id", "date", "period", name="uq_portfolio_returns"),
+        Index("idx_portfolio_returns_date", "portfolio_id", "date"),
+    )

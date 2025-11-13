@@ -12,7 +12,7 @@ from database.market import Market
 from database.stock_data import StockPriceHistory
 from database.fx import FxRate
 
-router = APIRouter(prefix="/api/valuation", tags=["valuation"])
+router = APIRouter(prefix="/api/valuation", tags=["Valuation"])
 
 def _tx_key(tt) -> str:
     return (tt.value if hasattr(tt, "value") else str(tt)).upper()
@@ -68,7 +68,7 @@ def fx_to_base_for_currency(db: Session, as_of: date, src_ccy: str, base_ccy: st
 
     return None
 
-@router.get("/preview-day")
+@router.get("/preview-day", operation_id="valuation_getPreviewDay")
 def preview_day_value(
     portfolio_id: int,
     as_of: date = Query(...),

@@ -27,6 +27,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@dev_db:${DB_PORT}/${DB_NAME}
       ENV: development
+      PORTFOLIO_TWR_VERBOSE: "1"
     depends_on:
       dev_db:
         condition: service_healthy

@@ -2,6 +2,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from database.base import get_db
@@ -9,7 +10,28 @@ from database.portfolio import Portfolio, Transaction
 from database.valuation import PortfolioValuationDaily
 from api.valuation_materialize import materialize_day
 
-router = APIRouter(prefix="/api/valuation", tags=["valuation"])
+router = APIRouter(prefix="/api/valuation", tags=["Valuation"])\
+
+class SeriesRequest(BaseModel):
+    portfolio_id: int
+    start: date = Field(..., description="YYYY-MM-DD")
+    end:   date = Field(..., description="YYYY-MM-DD")
+    carry_forward: bool = Field(True, description="Fill missing dates with last value")
+    include_breakdown: bool = Field(True, description="Include by_stock/by_cash/net_contributions if present")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "portfolio_id": 2,
+                    "start": "2025-10-01",
+                    "end": "2025-11-07",
+                    "carry_forward": True,
+                    "include_breakdown": True
+                }
+            ]
+        }
+    }
 
 def _daterange(d1: date, d2: date):
     cur = d1
@@ -17,7 +39,7 @@ def _daterange(d1: date, d2: date):
         yield cur
         cur += timedelta(days=1)
 
-@router.get("/series")
+@router.get("/series", operation_id="valuation_getSeries")
 def valuation_series(
     portfolio_id: int,
     start: date = Query(..., description="YYYY-MM-DD"),
@@ -115,3 +137,13 @@ def valuation_series(
                 pass
 
     return {"portfolio_id": portfolio_id, "points": points}
+
+@router.post("/series", operation_id="valuation_postSeries")
+def valuation_series_post(payload: SeriesRequest, db: Session = Depends(get_db)):
+    """Return time series of daily valuations (JSON body)."""
+    return valuation_series(
+        portfolio_id=payload.portfolio_id,
+        start=payload.start,
+        end=payload.end,
+        db=db,
+    )

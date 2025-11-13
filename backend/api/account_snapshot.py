@@ -136,9 +136,15 @@ def _snapshot_for_account(db, account: Account, base_ccy: str, as_of: date) -> d
         },
     }
 
-router = APIRouter(prefix="/api/snapshot", tags=["valuation-debug"])
+router = APIRouter(prefix="/api/snapshot", tags=["Snapshots"])
 
-@router.get("/by-portfolio/{portfolio_id}")
+@router.get("/by-portfolio/{portfolio_id}",
+            operation_id="snapshots_getByPortfolio",
+            summary="Snapshot per account",
+            description=(
+                "Returns a per-account snapshot (securities + cash) for a portfolio as of **today**. "
+                "Useful for reconciliation and UI dashboards."
+            ))
 def portfolio_accounts_snapshot(
     portfolio_id: int,
     as_of: date = Query(default=date.today(), description="YYYY-MM-DD"),

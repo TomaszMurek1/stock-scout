@@ -13,6 +13,7 @@ from .portfolio import (
     Transaction,
     TransactionType,
 )
+from .valuation import PortfolioValuationDaily, PortfolioReturns
 from .stock_data import CompanyMarketData, StockPriceHistory
 from .token_mgmt import RevokedToken
 from .user import User
