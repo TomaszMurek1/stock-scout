@@ -11,7 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from database.base import Base
 
-
+# TODO: extend position so it kept holings values in both, portfolio and instrument currency
 class Position(Base):
     __tablename__ = "positions"
     __table_args__ = (

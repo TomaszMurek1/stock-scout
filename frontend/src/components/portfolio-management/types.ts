@@ -53,6 +53,14 @@ export interface Portfolio {
   id: number;
   name: string;
   currency: CurrencyCode;
+  total_invested: number;
+  cash_available: number;
+}
+
+export interface PortfolioPerformance {
+  portfolio_id: number;
+  performance: any;
+  breakdowns?: any;
 }
 
 export interface WatchlistStock {

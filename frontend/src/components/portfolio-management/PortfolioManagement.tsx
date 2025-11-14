@@ -20,16 +20,15 @@ const rangeDays: Record<Exclude<TimeRange, "All">, number> = {
 export default function PortfolioManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "performance">("portfolio");
-  const { portfolio, holdings, transactions, currencyRates, priceHistory, refreshPortfolio, sell } =
+  const { portfolio, holdings, transactions, performance, refreshPortfolio, sell } =
     usePortfolioBaseData();
 
   const portfolioCurrency = portfolio?.currency || "USD";
   const totals = usePortfolioTotals({
+    performance,
     transactions,
     holdings,
-    priceHistory,
-    currencyRates,
-    portfolioCurrency,
+    portfolio,
   });
 
   useEffect(() => {

@@ -547,14 +547,23 @@ class PortfolioMetricsService:
         self,
         portfolio_id: int,
         end_date: date,
-        include_breakdown: bool = False
+        include_all_breakdowns: bool = False
     ):
+        """
+        Build performance summary for all periods.
+
+        If include_all_breakdowns = True → return breakdowns for all periods.
+        If False → return ONLY breakdowns for ["ytd", "itd"].
+        """
+
         ttwr_map = {}
         inv_map = {}
         mwrr_map = {}
         start_dates = {}
         end_dates = {}
         breakdowns = {}
+
+        ALWAYS_INCLUDED = {"ytd", "itd"}
 
         for p in PERIODS:
             start = self.get_period_start_date(portfolio_id, end_date, p)
@@ -569,7 +578,8 @@ class PortfolioMetricsService:
             inv_map[p] = float(ttwr_invested or 0)
             mwrr_map[p] = float(mwrr or 0)
 
-            if include_breakdown:
+            # new logic here:
+            if include_all_breakdowns or p in ALWAYS_INCLUDED:
                 bd = self.calculate_returns_breakdown(portfolio_id, start, end_date)
                 breakdowns[p] = serialize_breakdown(bd)
                 start_dates[p] = start.isoformat()
@@ -586,7 +596,8 @@ class PortfolioMetricsService:
             }
         }
 
-        if include_breakdown:
+        # Include meta & breakdowns only if something was actually added
+        if breakdowns:
             result["period_meta"] = {
                 "start_date": start_dates,
                 "end_date": end_dates,

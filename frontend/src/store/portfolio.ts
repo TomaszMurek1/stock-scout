@@ -1,4 +1,4 @@
-import { Portfolio } from "@/components/portfolio-management/types";
+import { Portfolio, PortfolioPerformance } from "@/components/portfolio-management/types";
 import { apiClient } from "@/services/apiClient";
 import {
   HoldingItem,
@@ -14,7 +14,8 @@ export type CurrencyPoint = { date: string; close: number };
 type CurrencyPair = Record<string, CurrencyPoint[]>;
 
 export interface PortfolioSlice {
-  portfolio: Portfolio | null;
+  portfolio: Portfolio;
+  performance: PortfolioPerformance;
   transactions: Transaction[];
   currencyRates: Record<string, CurrencyPair>;
   holdings: Holdings;
@@ -24,7 +25,17 @@ export interface PortfolioSlice {
 }
 
 export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
-  portfolio: null,
+  portfolio: {
+    id: 0,
+    name: "",
+    currency: "USD",
+    total_invested: 0,
+    cash_available: 0,
+  },
+  performance: {
+    portfolio_id: 0,
+    performance: 0,
+  },
   transactions: [],
   currencyRates: {},
   holdings: [],
@@ -32,18 +43,16 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
   refreshPortfolio: async () => {
     const { data } = await apiClient.get<{
       portfolio: Portfolio;
+      performance: PortfolioPerformance;
       watchlist: WatchlistStock[];
       transactions: Transaction[];
       holdings: Holdings;
-      currency_rates: Record<string, CurrencyRate>;
-      price_history?: Record<string, { date: string; close: number }[]>;
     }>("/portfolio/dashboard");
     set(
       {
         portfolio: data.portfolio,
+        performance: data.performance,
         transactions: data.transactions,
-        currencyRates: data.currency_rates,
-        priceHistory: data.price_history || {},
       },
       false,
       "refreshPortfolio"

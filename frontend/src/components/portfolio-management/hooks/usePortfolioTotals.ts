@@ -1,46 +1,31 @@
 import { useMemo } from "react";
-import {
-  calculateInvestedPerHolding,
-  calculateTotalInvested,
-  calculateTotalValue,
-} from "../utils/calculations";
+import { calculateInvestedPerHolding } from "../utils/calculations";
 import { PricePoint } from "@/store/portfolioPerformance";
-import { Transaction } from "../types";
+import { Portfolio, PortfolioPerformance, Transaction } from "../types";
 import { Holdings } from "@/store/portfolio";
 
 export function usePortfolioTotals({
+  portfolio,
+  performance,
   transactions,
   holdings,
-  priceHistory,
-  currencyRates,
-  portfolioCurrency,
 }: {
+  portfolio: Portfolio;
+  performance: PortfolioPerformance;
   transactions: Transaction[];
   holdings: Holdings;
-  priceHistory: Record<string, PricePoint[]>;
-  currencyRates: any;
-  portfolioCurrency: string;
 }) {
-  console.log("usePortfolioTotals called holdings", {
-    holdings,
-  });
-  const isPriceHistoryReady = priceHistory && Object.keys(priceHistory).length > 0;
   const totals = useMemo(() => {
-    if (!isPriceHistoryReady) return null;
+    console.log("totalGainLoss", performance);
+    if (!performance) return null;
 
-    const investedPerHolding = calculateInvestedPerHolding(transactions);
-    const { totalValueBase, byHolding } = calculateTotalValue(
-      holdings,
-      priceHistory,
-      currencyRates,
-      portfolioCurrency,
-      investedPerHolding
-    );
-    const totalInvested: number =
-      Object.values(investedPerHolding).reduce((a, b) => a + b.investedInPortfolio, 0) || 0;
+    const totalInvested: number = portfolio.total_invested || 0;
+    const totalValueBase: number = totalInvested;
 
-    const totalGainLoss = totalValueBase - totalInvested;
+    const totalGainLoss = performance.breakdowns?.itd.pnl.unrealized_gains_residual || 0;
+    console.log("totalGainLoss", performance);
     const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
+    const byHolding = holdings;
     return {
       totalValue: totalValueBase,
       totalInvested,
@@ -48,7 +33,7 @@ export function usePortfolioTotals({
       percentageChange,
       byHolding,
     };
-  }, [transactions, holdings, priceHistory, currencyRates, portfolioCurrency, isPriceHistoryReady]);
+  }, [transactions, holdings, portfolio]);
 
   return totals;
 }
