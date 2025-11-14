@@ -4,7 +4,6 @@ import {
   IByHolding,
   InvestedPerHolding,
   PriceHistoryEntry,
-  TotalValueResult,
   Transaction,
 } from "../types";
 

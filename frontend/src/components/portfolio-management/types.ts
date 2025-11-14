@@ -122,23 +122,12 @@ export type InvestedPerHolding = Record<
   }
 >;
 
-export type IByHolding = Record<string, HoldingValuation>;
-
-export type HoldingValuation = {
-  currentValueInHolding: number;
-  currentValueInPortfolio: number;
-  investedValueInHolding: number;
-  investedValueInPortfolio: number;
-  gainLossInHolding: number;
-  gainLossInPortfolio: number;
-  isPositive: boolean;
-  quantity: number;
-  price: number | undefined;
-  fx: number;
-  holdingCurrency: string;
-};
-
-export type TotalValueResult = {
-  totalValueBase: number;
-  byHolding: IByHolding;
+export type ApiHolding = {
+  ticker: string;
+  name: string;
+  shares: number;
+  average_cost: number;
+  average_cost_currency: string;
+  last_price: number;
+  market_currency: string;
 };

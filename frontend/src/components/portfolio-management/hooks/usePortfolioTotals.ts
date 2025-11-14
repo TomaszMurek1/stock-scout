@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { calculateInvestedPerHolding } from "../utils/calculations";
-import { PricePoint } from "@/store/portfolioPerformance";
 import { Portfolio, PortfolioPerformance, Transaction } from "../types";
 import { Holdings } from "@/store/portfolio";
 

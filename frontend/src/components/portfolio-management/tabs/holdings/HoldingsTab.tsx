@@ -2,16 +2,16 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { IByHolding } from "../../types";
+import { ApiHolding } from "../../types";
 
 interface HoldingsTabProps {
-  byHolding?: any; //IByHolding;
+  holdings: ApiHolding[];
   onRemove: (id: string) => void;
 }
 
-export default function HoldingsTab({ byHolding, onRemove }: HoldingsTabProps) {
-  console.log("byHolding", byHolding);
-  if (byHolding.length === 0) {
+export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
+  console.log("byHolding", holdings);
+  if (holdings.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500">
         No stocks in your portfolio. Add some stocks to get started.
@@ -45,31 +45,25 @@ export default function HoldingsTab({ byHolding, onRemove }: HoldingsTabProps) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {byHolding.map((row) => {
-            const {
-              ticker,
-              shares,
-              holdingCurrency,
-              investedValueInHolding,
-              investedValueInPortfolio,
-              currentValueInHolding,
-              currentValueInPortfolio,
-              gainLossInHolding,
-              gainLossInPortfolio,
-              isPositive,
-            } = row;
+          {holdings.map((holding) => {
+            const { ticker, shares, market_currency, average_cost, last_price } = holding;
 
+            const investedValueInHolding = shares * average_cost;
+            const currentValueInHolding = shares * last_price;
+            const gainLossInHolding = currentValueInHolding - investedValueInHolding;
+            const isPositive = gainLossInHolding >= 0;
+            //TODO: calculate investedValueInHolding, currentValueInHolding in both currencies
             return (
               <tr key={ticker}>
                 <td className="px-6 py-4 whitespace-nowrap font-medium">{ticker}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{shares}</td>
-                {/* <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap">
                   {investedValueInHolding.toLocaleString(undefined, {
                     style: "currency",
-                    currency: holdingCurrency,
+                    currency: market_currency,
                   })}{" "}
                   <br />(
-                  {investedValueInPortfolio.toLocaleString(undefined, {
+                  {investedValueInHolding.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
                   })}
@@ -78,10 +72,10 @@ export default function HoldingsTab({ byHolding, onRemove }: HoldingsTabProps) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {currentValueInHolding.toLocaleString(undefined, {
                     style: "currency",
-                    currency: holdingCurrency,
+                    currency: market_currency,
                   })}{" "}
                   <br />(
-                  {currentValueInPortfolio.toLocaleString(undefined, {
+                  {currentValueInHolding.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
                   })}
@@ -92,15 +86,15 @@ export default function HoldingsTab({ byHolding, onRemove }: HoldingsTabProps) {
                 >
                   {gainLossInHolding.toLocaleString(undefined, {
                     style: "currency",
-                    currency: holdingCurrency,
+                    currency: market_currency,
                   })}{" "}
                   <br />(
-                  {gainLossInPortfolio.toLocaleString(undefined, {
+                  {gainLossInHolding.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
                   })}
                   )
-                </td> */}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Button
                     variant="ghost"
