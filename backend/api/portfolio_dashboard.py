@@ -35,7 +35,11 @@ def get_portfolio_dashboard(
     transactions = get_transactions_for_portfolio(db, portfolio_id)
     
     return {
-        "portfolio_id": portfolio_id,
+        "portfolio": {
+            "id": portfolio.id,
+            "name": portfolio.name,
+            "currency": portfolio.currency,
+        },
         "as_of_date": end_date.isoformat(),
         "performance": performance,
         "holdings": holdings,

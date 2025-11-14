@@ -7,8 +7,8 @@ import {
   WatchlistStock,
 } from "@/components/portfolio-management/types";
 import { string } from "zod";
-type Holding = { quantity: number; currency: string };
-type Holdings = Record<string, Holding>;
+export type Holding = { shares: number; average_cost_currency: string };
+export type Holdings = Holding[];
 
 export type CurrencyPoint = { date: string; close: number };
 type CurrencyPair = Record<string, CurrencyPoint[]>;
@@ -23,40 +23,18 @@ export interface PortfolioSlice {
   sell: (payload: any) => Promise<void>;
 }
 
-const computeHoldings = (transactions: Transaction[]): Holdings => {
-  const holdings: Holdings = {};
-  transactions.forEach((tx) => {
-    if (!tx.ticker) return;
-    const tkr = tx.ticker;
-    const sign = tx.transaction_type === "buy" ? 1 : tx.transaction_type === "sell" ? -1 : 0;
-    if (sign === 0) return;
-
-    // If first transaction for ticker, initialize
-    if (!holdings[tkr]) {
-      holdings[tkr] = {
-        quantity: 0,
-        currency: tx.currency || "USD", // fallback if missing
-      };
-    }
-    holdings[tkr].quantity += sign * Number(tx.shares ?? tx.shares ?? 0);
-
-    // Optionally: if currency can differ, update to last seen
-    holdings[tkr].currency = tx.currency || holdings[tkr].currency || "USD";
-  });
-  return holdings;
-};
-
 export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
   portfolio: null,
   transactions: [],
   currencyRates: {},
-  holdings: {},
+  holdings: [],
 
   refreshPortfolio: async () => {
     const { data } = await apiClient.get<{
       portfolio: Portfolio;
       watchlist: WatchlistStock[];
       transactions: Transaction[];
+      holdings: Holdings;
       currency_rates: Record<string, CurrencyRate>;
       price_history?: Record<string, { date: string; close: number }[]>;
     }>("/portfolio/dashboard");
@@ -70,7 +48,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
       false,
       "refreshPortfolio"
     );
-    const holdings = computeHoldings(data.transactions);
+    const holdings = data.holdings;
     set({ holdings }, false, "refreshHoldings");
     get().setWatchlist(data.watchlist);
   },
