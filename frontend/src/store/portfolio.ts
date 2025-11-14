@@ -59,7 +59,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
       transactions: Transaction[];
       currency_rates: Record<string, CurrencyRate>;
       price_history?: Record<string, { date: string; close: number }[]>;
-    }>("/portfolio-metrics/performance");
+    }>("/portfolio/dashboard");
     set(
       {
         portfolio: data.portfolio,
