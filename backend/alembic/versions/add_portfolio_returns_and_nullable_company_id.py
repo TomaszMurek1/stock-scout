@@ -16,47 +16,34 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
-    # 1. Make company_id nullable in transactions table
-    op.alter_column('transactions', 'company_id',
-               existing_type=sa.INTEGER(),
-               nullable=True)
-    
-    # 2. Create portfolio_returns table
-    op.create_table('portfolio_returns',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('portfolio_id', sa.Integer(), nullable=False),
-    sa.Column('date', sa.Date(), nullable=False),
-    sa.Column('period', sa.String(length=10), nullable=False),
-    sa.Column('ttwr', sa.Numeric(precision=10, scale=6), nullable=True),
-    sa.Column('mwrr', sa.Numeric(precision=10, scale=6), nullable=True),
-    sa.Column('unrealized_gains', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('realized_gains', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('dividend_income', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('interest_income', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('currency_effects', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('fees_paid', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('total_return', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('beginning_value', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('ending_value', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.Column('net_cash_flows', sa.Numeric(precision=18, scale=4), nullable=True),
-    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('portfolio_id', 'date', 'period', name='uq_portfolio_returns')
-    )
-    op.create_index('idx_portfolio_returns_date', 'portfolio_returns', ['portfolio_id', 'date'], unique=False)
-    
-    # 3. Drop the old instruments table and related columns (from your generated migration)
-    op.drop_index('ix_instruments_figi', table_name='instruments')
-    op.drop_index('ix_instruments_isin', table_name='instruments')
-    op.drop_index('ix_instruments_symbol', table_name='instruments')
-    op.drop_table('instruments')
-    op.drop_index('ix_companies_instrument_type', table_name='companies')
-    op.drop_column('companies', 'instrument_type')
-    op.drop_index('ix_transactions_account_id', table_name='transactions')
-    op.drop_constraint('fk_transactions_account_id_accounts', 'transactions', type_='foreignkey')
-    op.create_foreign_key('fk_transactions_account_id', 'transactions', 'accounts', ['account_id'], ['id'])
 
+def upgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    # Only create the table if it does NOT exist
+    if "portfolio_returns" not in inspector.get_table_names():
+        op.create_table(
+            "portfolio_returns",
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("portfolio_id", sa.Integer(), nullable=False),
+            sa.Column("date", sa.Date(), nullable=False),
+            sa.Column("period", sa.String(10), nullable=False),
+            sa.Column("ttwr", sa.Numeric(10, 6)),
+            sa.Column("mwrr", sa.Numeric(10, 6)),
+            sa.Column("unrealized_gains", sa.Numeric(18, 4)),
+            sa.Column("realized_gains", sa.Numeric(18, 4)),
+            sa.Column("dividend_income", sa.Numeric(18, 4)),
+            sa.Column("interest_income", sa.Numeric(18, 4)),
+            sa.Column("currency_effects", sa.Numeric(18, 4)),
+            sa.Column("fees_paid", sa.Numeric(18, 4)),
+            sa.Column("total_return", sa.Numeric(18, 4)),
+            sa.Column("beginning_value", sa.Numeric(18, 4)),
+            sa.Column("ending_value", sa.Numeric(18, 4)),
+            sa.Column("net_cash_flows", sa.Numeric(18, 4)),
+            sa.ForeignKeyConstraint(["portfolio_id"], ["portfolios.id"]),
+            sa.UniqueConstraint("portfolio_id", "date", "period"),
+        )
 
 def downgrade():
     # 1. Drop the portfolio_returns table

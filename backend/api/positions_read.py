@@ -37,8 +37,8 @@ def list_positions_by_account(
             "account_id": p.account_id,
             "company_id": p.company_id,
             "quantity": str(p.quantity),
-            "avg_cost": str(p.avg_cost),
-            "avg_cost_ccy": p.avg_cost_ccy,
+            "avg_cost_instrument_ccy": str(p.avg_cost_instrument_ccy),
+            "instrument_currency_code": p.instrument_currency_code,
         }
         for p in rows
     ]

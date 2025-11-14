@@ -32,7 +32,7 @@ class TransferPositionRequest(BaseModel):
     quantity: Decimal = Field(..., gt=0)
 
     price_per_unit: Decimal | None = Field(None, description="Optional override; defaults to donor avg_cost")
-    currency: str | None = Field(None, description="Optional override; defaults to donor avg_cost_ccy")
+    currency: str | None = Field(None, description="Optional override; defaults to donor instrument_currency_code")
     currency_rate: Decimal | None = Field(None, description="Defaults to 1 if same as base")
 
     timestamp: datetime | None = None
@@ -84,8 +84,8 @@ def transfer_position(payload: TransferPositionRequest, db: Session = Depends(ge
     if not donor_pos or donor_pos.quantity < payload.quantity:
         raise HTTPException(400, "Insufficient quantity in source account")
 
-    ppu = payload.price_per_unit or donor_pos.avg_cost
-    ccy = (payload.currency or donor_pos.avg_cost_ccy).upper()
+    ppu = payload.price_per_unit or donor_pos.avg_cost_instrument_ccy
+    ccy = (payload.currency or donor_pos.instrument_currency_code).upper()
     rate = payload.currency_rate or Decimal("1")
 
     tx_out = Transaction(
