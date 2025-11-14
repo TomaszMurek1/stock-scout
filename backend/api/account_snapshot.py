@@ -14,7 +14,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from database.position import Position
+from database.position import PortfolioPositions
 
 # same sets we used for account cash math
 CASH_IN  = {TransactionType.DEPOSIT, TransactionType.DIVIDEND, TransactionType.INTEREST, TransactionType.TRANSFER_IN}
@@ -76,9 +76,9 @@ def _snapshot_for_account(db, account: Account, base_ccy: str, as_of: date) -> d
 
     # --- SECURITIES (positions table) ---
     pos_rows = (
-        db.query(Position)
-        .options(joinedload(Position.company).joinedload(Company.market))
-        .filter(Position.account_id == account.id)
+        db.query(PortfolioPositions)
+        .options(joinedload(PortfolioPositions.company).joinedload(Company.market))
+        .filter(PortfolioPositions.account_id == account.id)
         .all()
     )
 

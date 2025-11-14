@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database.base import get_db
-from database.position import Position
+from database.position import PortfolioPositions
 from database.account import Account
 from database.portfolio import Portfolio, Transaction, TransactionType
 from api.positions_service import apply_transaction_to_position
@@ -77,8 +77,8 @@ def transfer_position(payload: TransferPositionRequest, db: Session = Depends(ge
         raise HTTPException(400, "Account does not belong to given portfolio")
 
     donor_pos = (
-        db.query(Position)
-        .filter(Position.account_id == payload.from_account_id, Position.company_id == payload.company_id)
+        db.query(PortfolioPositions)
+        .filter(PortfolioPositions.account_id == payload.from_account_id, PortfolioPositions.company_id == payload.company_id)
         .first()
     )
     if not donor_pos or donor_pos.quantity < payload.quantity:

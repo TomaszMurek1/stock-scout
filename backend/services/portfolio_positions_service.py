@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
-from database.position import Position
+from database.position import PortfolioPositions
 from database.company import Company
 from database.stock_data import CompanyMarketData
 
@@ -28,9 +28,9 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
 
     # 2. Load positions for all accounts
     positions = (
-        db.query(Position)
-        .options(joinedload(Position.company))
-        .filter(Position.account_id.in_(account_ids))
+        db.query(PortfolioPositions)
+        .options(joinedload(PortfolioPositions.company))
+        .filter(PortfolioPositions.account_id.in_(account_ids))
         .all()
     )
 

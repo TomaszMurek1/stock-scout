@@ -53,8 +53,10 @@ export interface Portfolio {
   id: number;
   name: string;
   currency: CurrencyCode;
-  total_invested: number;
+  total_value: number;
   cash_available: number;
+  invested_value_current: number;
+  net_invested_cash: number;
 }
 
 export interface PortfolioPerformance {

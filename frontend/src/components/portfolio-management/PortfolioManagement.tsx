@@ -23,7 +23,6 @@ export default function PortfolioManagement() {
   const { portfolio, holdings, transactions, performance, refreshPortfolio, sell } =
     usePortfolioBaseData();
 
-  const portfolioCurrency = portfolio?.currency || "USD";
   const totals = usePortfolioTotals({
     performance,
     transactions,
@@ -61,6 +60,7 @@ export default function PortfolioManagement() {
         {activeTab === "portfolio" && (
           <>
             <Summary
+              invested_value_current={totals.invested_value_current}
               totalValue={totals.totalValue}
               totalInvested={totals.totalInvested}
               totalGainLoss={totals.totalGainLoss}

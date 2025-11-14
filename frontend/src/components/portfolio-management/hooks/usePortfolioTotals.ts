@@ -15,19 +15,15 @@ export function usePortfolioTotals({
   holdings: Holdings;
 }) {
   const totals = useMemo(() => {
-    console.log("totalGainLoss", performance);
     if (!performance) return null;
-
-    const totalInvested: number = portfolio.total_invested || 0;
-    const totalValueBase: number = totalInvested;
-
+    const { total_value, cash_available, invested_value_current, net_invested_cash } = portfolio;
     const totalGainLoss = performance.breakdowns?.itd.pnl.unrealized_gains_residual || 0;
-    console.log("totalGainLoss", performance);
-    const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
+    const percentageChange = net_invested_cash > 0 ? (totalGainLoss / net_invested_cash) * 100 : 0;
     const byHolding = holdings;
     return {
-      totalValue: totalValueBase,
-      totalInvested,
+      totalValue: total_value || 0,
+      invested_value_current: invested_value_current || 0,
+      totalInvested: net_invested_cash || 0,
       totalGainLoss,
       percentageChange,
       byHolding,

@@ -5,7 +5,7 @@ from sqlalchemy import func
 from database.portfolio import Transaction
 from database.account import Account
 from database.company import Company
-from database.position import Position
+from database.position import PortfolioPositions
 from schemas.portfolio_schemas import TransactionType  # you created this model earlier
 
 
@@ -43,14 +43,14 @@ def apply_transaction_to_position(db: Session, tx: Transaction) -> None:
         return
 
     pos = (
-        db.query(Position)
-        .filter(Position.account_id == tx.account_id, Position.company_id == tx.company_id)
+        db.query(PortfolioPositions)
+        .filter(PortfolioPositions.account_id == tx.account_id, PortfolioPositions.company_id == tx.company_id)
         .first()
     )
 
     if not pos:
         # Create empty position for this (account, company)
-        pos = Position(
+        pos = PortfolioPositions(
             account_id=tx.account_id,
             company_id=tx.company_id,
             quantity=Decimal("0"),
@@ -103,8 +103,8 @@ def reverse_transaction_from_position(db: Session, tx: Transaction) -> None:
         return
 
     pos = (
-        db.query(Position)
-        .filter(Position.account_id == tx.account_id, Position.company_id == tx.company_id)
+        db.query(PortfolioPositions)
+        .filter(PortfolioPositions.account_id == tx.account_id, PortfolioPositions.company_id == tx.company_id)
         .first()
     )
     if not pos:
@@ -165,12 +165,12 @@ def recompute_position(db: Session, account_id: int, company_id: int) -> None:
             # avg cost unchanged; P&L realized elsewhere
 
     pos = (
-        db.query(Position)
-        .filter(Position.account_id == account_id, Position.company_id == company_id)
+        db.query(PortfolioPositions)
+        .filter(PortfolioPositions.account_id == account_id, PortfolioPositions.company_id == company_id)
         .first()
     )
     if not pos:
-        pos = Position(
+        pos = PortfolioPositions(
             account_id=account_id,
             company_id=company_id,
             quantity=Decimal("0"),

@@ -5,7 +5,7 @@ from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
 from database.base import get_db
 from database.portfolio import FavoriteStock
-from database.position import Position
+from database.position import PortfolioPositions
 from database.user import User
 from database.company import Company
 from sqlalchemy.orm import joinedload
@@ -65,8 +65,8 @@ def get_holdings_for_user(db: Session, user) -> List[dict]:
         return []
 
     positions = (
-        db.query(Position)
-        .filter(Position.account_id.in_(account_ids))
+        db.query(PortfolioPositions)
+        .filter(PortfolioPositions.account_id.in_(account_ids))
         .all()
     )
 

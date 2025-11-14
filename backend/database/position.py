@@ -12,7 +12,7 @@ from sqlalchemy.orm import relationship
 from database.base import Base
 
 # TODO: extend position so it kept holings values in both, portfolio and instrument currency
-class Position(Base):
+class PortfolioPositions(Base):
     __tablename__ = "positions"
     __table_args__ = (
         UniqueConstraint("account_id", "company_id", name="uq_position_account_company"),

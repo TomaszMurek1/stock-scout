@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List
 from database.base import get_db
-from database.position import Position
+from database.position import PortfolioPositions
 from api.positions_service import recompute_position
 
 router = APIRouter(prefix="/api/positions", tags=["Positions"])
@@ -26,11 +26,11 @@ def list_positions_by_account(
     hide_zero: bool = Query(False, description="If true, hide zero-quantity positions"),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Position).filter(Position.account_id == account_id)
+    q = db.query(PortfolioPositions).filter(PortfolioPositions.account_id == account_id)
     if hide_zero:
         # numeric(18,8) = 0 → compare to 0 exactly is fine
-        q = q.filter(Position.quantity != 0)
-    rows = q.order_by(Position.company_id).all()
+        q = q.filter(PortfolioPositions.quantity != 0)
+    rows = q.order_by(PortfolioPositions.company_id).all()
     return [
         {
             "id": p.id,
