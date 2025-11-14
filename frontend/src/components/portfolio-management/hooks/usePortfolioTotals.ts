@@ -1,58 +1,39 @@
 import { useMemo } from "react";
-import { calculateInvestedPerHolding, calculateTotalInvested, calculateTotalValue } from "../utils/calculations";
+import { calculateInvestedPerHolding } from "../utils/calculations";
 import { PricePoint } from "@/store/portfolioPerformance";
-import { Transaction } from "../types";
+import { Portfolio, PortfolioPerformance, Transaction } from "../types";
+import { Holdings } from "@/store/portfolio";
 
 export function usePortfolioTotals({
-    transactions,
-    holdings,
-    priceHistory,
-    currencyRates,
-    portfolioCurrency,
+  portfolio,
+  performance,
+  transactions,
+  holdings,
 }: {
-    transactions: Transaction[];
-    holdings: Record<string, { quantity: number; currency: string }>;
-    priceHistory: Record<string, PricePoint[]>;
-    currencyRates: any;
-    portfolioCurrency: string;
+  portfolio: Portfolio;
+  performance: PortfolioPerformance;
+  transactions: Transaction[];
+  holdings: Holdings;
 }) {
-    console.log("usePortfolioTotals called holdings", {
-        holdings,
-    })
-    const isPriceHistoryReady = priceHistory && Object.keys(priceHistory).length > 0;
-    const totals = useMemo(() => {
-        if (!isPriceHistoryReady) return null;
+  const totals = useMemo(() => {
+    console.log("totalGainLoss", performance);
+    if (!performance) return null;
 
-        const investedPerHolding = calculateInvestedPerHolding(transactions);
-        const { totalValueBase, byHolding } = calculateTotalValue(
-            holdings,
-            priceHistory,
-            currencyRates,
-            portfolioCurrency,
-            investedPerHolding
-        );
-        const totalInvested: number = Object.values(investedPerHolding).reduce(
-            (a, b) => a + b.investedInPortfolio, 0
-        ) || 0;
+    const totalInvested: number = portfolio.total_invested || 0;
+    const totalValueBase: number = totalInvested;
 
-        const totalGainLoss = totalValueBase - totalInvested;
-        const percentageChange =
-            totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
-        return {
-            totalValue: totalValueBase,
-            totalInvested,
-            totalGainLoss,
-            percentageChange,
-            byHolding,
-        };
-    }, [
-        transactions,
-        holdings,
-        priceHistory,
-        currencyRates,
-        portfolioCurrency,
-        isPriceHistoryReady,
-    ]);
+    const totalGainLoss = performance.breakdowns?.itd.pnl.unrealized_gains_residual || 0;
+    console.log("totalGainLoss", performance);
+    const percentageChange = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
+    const byHolding = holdings;
+    return {
+      totalValue: totalValueBase,
+      totalInvested,
+      totalGainLoss,
+      percentageChange,
+      byHolding,
+    };
+  }, [transactions, holdings, portfolio]);
 
-    return totals;
+  return totals;
 }

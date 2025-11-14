@@ -18,6 +18,16 @@ class FxBatchRequest(BaseModel):
     start: Optional[date] = None
     end: Optional[date] = None
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "pairs": [["USD", "PLN"], ["EUR", "PLN"]],
+                "start": "2024-01-01",
+                "end": "2024-02-01"
+            }
+        }
+    }
+
 
 @router.post("/batch")
 def get_fx_rates_batch(

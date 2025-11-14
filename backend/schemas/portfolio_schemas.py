@@ -63,12 +63,6 @@ class PortfolioData(BaseModel):
     watchlist: List[str]
 
 
-class PortfolioSummary(BaseModel):
-    id: int
-    name: str
-    currency: str
-
-
 class HoldingItem(BaseModel):
     ticker: str
     name: str

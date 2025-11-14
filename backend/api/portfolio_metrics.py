@@ -3,18 +3,19 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from api.dependencies.portfolio import get_user_portfolio
 from services.portfolio_metrics_service import PortfolioMetricsService
-from database.base import get_db  # adjust import if your dependency is elsewhere
+from database.base import get_db
 
-router = APIRouter(prefix="/api/portfolio-metrics", tags=["portfolio-metrics"])
+router = APIRouter()
 
 # Periods we compute
-PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
+
 
 
 # ---- helpers ----
@@ -57,77 +58,19 @@ def _parse_as_of_date(as_of: Optional[str]) -> date:
 
 
 # ===========================
-# GET /{portfolio_id}/performance  (summary)
+# GET /performance  (summary)
 # ===========================
-@router.get("/{portfolio_id}/performance")
+@router.get("/performance")
 def get_portfolio_performance(
-    portfolio_id: int,
-    as_of_date: Optional[str] = Query(None, description="Defaults to today (server date)"),
-    as_percent: bool = Query(False, description="Kept for backward compatibility; ignored, returns fraction."),
-    include_breakdown: bool = Query(False, description="If true, include per-period breakdown + dates in response."),
-    db: Session = Depends(get_db),
+    portfolio = Depends(get_user_portfolio),
+    as_of_date: Optional[str] = Query(None),
+    include_breakdown: bool = Query(False),
+    db: Session = Depends(get_db)
 ):
-    """
-    Returns performance summary (ttwr, ttwr_invested, mwrr) as fractions.
-    If include_breakdown=true, also returns start_date/end_date per period and breakdowns.
-    """
     svc = PortfolioMetricsService(db)
     end_date = _parse_as_of_date(as_of_date)
+    return svc.build_performance_summary(portfolio.id, end_date, include_breakdown)
 
-    # main blocks
-    ttwr_map: Dict[str, float] = {}
-    inv_map: Dict[str, float] = {}
-    mwrr_map: Dict[str, float] = {}
-
-    # Optional period meta / breakdowns
-    start_dates: Dict[str, str] = {}
-    end_dates: Dict[str, str] = {}
-    breakdowns: Dict[str, dict] = {}
-
-    for p in PERIODS:
-        start = svc.get_period_start_date(portfolio_id, end_date, p)
-        if not start:
-            # skip if portfolio has no history yet
-            continue
-
-        ttwr = svc.calculate_ttwr(portfolio_id, start, end_date)
-        ttwr_invested = svc.calculate_ttwr_invested_only(portfolio_id, start, end_date)
-        mwrr = svc.calculate_mwrr(portfolio_id, start, end_date)
-
-        ttwr_map[p] = _to_float(ttwr or 0)
-        inv_map[p] = _to_float(ttwr_invested or 0)
-        mwrr_map[p] = _to_float(mwrr or 0)
-
-        if include_breakdown:
-            bd = svc.calculate_returns_breakdown(portfolio_id, start, end_date)
-            breakdowns[p] = _serialize_breakdown(bd)
-            start_dates[p] = start.isoformat()
-            end_dates[p] = end_date.isoformat()
-
-    response = {
-        "portfolio_id": portfolio_id,
-        "as_of_date": end_date.isoformat(),
-        "unit": "fraction",
-        "performance": {
-            "ttwr": ttwr_map,
-            "ttwr_invested": inv_map,
-            "mwrr": mwrr_map,
-        },
-        "notes": {
-            "ttwr": "Whole-portfolio time-weighted return (includes cash). External flows (deposits/withdrawals) are neutralized daily.",
-            "ttwr_invested": "Invested-only time-weighted return (excludes cash). Treats BUY as +flow and SELL as -flow to neutralize trading; reflects pure market performance of held assets.",
-            "mwrr": "Money-weighted XIRR (investor IRR) using deposits(-), withdrawals(+), dividends(+), interest(+), fees/taxes(-), and terminal market value (+).",
-        },
-    }
-
-    if include_breakdown:
-        response["period_meta"] = {
-            "start_date": start_dates,
-            "end_date": end_dates,
-        }
-        response["breakdowns"] = breakdowns
-
-    return response
 
 
 # ===========================

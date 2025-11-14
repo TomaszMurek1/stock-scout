@@ -21,7 +21,7 @@ from services.market.market_service import get_or_create_market
 from services.stock_data.stock_data_service import (
     fetch_and_save_stock_price_history_data,
 )
-from services.utils.db_retry import retry_on_db_lock
+from utils.db_retry import retry_on_db_lock
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

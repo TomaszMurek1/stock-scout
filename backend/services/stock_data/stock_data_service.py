@@ -9,7 +9,7 @@ import pandas_market_calendars as mcal
 from datetime import date
 from services.company.company_service import get_or_create_company
 from services.market.market_service import get_or_create_market
-from services.utils.db_retry import retry_on_db_lock
+from utils.db_retry import retry_on_db_lock
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

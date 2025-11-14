@@ -8,7 +8,7 @@ from database.base import get_db
 from database.company import Company
 from database.financials import CompanyFinancialHistory
 from database.stock_data import StockPriceHistory, CompanyMarketData
-from services.utils.sanitize import sanitize_numpy_types
+from utils.sanitize import sanitize_numpy_types
 
 router = APIRouter()
 
