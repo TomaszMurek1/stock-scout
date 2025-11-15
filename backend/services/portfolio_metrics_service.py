@@ -6,6 +6,7 @@ import math
 import logging
 from decimal import Decimal, getcontext
 from datetime import date, datetime, timedelta
+from numbers import Real
 from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import case, func, literal
@@ -350,17 +351,51 @@ class PortfolioMetricsService:
         def newton(seed: float) -> Optional[float]:
             r = seed
             for _ in range(80):
+                # 1) Guard invalid rate region (1 + r <= 0 → complex powers)
+                if not isinstance(r, Real) or r <= -0.999999:
+                    return None
+
                 f_r = f(r)
+
+                # 2) If f(r) is not a normal real number, bail out
+                if not isinstance(f_r, Real):
+                    return None
                 if abs(f_r) < 1e-12:
                     return r
+
                 h = 1e-6
-                slope = (f(r + h) - f_r) / h
-                if slope == 0 or math.isnan(slope) or math.isinf(slope):
+                f_r_plus = f(r + h)
+                if not isinstance(f_r_plus, Real):
                     return None
+
+                slope = (f_r_plus - f_r) / h
+
+                # 3) Slope must be a finite real
+                if not isinstance(slope, Real):
+                    return None
+                try:
+                    if slope == 0 or math.isnan(slope) or math.isinf(slope):
+                        return None
+                except TypeError:
+                    return None
+
                 r2 = r - f_r / slope
+
+                # 4) New rate must also be finite & real
+                if not isinstance(r2, Real):
+                    return None
+                try:
+                    if math.isnan(r2) or math.isinf(r2):
+                        return None
+                except TypeError:
+                    return None
+
                 if abs(r2 - r) < 1e-12:
                     return r2
+
                 r = r2
+
+            # Did not converge
             return None
 
         for seed in (0.1, 0.3, 0.5, -0.5, 1.0, 2.0):
@@ -424,9 +459,7 @@ class PortfolioMetricsService:
                 [(d.isoformat(), float(v)) for d, v in flows],
             )
 
-            if end_mv is None:
-                return D("0")
-            if not flows:
+            if end_mv is None or not flows:
                 return D("0")
 
             flows = list(flows) + [(end_date, end_mv if isinstance(end_mv, Decimal) else D(str(end_mv)))]
@@ -437,6 +470,8 @@ class PortfolioMetricsService:
 
             irr = self._xirr(flows)
             if irr is None or math.isnan(irr) or math.isinf(irr):
+                # Optional: downgrade to warning instead of silent zero
+                logger.warning("MWRR did not converge for flows=%s", flows)
                 return D("0")
             return D(str(irr))
         except Exception:

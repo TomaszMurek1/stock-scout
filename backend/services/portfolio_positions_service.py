@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session, joinedload
 from database.position import PortfolioPositions
 from database.company import Company
 from database.stock_data import CompanyMarketData
+from database.fx import FxRate
+
+
 
 
 def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
@@ -12,21 +15,22 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
         {
             "ticker": "AAPL",
             "name": "Apple",
-            "shares": 10.5,
-            "average_cost": 150.0,
-            "average_cost_currency": "USD",
-            "last_price": 172.4,
-            "market_currency": "USD"
+            "shares": ...,
+            "instrument_ccy": "USD",
+            "average_cost_instrument_ccy": ...,
+            "average_cost_portfolio_ccy": ...,
+            "last_price": ...,
+            "fx_rate_to_portfolio_ccy": 1.0 or last FX rate
         }
     ]
     """
 
-    # 1. Gather account IDs for this portfolio
+    # 1. Collect all accounts for this portfolio
     account_ids = [a.id for a in portfolio.accounts]
     if not account_ids:
         return []
 
-    # 2. Load positions for all accounts
+    # 2. Fetch positions
     positions = (
         db.query(PortfolioPositions)
         .options(joinedload(PortfolioPositions.company))
@@ -35,8 +39,10 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
     )
 
     holdings = []
+    portfolio_ccy = portfolio.currency
 
     for pos in positions:
+        # Latest market data
         latest_md: Optional[CompanyMarketData] = (
             db.query(CompanyMarketData)
             .filter_by(company_id=pos.company_id)
@@ -44,12 +50,31 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
             .first()
         )
 
+        # Determine FX rate instrument -> portfolio CCY
+        instrument_ccy = pos.instrument_currency_code
+        fx_rate_to_portfolio = None
+
+        if instrument_ccy == portfolio_ccy:
+            fx_rate_to_portfolio = 1.0
+        else:
+            fx_row: Optional[FxRate] = (
+                db.query(FxRate)
+                .filter_by(
+                    base_currency=instrument_ccy,
+                    quote_currency=portfolio_ccy,
+                )
+                .order_by(FxRate.date.desc())
+                .first()
+            )
+            if fx_row:
+                fx_rate_to_portfolio = float(fx_row.close)
+
         holdings.append(
             {
                 "ticker": pos.company.ticker,
                 "name": pos.company.name,
-                "shares": float(pos.quantity),    
-                "instrument_ccy": pos.instrument_currency_code,
+                "shares": float(pos.quantity),
+                "instrument_ccy": instrument_ccy,
                 "average_cost_instrument_ccy": float(pos.avg_cost_instrument_ccy),
                 "average_cost_portfolio_ccy": float(pos.avg_cost_portfolio_ccy),
                 "last_price": (
@@ -57,6 +82,7 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                     if latest_md and latest_md.current_price is not None
                     else None
                 ),
+                "fx_rate_to_portfolio_ccy": fx_rate_to_portfolio,
             }
         )
 
