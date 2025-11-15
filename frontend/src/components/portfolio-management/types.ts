@@ -128,8 +128,8 @@ export type ApiHolding = {
   ticker: string;
   name: string;
   shares: number;
-  average_cost: number;
-  average_cost_currency: string;
+  instrument_ccy: string;
+  average_cost_portfolio_ccy: number;
+  average_cost_instrument_ccy: number;
   last_price: number;
-  market_currency: string;
 };

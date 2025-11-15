@@ -26,7 +26,6 @@ interface PriceProps {
   currency: CurrencyCode;
 }
 export const Price: React.FC<PriceProps> = ({ value, currency }) => {
-  debugger;
   const locale = currencyLocaleMap[currency];
   const formatted = (value ?? 0).toLocaleString(locale, {
     style: "currency",

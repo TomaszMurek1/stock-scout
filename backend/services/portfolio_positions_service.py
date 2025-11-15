@@ -48,17 +48,13 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
             {
                 "ticker": pos.company.ticker,
                 "name": pos.company.name,
-                "shares": float(pos.quantity),
-                "average_cost": float(pos.avg_cost_instrument_ccy),
-                "average_cost_currency": pos.instrument_currency_code,
+                "shares": float(pos.quantity),    
+                "instrument_ccy": pos.instrument_currency_code,
+                "average_cost_instrument_ccy": float(pos.avg_cost_instrument_ccy),
+                "average_cost_portfolio_ccy": float(pos.avg_cost_portfolio_ccy),
                 "last_price": (
                     float(latest_md.current_price)
                     if latest_md and latest_md.current_price is not None
-                    else None
-                ),
-                "market_currency": (
-                    latest_md.market.currency
-                    if (latest_md and latest_md.market)
                     else None
                 ),
             }

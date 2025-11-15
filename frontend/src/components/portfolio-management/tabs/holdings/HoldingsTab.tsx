@@ -46,52 +46,63 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {holdings.map((holding) => {
-            const { ticker, shares, market_currency, average_cost, last_price } = holding;
+            const {
+              ticker,
+              shares,
+              instrument_ccy,
+              average_cost_instrument_ccy,
+              average_cost_portfolio_ccy,
+              last_price,
+            } = holding;
+            const fxRatePortfolioToInstrumentCcy = 3.75; // TODO: fetch actual FX rate
 
-            const investedValueInHolding = shares * average_cost;
-            const currentValueInHolding = shares * last_price;
-            const gainLossInHolding = currentValueInHolding - investedValueInHolding;
-            const isPositive = gainLossInHolding >= 0;
+            const investedValueInstrumentCcy = shares * average_cost_instrument_ccy;
+            const investedValuePortfolioCcy = shares * average_cost_portfolio_ccy;
+            const currentValueInstrumentCcy = shares * last_price;
+            const currentValuePortfolioCcy = shares * last_price * fxRatePortfolioToInstrumentCcy;
+            const gainLossInstrumentCcy = currentValueInstrumentCcy - investedValueInstrumentCcy;
+            const gainLossPortfolioCcy = currentValuePortfolioCcy - investedValuePortfolioCcy;
+            const isPositive = gainLossInstrumentCcy >= 0;
             //TODO: calculate investedValueInHolding, currentValueInHolding in both currencies
             return (
               <tr key={ticker}>
                 <td className="px-6 py-4 whitespace-nowrap font-medium">{ticker}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{shares}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {investedValueInHolding.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: market_currency,
-                  })}{" "}
-                  <br />(
-                  {investedValueInHolding.toLocaleString(undefined, {
+                  {investedValuePortfolioCcy.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
+                  })}{" "}
+                  <br />(
+                  {investedValueInstrumentCcy.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: instrument_ccy,
                   })}
                   )
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {currentValueInHolding.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: market_currency,
-                  })}{" "}
-                  <br />(
-                  {currentValueInHolding.toLocaleString(undefined, {
+                  {currentValuePortfolioCcy.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
+                  })}{" "}
+                  <br />(
+                  {currentValueInstrumentCcy.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: instrument_ccy,
                   })}
                   )
                 </td>
                 <td
                   className={`px-6 py-4 whitespace-nowrap ${isPositive ? "text-green-600" : "text-red-600"}`}
                 >
-                  {gainLossInHolding.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: market_currency,
-                  })}{" "}
-                  <br />(
-                  {gainLossInHolding.toLocaleString(undefined, {
+                  {gainLossPortfolioCcy.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
+                  })}{" "}
+                  <br />(
+                  {gainLossInstrumentCcy.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: instrument_ccy,
                   })}
                   )
                 </td>
