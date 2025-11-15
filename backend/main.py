@@ -11,6 +11,7 @@ from api import transactions_transfer
 from api import transactions_transfer_cash
 from api import account_snapshot
 from api import valuation_debug
+from api import stock_details
 from core.config import settings
 from api import (
     auth,
@@ -18,7 +19,6 @@ from api import (
     compare,
     fx,
     portfolio_management,
-    stocks,
     golden_cross,
     admin,
     fundamentals,
@@ -67,7 +67,7 @@ app.include_router(portfolio_metrics.router,          prefix="/api/portfolio-met
 app.include_router(portfolio_transactions.router,     prefix="/api/portfolio", tags=["Portfolio"])
 app.include_router(portfolio_dashboard.router,     prefix="/api/portfolio", tags=["Portfolio"],)
 app.include_router(positions_read.router,             prefix="/api/positions",     tags=["Positions"])
-app.include_router(stocks.router,                     prefix="/api/stock-details", tags=["Stock Data"])
+app.include_router(stock_details.router,              prefix="/api/stock-details", tags=["Stock Data"])
 app.include_router(stocks_price_data.router,          prefix="/api/stock", tags=["Stock Data"])
 app.include_router(valuation_preview.router,          prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_materialize.router,      prefix="/api/valuation",     tags=["Valuation"])
