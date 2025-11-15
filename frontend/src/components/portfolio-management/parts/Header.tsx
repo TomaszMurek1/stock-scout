@@ -1,15 +1,24 @@
-import React from "react"
-import AddStockButton from "./AddStockButton"
+"use client";
+
+import { FC } from "react";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
-    onAdd: () => void
+  onAdd: () => void;
 }
 
-export default function Header({ onAdd }: HeaderProps) {
-    return (
-        <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-800">Portfolio Management</h1>
-            <AddStockButton onClick={onAdd} />
-        </div>
-    )
-}
+const Header: FC<HeaderProps> = ({ onAdd }) => {
+  return (
+    <div className="mb-4 flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-bold">Portfolio management</h1>
+        <p className="text-sm text-muted-foreground">
+          Track positions, performance and cash flows.
+        </p>
+      </div>
+      <Button onClick={onAdd}>Add stock</Button>
+    </div>
+  );
+};
+
+export default Header;

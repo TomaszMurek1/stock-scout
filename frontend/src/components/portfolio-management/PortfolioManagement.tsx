@@ -6,20 +6,13 @@ import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
 import AddStockModal from "./modals/AddStockModal";
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData";
-import { TimeRange } from "./parts/performance/performance-chart";
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";
-
-const rangeDays: Record<Exclude<TimeRange, "All">, number> = {
-  "1M": 30,
-  "3M": 90,
-  "6M": 180,
-  "1Y": 365,
-};
 
 export default function PortfolioManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "performance">("portfolio");
+
   const { portfolio, holdings, transactions, performance, refreshPortfolio, sell } =
     usePortfolioBaseData();
 
@@ -36,21 +29,35 @@ export default function PortfolioManagement() {
 
   if (!portfolio || !totals) return <div>No portfolio found</div>;
 
+  const handleAddSuccess = () => {
+    setIsAddModalOpen(false);
+    refreshPortfolio();
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="container mx-auto space-y-8 px-4 py-8">
       <Header onAdd={() => setIsAddModalOpen(true)} />
+
       <div className="space-y-4">
         {/* Tab Switcher */}
         <div className="flex space-x-4 border-b pb-2">
           <button
             onClick={() => setActiveTab("portfolio")}
-            className={`px-4 py-2 font-medium ${activeTab === "portfolio" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-600"}`}
+            className={`px-4 py-2 font-medium ${
+              activeTab === "portfolio"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-600"
+            }`}
           >
             Portfolio
           </button>
           <button
             onClick={() => setActiveTab("performance")}
-            className={`px-4 py-2 font-medium ${activeTab === "performance" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-600"}`}
+            className={`px-4 py-2 font-medium ${
+              activeTab === "performance"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-600"
+            }`}
           >
             Performance
           </button>
@@ -78,7 +85,11 @@ export default function PortfolioManagement() {
         {activeTab === "performance" && <Performance />}
       </div>
 
-      <AddStockModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <AddStockModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 }

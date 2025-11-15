@@ -26,20 +26,40 @@ class TradeRequest(BaseModel):
 
 class TradeBase(BaseModel):
     ticker: str
-    shares: float
-    price: float
-    fee: Optional[float] = None
-    currency: str
-    currency_rate: Optional[float] = None
+    shares: Decimal
+    price: Decimal
+    fee: Optional[Decimal] = None
 
-    # NEW
-    trade_date: date
+    currency: str
+    currency_rate: Optional[Decimal] = None
+
+    # 👇 this is what FastAPI is complaining about
+    trade_date: date = Field(default_factory=date.today, description="Trade date (YYYY-MM-DD)")
+    trade_time: Optional[time] = Field(None, description="Optional time, default end of day")
+
+    # 👇 new (for multi-account support)
+    account_id: Optional[int] = Field(None, description="Account ID for the trade")
+
+    note: Optional[str] = None
+
+    @field_validator("ticker")
+    @classmethod
+    def _norm_ticker(cls, v: str) -> str:
+        v = (v or "").strip().upper()
+        if not v:
+            raise ValueError("ticker is required")
+        return v
+
+    @field_validator("currency")
+    @classmethod
+    def _norm_currency(cls, v: str) -> str:
+        v = (v or "").strip().upper()
+        if len(v) != 3:
+            raise ValueError("currency must be a 3-letter code")
+        return v
 
     def to_timestamp(self) -> datetime:
-        # tolerate older versions missing the field to avoid AttributeError
-        tt = getattr(self, "trade_time", None)
-        t = tt or time(23, 59, 59)
-        return datetime.combine(self.trade_date, t)
+        return datetime.combine(self.trade_date, self.trade_time or time(23, 59, 59))
 
 
 class TradeResponse(BaseModel):
