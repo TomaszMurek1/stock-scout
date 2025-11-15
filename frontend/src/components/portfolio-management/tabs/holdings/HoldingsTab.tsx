@@ -53,13 +53,13 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
               average_cost_instrument_ccy,
               average_cost_portfolio_ccy,
               last_price,
+              fx_rate_to_portfolio_ccy,
             } = holding;
-            const fxRatePortfolioToInstrumentCcy = 3.75; // TODO: fetch actual FX rate
 
             const investedValueInstrumentCcy = shares * average_cost_instrument_ccy;
             const investedValuePortfolioCcy = shares * average_cost_portfolio_ccy;
             const currentValueInstrumentCcy = shares * last_price;
-            const currentValuePortfolioCcy = shares * last_price * fxRatePortfolioToInstrumentCcy;
+            const currentValuePortfolioCcy = shares * last_price * fx_rate_to_portfolio_ccy;
             const gainLossInstrumentCcy = currentValueInstrumentCcy - investedValueInstrumentCcy;
             const gainLossPortfolioCcy = currentValuePortfolioCcy - investedValuePortfolioCcy;
             const isPositive = gainLossInstrumentCcy >= 0;
