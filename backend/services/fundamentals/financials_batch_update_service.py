@@ -299,6 +299,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         total_mappings += len(mappings)
         history_mappings.extend(mappings)
         
+        # Sanitize numpy types on ORM objects (snapshot + market data)
         for obj in db.new.union(db.dirty):
             if hasattr(obj, "__dict__"):
                 obj.__dict__.update(sanitize_numpy_types(obj.__dict__))
@@ -308,6 +309,9 @@ def fetch_and_save_financial_data_for_list_of_tickers(
     # Count actual inserted rows by comparing before/after count
     inserted_count = 0
     if history_mappings:
+        # 🔑 IMPORTANT: sanitize mappings before bulk_insert_mappings
+        history_mappings = sanitize_numpy_types(history_mappings)
+
         before = db.query(CompanyFinancialHistory).count()
         db.bulk_insert_mappings(CompanyFinancialHistory, history_mappings)
         db.commit()
