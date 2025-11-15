@@ -186,7 +186,9 @@ def buy_stock(
         raise HTTPException(status_code=404, detail="Company not found")
 
     tx_ts = trade.to_timestamp()
-    account_id = get_default_account_id(db, portfolio.id)
+
+    # 👇 use user-selected account if present, otherwise fallback
+    account_id = trade.account_id or get_default_account_id(db, portfolio.id)
 
     tx = Transaction(
         user_id=user.id,
@@ -197,9 +199,15 @@ def buy_stock(
         quantity=Decimal(str(trade.shares)),
         price=Decimal(str(trade.price)),
         fee=Decimal(str(trade.fee or 0)),
-        total_value=(Decimal(str(trade.shares)) * Decimal(str(trade.price))) + Decimal(str(trade.fee or 0)),
+        total_value=(
+            Decimal(str(trade.shares)) * Decimal(str(trade.price))
+        ) + Decimal(str(trade.fee or 0)),
         currency=trade.currency,
-        currency_rate=Decimal(str(trade.currency_rate)) if trade.currency_rate is not None else None,
+        currency_rate=(
+            Decimal(str(trade.currency_rate))
+            if trade.currency_rate is not None
+            else None
+        ),
         timestamp=tx_ts,
     )
     db.add(tx)
@@ -242,14 +250,17 @@ def sell_stock(
         db.query(func.coalesce(func.sum(qty_sign_case * Transaction.quantity), 0))
         .filter(Transaction.portfolio_id == portfolio.id)
         .filter(Transaction.company_id == company.company_id)
-        .filter(Transaction.timestamp <= tx_ts)  # as-of check
+        .filter(Transaction.timestamp <= tx_ts)
         .scalar()
     )
     if Decimal(str(owned)) < Decimal(str(trade.shares)):
         raise HTTPException(status_code=400, detail="Insufficient shares to sell as of trade time")
 
-    account_id = get_default_account_id(db, portfolio.id)
-    total_value = (Decimal(str(trade.shares)) * Decimal(str(trade.price))) - Decimal(str(trade.fee or 0))
+    # 👇 use user-selected account if present, otherwise fallback
+    account_id = trade.account_id or get_default_account_id(db, portfolio.id)
+    total_value = (
+        Decimal(str(trade.shares)) * Decimal(str(trade.price))
+    ) - Decimal(str(trade.fee or 0))
 
     tx = Transaction(
         user_id=user.id,
@@ -262,7 +273,11 @@ def sell_stock(
         fee=Decimal(str(trade.fee or 0)),
         total_value=total_value,
         currency=trade.currency,
-        currency_rate=Decimal(str(trade.currency_rate)) if trade.currency_rate is not None else None,
+        currency_rate=(
+            Decimal(str(trade.currency_rate))
+            if trade.currency_rate is not None
+            else None
+        ),
         timestamp=tx_ts,
     )
     db.add(tx)

@@ -2,10 +2,10 @@
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from database.portfolio import Transaction
+from database.portfolio import Portfolio, Transaction
 from database.account import Account
 from database.company import Company
-from database.position import Position
+from database.position import PortfolioPositions
 from schemas.portfolio_schemas import TransactionType  # you created this model earlier
 
 
@@ -24,70 +24,154 @@ def get_default_account_id(db: Session, portfolio_id: int) -> int:
         acc_id = acc.id
     return acc_id
 
+def get_default_account_id(db: Session, portfolio_id: int) -> int:
+    # Reuse seeded “Default” account
+    acc_id = (
+        db.query(Account.id)
+        .filter(Account.portfolio_id == portfolio_id, Account.name == "Default")
+        .scalar()
+    )
+    if not acc_id:
+        # Fallback: create it if missing (shouldn't happen, but safe)
+        acc = Account(portfolio_id=portfolio_id, name="Default", account_type="brokerage")
+        db.add(acc)
+        db.flush()
+        acc_id = acc.id
+    return acc_id
+
+
+def _dec(x) -> Decimal:
+    return Decimal(str(x or "0"))
+
 
 def apply_transaction_to_position(db: Session, tx: Transaction) -> None:
     """
-    Update Position for (account_id, company_id) after a single transaction.
-    Rules:
-      - BUY  : increase qty, recalc weighted avg_cost (per share) in tx.currency
-      - SELL : decrease qty, avg_cost unchanged (unless quantity becomes 0 -> reset avg_cost=0)
-      - Other tx types (DEPOSIT/WITHDRAWAL/DIVIDEND/INTEREST/FEE/TAX) do NOT change equity positions.
-        (They affect cash positions, which we’ll add once cash is an Instrument.)
-    """
-    # Ensure account_id present (older code paths might not set it yet)
-    if not tx.account_id:
-        tx.account_id = get_default_account_id(db, tx.portfolio_id)
+    Update PortfolioPositions for a BUY or SELL transaction.
 
-    # Div/Interest/Fee/Tax/Deposit/Withdrawal do not change share quantity for a company security
+    BUY:
+        - Increases quantity
+        - Recomputes weighted-average cost
+        - Tracks cost in BOTH instrument currency and portfolio currency
+        - Adds fee to the *portfolio currency* cost basis
+
+    SELL:
+        - Decreases quantity
+        - Removes proportional cost
+        - Resets cost basis if quantity goes to zero
+
+    NON-BUY/SELL (DIVIDEND, INTEREST, FEE, TAX, DEPOSIT, WITHDRAWAL):
+        - Do NOT modify equity positions.
+        - (These affect portfolio cash & PVD, not positions.)
+    """
+
+    # Only BUY/SELL modify equity positions
     if tx.transaction_type not in (TransactionType.BUY, TransactionType.SELL):
         return
 
+    # Make sure account_id exists (older requests may not set it)
+    if not tx.account_id:
+        tx.account_id = get_default_account_id(db, tx.portfolio_id)
+
+    # Portfolio base currency (e.g. PLN)
+    portfolio = db.query(Portfolio).filter(Portfolio.id == tx.portfolio_id).first()
+    base_ccy = (portfolio.currency or "USD").upper()
+
+    tx_ccy = (tx.currency or base_ccy).upper()
+
+    # FX: transaction currency -> portfolio base currency
+    if tx_ccy == base_ccy:
+        fx_to_base = Decimal("1")
+    else:
+        fx_to_base = _dec(tx.currency_rate or 1)
+
+    # Retrieve or create position for (account_id, company_id)
     pos = (
-        db.query(Position)
-        .filter(Position.account_id == tx.account_id, Position.company_id == tx.company_id)
+        db.query(PortfolioPositions)
+        .filter(
+            PortfolioPositions.account_id == tx.account_id,
+            PortfolioPositions.company_id == tx.company_id,
+        )
         .first()
     )
 
     if not pos:
-        # Create empty position for this (account, company)
-        pos = Position(
+        pos = PortfolioPositions(
             account_id=tx.account_id,
             company_id=tx.company_id,
             quantity=Decimal("0"),
-            avg_cost=Decimal("0"),
-            avg_cost_ccy=tx.currency,  # store tx currency as cost currency
+            avg_cost_instrument_ccy=Decimal("0"),
+            instrument_currency_code=tx_ccy,
+            avg_cost_portfolio_ccy=Decimal("0"),
+            total_cost_instrument_ccy=Decimal("0"),
+            total_cost_portfolio_ccy=Decimal("0"),
         )
         db.add(pos)
         db.flush()
 
-    qty = Decimal(str(pos.quantity))
-    avg = Decimal(str(pos.avg_cost))
-    q_tx = Decimal(str(tx.quantity))
-    p_tx = Decimal(str(tx.price or 0))
-    # NOTE: fee is ignored for avg_cost here; you may choose to include fee into cost basis if desired.
+    # Existing values
+    qty_old = _dec(pos.quantity)
+    avg_inst_old = _dec(pos.avg_cost_instrument_ccy)
+    avg_base_old = _dec(pos.avg_cost_portfolio_ccy)
+    total_inst_old = _dec(pos.total_cost_instrument_ccy)
+    total_base_old = _dec(pos.total_cost_portfolio_ccy)
 
+    # Transaction values
+    qty_tx = _dec(tx.quantity)
+    price_tx = _dec(tx.price)
+    fee_tx = _dec(tx.fee)
+
+    # ---------------------------------------------------
+    # BUY
+    # ---------------------------------------------------
     if tx.transaction_type == TransactionType.BUY:
-        new_qty = qty + q_tx
+        new_qty = qty_old + qty_tx
+
+        # cost of this transaction in instrument currency
+        lot_cost_inst = qty_tx * price_tx
+
+        # cost of this transaction in portfolio currency (fee belongs here)
+        lot_cost_base = (qty_tx * price_tx + fee_tx) * fx_to_base
+
+        total_inst_new = total_inst_old + lot_cost_inst
+        total_base_new = total_base_old + lot_cost_base
+
         if new_qty > 0:
-            # Weighted average cost per share
-            new_avg = ((qty * avg) + (q_tx * p_tx)) / new_qty
+            new_avg_inst = total_inst_new / new_qty
+            new_avg_base = total_base_new / new_qty
         else:
-            new_avg = Decimal("0")
+            new_avg_inst = Decimal("0")
+            new_avg_base = Decimal("0")
+
+        # Save updates
         pos.quantity = new_qty
-        pos.avg_cost = new_avg
-        pos.avg_cost_ccy = tx.currency  # keep last buy currency as cost currency
+        pos.instrument_currency_code = tx_ccy
+        pos.avg_cost_instrument_ccy = new_avg_inst
+        pos.avg_cost_portfolio_ccy = new_avg_base
+        pos.total_cost_instrument_ccy = total_inst_new
+        pos.total_cost_portfolio_ccy = total_base_new
 
+    # ---------------------------------------------------
+    # SELL
+    # ---------------------------------------------------
     elif tx.transaction_type == TransactionType.SELL:
-        new_qty = qty - q_tx
-        if new_qty <= 0:
-            # Flat close
-            pos.quantity = Decimal("0")
-            pos.avg_cost = Decimal("0")
-        else:
-            pos.quantity = new_qty
-            # avg_cost unchanged on sells
+        new_qty = qty_old - qty_tx
 
-    # last_updated handled by DB default/onupdate if set, or leave as-is.
+        # If fully sold, reset fields
+        if new_qty <= 0:
+            pos.quantity = Decimal("0")
+            pos.avg_cost_instrument_ccy = Decimal("0")
+            pos.avg_cost_portfolio_ccy = Decimal("0")
+            pos.total_cost_instrument_ccy = Decimal("0")
+            pos.total_cost_portfolio_ccy = Decimal("0")
+        else:
+            # Reduce total cost proportionally
+            pos.quantity = new_qty
+            pos.avg_cost_instrument_ccy = avg_inst_old
+            pos.avg_cost_portfolio_ccy = avg_base_old
+            pos.total_cost_instrument_ccy = new_qty * avg_inst_old
+            pos.total_cost_portfolio_ccy = new_qty * avg_base_old
+            # NOTE: Realized PnL is handled elsewhere.
+
     db.flush()
 
 
@@ -103,8 +187,8 @@ def reverse_transaction_from_position(db: Session, tx: Transaction) -> None:
         return
 
     pos = (
-        db.query(Position)
-        .filter(Position.account_id == tx.account_id, Position.company_id == tx.company_id)
+        db.query(PortfolioPositions)
+        .filter(PortfolioPositions.account_id == tx.account_id, PortfolioPositions.company_id == tx.company_id)
         .first()
     )
     if not pos:
@@ -138,49 +222,151 @@ def reverse_transaction_from_position(db: Session, tx: Transaction) -> None:
     db.flush()
 
 
+
 def recompute_position(db: Session, account_id: int, company_id: int) -> None:
     """
-    Full recompute of a single (account, company) position from transactions.
-    Use this if you ever need to guarantee correctness after multiple edits.
-    """
-    from decimal import Decimal
-    qty = Decimal("0")
-    cost = Decimal("0")  # total cost value = sum(q*price) for buys
+    Full recompute of a single (account, company) position from scratch.
 
-    rows = (
+    Logic is equivalent to:
+      - start with empty position
+      - replay all BUY/SELL transactions in chronological order
+      - apply FX and fees like in apply_transaction_to_position()
+
+    Computes:
+      - quantity
+      - avg_cost_instrument_ccy
+      - avg_cost_portfolio_ccy
+      - total_cost_instrument_ccy
+      - total_cost_portfolio_ccy
+      - instrument_currency_code
+
+    Ignores non-BUY/SELL transactions (DIVIDEND, INTEREST, etc.).
+    """
+
+    # ---- 1) Get portfolio base currency (e.g. "PLN" / "USD") ----
+    portfolio_id = (
+        db.query(Transaction.portfolio_id)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.company_id == company_id,
+        )
+        .order_by(Transaction.timestamp.asc())
+        .limit(1)
+        .scalar()
+    )
+
+    if portfolio_id is not None:
+        base_ccy = (
+            db.query(Portfolio.currency)
+            .filter(Portfolio.id == portfolio_id)
+            .scalar()
+            or "USD"
+        ).upper()
+    else:
+        # No transactions at all → fall back to default
+        base_ccy = "USD"
+
+    # ---- 2) Load all transactions for this (account, company) ----
+    txs = (
         db.query(Transaction)
-        .filter(Transaction.account_id == account_id, Transaction.company_id == company_id)
+        .filter(
+            Transaction.account_id == account_id,
+            Transaction.company_id == company_id,
+        )
         .order_by(Transaction.timestamp.asc())
         .all()
     )
 
-    last_ccy = None
-    for t in rows:
-        last_ccy = t.currency or last_ccy
-        if t.transaction_type == TransactionType.BUY:
-            qty += Decimal(str(t.quantity))
-            cost += Decimal(str(t.quantity)) * Decimal(str(t.price or 0))
-        elif t.transaction_type == TransactionType.SELL:
-            qty -= Decimal(str(t.quantity))
-            # avg cost unchanged; P&L realized elsewhere
+    qty = Decimal("0")
+    total_cost_inst = Decimal("0")
+    total_cost_base = Decimal("0")
+    last_inst_ccy = None
 
+    for tx in txs:
+        if tx.transaction_type not in (TransactionType.BUY, TransactionType.SELL):
+            # non-BUY/SELL do not change the equity position itself
+            continue
+
+        tx_qty = _dec(tx.quantity)
+        tx_price = _dec(tx.price)
+        tx_fee = _dec(tx.fee)
+        tx_ccy = (tx.currency or base_ccy).upper()
+
+        # FX: transaction currency -> portfolio base currency
+        if tx_ccy == base_ccy:
+            fx_to_base = Decimal("1")
+        else:
+            fx_to_base = _dec(tx.currency_rate or 1)
+
+        if tx.transaction_type == TransactionType.BUY:
+            # --- BUY ---
+            last_inst_ccy = tx_ccy
+
+            lot_cost_inst = tx_qty * tx_price
+            lot_cost_base = (tx_qty * tx_price + tx_fee) * fx_to_base
+
+            qty += tx_qty
+            total_cost_inst += lot_cost_inst
+            total_cost_base += lot_cost_base
+
+        elif tx.transaction_type == TransactionType.SELL:
+            # --- SELL ---
+            if qty <= 0:
+                # Defensive: if we somehow have sells without prior buys
+                qty = Decimal("0")
+                total_cost_inst = Decimal("0")
+                total_cost_base = Decimal("0")
+            else:
+                new_qty = qty - tx_qty
+
+                if new_qty <= 0:
+                    # full close
+                    qty = Decimal("0")
+                    total_cost_inst = Decimal("0")
+                    total_cost_base = Decimal("0")
+                else:
+                    # scale cost proportionally to remaining quantity
+                    ratio = new_qty / qty
+                    qty = new_qty
+                    total_cost_inst = total_cost_inst * ratio
+                    total_cost_base = total_cost_base * ratio
+
+    # ---- 3) Upsert PortfolioPositions row ----
     pos = (
-        db.query(Position)
-        .filter(Position.account_id == account_id, Position.company_id == company_id)
+        db.query(PortfolioPositions)
+        .filter(
+            PortfolioPositions.account_id == account_id,
+            PortfolioPositions.company_id == company_id,
+        )
         .first()
     )
+
     if not pos:
-        pos = Position(
+        pos = PortfolioPositions(
             account_id=account_id,
             company_id=company_id,
-            quantity=Decimal("0"),
-            avg_cost=Decimal("0"),
-            avg_cost_ccy=last_ccy or "USD",
         )
         db.add(pos)
 
-    pos.quantity = qty if qty > 0 else Decimal("0")
-    pos.avg_cost = (cost / qty) if qty > 0 else Decimal("0")
-    if last_ccy:
-        pos.avg_cost_ccy = last_ccy
+    # If quantity is zero → reset basis fields
+    if qty <= 0:
+        pos.quantity = Decimal("0")
+        pos.avg_cost_instrument_ccy = Decimal("0")
+        pos.avg_cost_portfolio_ccy = Decimal("0")
+        pos.total_cost_instrument_ccy = Decimal("0")
+        pos.total_cost_portfolio_ccy = Decimal("0")
+        pos.instrument_currency_code = last_inst_ccy or base_ccy
+
+    else:
+        pos.quantity = qty
+        pos.total_cost_instrument_ccy = total_cost_inst
+        pos.total_cost_portfolio_ccy = total_cost_base
+        pos.avg_cost_instrument_ccy = (
+            total_cost_inst / qty if qty > 0 else Decimal("0")
+        )
+        pos.avg_cost_portfolio_ccy = (
+            total_cost_base / qty if qty > 0 else Decimal("0")
+        )
+        pos.instrument_currency_code = last_inst_ccy or base_ccy
+
     db.flush()

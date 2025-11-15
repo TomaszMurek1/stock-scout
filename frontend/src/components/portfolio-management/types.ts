@@ -53,8 +53,10 @@ export interface Portfolio {
   id: number;
   name: string;
   currency: CurrencyCode;
-  total_invested: number;
+  total_value: number;
   cash_available: number;
+  invested_value_current: number;
+  net_invested_cash: number;
 }
 
 export interface PortfolioPerformance {
@@ -122,23 +124,13 @@ export type InvestedPerHolding = Record<
   }
 >;
 
-export type IByHolding = Record<string, HoldingValuation>;
-
-export type HoldingValuation = {
-  currentValueInHolding: number;
-  currentValueInPortfolio: number;
-  investedValueInHolding: number;
-  investedValueInPortfolio: number;
-  gainLossInHolding: number;
-  gainLossInPortfolio: number;
-  isPositive: boolean;
-  quantity: number;
-  price: number | undefined;
-  fx: number;
-  holdingCurrency: string;
-};
-
-export type TotalValueResult = {
-  totalValueBase: number;
-  byHolding: IByHolding;
+export type ApiHolding = {
+  ticker: string;
+  name: string;
+  shares: number;
+  instrument_ccy: string;
+  average_cost_portfolio_ccy: number;
+  average_cost_instrument_ccy: number;
+  fx_rate_to_portfolio_ccy: number;
+  last_price: number;
 };

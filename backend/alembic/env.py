@@ -18,7 +18,7 @@ from database.portfolio import Portfolio, Transaction, FavoriteStock
 from database.account import Account  # ADD THIS LINE - this was missing!
 from database.company import Company
 from database.market import Market
-from database.position import Position
+from database.position import PortfolioPositions
 from database.valuation import PortfolioValuationDaily, PortfolioReturns
 from database.stock_data import CompanyMarketData, StockPriceHistory
 from database.fx import FxRate

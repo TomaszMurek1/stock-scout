@@ -2,16 +2,16 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { IByHolding } from "../../types";
+import { ApiHolding } from "../../types";
 
 interface HoldingsTabProps {
-  byHolding?: any; //IByHolding;
+  holdings: ApiHolding[];
   onRemove: (id: string) => void;
 }
 
-export default function HoldingsTab({ byHolding, onRemove }: HoldingsTabProps) {
-  console.log("byHolding", byHolding);
-  if (byHolding.length === 0) {
+export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
+  console.log("byHolding", holdings);
+  if (holdings.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500">
         No stocks in your portfolio. Add some stocks to get started.
@@ -45,62 +45,67 @@ export default function HoldingsTab({ byHolding, onRemove }: HoldingsTabProps) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {byHolding.map((row) => {
+          {holdings.map((holding) => {
             const {
               ticker,
               shares,
-              holdingCurrency,
-              investedValueInHolding,
-              investedValueInPortfolio,
-              currentValueInHolding,
-              currentValueInPortfolio,
-              gainLossInHolding,
-              gainLossInPortfolio,
-              isPositive,
-            } = row;
+              instrument_ccy,
+              average_cost_instrument_ccy,
+              average_cost_portfolio_ccy,
+              last_price,
+              fx_rate_to_portfolio_ccy,
+            } = holding;
 
+            const investedValueInstrumentCcy = shares * average_cost_instrument_ccy;
+            const investedValuePortfolioCcy = shares * average_cost_portfolio_ccy;
+            const currentValueInstrumentCcy = shares * last_price;
+            const currentValuePortfolioCcy = shares * last_price * fx_rate_to_portfolio_ccy;
+            const gainLossInstrumentCcy = currentValueInstrumentCcy - investedValueInstrumentCcy;
+            const gainLossPortfolioCcy = currentValuePortfolioCcy - investedValuePortfolioCcy;
+            const isPositive = gainLossInstrumentCcy >= 0;
+            //TODO: calculate investedValueInHolding, currentValueInHolding in both currencies
             return (
               <tr key={ticker}>
                 <td className="px-6 py-4 whitespace-nowrap font-medium">{ticker}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{shares}</td>
-                {/* <td className="px-6 py-4 whitespace-nowrap">
-                  {investedValueInHolding.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: holdingCurrency,
-                  })}{" "}
-                  <br />(
-                  {investedValueInPortfolio.toLocaleString(undefined, {
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {investedValuePortfolioCcy.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
+                  })}{" "}
+                  <br />(
+                  {investedValueInstrumentCcy.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: instrument_ccy,
                   })}
                   )
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {currentValueInHolding.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: holdingCurrency,
-                  })}{" "}
-                  <br />(
-                  {currentValueInPortfolio.toLocaleString(undefined, {
+                  {currentValuePortfolioCcy.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
+                  })}{" "}
+                  <br />(
+                  {currentValueInstrumentCcy.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: instrument_ccy,
                   })}
                   )
                 </td>
                 <td
                   className={`px-6 py-4 whitespace-nowrap ${isPositive ? "text-green-600" : "text-red-600"}`}
                 >
-                  {gainLossInHolding.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: holdingCurrency,
-                  })}{" "}
-                  <br />(
-                  {gainLossInPortfolio.toLocaleString(undefined, {
+                  {gainLossPortfolioCcy.toLocaleString(undefined, {
                     style: "currency",
                     currency: "PLN",
+                  })}{" "}
+                  <br />(
+                  {gainLossInstrumentCcy.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: instrument_ccy,
                   })}
                   )
-                </td> */}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Button
                     variant="ghost"

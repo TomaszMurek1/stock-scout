@@ -233,7 +233,7 @@ def materialize_day(
         raise HTTPException(status_code=404, detail="Portfolio not found")
     base_ccy = (pf.currency or "").upper()
 
-    # === 1) Securities preview (positions only — we won't trust its cash/total) ===
+
     preview = preview_day_value(portfolio_id=portfolio_id, as_of=as_of, db=db)
 
     # === 2) Cash via rolling balance (correct for BUY/SELL and other flows) ===
