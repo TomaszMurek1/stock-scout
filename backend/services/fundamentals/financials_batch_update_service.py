@@ -42,15 +42,14 @@ def get_companies_by_tickers(db: Session, tickers: List[str]) -> List[Company]:
 
 
 def get_latest_report_dates(
-    db: Session, company_ids: List[int], market_id: int
+    db: Session, company_ids: List[int]
 ) -> Dict[int, datetime]:
-    """Return {company_id: latest_report_end_date}."""
+    """Return {company_id: latest_report_end_date} (market-agnostic)."""
     rows = (
         db.query(
             CompanyFinancialHistory.company_id,
             func.max(CompanyFinancialHistory.report_end_date),
         )
-        .filter(CompanyFinancialHistory.market_id == market_id)
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
         .group_by(CompanyFinancialHistory.company_id)
         .all()
@@ -75,37 +74,36 @@ def should_update_financials(
     return (today - date_only).days >= 350
 
 
-def preload_existing_financials(db: Session, company_ids: List[int], market_id: int):
+def preload_existing_financials(db: Session, company_ids: List[int]):
     """Preload existing snapshots and history for upsert skipping."""
     market_data = {
         md.company_id: md
         for md in db.query(CompanyMarketData)
-        .filter(CompanyMarketData.market_id == market_id)
         .filter(CompanyMarketData.company_id.in_(company_ids))
         .all()
     }
+
     financials = {
         fn.company_id: fn
         for fn in db.query(CompanyFinancials)
-        .filter(CompanyFinancials.market_id == market_id)
         .filter(CompanyFinancials.company_id.in_(company_ids))
         .all()
     }
+
     history_keys = set(
         db.query(
             CompanyFinancialHistory.company_id,
             CompanyFinancialHistory.report_end_date,
         )
-        .filter(CompanyFinancialHistory.market_id == market_id)
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
         .all()
     )
+
     return market_data, financials, history_keys
 
 
 def build_financial_history_mappings(
     company,
-    market,
     income_stmt,
     balance_sheet,
     cashflow,
@@ -133,7 +131,6 @@ def build_financial_history_mappings(
             continue
         hist_data = {
             "company_id": company.company_id,
-            "market_id": market.market_id,
             "report_end_date": end_date,
             "net_income": safe_get(income_stmt, "Net Income", col),
             "total_revenue": safe_get(income_stmt, "Total Revenue", col),
@@ -270,7 +267,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
 
         # Financials snapshot upsert
         fn = financials.get(comp.company_id) or CompanyFinancials(
-            company_id=comp.company_id, market_id=market.market_id
+            company_id=comp.company_id
         )
         if income_stmt is not None and not income_stmt.empty:
             col = get_most_recent_column(income_stmt.columns)
@@ -288,7 +285,6 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         # Build new financial history (no duplicates)
         mappings = build_financial_history_mappings(
             comp,
-            market,
             income_stmt,
             balance_sheet,
             cashflow,
@@ -356,7 +352,7 @@ def update_financials_for_tickers(
         return
 
     company_ids = [c.company_id for c in companies]
-    latest_reports = get_latest_report_dates(db, company_ids, market.market_id)
+    latest_reports = get_latest_report_dates(db, company_ids)
     today = datetime.now(timezone.utc).date()
 
     eligible_tickers = []

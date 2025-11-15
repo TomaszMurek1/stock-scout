@@ -16,17 +16,8 @@ class Market(Base):
     companies = relationship("Company", back_populates="market")  # <-- CHANGED HERE
 
     analysis_results = relationship("AnalysisResult", back_populates="market")
-    financials = relationship(
-        "CompanyFinancials", back_populates="market", cascade="all, delete-orphan"
-    )
-    market_data = relationship(
-        "CompanyMarketData", back_populates="market", cascade="all, delete-orphan"
-    )
     indexes = relationship(
         "StockIndex", back_populates="market", cascade="all, delete-orphan"
-    )
-    financial_history = relationship(
-        "CompanyFinancialHistory", back_populates="market", cascade="all, delete-orphan"
     )
 
 

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from sqlalchemy import BigInteger, Column, DateTime, Float, ForeignKey, Integer
+
+from sqlalchemy import BigInteger, Column, DateTime, Float, ForeignKey, Index, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -10,7 +11,6 @@ class CompanyFinancials(Base):
 
     financials_id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
-    market_id = Column(Integer, ForeignKey("markets.market_id"), nullable=False)
 
     enterprise_value = Column(Float, nullable=True)
     total_revenue = Column(Float, nullable=True)
@@ -42,15 +42,20 @@ class CompanyFinancials(Base):
     )
 
     company = relationship("Company", back_populates="financials")
-    market = relationship("Market", back_populates="financials")
 
 
 class CompanyFinancialHistory(Base):
     __tablename__ = "company_financial_history"
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id", "report_end_date",
+            name="uq_company_hist_company_date",
+        ),
+        Index("idx_company_hist_company_date", "company_id", "report_end_date"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
-    market_id = Column(Integer, ForeignKey("markets.market_id"), nullable=False)
     report_end_date = Column(DateTime, nullable=False, index=True)
     net_income = Column(Float, nullable=True)
     total_revenue = Column(Float, nullable=True)
@@ -79,4 +84,3 @@ class CompanyFinancialHistory(Base):
     )
 
     company = relationship("Company", back_populates="financial_history")
-    market = relationship("Market", back_populates="financial_history")
