@@ -20,9 +20,8 @@ class CompanyMarketData(Base):
 
     __tablename__ = "company_market_data"
 
-    market_data_id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
-    market_id = Column(Integer, ForeignKey("markets.market_id"), nullable=False)
 
     # Stock Market Data
     current_price = Column(Float, nullable=True)
@@ -51,15 +50,13 @@ class CompanyMarketData(Base):
     )
 
     company = relationship("Company", back_populates="market_data")
-    market = relationship("Market", back_populates="market_data")
 
 
 class StockPriceHistory(Base):
     __tablename__ = "stock_price_history"
-
+    market_id = Column(Integer, ForeignKey("markets.market_id"), nullable=False)
     data_id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
-    market_id = Column(Integer, ForeignKey("markets.market_id"), nullable=False)
     date = Column(Date, nullable=False, index=True)
     open = Column(Float)
     high = Column(Float)
@@ -74,11 +71,11 @@ class StockPriceHistory(Base):
     )
 
     company = relationship("Company")
-    market = relationship("Market")
 
     __table_args__ = (
-        UniqueConstraint(
-            "company_id", "market_id", "date", name="_company_market_date_uc"
-        ),
-        Index("idx_stockpricehistory_date", "date"),
+        UniqueConstraint("company_id", "market_id", "date", name="uq_company_market_date"),
+        Index("idx_stockpricehistory_company_market_date", "company_id", "market_id", "date"),
+        {
+            "postgresql_partition_by": "LIST (market_id)",
+        },
     )

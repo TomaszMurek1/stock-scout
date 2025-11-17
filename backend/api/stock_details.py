@@ -225,7 +225,7 @@ def get_stock_details(
         logger.warning(f"Stock price history not found for ticker {ticker}")
         raise HTTPException(status_code=404, detail="Stock price history not found.")
 
-    trends = build_financial_trends(db, company.company_id, market.market_id)
+    trends = build_financial_trends(db, company.company_id)
     investor_metrics = build_investor_metrics(financials, trends)
     valuation_metrics = build_valuation_metrics(company, financials, db)
     raw_technical_analysis = build_extended_technical_analysis(

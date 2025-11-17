@@ -39,7 +39,7 @@ def build_valuation_metrics(
     ev_ebitda = ev / ebitda if (ev is not None and ebitda not in (None, 0)) else None
 
     # Safe revenue growth from trends
-    trends = build_financial_trends(db, company.company_id, financials.market_id)
+    trends = build_financial_trends(db, company.company_id)
     revenue_growth = None
     if trends.get("revenue") and len(trends["revenue"]) >= 2:
         recent = trends["revenue"][0].get("value")

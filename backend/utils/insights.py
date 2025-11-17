@@ -13,10 +13,10 @@ def clean_nan_dict(d: dict) -> dict:
     return {k: (None if (v is None or is_invalid(v)) else v) for k, v in d.items()}
 
 
-def build_financial_trends(db: Session, company_id: int, market_id: int) -> dict:
+def build_financial_trends(db: Session, company_id: int) -> dict:
     records = (
         db.query(CompanyFinancialHistory)
-        .filter_by(company_id=company_id, market_id=market_id)
+        .filter_by(company_id=company_id)
         .order_by(CompanyFinancialHistory.report_end_date.desc())
         .limit(6)
         .all()
