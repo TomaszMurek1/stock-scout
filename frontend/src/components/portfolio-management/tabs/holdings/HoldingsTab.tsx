@@ -35,6 +35,13 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
             </IconButton>
           </Tooltip>
         )}
+        muiTopToolbarProps={{
+          sx: {
+            backgroundColor: "#e5e7eb", // gray-200
+            paddingY: 1,
+            paddingX: 2,
+          },
+        }}
         muiTableHeadCellProps={{
           sx: {
             backgroundColor: "#e5e7eb",
