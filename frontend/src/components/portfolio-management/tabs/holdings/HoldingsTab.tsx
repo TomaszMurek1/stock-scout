@@ -22,7 +22,7 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
   const columns = useHoldingsColumns();
 
   return (
-    <div className="p-4 shadow-sm">
+    <div className="shadow-sm">
       <MaterialReactTable
         columns={columns}
         data={holdings}
