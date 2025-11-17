@@ -22,7 +22,7 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
   const columns = useHoldingsColumns();
 
   return (
-    <div className="p-4 bg-white rounded-xl shadow-sm">
+    <div className="p-4 shadow-sm">
       <MaterialReactTable
         columns={columns}
         data={holdings}
@@ -35,10 +35,19 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
             </IconButton>
           </Tooltip>
         )}
-        muiTablePaperProps={{
-          elevation: 0,
+        muiTableHeadCellProps={{
           sx: {
-            borderRadius: 2,
+            backgroundColor: "#e5e7eb",
+          },
+        }}
+        muiTableBodyRowProps={{
+          sx: {
+            backgroundColor: "#fff",
+          },
+        }}
+        muiBottomToolbarProps={{
+          sx: {
+            backgroundColor: "#e5e7eb",
           },
         }}
       />

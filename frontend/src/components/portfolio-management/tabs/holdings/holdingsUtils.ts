@@ -51,7 +51,6 @@ export function formatCurrencySafe(value: number, currency: string): string {
       currency,
     });
   } catch {
-    // Fallback in case of weird currency codes
     return `${value.toFixed(2)} ${currency}`;
   }
 }
