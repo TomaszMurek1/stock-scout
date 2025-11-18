@@ -2,6 +2,7 @@
 import React, { useMemo } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { CurrencyRate } from "../../types";
+import { color } from "@mui/system";
 
 interface SummaryProps {
   totalValue: number;
@@ -100,26 +101,31 @@ export const Summary: React.FC<SummaryProps> = ({
   currency,
 }) => {
   const isPositiveGL = totalGainLoss >= 0;
+  const bgColor = "bg-gray-200";
+  const padding = "p-6";
+  const borderRadius = "rounded-lg";
+  const boxShadow = "shadow-md";
+  const border = "border border-gray-400";
 
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className={`${bgColor} ${padding} ${borderRadius} ${boxShadow} ${border}`}>
           <div className="text-sm text-gray-600 mb-1">Total Portfolio Value</div>
           <Price value={invested_value_current} currency={currency} />
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className={`${bgColor} ${padding} ${borderRadius} ${boxShadow} ${border}`}>
           <div className="text-sm text-gray-600 mb-1">Total Invested</div>
           <Price value={totalInvested} currency={currency} />
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className={`${bgColor} ${padding} ${borderRadius} ${boxShadow} ${border}`}>
           <div className="text-sm text-gray-600 mb-1">Total Gain/Loss</div>
           <GainLoss totalGainLoss={totalGainLoss} currency={currency} isPositive={isPositiveGL} />
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className={`${bgColor} ${padding} ${borderRadius} ${boxShadow} ${border}`}>
           <div className="text-sm text-gray-600 mb-1">Percentage Change</div>
           <PercentageChange
             percentageChange={percentageChange}
