@@ -14,22 +14,20 @@ import { Plus } from "lucide-react"
 import { CompanySearch } from "@/components/company-search/CompanySearch"
 import { Company } from "@/components/company-search/types"
 import { apiClient } from "@/services/apiClient"
-import { fetchWatchlist } from "@/services/api/watchlist"
 import { AppState, useAppStore } from "@/store/appStore"
 
 export function AddWatchlistDialog() {
     const [open, setOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const setWatchlist = useAppStore((state: AppState) => state.setWatchlist)
+    const refreshWatchlist = useAppStore((state: AppState) => state.refreshWatchlist)
 
     const handleAdd = async (company: Company) => {
         setError(null)
         setSubmitting(true)
         try {
             await apiClient.post("/watchlist", { ticker: company.ticker })
-            const updated = await fetchWatchlist()
-            setWatchlist(updated)
+            await refreshWatchlist()
             setOpen(false)
         } catch (err) {
             const message =

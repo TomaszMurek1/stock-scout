@@ -2,30 +2,27 @@
 import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { fetchWatchlist } from "@/services/api/watchlist";
-import type { WatchlistStock } from "./types";
 import { WatchlistTable } from "./WatchlistTable";
 import { AppState, useAppStore } from "@/store/appStore";
 import { AddWatchlistDialog } from "./AddWatchlistDialog";
 
 export default function WatchlistTab() {
-  const setWatchlist = useAppStore((state: AppState) => state.setWatchlist);
+  const loadWatchlist = useAppStore((state: AppState) => state.loadWatchlist);
+  const refreshWatchlist = useAppStore((state: AppState) => state.refreshWatchlist);
+  const isLoading = useAppStore((state: AppState) => state.watchlist.isLoading);
 
-  const handleRefresh = useCallback(
-    () =>
-      fetchWatchlist()
-        .then((list: WatchlistStock[]) => {
-          setWatchlist(list);
-        })
-        .catch((err) => {
-          console.error("Failed to refresh watchlist", err);
-        }),
-    [setWatchlist]
-  );
+  const handleRefresh = useCallback(() => {
+    refreshWatchlist().catch((err) => {
+      console.error("Failed to refresh watchlist", err);
+    });
+  }, [refreshWatchlist]);
 
   useEffect(() => {
-    handleRefresh();
-  }, [handleRefresh]);
+    console.log("Loading watchlist...");
+    loadWatchlist().catch((err) => {
+      console.error("Failed to load watchlist", err);
+    });
+  }, [loadWatchlist]);
 
   return (
     <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
@@ -33,7 +30,13 @@ export default function WatchlistTab() {
         <h2 className="text-xl font-semibold text-gray-800">Watchlist</h2>
         <div className="flex space-x-2">
           <AddWatchlistDialog />
-          <Button variant="outline" size="sm" className="text-gray-600" onClick={handleRefresh}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-gray-600"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>

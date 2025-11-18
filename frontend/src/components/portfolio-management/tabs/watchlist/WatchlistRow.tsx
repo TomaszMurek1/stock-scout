@@ -22,12 +22,16 @@ export function WatchlistRow({ stock }: WatchlistRowProps) {
     const toggleWatchlist = useAppStore(
         (state: AppState) => state.toggleWatchlist
     )
+    const refreshWatchlist = useAppStore(
+        (state: AppState) => state.refreshWatchlist
+    )
 
     const handleWatchlistClick = async (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation()
         toggleWatchlist(stock)
         try {
             await apiClient.delete(`/watchlist/${stock.ticker}`)
+            await refreshWatchlist()
         } catch {
             toggleWatchlist(stock)
         }

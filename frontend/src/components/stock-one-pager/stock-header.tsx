@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import type { MouseEvent } from 'react'
 import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
-import { fetchWatchlist } from "@/services/api/watchlist";
 import { apiClient } from "@/services/apiClient";
 import { AppState, useAppStore } from "@/store/appStore";
 
@@ -38,22 +37,22 @@ const StockHeader: FC<StockHeaderProps> = ({
 
   const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
-  const watchlist = useAppStore((state: AppState) => state.watchlist)
-  const setWatchlist = useAppStore(
-    (state: AppState) => state.setWatchlist
+  const watchlist = useAppStore((state: AppState) => state.watchlist.data)
+  const loadWatchlist = useAppStore(
+    (state: AppState) => state.loadWatchlist
   )
   const toggleWatchlist = useAppStore(
     (state: AppState) => state.toggleWatchlist
+  )
+  const refreshWatchlist = useAppStore(
+    (state: AppState) => state.refreshWatchlist
   )
 
   const isFavorite = watchlist.some(w => w.ticker === ticker)
 
   useEffect(() => {
-    if (!ticker) return
-    fetchWatchlist().then((list) => {
-      setWatchlist(list)
-    })
-  }, [ticker, setWatchlist])
+    loadWatchlist().catch(() => undefined)
+  }, [loadWatchlist])
 
   const handleWatchlistClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -70,8 +69,9 @@ const StockHeader: FC<StockHeaderProps> = ({
       if (isFavorite) {
         await apiClient.delete(`/watchlist/${ticker}`)
       } else {
-        await apiClient.post(`/watchlist/${ticker}`)
+        await apiClient.post(`/watchlist`, { ticker })
       }
+      await refreshWatchlist()
     } catch (err) {
       console.error("Watchlist toggle failed:", err)
       // Revert on error

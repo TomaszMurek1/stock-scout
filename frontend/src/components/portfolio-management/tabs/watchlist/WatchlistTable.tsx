@@ -10,11 +10,17 @@ import {
 import { WatchlistRow } from "./WatchlistRow"
 import { AppState, useAppStore } from "@/store/appStore"
 
-
 export function WatchlistTable() {
-    const watchlist = useAppStore((state: AppState) => state.watchlist)
+    const watchlist = useAppStore((state: AppState) => state.watchlist.data)
+    const isLoading = useAppStore((state: AppState) => state.watchlist.isLoading)
 
-
+    if (isLoading && watchlist.length === 0) {
+        return (
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
+                <p className="text-gray-600">Loading watchlist...</p>
+            </div>
+        )
+    }
 
     if (watchlist.length === 0) {
         return (
