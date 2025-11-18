@@ -1,132 +1,95 @@
-
-import { WatchlistStock } from "@/components/portfolio-management/tabs/watchlist/types"
-import { fetchWatchlist } from "@/services/api/watchlist"
+import { WatchlistStock } from "@/components/portfolio-management/tabs/watchlist/types";
+import { fetchWatchlist } from "@/services/api/watchlist";
 
 export interface WatchlistState {
-    data: WatchlistStock[]
-    isLoading: boolean
-    isLoaded: boolean
+  data: WatchlistStock[];
+  isLoading: boolean;
+  isLoaded: boolean;
 }
 
 export interface WatchlistSlice {
-    watchlist: WatchlistState
-    setWatchlist: (list: WatchlistStock[]) => void
-    toggleWatchlist: (stock: WatchlistStock) => void
-    loadWatchlist: () => Promise<void>
-    refreshWatchlist: () => Promise<void>
+  watchlist: WatchlistState;
+  setWatchlistLoadingState: (isLoading: boolean, action?: string) => void;
+  completeWatchlistLoad: (list: WatchlistStock[], action?: string) => void;
+  toggleWatchlist: (stock: WatchlistStock) => void;
+  loadWatchlist: () => Promise<void>;
+  refreshWatchlist: () => Promise<void>;
 }
 
-export const createWatchlistSlice = (set: any, get: any): WatchlistSlice => ({
+export const createWatchlistSlice = (set: any, get: any): WatchlistSlice => {
+  const setWatchlistLoadingState = (isLoading: boolean, action = "watchlist/setLoading") =>
+    set(
+      (state: any) => ({
+        watchlist: { ...state.watchlist, isLoading },
+      }),
+      false,
+      action
+    );
+
+  const completeLoad = (list: WatchlistStock[], action: string) =>
+    set(
+      (state: any) => ({
+        watchlist: {
+          ...state.watchlist,
+          data: list,
+          isLoaded: true,
+          isLoading: false,
+        },
+      }),
+      false,
+      action
+    );
+
+  const fetchAndCommit = async (
+    actionPrefix: string,
+    options: { skipIfLoaded?: boolean } = {}
+  ) => {
+    const { watchlist } = get();
+    if (options.skipIfLoaded && (watchlist.isLoaded || watchlist.isLoading)) {
+      return;
+    }
+    setWatchlistLoadingState(true, `${actionPrefix}/pending`);
+    try {
+      const list = await fetchWatchlist();
+      completeLoad(list, `${actionPrefix}/fulfilled`);
+    } catch (error) {
+      setWatchlistLoadingState(false, `${actionPrefix}/rejected`);
+      throw error;
+    }
+  };
+
+  return {
     watchlist: {
-        data: [],
-        isLoading: false,
-        isLoaded: false,
+      data: [],
+      isLoading: false,
+      isLoaded: false,
     },
 
-    setWatchlist: (list) =>
-        set(
-            (state: any) => ({
-                watchlist: {
-                    ...state.watchlist,
-                    data: list,
-                    isLoaded: true,
-                    isLoading: false,
-                },
-            }),
-            false,
-            "setWatchlist"
-        ),
+    setWatchlistLoadingState,
+
+    completeWatchlistLoad: (list, action = "watchlist/loadCompleted") => completeLoad(list, action),
 
     toggleWatchlist: (stock) =>
-        set(
-            (state: any) => {
-                const exists = state.watchlist.data.some(
-                    (w: WatchlistStock) => w.ticker === stock.ticker
-                )
-                return {
-                    watchlist: {
-                        ...state.watchlist,
-                        data: exists
-                            ? state.watchlist.data.filter(
-                                (w: WatchlistStock) => w.ticker !== stock.ticker
-                            )
-                            : [...state.watchlist.data, stock],
-                    },
-                }
+      set(
+        (state: any) => {
+          const exists = state.watchlist.data.some(
+            (w: WatchlistStock) => w.ticker === stock.ticker
+          );
+          return {
+            watchlist: {
+              ...state.watchlist,
+              data: exists
+                ? state.watchlist.data.filter((w: WatchlistStock) => w.ticker !== stock.ticker)
+                : [...state.watchlist.data, stock],
             },
-            false,
-            `toggleWatchlist(${stock.ticker})`
-        ),
+          };
+        },
+        false,
+        `watchlist/toggle(${stock.ticker})`
+      ),
 
-    loadWatchlist: async () => {
-        const { watchlist } = get()
-        if (watchlist.isLoaded || watchlist.isLoading) {
-            return
-        }
-        set(
-            (state: any) => ({
-                watchlist: { ...state.watchlist, isLoading: true },
-            }),
-            false,
-            "loadWatchlist:start"
-        )
-        try {
-            const list = await fetchWatchlist()
-            set(
-                (state: any) => ({
-                    watchlist: {
-                        ...state.watchlist,
-                        data: list,
-                        isLoading: false,
-                        isLoaded: true,
-                    },
-                }),
-                false,
-                "loadWatchlist:success"
-            )
-        } catch (error) {
-            set(
-                (state: any) => ({
-                    watchlist: { ...state.watchlist, isLoading: false },
-                }),
-                false,
-                "loadWatchlist:error"
-            )
-            throw error
-        }
-    },
+    loadWatchlist: () => fetchAndCommit("watchlist/load", { skipIfLoaded: true }),
 
-    refreshWatchlist: async () => {
-        set(
-            (state: any) => ({
-                watchlist: { ...state.watchlist, isLoading: true },
-            }),
-            false,
-            "refreshWatchlist:start"
-        )
-        try {
-            const list = await fetchWatchlist()
-            set(
-                (state: any) => ({
-                    watchlist: {
-                        ...state.watchlist,
-                        data: list,
-                        isLoading: false,
-                        isLoaded: true,
-                    },
-                }),
-                false,
-                "refreshWatchlist:success"
-            )
-        } catch (error) {
-            set(
-                (state: any) => ({
-                    watchlist: { ...state.watchlist, isLoading: false },
-                }),
-                false,
-                "refreshWatchlist:error"
-            )
-            throw error
-        }
-    },
-})
+    refreshWatchlist: () => fetchAndCommit("watchlist/refresh"),
+  };
+};
