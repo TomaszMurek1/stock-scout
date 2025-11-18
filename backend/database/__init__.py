@@ -6,6 +6,7 @@ from .company import (
     CompanyOverview,
     company_stockindex_association,
 )
+from .company_note import CompanyNote
 from .financials import CompanyFinancials, CompanyFinancialHistory
 from .market import Market, StockIndex
 from .portfolio import (

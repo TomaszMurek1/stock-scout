@@ -6,7 +6,6 @@ import {
   CurrencyRate,
   WatchlistStock,
 } from "@/components/portfolio-management/types";
-import { string } from "zod";
 export type Holding = { shares: number; average_cost_currency: string };
 export type Holdings = Holding[];
 
@@ -24,30 +23,17 @@ export interface PortfolioSlice {
   sell: (payload: any) => Promise<void>;
 }
 
-export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
-  portfolio: {
-    id: 0,
-    name: "",
-    currency: "USD",
-    total_invested: 0,
-    cash_available: 0,
-  },
-  performance: {
-    portfolio_id: 0,
-    performance: 0,
-  },
-  transactions: [],
-  currencyRates: {},
-  holdings: [],
-
-  refreshPortfolio: async () => {
-    const { data } = await apiClient.get<{
+export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
+  const applyDashboardData = (
+    data: {
       portfolio: Portfolio;
       performance: PortfolioPerformance;
       watchlist: WatchlistStock[];
       transactions: Transaction[];
       holdings: Holdings;
-    }>("/portfolio/dashboard");
+    },
+    actionPrefix = "portfolio/dashboard"
+  ) => {
     set(
       {
         portfolio: data.portfolio,
@@ -55,20 +41,56 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => ({
         transactions: data.transactions,
       },
       false,
-      "refreshPortfolio"
+      `${actionPrefix}/core`
     );
-    const holdings = data.holdings;
-    set({ holdings }, false, "refreshHoldings");
-    get().setWatchlist(data.watchlist);
-  },
+    set({ holdings: data.holdings }, false, `${actionPrefix}/holdings`);
+    get().completeWatchlistLoad(data.watchlist, "watchlist/dashboardFulfilled");
+  };
 
-  buy: async (payload: any) => {
-    await apiClient.post("/portfolio-management/buy", payload);
-    await get().refreshPortfolio();
-  },
+  const fetchDashboard = async () => {
+    const setWatchlistLoadingState = get().setWatchlistLoadingState;
+    setWatchlistLoadingState(true, "watchlist/dashboardPending");
+    try {
+      const { data } = await apiClient.get<{
+        portfolio: Portfolio;
+        performance: PortfolioPerformance;
+        watchlist: WatchlistStock[];
+        transactions: Transaction[];
+        holdings: Holdings;
+      }>("/portfolio/dashboard");
+      applyDashboardData(data);
+    } catch (error) {
+      setWatchlistLoadingState(false, "watchlist/dashboardRejected");
+      throw error;
+    }
+  };
 
-  sell: async (payload: any) => {
-    await apiClient.post("/portfolio-management/sell", payload);
-    await get().refreshPortfolio();
-  },
-});
+  return {
+    portfolio: {
+      id: 0,
+      name: "",
+      currency: "USD",
+      total_invested: 0,
+      cash_available: 0,
+    },
+    performance: {
+      portfolio_id: 0,
+      performance: 0,
+    },
+    transactions: [],
+    currencyRates: {},
+    holdings: [],
+
+    refreshPortfolio: fetchDashboard,
+
+    buy: async (payload: any) => {
+      await apiClient.post("/portfolio-management/buy", payload);
+      await get().refreshPortfolio();
+    },
+
+    sell: async (payload: any) => {
+      await apiClient.post("/portfolio-management/sell", payload);
+      await get().refreshPortfolio();
+    },
+  };
+};

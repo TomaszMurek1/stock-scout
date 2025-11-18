@@ -3,6 +3,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -120,6 +121,8 @@ class FavoriteStock(Base):
         UniqueConstraint(
             "user_id", "company_id", name="uq_favorite_stocks_user_company"
         ),
+        Index("idx_favorite_stocks_user", "user_id"),
+        Index("idx_favorite_stocks_company", "company_id"),
     )
 
     id = Column(Integer, primary_key=True, index=True)

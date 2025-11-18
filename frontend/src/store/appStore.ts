@@ -13,7 +13,7 @@ export const useAppStore = create<AppState>()(
         (set, get) => ({
             ...createPortfolioPerformanceSlice(set, get),
             ...createPortfolioSlice(set, get),
-            ...createWatchlistSlice(set),
+            ...createWatchlistSlice(set, get),
             ...createFxRatesSlice(set, get),
         }),
         { name: "AppStore" }
