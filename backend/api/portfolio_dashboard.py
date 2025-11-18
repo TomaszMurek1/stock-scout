@@ -35,7 +35,7 @@ def get_portfolio_dashboard(
 
     holdings = get_holdings_for_user(db, portfolio)
     watchlist = get_watchlist_companies_for_user(db, user)
-    transactions = get_transactions_for_portfolio(db, portfolio_id, tx_period)
+    transactions = get_transactions_for_portfolio(db, portfolio_id)
 
     snapshot = get_portfolio_snapshot(db, portfolio)
 

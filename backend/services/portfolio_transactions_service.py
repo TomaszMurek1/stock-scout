@@ -38,8 +38,8 @@ def get_transactions_for_portfolio(db: Session, portfolio_id: int, period: str =
             "price": float(tx.price),
             "fee": float(tx.fee or 0),
             "timestamp": tx.timestamp.isoformat(),
-            "currency": "PLN",
-            "currency_rate": 1.0
+            "currency": tx.currency,
+            "currency_rate": tx.currency_rate
         }
         for tx in txs
     ]
