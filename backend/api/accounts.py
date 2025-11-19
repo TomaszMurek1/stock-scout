@@ -1,3 +1,4 @@
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -20,6 +21,7 @@ class AccountRead(BaseModel):
     name: str
     account_type: str
     currency: str | None
+    cash: Decimal
 
     class Config:
         from_attributes = True

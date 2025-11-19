@@ -1,12 +1,12 @@
 # /api/fx.py
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database.base import get_db
 
 from database.fx import FxRate
-from datetime import date, timedelta
+from datetime import date
 
 from services.fx.fx_rate_service import fetch_and_save_fx_rate
 
@@ -33,19 +33,20 @@ class FxBatchRequest(BaseModel):
 def get_fx_rates_batch(
     payload: FxBatchRequest = Body(...), db: Session = Depends(get_db)
 ):
-    today = date.today()
-    # Default range (only used for fetching new data)
+    if payload.start and payload.end and payload.start > payload.end:
+        raise HTTPException(status_code=400, detail="start date must be before end date")
 
     result = {}
 
     for base, quote in payload.pairs:
-        # Ensure DB is filled up to today
-        fetch_and_save_fx_rate(base, quote, db)
+        fetch_and_save_fx_rate(base, quote, db, payload.start, payload.end)
 
         # Return all historical records available for this pair
         rates = (
             db.query(FxRate)
             .filter_by(base_currency=base, quote_currency=quote)
+            .filter(FxRate.date >= (payload.start or date(1900, 1, 1)))
+            .filter(FxRate.date <= (payload.end or date.today()))
             .order_by(FxRate.date)
             .all()
         )

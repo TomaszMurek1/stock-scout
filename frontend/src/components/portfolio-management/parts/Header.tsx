@@ -16,7 +16,7 @@ export const Header: FC<HeaderProps> = ({ onAdd }) => {
           Track positions, performance and cash flows.
         </p>
       </div>
-      <Button onClick={onAdd}>Buy stock</Button>
+      <Button onClick={onAdd}>Buy stock 2</Button>
     </div>
   );
 };

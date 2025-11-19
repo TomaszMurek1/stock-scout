@@ -10,34 +10,25 @@ from schemas.portfolio_schemas import TransactionType  # you created this model 
 
 
 def get_default_account_id(db: Session, portfolio_id: int) -> int:
-    # Reuse seeded “Default” account
-    acc_id = (
-        db.query(Account.id)
+    account = (
+        db.query(Account)
         .filter(Account.portfolio_id == portfolio_id, Account.name == "Default")
-        .scalar()
+        .first()
     )
-    if not acc_id:
-        # Fallback: create it if missing (shouldn't happen, but safe)
-        acc = Account(portfolio_id=portfolio_id, name="Default", account_type="brokerage")
-        db.add(acc)
-        db.flush()
-        acc_id = acc.id
-    return acc_id
+    if account:
+        return account.id
 
-def get_default_account_id(db: Session, portfolio_id: int) -> int:
-    # Reuse seeded “Default” account
-    acc_id = (
-        db.query(Account.id)
-        .filter(Account.portfolio_id == portfolio_id, Account.name == "Default")
-        .scalar()
+    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    currency = portfolio.currency if portfolio else None
+    acc = Account(
+        portfolio_id=portfolio_id,
+        name="Default",
+        account_type="brokerage",
+        currency=currency,
     )
-    if not acc_id:
-        # Fallback: create it if missing (shouldn't happen, but safe)
-        acc = Account(portfolio_id=portfolio_id, name="Default", account_type="brokerage")
-        db.add(acc)
-        db.flush()
-        acc_id = acc.id
-    return acc_id
+    db.add(acc)
+    db.flush()
+    return acc.id
 
 
 def _dec(x) -> Decimal:

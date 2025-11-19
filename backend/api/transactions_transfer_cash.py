@@ -19,6 +19,20 @@ from api.valuation_materialize import materialize_day
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
 
+CASH_PRECISION = Decimal("0.0001")
+
+
+def _dec(value) -> Decimal:
+    return Decimal(str(value or "0"))
+
+
+def _ensure_account_currency(db: Session, account: Account, fallback: str) -> str:
+    if account.currency:
+        return account.currency.upper()
+    account.currency = fallback.upper()
+    db.flush()
+    return account.currency
+
 
 class TransferCashRequest(BaseModel):
     from_portfolio_id: int = Field(..., description="Source portfolio ID")
@@ -73,6 +87,16 @@ def transfer_cash(payload: TransferCashRequest, db: Session = Depends(get_db)):
     if a_from.portfolio_id != payload.from_portfolio_id or a_to.portfolio_id != payload.to_portfolio_id:
         raise HTTPException(status_code=400, detail="Account does not belong to given portfolio")
 
+    transfer_ccy = payload.currency.upper()
+    from_ccy = _ensure_account_currency(db, a_from, transfer_ccy)
+    to_ccy = _ensure_account_currency(db, a_to, transfer_ccy)
+    if from_ccy != transfer_ccy or to_ccy != transfer_ccy:
+        raise HTTPException(status_code=400, detail="Transfer currency must match source and destination account currencies")
+
+    amount = _dec(payload.amount)
+    if _dec(a_from.cash) < amount:
+        raise HTTPException(status_code=400, detail="Insufficient cash in source account")
+
     # OUT leg
     tx_out = Transaction(
         user_id=pf_from.user_id,
@@ -80,11 +104,11 @@ def transfer_cash(payload: TransferCashRequest, db: Session = Depends(get_db)):
         account_id=payload.from_account_id,
         company_id=None,
         transaction_type=TransactionType.TRANSFER_OUT,
-        quantity=payload.amount,
+        quantity=amount,
         price=Decimal("0"),
         fee=Decimal("0"),
         total_value=Decimal("0"),
-        currency=payload.currency.upper(),
+        currency=transfer_ccy,
         currency_rate=payload.currency_rate,
         timestamp=ts,
         note=payload.note,
@@ -99,17 +123,21 @@ def transfer_cash(payload: TransferCashRequest, db: Session = Depends(get_db)):
         account_id=payload.to_account_id,
         company_id=None,
         transaction_type=TransactionType.TRANSFER_IN,
-        quantity=payload.amount,
+        quantity=amount,
         price=Decimal("0"),
         fee=Decimal("0"),
         total_value=Decimal("0"),
-        currency=payload.currency.upper(),
+        currency=transfer_ccy,
         currency_rate=payload.currency_rate,
         timestamp=ts,
         note=payload.note,
         transfer_group_id=gid,
     )
     db.add(tx_in)
+    db.flush()
+
+    a_from.cash = (_dec(a_from.cash) - amount).quantize(CASH_PRECISION)
+    a_to.cash = (_dec(a_to.cash) + amount).quantize(CASH_PRECISION)
     db.flush()
 
     # Materialize valuation (same day) for both portfolios
