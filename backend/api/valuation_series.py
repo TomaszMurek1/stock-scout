@@ -10,7 +10,7 @@ from database.portfolio import Portfolio, Transaction
 from database.valuation import PortfolioValuationDaily
 from api.valuation_materialize import materialize_day
 
-router = APIRouter(prefix="/api/valuation", tags=["Valuation"])\
+router = APIRouter()
 
 class SeriesRequest(BaseModel):
     portfolio_id: int

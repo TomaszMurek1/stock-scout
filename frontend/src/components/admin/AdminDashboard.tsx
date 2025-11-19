@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Database, LineChart, Shield } from "lucide-react";
+import { Database, LineChart, RefreshCw, Shield } from "lucide-react";
 
 const adminLinks = [
   {
@@ -15,6 +15,12 @@ const adminLinks = [
     description: "Fetch and backfill FX history for multiple currency pairs.",
     href: "/admin/fx-batch",
     icon: LineChart,
+  },
+  {
+    title: "Materialize Valuation",
+    description: "Trigger valuation recomputation for a day or a date range.",
+    href: "/admin/valuation",
+    icon: RefreshCw,
   },
 ];
 

@@ -18,21 +18,7 @@ from database.valuation import PortfolioValuationDaily
 from database.company import Company
 from api.valuation_preview import preview_day_value, fx_to_base_for_currency
 
-router = APIRouter(prefix="/api/valuation", tags=["Valuation"])
-
-
-class MaterializeRangeRequest(BaseModel):
-    portfolio_id: int = Field(..., description="Portfolio to materialize")
-    start: date = Field(..., description="Start date (YYYY-MM-DD)")
-    end: date = Field(..., description="End date (YYYY-MM-DD)")
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {"portfolio_id": 2, "start": "2025-10-22", "end": "2025-11-07"}
-            ]
-        }
-    }
+router = APIRouter()
 
 
 # ---------- helpers ----------
@@ -392,14 +378,3 @@ def materialize_range(
         cur += timedelta(days=1)
 
     return {"portfolio_id": portfolio_id, "points": out}
-
-
-@router.post("/materialize-range-body", operation_id="valuation_materializeRangeBody")
-def materialize_range_body(payload: MaterializeRangeRequest, db: Session = Depends(get_db)):
-    """Materialize daily valuations for a range using a JSON body."""
-    return materialize_range(
-        portfolio_id=payload.portfolio_id,
-        start=payload.start,
-        end=payload.end,
-        db=db,
-    )
