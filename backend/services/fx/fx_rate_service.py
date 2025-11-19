@@ -2,6 +2,7 @@
 import pandas as pd
 import yfinance as yf
 from datetime import date, timedelta
+from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database.fx import FxRate
@@ -30,10 +31,12 @@ def fetch_and_save_fx_rate(
     base: str,
     quote: str,
     db: Session,
-    start_date: date | None = None,
-    end_date: date | None = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     force: bool = False,
 ):
+    base = (base or "").upper()
+    quote = (quote or "").upper()
     today = date.today()
     desired_end = min(end_date or today, today)
     desired_start = start_date or (desired_end - timedelta(days=365))

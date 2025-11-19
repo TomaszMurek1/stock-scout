@@ -44,12 +44,12 @@ export const scenarios: Scenario[] = [
     type: "ev-to-revenue",
   },
   {
-    title: "Admin create tickers for market",
-    description: "Create tiockers data for new market",
+    title: "Admin tools",
+    description: "Access utilities like ticker import and FX batch loader",
     icon: BarChart,
-    href: "/admin/create-tickers",
+    href: "/admin",
     color: "bg-slate-200 bg-opacity-50",
-    type: "golden-cross",
+    type: "admin",
   },
   {
     title: "Death Cross",

@@ -1,6 +1,6 @@
 # /api/fx.py
 from fastapi import APIRouter, Body, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database.base import get_db
@@ -13,15 +13,31 @@ from services.fx.fx_rate_service import fetch_and_save_fx_rate
 router = APIRouter()
 
 
+class FxPair(BaseModel):
+    base: str
+    quote: str
+
+    @field_validator("base", "quote")
+    @classmethod
+    def _normalize(cls, v: str) -> str:
+        value = (v or "").strip().upper()
+        if len(value) != 3:
+            raise ValueError("Currency codes must be 3 letters")
+        return value
+
+
 class FxBatchRequest(BaseModel):
-    pairs: List[List[str]]  # e.g. [["USD", "PLN"], ["EUR", "PLN"]]
+    pairs: List[FxPair]
     start: Optional[date] = None
     end: Optional[date] = None
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "pairs": [["USD", "PLN"], ["EUR", "PLN"]],
+                "pairs": [
+                    {"base": "USD", "quote": "PLN"},
+                    {"base": "EUR", "quote": "PLN"},
+                ],
                 "start": "2024-01-01",
                 "end": "2024-02-01"
             }
@@ -38,7 +54,9 @@ def get_fx_rates_batch(
 
     result = {}
 
-    for base, quote in payload.pairs:
+    for pair in payload.pairs:
+        base = pair.base
+        quote = pair.quote
         fetch_and_save_fx_rate(base, quote, db, payload.start, payload.end)
 
         # Return all historical records available for this pair
