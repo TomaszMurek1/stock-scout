@@ -7,7 +7,7 @@ interface HeaderProps {
   onAdd: () => void;
 }
 
-const Header: FC<HeaderProps> = ({ onAdd }) => {
+export const Header: FC<HeaderProps> = ({ onAdd }) => {
   return (
     <div className="mb-4 flex items-center justify-between">
       <div>
@@ -16,9 +16,7 @@ const Header: FC<HeaderProps> = ({ onAdd }) => {
           Track positions, performance and cash flows.
         </p>
       </div>
-      <Button onClick={onAdd}>Add stock</Button>
+      <Button onClick={onAdd}>Buy stock 2</Button>
     </div>
   );
 };
-
-export default Header;

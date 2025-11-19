@@ -12,7 +12,7 @@ from database.market import Market
 from database.stock_data import StockPriceHistory
 from database.fx import FxRate
 
-router = APIRouter(prefix="/api/valuation", tags=["Valuation"])
+router = APIRouter()
 
 def _tx_key(tt) -> str:
     return (tt.value if hasattr(tt, "value") else str(tt)).upper()

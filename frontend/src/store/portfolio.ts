@@ -1,4 +1,8 @@
-import { Portfolio, PortfolioPerformance } from "@/components/portfolio-management/types";
+import {
+  ApiHolding,
+  Portfolio,
+  PortfolioPerformance,
+} from "@/components/portfolio-management/types";
 import { apiClient } from "@/services/apiClient";
 import {
   HoldingItem,
@@ -7,7 +11,6 @@ import {
   WatchlistStock,
 } from "@/components/portfolio-management/types";
 export type Holding = { shares: number; average_cost_currency: string };
-export type Holdings = Holding[];
 
 export type CurrencyPoint = { date: string; close: number };
 type CurrencyPair = Record<string, CurrencyPoint[]>;
@@ -17,7 +20,7 @@ export interface PortfolioSlice {
   performance: PortfolioPerformance;
   transactions: Transaction[];
   currencyRates: Record<string, CurrencyPair>;
-  holdings: Holdings;
+  holdings: ApiHolding[];
   refreshPortfolio: () => Promise<void>;
   buy: (payload: any) => Promise<void>;
   sell: (payload: any) => Promise<void>;
@@ -30,7 +33,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       performance: PortfolioPerformance;
       watchlist: WatchlistStock[];
       transactions: Transaction[];
-      holdings: Holdings;
+      holdings: ApiHolding[];
     },
     actionPrefix = "portfolio/dashboard"
   ) => {
@@ -56,7 +59,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         performance: PortfolioPerformance;
         watchlist: WatchlistStock[];
         transactions: Transaction[];
-        holdings: Holdings;
+        holdings: ApiHolding[];
       }>("/portfolio/dashboard");
       applyDashboardData(data);
     } catch (error) {
@@ -70,8 +73,10 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       id: 0,
       name: "",
       currency: "USD",
-      total_invested: 0,
       cash_available: 0,
+      total_value: 0,
+      invested_value_current: 0,
+      net_invested_cash: 0,
     },
     performance: {
       portfolio_id: 0,

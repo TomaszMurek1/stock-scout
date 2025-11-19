@@ -1,27 +1,43 @@
 # /api/fx.py
-from fastapi import APIRouter, Body, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Body, Depends, HTTPException
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database.base import get_db
 
 from database.fx import FxRate
-from datetime import date, timedelta
+from datetime import date
 
 from services.fx.fx_rate_service import fetch_and_save_fx_rate
 
 router = APIRouter()
 
 
+class FxPair(BaseModel):
+    base: str
+    quote: str
+
+    @field_validator("base", "quote")
+    @classmethod
+    def _normalize(cls, v: str) -> str:
+        value = (v or "").strip().upper()
+        if len(value) != 3:
+            raise ValueError("Currency codes must be 3 letters")
+        return value
+
+
 class FxBatchRequest(BaseModel):
-    pairs: List[List[str]]  # e.g. [["USD", "PLN"], ["EUR", "PLN"]]
+    pairs: List[FxPair]
     start: Optional[date] = None
     end: Optional[date] = None
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "pairs": [["USD", "PLN"], ["EUR", "PLN"]],
+                "pairs": [
+                    {"base": "USD", "quote": "PLN"},
+                    {"base": "EUR", "quote": "PLN"},
+                ],
                 "start": "2024-01-01",
                 "end": "2024-02-01"
             }
@@ -33,19 +49,22 @@ class FxBatchRequest(BaseModel):
 def get_fx_rates_batch(
     payload: FxBatchRequest = Body(...), db: Session = Depends(get_db)
 ):
-    today = date.today()
-    # Default range (only used for fetching new data)
+    if payload.start and payload.end and payload.start > payload.end:
+        raise HTTPException(status_code=400, detail="start date must be before end date")
 
     result = {}
 
-    for base, quote in payload.pairs:
-        # Ensure DB is filled up to today
-        fetch_and_save_fx_rate(base, quote, db)
+    for pair in payload.pairs:
+        base = pair.base
+        quote = pair.quote
+        fetch_and_save_fx_rate(base, quote, db, payload.start, payload.end)
 
         # Return all historical records available for this pair
         rates = (
             db.query(FxRate)
             .filter_by(base_currency=base, quote_currency=quote)
+            .filter(FxRate.date >= (payload.start or date(1900, 1, 1)))
+            .filter(FxRate.date <= (payload.end or date.today()))
             .order_by(FxRate.date)
             .all()
         )

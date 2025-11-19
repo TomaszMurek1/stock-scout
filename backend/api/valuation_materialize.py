@@ -16,23 +16,9 @@ from database.base import get_db
 from database.portfolio import Portfolio, Transaction, TransactionType
 from database.valuation import PortfolioValuationDaily
 from database.company import Company
-from api.valuation_preview import preview_day_value
+from api.valuation_preview import preview_day_value, fx_to_base_for_currency
 
-router = APIRouter(prefix="/api/valuation", tags=["Valuation"])
-
-
-class MaterializeRangeRequest(BaseModel):
-    portfolio_id: int = Field(..., description="Portfolio to materialize")
-    start: date = Field(..., description="Start date (YYYY-MM-DD)")
-    end: date = Field(..., description="End date (YYYY-MM-DD)")
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {"portfolio_id": 2, "start": "2025-10-22", "end": "2025-11-07"}
-            ]
-        }
-    }
+router = APIRouter()
 
 
 # ---------- helpers ----------
@@ -67,46 +53,62 @@ def get_first_tx_date(db: Session, portfolio_id: int) -> date | None:
 
 def _calculate_cash_balance(db: Session, portfolio_id: int, as_of: date, base_ccy: str) -> Decimal:
     """
-    Calculate actual cash balance by processing ALL cash-affecting transactions
+    Calculate actual cash balance by processing ALL cash-affecting transactions and
+    revaluing each currency position using FX as of the provided date.
     """
-    cash_balance = Decimal("0")
-    
-    # Get all transactions that affect cash
+    balances_by_ccy: Dict[str, Decimal] = {}
+
+    def _apply(ccy: str, delta: Decimal):
+        balances_by_ccy[ccy] = balances_by_ccy.get(ccy, Decimal("0")) + delta
+
     cash_transactions = (
         db.query(Transaction)
         .filter(
             Transaction.portfolio_id == portfolio_id,
-            func.date(Transaction.timestamp) <= as_of
+            func.date(Transaction.timestamp) <= as_of,
         )
         .order_by(Transaction.timestamp)
         .all()
     )
-    
+
     for tx in cash_transactions:
-        amount_base = tx.quantity * tx.currency_rate
-        
-        if tx.transaction_type == TransactionType.DEPOSIT:
-            cash_balance += amount_base
-        elif tx.transaction_type == TransactionType.WITHDRAWAL:
-            cash_balance -= amount_base
-        elif tx.transaction_type == TransactionType.DIVIDEND:
-            cash_balance += amount_base
-        elif tx.transaction_type == TransactionType.INTEREST:
-            cash_balance += amount_base
-        elif tx.transaction_type == TransactionType.FEE:
-            cash_balance -= amount_base
-        elif tx.transaction_type == TransactionType.TAX:
-            cash_balance -= amount_base
-        elif tx.transaction_type == TransactionType.BUY:
-            # BUY reduces cash by total cost
-            total_cost = (tx.quantity * tx.price + (tx.fee or 0)) * tx.currency_rate
-            cash_balance -= total_cost
-        elif tx.transaction_type == TransactionType.SELL:
-            # SELL increases cash by total proceeds
-            total_proceeds = (tx.quantity * tx.price - (tx.fee or 0)) * tx.currency_rate
-            cash_balance += total_proceeds
-    
-    return cash_balance
+        ccy = (tx.currency or base_ccy).upper()
+        ttype = tx.transaction_type
+
+        if ttype == TransactionType.DEPOSIT:
+            _apply(ccy, _dec(tx.quantity))
+        elif ttype == TransactionType.WITHDRAWAL:
+            _apply(ccy, -_dec(tx.quantity))
+        elif ttype == TransactionType.DIVIDEND:
+            _apply(ccy, _dec(tx.quantity))
+        elif ttype == TransactionType.INTEREST:
+            _apply(ccy, _dec(tx.quantity))
+        elif ttype == TransactionType.FEE:
+            _apply(ccy, -_dec(tx.quantity))
+        elif ttype == TransactionType.TAX:
+            _apply(ccy, -_dec(tx.quantity))
+        elif ttype == TransactionType.TRANSFER_IN:
+            _apply(ccy, _dec(tx.quantity))
+        elif ttype == TransactionType.TRANSFER_OUT:
+            _apply(ccy, -_dec(tx.quantity))
+        elif ttype == TransactionType.BUY:
+            total_cost = (_dec(tx.quantity) * _dec(tx.price or 0)) + _dec(tx.fee or 0)
+            _apply(ccy, -total_cost)
+        elif ttype == TransactionType.SELL:
+            total_proceeds = (_dec(tx.quantity) * _dec(tx.price or 0)) - _dec(tx.fee or 0)
+            _apply(ccy, total_proceeds)
+
+    cash_balance_base = Decimal("0")
+    for ccy, amt in balances_by_ccy.items():
+        if amt == 0:
+            continue
+        rate = fx_to_base_for_currency(db, as_of, ccy, base_ccy, portfolio_id, None)
+        if rate is None:
+            log.warning("Missing FX rate for %s on %s; skipping cash component", ccy, as_of)
+            continue
+        cash_balance_base += amt * rate
+
+    return cash_balance_base
 
 
 
@@ -376,14 +378,3 @@ def materialize_range(
         cur += timedelta(days=1)
 
     return {"portfolio_id": portfolio_id, "points": out}
-
-
-@router.post("/materialize-range-body", operation_id="valuation_materializeRangeBody")
-def materialize_range_body(payload: MaterializeRangeRequest, db: Session = Depends(get_db)):
-    """Materialize daily valuations for a range using a JSON body."""
-    return materialize_range(
-        portfolio_id=payload.portfolio_id,
-        start=payload.start,
-        end=payload.end,
-        db=db,
-    )

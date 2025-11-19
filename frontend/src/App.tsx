@@ -12,7 +12,10 @@ import EvToRevenuePage from "./components/scenario-carousel/scan-types/ev-to-rev
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
+import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
+import AdminFxBatchPage from "./components/admin/admin-fx-batch/admin-fx-batch";
+import AdminValuationTools from "./components/admin/admin-valuation/admin-valuation";
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
@@ -74,9 +77,18 @@ function App() {
                 path="/scenarios/break-even-point"
                 element={<PrivateRoute element={<BreakEvenPointPage />} />}
               />
+              <Route path="/admin" element={<PrivateRoute element={<AdminDashboard />} />} />
               <Route
                 path="/admin/create-tickers"
                 element={<PrivateRoute element={<AdminCreateTickersPage />} />}
+              />
+              <Route
+                path="/admin/fx-batch"
+                element={<PrivateRoute element={<AdminFxBatchPage />} />}
+              />
+              <Route
+                path="/admin/valuation"
+                element={<PrivateRoute element={<AdminValuationTools />} />}
               />
               <Route
                 path="/stock-details/:ticker"

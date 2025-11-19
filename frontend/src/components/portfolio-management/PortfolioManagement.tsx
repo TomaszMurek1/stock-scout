@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Header from "./parts/Header";
+import { Header } from "./parts/Header";
 import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
 import AddStockModal from "./modals/AddStockModal";

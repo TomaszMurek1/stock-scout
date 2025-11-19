@@ -3,7 +3,7 @@
 import React, { lazy, Suspense } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react";
-import { IByHolding, Transaction } from "../types";
+import { ApiHolding, Transaction } from "../types";
 
 const HoldingsTab = lazy(() => import("../tabs/holdings/HoldingsTab"));
 const WatchlistTab = lazy(() => import("../tabs/watchlist/WatchlistTab"));
@@ -13,7 +13,7 @@ const CashTab = lazy(() => import("../tabs/cash/CashTab"));
 const RiskTab = lazy(() => import("../tabs/risk/RiskTab"));
 
 interface PortfolioTabsProps {
-  byHolding?: IByHolding;
+  byHolding?: ApiHolding[];
   transactions: Transaction[];
   onRemove: (ticker: string) => void;
   onRefresh: () => void;
