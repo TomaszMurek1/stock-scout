@@ -78,6 +78,7 @@ export default function PortfolioManagement() {
               onRemove={sell}
               onRefresh={refreshPortfolio}
               byHolding={totals.byHolding}
+              transactions={transactions}
             />
           </>
         )}

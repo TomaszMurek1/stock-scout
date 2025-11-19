@@ -1,25 +1,97 @@
 "use client";
 
-import { MaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { MaterialReactTable, type MRT_Row } from "material-react-table";
 import { Trash2 } from "lucide-react";
 import { IconButton, Tooltip } from "@mui/material";
-import type { ApiHolding } from "../../types";
+import type { ApiHolding, Transaction } from "../../types";
 import { useHoldingsColumns } from "./useHoldingsColumns";
 import { HoldingsEmptyState } from "./HoldingsEmptyState";
 
 interface HoldingsTabProps {
   holdings: ApiHolding[];
-  onRemove: (id: string) => void;
+  transactions: Transaction[];
+  onRemove: (ticker: string) => void;
 }
 
-export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
-  console.log("byHolding", holdings);
-
-  if (holdings.length === 0) {
-    return <HoldingsEmptyState />;
-  }
+export default function HoldingsTab({ holdings, transactions, onRemove }: HoldingsTabProps) {
+  const navigate = useNavigate();
 
   const columns = useHoldingsColumns();
+
+  const transactionsByTicker = useMemo(() => {
+    return transactions.reduce<Record<string, Transaction[]>>((acc, tx) => {
+      if (!tx.ticker) return acc;
+      const key = tx.ticker.toUpperCase();
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(tx);
+      return acc;
+    }, {});
+  }, [transactions]);
+
+  const renderDetailPanel = useCallback(
+    ({ row }: { row: MRT_Row<ApiHolding> }) => {
+      const tickerKey = row.original.ticker?.toUpperCase?.() ?? "";
+      const relatedTransactions = transactionsByTicker[tickerKey] ?? [];
+
+      if (relatedTransactions.length === 0) {
+        return (
+          <div className="w-full p-4 bg-gray-50 border border-dashed border-gray-200 rounded-md text-sm text-gray-600">
+            No transactions recorded for this holding yet.
+          </div>
+        );
+      }
+
+      return (
+        <div className="w-full overflow-x-auto bg-gray-50 border border-gray-200 rounded-md p-4">
+          <table className="w-full text-sm text-gray-700">
+            <thead>
+              <tr className="text-left text-gray-500">
+                <th className="py-2 pr-4 font-semibold">Type</th>
+                <th className="py-2 pr-4 font-semibold">Shares</th>
+                <th className="py-2 pr-4 font-semibold">Price</th>
+                <th className="py-2 pr-4 font-semibold">Fee</th>
+                <th className="py-2 pr-4 font-semibold">Timestamp</th>
+                <th className="py-2 pr-4 font-semibold">Currency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {relatedTransactions.map((tx) => (
+                <tr key={tx.id} className="border-t border-gray-200 last:border-b-0">
+                  <td className="py-2 pr-4 font-medium">{String(tx.transaction_type).toUpperCase()}</td>
+                  <td className="py-2 pr-4">{Number(tx.shares).toLocaleString()}</td>
+                  <td className="py-2 pr-4">
+                    {Number(tx.price).toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td className="py-2 pr-4">
+                    {Number(tx.fee ?? 0).toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td className="py-2 pr-4">
+                    {tx.timestamp ? new Date(tx.timestamp).toLocaleString() : "—"}
+                  </td>
+                  <td className="py-2 pr-4">{tx.currency}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    },
+    [transactionsByTicker]
+  );
+
+  if (!holdings || holdings.length === 0) {
+    return <HoldingsEmptyState />;
+  }
 
   return (
     <div className="shadow-sm">
@@ -27,17 +99,32 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
         columns={columns}
         data={holdings}
         enableRowActions
+        enableExpanding
         positionActionsColumn="last"
         renderRowActions={({ row }) => (
           <Tooltip title="Remove holding">
-            <IconButton size="small" onClick={() => onRemove(row.original.ticker)}>
+            <IconButton
+              size="small"
+              onClick={(event) => {
+                event.stopPropagation();
+                onRemove(row.original.ticker);
+              }}
+            >
               <Trash2 className="h-4 w-4 text-red-500" />
             </IconButton>
           </Tooltip>
         )}
+        renderDetailPanel={renderDetailPanel}
+        muiTableBodyRowProps={({ row }) => ({
+          sx: {
+            cursor: "pointer",
+            backgroundColor: "#fff",
+          },
+          onClick: () => navigate(`/stock-details/${row.original.ticker}`),
+        })}
         muiTopToolbarProps={{
           sx: {
-            backgroundColor: "#e5e7eb", // gray-200
+            backgroundColor: "#e5e7eb",
             paddingY: 1,
             paddingX: 2,
           },
@@ -45,11 +132,6 @@ export default function HoldingsTab({ holdings, onRemove }: HoldingsTabProps) {
         muiTableHeadCellProps={{
           sx: {
             backgroundColor: "#e5e7eb",
-          },
-        }}
-        muiTableBodyRowProps={{
-          sx: {
-            backgroundColor: "#fff",
           },
         }}
         muiBottomToolbarProps={{
