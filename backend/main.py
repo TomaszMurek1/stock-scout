@@ -12,6 +12,7 @@ from api import transactions_transfer_cash
 from api import account_snapshot
 from api import valuation_debug
 from api import stock_details
+from api import baskets as baskets_api
 from core.config import settings
 from api import (
     auth,
@@ -72,6 +73,7 @@ app.include_router(stocks_price_data.router,          prefix="/api/stock", tags=
 app.include_router(valuation_preview.router,          prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_materialize.router,      prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_series.router,           prefix="/api/valuation",     tags=["Valuation"])
+app.include_router(baskets_api.router,                prefix="/api",               tags=["Baskets"])
 app.include_router(transactions.router,               prefix="/api/transactions",  tags=["Transactions"])
 app.include_router(transactions_transfer.router,      prefix="/api/transactions",  tags=["Transactions"])
 app.include_router(transactions_transfer_cash.router, prefix="/api/transactions",  tags=["Transactions"])
