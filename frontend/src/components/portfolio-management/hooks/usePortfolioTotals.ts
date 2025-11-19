@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { calculateInvestedPerHolding } from "../utils/calculations";
-import { Portfolio, PortfolioPerformance, Transaction } from "../types";
-import { Holdings } from "@/store/portfolio";
+import { ApiHolding, Portfolio, PortfolioPerformance, Transaction } from "../types";
 
 export function usePortfolioTotals({
   portfolio,
@@ -12,7 +11,7 @@ export function usePortfolioTotals({
   portfolio: Portfolio;
   performance: PortfolioPerformance;
   transactions: Transaction[];
-  holdings: Holdings;
+  holdings: ApiHolding[];
 }) {
   const totals = useMemo(() => {
     if (!performance) return null;
