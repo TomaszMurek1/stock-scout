@@ -11,6 +11,7 @@ interface SyncResult {
   metadata_only: number;
   missing_exchange: string[];
   missing_market: string[];
+  delisted: string[];
 }
 
 export default function AdminSyncMarkets() {
@@ -61,7 +62,7 @@ export default function AdminSyncMarkets() {
             />
             <FormControlLabel
               control={<Checkbox checked={force} onChange={(e) => setForce(e.target.checked)} />}
-              label="Force update even if market already assigned"
+              label="Process all companies (force)"
             />
           </div>
           <MuiButton
@@ -91,6 +92,12 @@ export default function AdminSyncMarkets() {
               <div>
                 <p className="font-semibold">Unmapped exchanges</p>
                 <p className="break-words text-slate-500">{result.missing_market.join(", ")}</p>
+              </div>
+            )}
+            {result.delisted.length > 0 && (
+              <div>
+                <p className="font-semibold">Marked as delisted</p>
+                <p className="break-words text-slate-500">{result.delisted.join(", ")}</p>
               </div>
             )}
           </div>

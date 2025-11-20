@@ -54,20 +54,47 @@ def _lookup_market(db: Session, exchange_code: str | None) -> Optional[Market]:
     )
 
 
-def _detect_yahoo_exchange(ticker: str) -> Optional[str]:
+def _looks_delisted(ticker_obj: yf.Ticker) -> bool:
     try:
-        ticker_obj = yf.Ticker(ticker)
+        hist = ticker_obj.history(period="5d")
+        if hist.empty:
+            return True
+    except Exception as exc:  # noqa: BLE001
+        if "delisted" in str(exc).lower():
+            return True
+    return False
+
+
+def _detect_yahoo_exchange(ticker: str) -> Optional[str]:
+    ticker_obj = yf.Ticker(ticker)
+
+    def _maybe_delisted(exc: Exception) -> bool:
+        return "delisted" in str(exc).lower()
+
+    try:
         fast_info = getattr(ticker_obj, "fast_info", None) or {}
         exchange = fast_info.get("exchange") or fast_info.get("exchangeCode")
         if exchange:
             return str(exchange).upper()
-        # fallback to full info – slower but more reliable
+    except Exception as exc:  # noqa: BLE001
+        if _maybe_delisted(exc):
+            return "DELISTED"
+        log.warning("Failed to read fast_info for %s: %s", ticker, exc)
+
+    try:
         info = ticker_obj.info
         exchange = info.get("exchange") or info.get("exchangeTimezoneShortName")
-        return str(exchange).upper() if exchange else None
+        if exchange:
+            return str(exchange).upper()
     except Exception as exc:  # noqa: BLE001
-        log.warning("Failed to fetch exchange for %s: %s", ticker, exc)
-        return None
+        if _maybe_delisted(exc):
+            return "DELISTED"
+        log.warning("Failed to read info for %s: %s", ticker, exc)
+
+    if _looks_delisted(ticker_obj):
+        return "DELISTED"
+
+    return None
 
 
 def sync_company_markets(
@@ -80,7 +107,10 @@ def sync_company_markets(
 
     query = db.query(Company)
     if not force:
-        query = query = query.filter((Company.market_id == None) & (Company.yfinance_market == None)) # noqa: E711
+        query = query.filter(Company.market_id == None)  # noqa: E711
+        query = query.filter(Company.yfinance_market == None)  # noqa: E711
+
+            
     if limit:
         query = query.limit(limit)
 
@@ -93,6 +123,7 @@ def sync_company_markets(
             "skipped": 0,
             "missing_exchange": [],
             "missing_market": [],
+            "delisted": [],
         }
 
     updated = 0
@@ -100,12 +131,23 @@ def sync_company_markets(
     metadata_only = 0
     missing_exchange: list[str] = []
     missing_market: list[str] = []
+    delisted: list[str] = []
 
     for company in companies:
+        if not force and company.yfinance_market == "DELISTED":
+            skipped += 1
+            continue
+
         exchange = _detect_yahoo_exchange(company.ticker)
         if not exchange:
             missing_exchange.append(company.ticker)
             skipped += 1
+            continue
+
+        if exchange == "DELISTED":
+            company.yfinance_market = "DELISTED"
+            metadata_only += 1
+            delisted.append(company.ticker)
             continue
 
         mapped_code = YAHOO_TO_EXCHANGE.get(exchange, exchange)
@@ -115,7 +157,6 @@ def sync_company_markets(
         if not market:
             missing_market.append(f"{company.ticker}:{exchange}")
             metadata_only += 1
-            skipped += 1
             continue
 
         if company.market_id != market.market_id or force:
@@ -132,4 +173,5 @@ def sync_company_markets(
         "metadata_only": metadata_only,
         "missing_exchange": missing_exchange,
         "missing_market": missing_market,
+        "delisted": delisted,
     }
