@@ -18,6 +18,7 @@ from database.baskets import Basket, BasketCompany, BasketType
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def _chunked(seq, size):
@@ -50,16 +51,14 @@ def resolve_universe(db: Session, market_names: list[str] | None, basket_ids: li
             company_map[comp.company_id] = comp
 
     if basket_ids:
+
         basket_market_ids, basket_companies = resolve_baskets_to_companies(db, basket_ids)
         market_ids.update(basket_market_ids)
         for comp in basket_companies:
             company_map[comp.company_id] = comp
 
     if not company_map:
-        raise HTTPException(
-            status_code=404,
-            detail="No companies found for the selected markets/baskets.",
-        )
+        return market_ids, []
 
     # Ensure market IDs also include values from resolved companies (in case baskets lacked mid info)
     for comp in company_map.values():
@@ -67,23 +66,20 @@ def resolve_universe(db: Session, market_names: list[str] | None, basket_ids: li
             market_ids.add(comp.market.market_id)
 
     if not market_ids:
-        raise HTTPException(
-            status_code=404,
-            detail="Unable to determine markets for the selected baskets.",
-        )
+        return [], []
 
     return list(market_ids), list(company_map.values())
 
 
 def _query_pairs_for_basket(db: Session, basket: Basket):
     if basket.type == BasketType.MARKET:
-        if basket.reference_id is None:
-            return []
-        return (
-            db.query(Company.company_id, Company.market_id)
-            .filter(Company.market_id == basket.reference_id)
-            .all()
-        )
+        if basket.reference_id is not None:
+            return (
+                db.query(Company.company_id, Company.market_id)
+                .filter(Company.market_id == basket.reference_id)
+                .all()
+            )
+        # Fall back to explicit company assignments for market baskets without reference_id
     if basket.type == BasketType.INDEX:
         if basket.reference_id is None:
             return []
@@ -118,24 +114,26 @@ def resolve_baskets_to_companies(db: Session, basket_ids: list[int]):
             detail=f"Unknown basket IDs: {', '.join(str(b) for b in sorted(missing))}",
         )
 
-    pairs = set()
+    company_ids = set()
+    market_ids = set()
     for basket in baskets:
         rows = _query_pairs_for_basket(db, basket)
         for company_id, market_id in rows:
-            if company_id is None or market_id is None:
+            if company_id is None:
                 continue
-            pairs.add((company_id, market_id))
+            company_ids.add(company_id)
+            if market_id is not None:
+                market_ids.add(market_id)
 
-    if not pairs:
+    if not company_ids:
         return set(), []
 
-    company_ids = [cid for cid, _ in pairs]
     companies = (
         db.query(Company)
         .filter(Company.company_id.in_(company_ids))
         .all()
     )
-    return {mid for _, mid in pairs}, companies
+    return market_ids, companies
 
 
 def load_existing_golden_cross_analysis(
@@ -303,6 +301,8 @@ def cached_golden_cross(
 
     # 1) Get all matching markets & companies
     market_ids, companies = resolve_universe(db, request.markets, request.basket_ids)
+    if not companies:
+        return {"status": "success", "data": []}
     # 2) Preload existing analysis so we only re-analyze stale/missing
     analysis_map = load_existing_golden_cross_analysis(
         db, market_ids, companies, short_window, long_window
@@ -356,8 +356,6 @@ def cached_golden_cross(
     )
 
     if not golden_cross_results:
-        raise HTTPException(
-            status_code=404, detail="No golden crosses found for any companies."
-        )
+        return {"status": "success", "data": []}
     golden_cross_results.sort(key=lambda x: x["ticker"])
     return {"status": "success", "data": golden_cross_results}
