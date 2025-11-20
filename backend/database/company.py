@@ -53,6 +53,7 @@ class Company(Base):
     ticker = Column(String, nullable=False, index=True)
     sector = Column(String)
     industry = Column(String)
+    yfinance_market = Column(String)
     market_id = Column(Integer, ForeignKey("markets.market_id"))
     market = relationship("Market", back_populates="companies")  # <-- CHANGED HERE
     stock_indexes = relationship(

@@ -15,6 +15,7 @@ import Home from "./components/Home";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
 import AdminFxBatchPage from "./components/admin/admin-fx-batch/admin-fx-batch";
+import AdminSyncMarkets from "./components/admin/admin-sync-markets/AdminSyncMarkets";
 import AdminValuationTools from "./components/admin/admin-valuation/admin-valuation";
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
@@ -85,6 +86,10 @@ function App() {
               <Route
                 path="/admin/fx-batch"
                 element={<PrivateRoute element={<AdminFxBatchPage />} />}
+              />
+              <Route
+                path="/admin/sync-markets"
+                element={<PrivateRoute element={<AdminSyncMarkets />} />}
               />
               <Route
                 path="/admin/valuation"
