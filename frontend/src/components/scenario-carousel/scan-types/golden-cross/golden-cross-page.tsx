@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
@@ -7,15 +7,22 @@ import { GoldenCrossOutput } from "./golden-cross-output";
 import { toast } from "react-toastify";
 import { ScanResultsProps } from "./golden-cross-page.types";
 import {
-  goldenCrossFormFields,
+  baseGoldenCrossFields,
   goldenCrossFormSchema,
   GoldenCrossFormValues,
 } from "./golden-cross-page.helpers";
 import { apiClient } from "@/services/apiClient";
 
+interface BasketOption {
+  id: number;
+  name: string;
+  type: string;
+}
+
 export default function GoldenCrossScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
+  const [basketOptions, setBasketOptions] = useState<BasketOption[]>([]);
 
   const form = useForm<GoldenCrossFormValues>({
     resolver: zodResolver(goldenCrossFormSchema),
@@ -23,9 +30,39 @@ export default function GoldenCrossScanPage() {
       shortPeriod: 50,
       longPeriod: 200,
       daysToLookBack: 60,
+      basketIds: [],
     },
   });
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
+  useEffect(() => {
+    const fetchBaskets = async () => {
+      try {
+        const response = await apiClient.get("/baskets");
+        setBasketOptions(response.data || []);
+      } catch (error) {
+        console.error("Failed to load baskets", error);
+        toast.error("Unable to load baskets. Please try again later.");
+      }
+    };
+    fetchBaskets();
+  }, []);
+
+  const formFields = useMemo(() => {
+    return [
+      ...baseGoldenCrossFields,
+      {
+        name: "basketIds",
+        label: "Select baskets",
+        description: "Choose one or more baskets to define the scan universe.",
+        type: "checkbox",
+        options: basketOptions.map((basket) => ({
+          label: `${basket.name} (${basket.type})`,
+          value: String(basket.id),
+        })),
+      },
+    ];
+  }, [basketOptions]);
 
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
@@ -38,7 +75,7 @@ export default function GoldenCrossScanPage() {
           days_to_look_back: data.daysToLookBack,
           min_volume: 1000000,
           adjusted: false, //use true iof you want adjusted_close be used for caalculations instead of close
-          markets: data.markets,
+          basket_ids: data.basketIds.map((id) => Number(id)),
         }
       );
 
@@ -66,10 +103,15 @@ export default function GoldenCrossScanPage() {
     >
       <FormFieldsGenerator<GoldenCrossFormValues>
         form={form}
-        formFields={goldenCrossFormFields}
+        formFields={formFields}
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
+      {basketOptions.length === 0 && (
+        <p className="text-sm text-slate-500 px-4">
+          No baskets available. Create a market/index/favorites basket to start scanning.
+        </p>
+      )}
       {results && results.data && results.data.length > 0 && (
         <GoldenCrossOutput results={results.data} />
       )}

@@ -8,6 +8,7 @@ class Market(Base):
     __tablename__ = "markets"
 
     market_id = Column(Integer, primary_key=True, autoincrement=True)
+    mic_code = Column(String, nullable=True)
     name = Column(String, nullable=False)
     country = Column(String)
     currency = Column(String)

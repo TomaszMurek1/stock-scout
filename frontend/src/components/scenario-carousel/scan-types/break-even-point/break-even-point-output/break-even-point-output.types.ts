@@ -1,14 +1,12 @@
 export interface IBreakEvenPointData {
-    ticker: string;
-    break_even_date: string;
-    current_net_income: number;
-    previous_net_income: number
-    company_name: string
-    currency: string
-  }
-
-  export interface IBreakEvenPointProps {
-    status: string;
-    data: IBreakEvenPointData[];
-  }
-  
+  company_id: number;
+  ticker: string;
+  company_name: string;
+  current_quarter: string;
+  previous_quarter: string;
+  previous_net_income: number;
+  current_net_income: number;
+  total_revenue: number;
+  currency: string;
+  threshold_margin: number;
+}

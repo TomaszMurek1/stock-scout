@@ -1,9 +1,17 @@
 import secrets
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database.base import get_db
 from schemas.user_schemas import InvitationCreate, InvitationOut
 from database.user import Invitation
+from services.auth.auth import get_current_user
+from services.company_market_sync import sync_company_markets
+
+
+class SyncCompanyMarketsRequest(BaseModel):
+    force: bool = False
+    limit: int | None = None
 from services.fundamentals.financials_batch_update_service import (
     update_financials_for_tickers,
 )
@@ -18,7 +26,11 @@ async def health_check():
 
 
 @router.post("/invitations", response_model=InvitationOut)
-def create_invitation(payload: InvitationCreate, db: Session = Depends(get_db)):
+def create_invitation(
+    payload: InvitationCreate,
+    db: Session = Depends(get_db),
+    _: str = Depends(get_current_user),
+):
     code = secrets.token_urlsafe(16)  # unique/secure token
     invitation = Invitation(
         code=code,
@@ -35,7 +47,11 @@ def create_invitation(payload: InvitationCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/run-financials-market-update")
-def run_financials_batch_update(market_name: str, db: Session = Depends(get_db)):
+def run_financials_batch_update(
+    market_name: str,
+    db: Session = Depends(get_db),
+    _: str = Depends(get_current_user),
+):
     try:
         from database.market import Market
         from database.company import Company
@@ -57,3 +73,13 @@ def run_financials_batch_update(market_name: str, db: Session = Depends(get_db))
         return {"status": "success", "results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/sync-company-markets")
+def sync_companies_to_markets(
+    payload: SyncCompanyMarketsRequest,
+    db: Session = Depends(get_db),
+    _: str = Depends(get_current_user),
+):
+    result = sync_company_markets(db, force=payload.force, limit=payload.limit)
+    return result

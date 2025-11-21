@@ -6,7 +6,8 @@ import { createPortfolioSlice, PortfolioSlice } from "./portfolio";
 import { devtools } from "zustand/middleware";
 import { createPerformanceSlice as createPortfolioPerformanceSlice, PerformanceSlice } from "./portfolioPerformance";
 import { createFxRatesSlice, FxRatesSlice } from "./fxRates.slice";
-export type AppState = PerformanceSlice & PortfolioSlice & WatchlistSlice & FxRatesSlice;
+import { createAnalyticsSlice, AnalyticsSlice } from "./analytics.slice";
+export type AppState = PerformanceSlice & PortfolioSlice & WatchlistSlice & FxRatesSlice & AnalyticsSlice;
 
 export const useAppStore = create<AppState>()(
     devtools(
@@ -15,6 +16,7 @@ export const useAppStore = create<AppState>()(
             ...createPortfolioSlice(set, get),
             ...createWatchlistSlice(set, get),
             ...createFxRatesSlice(set, get),
+            ...createAnalyticsSlice(set, get),
         }),
         { name: "AppStore" }
     )

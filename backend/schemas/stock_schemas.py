@@ -15,7 +15,8 @@ class GoldenCrossRequest(BaseModel):
     days_to_look_back: int = 90
     min_volume: int = 1_000_000
     adjusted: bool = True
-    markets: List[str]
+    markets: List[str] | None = None
+    basket_ids: List[int] | None = None
 
 
 class TickerRequestAdmin(BaseModel):

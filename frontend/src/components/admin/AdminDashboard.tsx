@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Database, LineChart, RefreshCw, Shield } from "lucide-react";
+import { Database, LineChart, RefreshCw, Shield, Globe } from "lucide-react";
 
 const adminLinks = [
   {
@@ -21,6 +21,12 @@ const adminLinks = [
     description: "Trigger valuation recomputation for a day or a date range.",
     href: "/admin/valuation",
     icon: RefreshCw,
+  },
+  {
+    title: "Sync Company Markets",
+    description: "Detect real exchanges via Yahoo Finance and assign markets.",
+    href: "/admin/sync-markets",
+    icon: Globe,
   },
 ];
 
