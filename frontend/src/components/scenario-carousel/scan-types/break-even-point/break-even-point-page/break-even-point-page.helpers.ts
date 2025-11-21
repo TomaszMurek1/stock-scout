@@ -3,7 +3,15 @@ import { z } from "zod";
 
 export const BreakEvenPointFormSchema = z.object({
   basketIds: z.array(z.string()).nonempty("Select at least one basket"),
+  thresholdPct: z.coerce.number().min(0).max(100).default(5),
 });
 export type BreakEvenPointValues = z.infer<typeof BreakEvenPointFormSchema>;
 
-export const BreakEvenBaseFields: IFormGeneratorField<BreakEvenPointValues>[] = [];
+export const BreakEvenBaseFields: IFormGeneratorField<BreakEvenPointValues>[] = [
+  {
+    name: "thresholdPct",
+    label: "Threshold %",
+    description: "Maximum % of revenue the company can be losing. Profitable firms always pass.",
+    type: "number",
+  },
+];

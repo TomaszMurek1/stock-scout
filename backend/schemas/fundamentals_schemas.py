@@ -9,3 +9,4 @@ class EVRevenueScanRequest(BaseModel):
 class BreakEvenPointRequest(BaseModel):
     markets: List[str] | None = None
     basket_ids: List[int] | None = None
+    threshold_pct: float | None = None
