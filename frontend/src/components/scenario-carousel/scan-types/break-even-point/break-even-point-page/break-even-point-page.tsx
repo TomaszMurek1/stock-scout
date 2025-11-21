@@ -1,32 +1,62 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import { toast } from "react-toastify";
-import { BreakEvenPointFormFields, BreakEvenPointValues,BreakEvenPointFormSchema } from "./break-even-point-page.helpers";
+import { BreakEvenPointValues,BreakEvenPointFormSchema, BreakEvenBaseFields } from "./break-even-point-page.helpers";
 import { BreakEvenPointOutput } from "../break-even-point-output/break-even-point-output";
 import { IBreakEvenPointProps } from "../break-even-point-output/break-even-point-output.types";
+import { apiClient } from "@/services/apiClient";
 
 
 
 export default function BreakEvenPointScanForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<IBreakEvenPointProps | null>(null);
+  const [basketOptions, setBasketOptions] = useState<{ id: number; name: string; type: string }[]>([]);
 
   const form = useForm<BreakEvenPointValues>({
     resolver: zodResolver(BreakEvenPointFormSchema),
     defaultValues: {
-      markets: [] as string[],
+      basketIds: [],
     },
    
   });
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
+  useEffect(() => {
+    const loadBaskets = async () => {
+      try {
+        const { data } = await apiClient.get("/baskets");
+        setBasketOptions(data || []);
+      } catch (error) {
+        console.error("Failed to load baskets", error);
+        toast.error("Unable to load baskets. Please try again later.");
+      }
+    };
+    loadBaskets();
+  }, []);
+
+  const formFields = useMemo(() => {
+    return [
+      ...BreakEvenBaseFields,
+      {
+        name: "basketIds",
+        label: "Select baskets",
+        description: "Choose one or more baskets to scan.",
+        type: "checkbox",
+        options: basketOptions.map((basket) => ({
+          label: `${basket.name} (${basket.type})`,
+          value: String(basket.id),
+        })),
+      },
+    ];
+  }, [basketOptions]);
   
   const onSubmit: SubmitHandler<BreakEvenPointValues> = async (data) => {
     setResults(null)
     setIsLoading(true);
-    console.log(data);
     try {
       const response = await fetch(
         `${API_URL}/fundamentals/break-even-companies?months=12`,
@@ -34,7 +64,7 @@ export default function BreakEvenPointScanForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            markets: data.markets,
+            basket_ids: data.basketIds.map((id) => Number(id)),
           }),
         }
       );
@@ -48,7 +78,6 @@ export default function BreakEvenPointScanForm() {
 
       const result: IBreakEvenPointProps = await response.json();
       setResults(result);
-      console.log("BreakEvenPoint:", result.data);
       toast.success("Break Even Point scan completed successfully");
     } catch (error) {
       console.error("Fetch error:", error);
@@ -69,10 +98,13 @@ export default function BreakEvenPointScanForm() {
     >
       <FormFieldsGenerator<BreakEvenPointValues>
         form={form}
-        formFields={BreakEvenPointFormFields}
+        formFields={formFields}
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
+      {basketOptions.length === 0 && (
+        <p className="text-sm text-slate-500 px-4">No baskets available. Add baskets to start scanning.</p>
+      )}
       {results && results.data && results.data.length > 0 && (
         <BreakEvenPointOutput data={results.data} />
       )}

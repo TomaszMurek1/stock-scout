@@ -14,7 +14,7 @@ from services.analysis_results.analysis_results import get_or_update_analysis_re
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
-from database.baskets import Basket, BasketCompany, BasketType
+from services.basket_resolver import resolve_baskets_to_companies
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -51,8 +51,7 @@ def resolve_universe(db: Session, market_names: list[str] | None, basket_ids: li
             company_map[comp.company_id] = comp
 
     if basket_ids:
-
-        basket_market_ids, basket_companies = resolve_baskets_to_companies(db, basket_ids)
+        basket_market_ids, basket_companies = _resolve_baskets_or_404(db, basket_ids)
         market_ids.update(basket_market_ids)
         for comp in basket_companies:
             company_map[comp.company_id] = comp
@@ -71,69 +70,13 @@ def resolve_universe(db: Session, market_names: list[str] | None, basket_ids: li
     return list(market_ids), list(company_map.values())
 
 
-def _query_pairs_for_basket(db: Session, basket: Basket):
-    if basket.type == BasketType.MARKET:
-        if basket.reference_id is not None:
-            return (
-                db.query(Company.company_id, Company.market_id)
-                .filter(Company.market_id == basket.reference_id)
-                .all()
-            )
-        # Fall back to explicit company assignments for market baskets without reference_id
-    if basket.type == BasketType.INDEX:
-        if basket.reference_id is None:
-            return []
-        return (
-            db.query(Company.company_id, Company.market_id)
-            .join(
-                company_stockindex_association,
-                company_stockindex_association.c.company_id == Company.company_id,
-            )
-            .filter(company_stockindex_association.c.index_id == basket.reference_id)
-            .all()
-        )
-    # Custom/favorites/portfolio baskets rely on BasketCompany table
-    return (
-        db.query(Company.company_id, Company.market_id)
-        .join(BasketCompany, BasketCompany.company_id == Company.company_id)
-        .filter(BasketCompany.basket_id == basket.id)
-        .all()
-    )
-
-
-def resolve_baskets_to_companies(db: Session, basket_ids: list[int]):
+def _resolve_baskets_or_404(db: Session, basket_ids: list[int]):
     if not basket_ids:
         return set(), []
-
-    baskets = db.query(Basket).filter(Basket.id.in_(basket_ids)).all()
-    found_ids = {b.id for b in baskets}
-    missing = set(basket_ids) - found_ids
-    if missing:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Unknown basket IDs: {', '.join(str(b) for b in sorted(missing))}",
-        )
-
-    company_ids = set()
-    market_ids = set()
-    for basket in baskets:
-        rows = _query_pairs_for_basket(db, basket)
-        for company_id, market_id in rows:
-            if company_id is None:
-                continue
-            company_ids.add(company_id)
-            if market_id is not None:
-                market_ids.add(market_id)
-
-    if not company_ids:
-        return set(), []
-
-    companies = (
-        db.query(Company)
-        .filter(Company.company_id.in_(company_ids))
-        .all()
-    )
-    return market_ids, companies
+    try:
+        return resolve_baskets_to_companies(db, basket_ids)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 def load_existing_golden_cross_analysis(

@@ -20,8 +20,8 @@ def find_companies_near_break_even(db: Session, months: int, company_ids: list[i
     # Get all financials for target companies, sorted by date
     financial_data = (
         db.query(CompanyFinancialHistory, Company, Market.currency)
-        .join(Company)
-        .join(Market)
+        .join(Company, CompanyFinancialHistory.company_id == Company.company_id)
+        .outerjoin(Market, Market.market_id == Company.market_id)
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
         .filter(CompanyFinancialHistory.net_income.isnot(None))
         .filter(CompanyFinancialHistory.total_revenue.isnot(None))

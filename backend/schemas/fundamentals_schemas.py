@@ -7,4 +7,5 @@ class EVRevenueScanRequest(BaseModel):
     markets: List[str]
 
 class BreakEvenPointRequest(BaseModel):
-    markets: List[str]
+    markets: List[str] | None = None
+    basket_ids: List[int] | None = None
