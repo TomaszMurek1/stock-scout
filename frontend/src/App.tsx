@@ -17,6 +17,8 @@ import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admi
 import AdminFxBatchPage from "./components/admin/admin-fx-batch/admin-fx-batch";
 import AdminSyncMarkets from "./components/admin/admin-sync-markets/AdminSyncMarkets";
 import AdminValuationTools from "./components/admin/admin-valuation/admin-valuation";
+import AdminYFinanceProbe from "./components/admin/admin-yfinance-probe/AdminYFinanceProbe";
+import AdminFinancialRefresh from "./components/admin/admin-financial-refresh/AdminFinancialRefresh";
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/AuthContext";
@@ -94,6 +96,14 @@ function App() {
               <Route
                 path="/admin/valuation"
                 element={<PrivateRoute element={<AdminValuationTools />} />}
+              />
+              <Route
+                path="/admin/yfinance-probe"
+                element={<PrivateRoute element={<AdminYFinanceProbe />} />}
+              />
+              <Route
+                path="/admin/financial-refresh"
+                element={<PrivateRoute element={<AdminFinancialRefresh />} />}
               />
               <Route
                 path="/stock-details/:ticker"

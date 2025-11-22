@@ -16,7 +16,7 @@ def clean_nan_dict(d: dict) -> dict:
 def build_financial_trends(db: Session, company_id: int) -> dict:
     records = (
         db.query(CompanyFinancialHistory)
-        .filter_by(company_id=company_id)
+        .filter_by(company_id=company_id, period_type="annual")
         .order_by(CompanyFinancialHistory.report_end_date.desc())
         .limit(6)
         .all()

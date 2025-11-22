@@ -21,14 +21,22 @@ def get_first_valid_row(df, keys, col):
 
 
 def safe_get(df, row, col):
-    lookup = {i.strip().lower(): i for i in df.index}
-    key = row.strip().lower()
+    def _norm(s: str) -> str:
+        return s.replace(" ", "").replace("_", "").lower()
 
-    if key not in lookup:
-        # logger.warning(f"[safe_get] Row '{row}' not found. Index: {list(df.index)}")
+    try:
+        lookup = {i.strip().lower(): i for i in df.index}
+        lookup_norm = {_norm(str(i)): i for i in df.index}
+    except Exception:
         return None
 
-    return df.loc[lookup[key], col] if col in df.columns else None
+    key = row.strip().lower()
+    key_norm = _norm(row.strip())
+
+    idx = lookup.get(key) or lookup_norm.get(key_norm)
+    if idx is None or col not in df.columns:
+        return None
+    return df.loc[idx, col]
 
 
 def get_most_recent_column(columns):
@@ -80,10 +88,22 @@ def update_financial_snapshot(
 ):
     fin_record.net_income = safe_get(income_stmt, "Net Income", col)
     fin_record.total_revenue = safe_get(income_stmt, "Total Revenue", col)
-    fin_record.ebit = safe_get(income_stmt, "EBIT", col)
+    fin_record.ebit = get_first_valid_row(
+        income_stmt,
+        [
+            "EBIT",
+            "Ebit",
+            "Operating Income",
+            "Earnings Before Interest And Taxes",
+            "Earnings Before Interest And Tax",
+        ],
+        col,
+    )
     fin_record.ebitda = get_first_valid_row(
         income_stmt, ["EBITDA", "Normalized EBITDA"], col
     )
+    if fin_record.ebit is None and fin_record.ebitda is not None and fin_record.depreciation_amortization is not None:
+        fin_record.ebit = fin_record.ebitda - fin_record.depreciation_amortization
     fin_record.diluted_eps = safe_get(income_stmt, "Diluted EPS", col)
     fin_record.basic_eps = safe_get(income_stmt, "Basic EPS", col)
     fin_record.interest_income = safe_get(income_stmt, "Interest Income", col)
@@ -92,6 +112,25 @@ def update_financial_snapshot(
         income_stmt, ["Operating Income", "Total Operating Income As Reported"], col
     )
     fin_record.total_debt = safe_get(balance_sheet, "Total Debt", col)
+    fin_record.total_assets = safe_get(balance_sheet, "Total Assets", col)
+    fin_record.total_liabilities = get_first_valid_row(
+        balance_sheet, ["Total Liabilities Net Minority Interest", "Total Liabilities"], col
+    )
+    fin_record.total_equity = get_first_valid_row(
+        balance_sheet,
+        ["Total Stockholder Equity", "Stockholders Equity", "Total Equity Gross Minority Interest"],
+        col,
+    )
+    fin_record.current_assets = get_first_valid_row(
+        balance_sheet,
+        ["Total Current Assets", "Current Assets"],
+        col,
+    )
+    fin_record.current_liabilities = get_first_valid_row(
+        balance_sheet,
+        ["Total Current Liabilities", "Current Liabilities"],
+        col,
+    )
     fin_record.cash_and_cash_equivalents = get_first_valid_row(
         balance_sheet,
         [
@@ -100,6 +139,12 @@ def update_financial_snapshot(
             "Cash Financial",
         ],
         col,
+    )
+    fin_record.working_capital = (
+        fin_record.current_assets - fin_record.current_liabilities
+        if fin_record.current_assets is not None
+        and fin_record.current_liabilities is not None
+        else None
     )
     fin_record.shares_outstanding = fast_info.get("shares")
     fin_record.current_price = fast_info.get("lastPrice")
@@ -116,6 +161,11 @@ def update_financial_snapshot(
         income_stmt, "Reconciled Depreciation", col
     ) or safe_get(cashflow, "Depreciation And Amortization", col)
     fin_record.free_cash_flow = safe_get(cashflow, "Free Cash Flow", col)
+    fin_record.operating_cash_flow = get_first_valid_row(
+        cashflow,
+        ["Operating Cash Flow", "Cash Flow From Continuing Operating Activities"],
+        col,
+    )
     fin_record.capital_expenditure = safe_get(cashflow, "Capital Expenditure", col)
     fin_record.enterprise_value = info_dict.get("enterpriseValue")
     fin_record.last_updated = datetime.now(timezone.utc)

@@ -1,0 +1,48 @@
+Goal: Generate a visually stunning and highly functional "Equity Investment Analysis Dashboard" based on the provided table data, emphasizing long-term growth potential and risk elimination, according to the methodology outlined in the source documents. The dashboard must be designed for professional investors seeking results better than the benchmark (S&P 500)
+
+Dashboard Structure and Visualization Instructions
+The dashboard must be highly responsive, modern (dark mode recommended for a "world-class" look), and organized into three primary sections, clearly labelled, with dedicated sections for Indicator Explanations.
+A. Global Functionality and Aesthetics
+1. Visual Style: Use a modern, clean design (e.g., muted dark background, vibrant accent colors for metrics).
+2. Explanations (Crucial): Every single displayed indicator (KPI or chart element) must have an accompanying tooltip or side panel that provides a clear, concise definition of the indicator, what it measures, and the recommended threshold values according to the methodology (e.g., ROIC > 15%).
+3. Color Coding: Use green for metrics meeting or exceeding positive thresholds/forecasts (e.g., Revenue CAGR > 5%), red for metrics falling below critical safety thresholds (e.g., Current Ratio < 1), and amber/yellow for metrics that are acceptable but not stellar.
+4. Filtering/Selection: If analyzing multiple tickers, include a prominent filter allowing the user to select the analyzed company.
+B. Section 1: Zyskowność i Wzrost (Profitability and Growth)
+This section must dominate the dashboard space as Growth is the critical factor driving long-term returns.
+1. Long-Term Performance Comparison Chart:
+    ◦ Type: Multi-line trend chart spanning 10 years (or maximum available history).
+    ◦ Data Series: Display the stock price total return (10Y_Total_Return) compared against the growth of key financial metrics: 10Y_Revenue_Growth, 10Y_NetIncome_Growth, and 10Y_CFO_Growth.
+    ◦ Insight: Visually demonstrate the core principle that stock price movements correlate with the growth of profits, revenues, and cash flow in the long term.
+2. Key Profitability Indicators (KPI Cards): Display the current values for:
+    ◦ ROIC (Return on Invested Capital): Goal: Minimum 15%. Color code based on achieving this threshold.
+    ◦ ROA (Return on Assets): Goal: Minimum 15%. Color code based on achieving this threshold.
+    ◦ Operating Margin: Goal: Stable, minimum 20%. Use color to indicate stability and level.
+3. Future Growth Dynamics (Forecasts): Present these as prominent indicators, stressing that future dynamism is the key to investment success.
+    ◦ Revenue CAGR (2Y Forecast): Display Revenue_CAGR_2Y_Forecast. Highlight the threshold: Min 5%.
+    ◦ EPS Growth (5Y Forecast): Display EPS_CAGR_5Y_Forecast. Highlight the goal: Growing at least 2x the Revenue growth rate.
+    ◦ CFO Growth Rate Forecast: Display CFO_Growth_Rate_Forecast. Highlight the threshold: Min 10%.
+    ◦ Forecast Revision Direction: Use a highly visible indicator (e.g., an arrow icon and text) displaying Forecast_Revision_Direction. Revisions 'Up' are a very strong positive signal.
+C. Section 2: Filtry Bezpieczeństwa (Fundamental Safety Filters)
+This section is designed to eliminate high-risk companies, not to select the best ones. Use status indicators, gauges, or heatmaps to quickly confirm compliance with minimal safety standards.
+1. Liquidity and Debt Ratios (Status Gauges): Create gauges for the following mandatory filters, clearly marking the acceptable thresholds:
+    ◦ Current Ratio: Value display of Current_Ratio. Filter Threshold: Must be > 1.0. If < 1.0, flag as a critical warning (RED).
+    ◦ Debt to Assets: Value display of Debt_to_Assets. Max Acceptance: 40% (0.40). If significantly above 40%, flag as highly indebted (RED/AMBER).
+    ◦ Interest Coverage: Value display of Interest_Coverage. Filter Threshold: Must be > 3.0.
+    ◦ CFO to Total Debt: Value display of CFO_to_Total_Debt. Filter Threshold: Must be > 0.3.
+2. Risk Summary:
+    ◦ Olson Indicator: Display Olson_Indicator value. Filter Threshold: Must be < 2% risk of bankruptcy.
+    ◦ Debt Trend: Display Debt_Trend. Reward/Premiums: Flag companies with a 'Decreasing' debt trend as safer.
+D. Section 3: Kontekst Wyceny i Timing (Valuation and Timing)
+Valuation is secondary, used primarily for contextual timing and risk management (to avoid buying a bubble).
+1. Upside Potential (Key Timing Indicator):
+    ◦ KPI and Gauge: Display the current Upside percentage. Use a gauge chart to show the Upside relative to its historical range (if possible, based on historical Upside data not explicitly provided but implied by the methodology).
+    ◦ Interpretation Tip (Tooltip): Clearly explain that a low Upside (near zero) suggests the stock has reached the 12-month analyst target and may signal a need to wait for a correction/pullback.
+2. Historical Relative Valuation:
+    ◦ P/S Trend Chart (5 Years): Display the current P_S value plotted against its P_S_Median_5Y and P_S_High_5Y.
+    ◦ Visual Interpretation: Mark the areas of the chart: "Expensive" (near P/S High), "Fairly Valued" (near Median), and "Historically Cheap" (low P/S).
+    ◦ Growth Stock Caveat (Crucial Tooltip): Include a prominent note or dynamic text explaining that for high-growth companies (those meeting the Section 1 criteria), a historically high P/S may still be cheap if the denominator (Sales/Revenue) is expected to grow significantly next year (i.e., forward P/S is lower than current P/S). The best companies are often not cheap.
+Summary of Indicators and Explanations
+The resulting dashboard must coherently integrate these three sections. For the user's benefit, ensure the indicator explanations clearly communicate the long-term methodology: focus on Growth (especially future forecasts), use Fundamentals only to exclude potential bankruptcies, and treat Valuation (especially low P/E/P/S) with skepticism, prioritizing the Upside metric for timing context
+
+
+Note that I already have some dashboard which you can extend (you can regroup, reorganize, add indicators but cannot remove whats already there, use table we just created and filled with data - CompanyFinancialHistory )

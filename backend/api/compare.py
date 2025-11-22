@@ -27,6 +27,7 @@ def _get_history(db: Session, cid: int) -> List[CompanyFinancialHistory]:
     return (
         db.query(CompanyFinancialHistory)
         .filter(CompanyFinancialHistory.company_id == cid)
+        .filter(CompanyFinancialHistory.period_type == "annual")
         .order_by(CompanyFinancialHistory.report_end_date)
         .all()
     )
