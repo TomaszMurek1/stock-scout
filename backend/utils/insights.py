@@ -108,7 +108,7 @@ def build_investor_metrics(
     growth_sustainability_index = safe_divide(net_income, capex)
 
     # Composite metric
-    rule_of_40 = (revenue_growth or 0) + (ebitda_margin * 100 if ebitda_margin else 0)
+    rule_of_40 = (revenue_growth or 0) + (fcf_margin * 100 if ebitda_margin else 0)
 
     # Final metrics dict
     metrics = {

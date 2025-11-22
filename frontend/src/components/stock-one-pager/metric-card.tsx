@@ -11,6 +11,7 @@ interface MetricsItem {
   icon: ReactNode
   tooltip: string
   status?: MetricStatus
+  meets?: boolean
 }
 
 interface MetricsCardProps {
@@ -32,12 +33,12 @@ export const MetricsCard = ({ title, titleIcon, metrics }: MetricsCardProps) => 
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {metrics.map(({ label, value, icon, tooltip, status }) => (
+        {metrics.map(({ label, value, icon, tooltip, status, meets }) => (
           <TooltipProvider key={label}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={clsx("flex items-center gap-3 p-3 rounded-lg border hover:shadow-sm transition", {
+                  className={clsx("flex items-start gap-3 p-3 rounded-lg border hover:shadow-sm transition", {
                     "bg-green-50 border-green-200": status === "good",
                     "bg-amber-50 border-amber-200": status === "neutral",
                     "bg-red-50 border-red-200": status === "bad",
@@ -54,9 +55,21 @@ export const MetricsCard = ({ title, titleIcon, metrics }: MetricsCardProps) => 
                   >
                     {icon}
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">{label}</p>
-                    <p className="text-lg font-semibold text-gray-900">{value}</p>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-gray-600 font-medium leading-snug">{label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-lg font-semibold text-gray-900 tabular-nums text-left">{value}</p>
+                      {typeof meets === "boolean" && (
+                        <span
+                          className={clsx(
+                            "px-2 py-0.5 rounded-full text-xs font-semibold",
+                            meets ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                          )}
+                        >
+                          {meets ? "OK" : "Watch"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </TooltipTrigger>
@@ -70,4 +83,3 @@ export const MetricsCard = ({ title, titleIcon, metrics }: MetricsCardProps) => 
     </Card>
   )
 }
-

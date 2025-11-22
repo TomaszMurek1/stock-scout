@@ -5,7 +5,12 @@ from datetime import datetime, timedelta, timezone
 import logging
 from database.company import Company, CompanyOverview
 from database.market import Market
-from database.financials import CompanyFinancials
+from database.financials import (
+    CompanyEstimateHistory,
+    CompanyEpsRevisionHistory,
+    CompanyFinancialHistory,
+    CompanyFinancials,
+)
 from database.stock_data import StockPriceHistory
 import requests
 import os
@@ -142,6 +147,112 @@ def get_company_financials(company: Company, db: Session) -> dict:
     }
 
 
+def _latest_history(db: Session, company_id: int, limit: int = 4):
+    return (
+        db.query(CompanyFinancialHistory)
+        .filter(CompanyFinancialHistory.company_id == company_id)
+        .order_by(CompanyFinancialHistory.report_end_date.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def _latest_estimate(db: Session, company_id: int, est_type: str):
+    return (
+        db.query(CompanyEstimateHistory)
+        .filter(
+            CompanyEstimateHistory.company_id == company_id,
+            CompanyEstimateHistory.estimate_type == est_type,
+        )
+        .order_by(CompanyEstimateHistory.created_at.desc())
+        .first()
+    )
+
+
+def _latest_eps_revision(db: Session, company_id: int):
+    return (
+        db.query(CompanyEpsRevisionHistory)
+        .filter(CompanyEpsRevisionHistory.company_id == company_id)
+        .order_by(CompanyEpsRevisionHistory.created_at.desc())
+        .first()
+    )
+
+
+def build_dashboard_metrics(db: Session, company: Company) -> dict:
+    history = _latest_history(db, company.company_id, limit=4)
+    latest = history[0] if history else None
+    prev = history[1] if len(history) > 1 else None
+
+    def _safe_div(n, d):
+        try:
+            if n is None or d in (None, 0):
+                return None
+            return float(n) / float(d)
+        except Exception:
+            return None
+
+    revenue_forecast = _latest_estimate(db, company.company_id, "revenue")
+    eps_forecast = _latest_estimate(db, company.company_id, "earnings")
+    eps_forecast_long = _latest_estimate(db, company.company_id, "eps_long") or eps_forecast
+    price_target = _latest_estimate(db, company.company_id, "price_target")
+    eps_revision = _latest_eps_revision(db, company.company_id)
+
+    forecast_rev_growth = revenue_forecast.growth if revenue_forecast else None
+    forecast_eps_growth_short = eps_forecast.growth if eps_forecast else None
+    forecast_eps_growth_long = eps_forecast_long.growth if eps_forecast_long else None
+
+    debt_trend = None
+    if latest and prev and latest.total_debt is not None and prev.total_debt is not None:
+        change = latest.total_debt - prev.total_debt
+        direction = "flat"
+        if abs(change) > 1e-9:
+            direction = "up" if change > 0 else "down"
+        debt_trend = {
+            "latest": latest.total_debt,
+            "previous": prev.total_debt,
+            "change": change,
+            "direction": direction,
+        }
+
+    forecast_revision_direction = None
+    if eps_revision:
+        up = eps_revision.revision_up or 0
+        down = eps_revision.revision_down or 0
+        if up == down == 0:
+            forecast_revision_direction = None
+        elif abs(up - down) < 1e-9:
+            forecast_revision_direction = "neutral"
+        else:
+            forecast_revision_direction = "upward" if up > down else "downward"
+
+    return {
+        "total_revenue": latest.total_revenue if latest else None,
+        "net_income": latest.net_income if latest else None,
+        "eps": latest.diluted_eps or (latest.basic_eps if latest else None),
+        "operating_income": latest.operating_income if latest else None,
+        "operating_cash_flow": latest.operating_cash_flow if latest else None,
+        "forecast_revenue_growth_rate": forecast_rev_growth,
+        "forecast_eps_growth_rate_short": forecast_eps_growth_short,
+        "forecast_eps_growth_rate_long": forecast_eps_growth_long,
+        "forecast_revision_direction": forecast_revision_direction,
+        "return_on_assets": _safe_div(latest.net_income if latest else None, latest.total_assets if latest else None),
+        "return_on_invested_capital": _safe_div(
+            latest.operating_income if latest else None,
+            ((latest.total_debt or 0) + (latest.total_equity or 0)) if latest else None,
+        ),
+        "interest_coverage": _safe_div(
+            latest.operating_income if latest else None, latest.interest_expense if latest else None
+        ),
+        "cfo_to_total_debt": _safe_div(latest.operating_cash_flow if latest else None, latest.total_debt if latest else None),
+        "total_debt_trend": debt_trend,
+        "current_ratio": _safe_div(latest.current_assets if latest else None, latest.current_liabilities if latest else None),
+        "debt_to_assets": _safe_div(latest.total_debt if latest else None, latest.total_assets if latest else None),
+        "ohlson_indicator_score": None,
+        "analyst_price_target": price_target.average if price_target else None,
+        "upside": None,
+    }
+
+
 def build_executive_summary(company: Company, market: Market | None) -> dict:
     return {
         "ticker": company.ticker,
@@ -234,6 +345,7 @@ def get_stock_details(
     technical_analysis = clean_nan_values(raw_technical_analysis)
     risk_metrics = {}  # build_risk_metrics(company, stock_history, db)  # Placeholder
     peer_comparison = build_peer_comparisons(company, db)
+    dashboard_metrics = build_dashboard_metrics(db, company)
 
     response = {
         "executive_summary": executive_summary,
@@ -251,5 +363,6 @@ def get_stock_details(
         "technical_analysis": technical_analysis,
         "risk_metrics": risk_metrics,
         "peer_comparison": peer_comparison,
+        "analysis_dashboard": dashboard_metrics,
     }
     return sanitize_numpy_types(response)
