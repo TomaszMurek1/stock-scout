@@ -29,6 +29,10 @@ from utils.db_retry import retry_on_db_lock
 logger = logging.getLogger(__name__)
 
 
+def _is_missing_number(value) -> bool:
+  return value is None or (isinstance(value, (float, int)) and (pd.isna(value) or value != value))
+
+
 def get_market_by_name(db: Session, market_name: str) -> Market:
     market = db.query(Market).filter_by(name=market_name).first()
     if not market:
@@ -192,12 +196,17 @@ def build_financial_history_mappings(
         if key in existing_history_keys:
             continue
 
+        # Skip rows with no revenue to avoid inserting empty/quarterly-like records
+        total_revenue_val = safe_get(income_stmt, "Total Revenue", col)
+        if _is_missing_number(total_revenue_val):
+            continue
+
         hist_data = {
             "company_id": company.company_id,
             "report_end_date": end_date,
             "period_type": period_type,
             "net_income": safe_get(income_stmt, "Net Income", col),
-            "total_revenue": safe_get(income_stmt, "Total Revenue", col),
+            "total_revenue": total_revenue_val,
             "ebitda": get_first_valid_row(
                 income_stmt, ["EBITDA", "Normalized EBITDA"], col
             ),
@@ -310,7 +319,7 @@ def is_missing_or_delisted_fast_info(
 
 @retry_on_db_lock
 def fetch_and_save_financial_data_for_list_of_tickers(
-    tickers: List[str], market_name: str, db: Session
+    tickers: List[str], market_name: str, db: Session, include_quarterly: bool = True
 ) -> Dict:
     """
     For a list of tickers, fetch and upsert financials and market data using yfinance.
@@ -376,14 +385,22 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             balance_sheet = getattr(y_t, "balance_sheet", None)
             cashflow = getattr(y_t, "cashflow", None)
             info_dict = getattr(y_t, "get_info", lambda: {})() or {}
-            q_income_stmt = _safe_stmt("get_income_stmt", "quarterly_income_stmt", freq="quarterly")
-            q_balance_sheet = _safe_stmt(
-                "get_balance_sheet", "quarterly_balance_sheet", freq="quarterly"
+            q_income_stmt = (
+                _safe_stmt("get_income_stmt", "quarterly_income_stmt", freq="quarterly")
+                if include_quarterly
+                else None
             )
-            q_cashflow = _safe_stmt(
-                "get_cash_flow", "quarterly_cashflow", freq="quarterly"
+            q_balance_sheet = (
+                _safe_stmt("get_balance_sheet", "quarterly_balance_sheet", freq="quarterly")
+                if include_quarterly
+                else None
             )
-            if (q_cashflow is None or (hasattr(q_cashflow, "empty") and q_cashflow.empty)):
+            q_cashflow = (
+                _safe_stmt("get_cash_flow", "quarterly_cashflow", freq="quarterly")
+                if include_quarterly
+                else None
+            )
+            if include_quarterly and (q_cashflow is None or (hasattr(q_cashflow, "empty") and q_cashflow.empty)):
                 q_cashflow = _safe_stmt(
                     "get_cash_flow", "quarterly_cash_flow", freq="quarterly"
                 )
@@ -449,18 +466,19 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             history_mappings.extend(mappings)
 
             # Quarterly mappings
-            q_mappings = build_financial_history_mappings(
-                comp,
-                q_income_stmt,
-                q_balance_sheet,
-                q_cashflow,
-                fast_info,
-                now,
-                history_keys,
-                "quarterly",
-            )
-            total_mappings += len(q_mappings)
-            history_mappings.extend(q_mappings)
+            if include_quarterly:
+                q_mappings = build_financial_history_mappings(
+                    comp,
+                    q_income_stmt,
+                    q_balance_sheet,
+                    q_cashflow,
+                    fast_info,
+                    now,
+                    history_keys,
+                    "quarterly",
+                )
+                total_mappings += len(q_mappings)
+                history_mappings.extend(q_mappings)
 
             # Recommendations
             if isinstance(upgrades_downgrades, pd.DataFrame) and not upgrades_downgrades.empty:
@@ -651,6 +669,7 @@ def update_financials_for_tickers(
     market_name: str,
     batch_size: int = 50,
     log_skips: bool = False,
+    include_quarterly: bool = True,
 ):
     """
     For each ticker, checks latest report_end_date in DB:
@@ -711,6 +730,7 @@ def update_financials_for_tickers(
             tickers=chunk,
             market_name=market_name,
             db=db,
+            include_quarterly=include_quarterly,
         )
         logger.info(
             f"Batch completed: {res.get('inserted_history', 0)} "

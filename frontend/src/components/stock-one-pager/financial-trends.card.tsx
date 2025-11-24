@@ -33,13 +33,19 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
   financialTrends,
   currency,
 }) => {
+  const validRevenueYears = new Set(
+    (financialTrends.revenue || []).filter((item) => item.value != null).map((item) => item.year)
+  );
+
   const getTrendData = (
     key: "revenue" | "net_income" | "ebitda" | "free_cash_flow"
   ): { year: number; value: number }[] => {
-    return financialTrends[key].map((item) => ({
-      year: item.year,
-      value: item.value,
-    }));
+    return financialTrends[key]
+      .filter((item) => validRevenueYears.has(item.year) && item.value != null)
+      .map((item) => ({
+        year: item.year,
+        value: item.value,
+      }));
   };
 
   const renderTrendTable = (

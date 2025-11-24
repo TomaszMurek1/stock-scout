@@ -123,95 +123,91 @@ const buildProfitabilityGrowthMetrics = (
   },
 ];
 
-const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard, currencyCode: string) => [
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.current_ratio, 1);
-    const formatted = formatNumber(analysisDashboard.current_ratio, 2);
-    return {
+const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard, currencyCode: string) => {
+  const currentRatioValue = formatNumber(analysisDashboard.current_ratio, 2);
+  const currentRatioMeets = meetsThreshold(analysisDashboard.current_ratio, 1);
+
+  const debtToAssetsMeets = meetsThreshold(analysisDashboard.debt_to_assets, 0.4, true);
+
+  const interestCoverageFormatted = formatNumber(analysisDashboard.interest_coverage, 2);
+  const interestCoverageMeets = meetsThreshold(analysisDashboard.interest_coverage, 3);
+
+  const cfoDebtMeets = meetsThreshold(analysisDashboard.cfo_to_total_debt, 0.3);
+
+  const debtChange = analysisDashboard.total_debt_trend?.change ?? null;
+  const debtTrendMeets = meetsThreshold(debtChange, 0, true);
+  const debtTrendDisplay = formatCompactCurrencyValue(debtChange, currencyCode);
+  const debtDirection = analysisDashboard.total_debt_trend?.direction;
+
+  const ohlsonMeets = meetsThreshold(analysisDashboard.ohlson_indicator_score, 0.02, true);
+
+  return [
+    {
       label: "Current Ratio",
-      value: formatted === "N/A" ? formatted : `${formatted}x`,
+      value: currentRatioValue === "N/A" ? currentRatioValue : `${currentRatioValue}x`,
       tooltip: "Current Ratio (>1.0)",
       description:
         "Stosunek bieżących aktywów do bieżących pasywów (zobowiązań do spłaty w ciągu 12 miesięcy). Powyżej 1 oznacza, że firma ma z czego sfinansować swoje zobowiązania",
       definition: "Current Ratio = Current Assets / Current Liabilities",
-      meets,
-      status: statusFromMeets(meets),
+      meets: currentRatioMeets,
+      status: statusFromMeets(currentRatioMeets),
       icon: <ShieldExclamationIcon className="h-8 w-8" />,
-    };
-  })(),
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.debt_to_assets, 0.4, true);
-    return {
+    },
+    {
       label: "Debt to Assets",
       value: formatPercentage(analysisDashboard.debt_to_assets),
       tooltip: "Debt to Assets (<40%)",
       description:
         "Stosunek zadłużenia do aktywów; niższa wartość oznacza mniejsze obciążenie aktywów długiem.",
       definition: "Debt to Assets = Total Debt / Total Assets",
-      meets,
-      status: statusFromMeets(meets),
+      meets: debtToAssetsMeets,
+      status: statusFromMeets(debtToAssetsMeets),
       icon: <ScaleIcon className="h-8 w-8" />,
-    };
-  })(),
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.interest_coverage, 3);
-    const formatted = formatNumber(analysisDashboard.interest_coverage, 2);
-    return {
+    },
+    {
       label: "Interest Coverage",
-      value: formatted === "N/A" ? formatted : `${formatted}x`,
+      value: interestCoverageFormatted === "N/A" ? interestCoverageFormatted : `${interestCoverageFormatted}x`,
       tooltip: "Interest Coverage (>3x)",
       description:
         "Pokazuje, ile razy wynik pokrywa koszty odsetek; poziom ≥3 daje zapas bezpieczeństwa.",
       definition: "Interest Coverage = Operating Income / Interest Expense",
-      meets,
-      status: statusFromMeets(meets),
+      meets: interestCoverageMeets,
+      status: statusFromMeets(interestCoverageMeets),
       icon: <ChartBarIcon className="h-8 w-8" />,
-    };
-  })(),
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.cfo_to_total_debt, 0.3);
-    return {
+    },
+    {
       label: "CFO to Total Debt",
       value: formatPercentage(analysisDashboard.cfo_to_total_debt),
       tooltip: "CFO / Debt (>30%)",
       description:
         "Ile lat gotówka z działalności operacyjnej pokrywa całe zadłużenie; wyższy poziom = szybsza spłata.",
       definition: "CFO to Total Debt = Operating Cash Flow / Total Debt",
-      meets,
-      status: statusFromMeets(meets),
+      meets: cfoDebtMeets,
+      status: statusFromMeets(cfoDebtMeets),
       icon: <BanknotesIcon className="h-8 w-8" />,
-    };
-  })(),
-  (() => {
-    const change = analysisDashboard.total_debt_trend?.change ?? null;
-    const meets = meetsThreshold(change, 0, true);
-    const debtChange = formatCompactCurrencyValue(change, currencyCode);
-    const direction = analysisDashboard.total_debt_trend?.direction;
-    return {
+    },
+    {
       label: "Debt Trend",
-      value: direction ? `${direction} ${debtChange}` : debtChange,
+      value: debtDirection ? `${debtDirection} ${debtTrendDisplay}` : debtTrendDisplay,
       tooltip: "Debt Trend (prefer ≤ 0)",
       description: "Czy poziom zadłużenia rośnie czy maleje względem poprzedniego okresu.",
       definition: "Change in total debt compared to the previous period.",
-      meets,
-      status: statusFromMeets(meets),
+      meets: debtTrendMeets,
+      status: statusFromMeets(debtTrendMeets),
       icon: <ArrowTrendingDownIcon className="h-8 w-8" />,
-    };
-  })(),
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.ohlson_indicator_score, 0.02, true);
-    return {
+    },
+    {
       label: "Ohlson Score",
       value: formatPercentage(analysisDashboard.ohlson_indicator_score),
       tooltip: "Ohlson Score (<2%)",
       description: "Zbiorczy wskaźnik prawdopodobieństwa bankructwa; im niżej, tym bezpieczniej.",
       definition: "Probabilistic bankruptcy risk score (Ohlson O-Score).",
-      meets,
-      status: statusFromMeets(meets),
+      meets: ohlsonMeets,
+      status: statusFromMeets(ohlsonMeets),
       icon: <ShieldExclamationIcon className="h-8 w-8" />,
-    };
-  })(),
-];
+    },
+  ];
+};
 
 const buildValuationTimingMetrics = (
   analysisDashboard: AnalysisDashboard,

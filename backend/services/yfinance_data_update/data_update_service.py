@@ -261,4 +261,5 @@ def ensure_fresh_data(
         db=db,
         tickers=[ticker],
         market_name=market_name,
+        include_quarterly=True,
     )
