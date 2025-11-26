@@ -1,11 +1,7 @@
 import React from "react";
 import { Card, Tooltip } from "@/components/ui/Layout";
-import {
-  formatCurrency,
-  formatNumber,
-  formatPercentage,
-} from "@/utils/formatting";
-import { formatCompactCurrencyValue, meetsThreshold, statusFromMeets } from "./metric-helpers";
+import { formatCurrency, formatNumber, formatPercentage } from "@/utils/formatting";
+import { meetsThreshold, statusFromMeets } from "./metric-helpers";
 import { getMetricStatus } from "./metric-utils";
 import type {
   AnalysisDashboard,
@@ -233,8 +229,7 @@ interface MetricsColumnProps {
 
 const buildProfitabilityGrowthMetrics = (
   analysisDashboard: AnalysisDashboard,
-  financialPerformance: FinancialPerformance,
-  currencyCode: string
+  financialPerformance: FinancialPerformance
 ) => [
   (() => {
     const meets = meetsThreshold(analysisDashboard.return_on_assets, 0.15);
@@ -288,18 +283,9 @@ const buildProfitabilityGrowthMetrics = (
       icon: <Icons.TrendingUp />,
     };
   })(),
-  {
-    label: "Operating Cash Flow",
-    value: formatCompactCurrencyValue(analysisDashboard.operating_cash_flow, currencyCode),
-    tooltip: "Operating cash flow (ttm).",
-    definition: "CFO (ttm) = Cash from operations.",
-    description: "Cash generated from core business activities.",
-    icon: <Icons.Banknote />,
-    status: "neutral",
-  },
 ];
 
-const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard, currencyCode: string) => {
+const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard) => {
   const currentRatioValue = formatNumber(analysisDashboard.current_ratio, 2);
   const currentRatioMeets = meetsThreshold(analysisDashboard.current_ratio, 1);
   const debtToAssetsMeets = meetsThreshold(analysisDashboard.debt_to_assets, 0.4, true);
@@ -459,7 +445,7 @@ export const MetricsColumn: React.FC<MetricsColumnProps> = ({
     ? buildValuationTimingMetrics(analysisDashboard, currencyCode)
     : [];
   const profitabilityMetrics = analysisDashboard
-    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance, currencyCode)
+    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance)
     : [];
   const valuationList = buildValuationMetrics(valuationMetrics);
   const riskList = buildRiskMetrics(riskMetrics);
