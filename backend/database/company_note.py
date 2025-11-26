@@ -19,7 +19,6 @@ from .base import Base
 class CompanyNote(Base):
     __tablename__ = "company_notes"
     __table_args__ = (
-        UniqueConstraint("user_id", "company_id", name="uq_company_notes_user_company"),
         Index("idx_company_notes_user", "user_id"),
         Index("idx_company_notes_company", "company_id"),
         Index("idx_company_notes_status", "research_status"),
