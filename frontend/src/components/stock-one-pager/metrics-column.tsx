@@ -1,34 +1,235 @@
+import React from "react";
+import { Card, Tooltip } from "@/components/ui/Layout";
 import {
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  ScaleIcon,
-  ShieldExclamationIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  BanknotesIcon,
-  ChartPieIcon,
-  Cog6ToothIcon,
-} from "@heroicons/react/24/outline";
-import { MetricsCard } from "./metric-card";
-import { getMetricStatus } from "./metric-utils";
-import { formatCurrency, formatNumber, formatPercentage } from "@/utils/formatting";
+  formatCurrency,
+  formatNumber,
+  formatPercentage,
+} from "@/utils/formatting";
 import { formatCompactCurrencyValue, meetsThreshold, statusFromMeets } from "./metric-helpers";
+import { getMetricStatus } from "./metric-utils";
 import type {
   AnalysisDashboard,
   FinancialPerformance,
-  InvestorMetrics,
   RiskMetrics,
   ValuationMetrics,
 } from "./stock-one-pager.types";
+
+// --- Icons (Inline SVGs for portability) ---
+const Icons = {
+  TrendingUp: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+      />
+    </svg>
+  ),
+  TrendingDown: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+      />
+    </svg>
+  ),
+  Scale: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v8"
+      />
+    </svg>
+  ),
+  Shield: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+      />
+    </svg>
+  ),
+  Dollar: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  ),
+  ChartBar: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+      />
+    </svg>
+  ),
+  Pie: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"
+      />
+    </svg>
+  ),
+  Banknote: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+      />
+    </svg>
+  ),
+  Cog: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  ),
+};
+
+// --- Sub-Components ---
+const MetricsCard = ({
+  title,
+  titleIcon,
+  metrics,
+}: {
+  title: string;
+  titleIcon: React.ReactNode;
+  metrics: any[];
+}) => (
+  <Card className="mb-6 bg-white shadow-sm border-slate-200">
+    <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50 rounded-t-lg">
+      <span className="text-slate-600">{titleIcon}</span>
+      <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide">{title}</h3>
+    </div>
+    <div className="p-2">
+      {metrics.map((metric, idx) => (
+        <div
+          key={idx}
+          className="group flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 group-hover:text-slate-600 transition-colors">
+              {metric.icon}
+            </span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-700">{metric.label}</span>
+                <Tooltip
+                  content={
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                          Value
+                        </h4>
+                        <p className="font-mono text-emerald-400 font-semibold">{metric.value}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                          Description
+                        </h4>
+                        <p className="text-slate-300 text-xs leading-snug">{metric.description}</p>
+                      </div>
+                      <div className="border-t border-slate-700 pt-2">
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                          Formula
+                        </h4>
+                        <p className="text-slate-400 text-xs italic">{metric.definition}</p>
+                      </div>
+                      {metric.tooltip && (
+                        <div className="border-t border-slate-700 pt-2">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                            Threshold
+                          </h4>
+                          <p className="text-slate-300 text-xs">{metric.tooltip}</p>
+                        </div>
+                      )}
+                    </div>
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-slate-300 hover:text-blue-500 cursor-help"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 16v-4" />
+                    <path d="M12 8h.01" />
+                  </svg>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <span
+              className={`text-sm font-bold ${
+                metric.status === "success"
+                  ? "text-emerald-600"
+                  : metric.status === "danger"
+                    ? "text-rose-600"
+                    : metric.status === "warning"
+                      ? "text-amber-600"
+                      : "text-slate-900"
+              }`}
+            >
+              {metric.value}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </Card>
+);
 
 interface MetricsColumnProps {
   analysisDashboard?: AnalysisDashboard;
   currencyCode: string;
   valuationMetrics: ValuationMetrics;
   financialPerformance: FinancialPerformance;
-  investorMetrics: InvestorMetrics;
   riskMetrics: RiskMetrics;
 }
+
+// --- Data Builders ---
 
 const buildProfitabilityGrowthMetrics = (
   analysisDashboard: AnalysisDashboard,
@@ -42,25 +243,23 @@ const buildProfitabilityGrowthMetrics = (
       value: formatPercentage(analysisDashboard.return_on_assets),
       tooltip: "ROA (≥15%)",
       definition: "ROA = Net Income / Total Assets",
-      description:
-        "Jak efektywnie spółka wykorzystuje aktywa (know-how, serwerownie, linie produkcyjne) do generowania zysków.",
+      description: "How efficiently assets are used to generate profit.",
       meets,
       status: statusFromMeets(meets),
-      icon: <ArrowTrendingUpIcon className="h-8 w-8" />,
+      icon: <Icons.TrendingUp />,
     };
   })(),
   (() => {
     const meets = meetsThreshold(analysisDashboard.return_on_invested_capital, 0.15);
     return {
-      label: "Return on Invested Capital (ROIC)",
+      label: "ROIC",
       value: formatPercentage(analysisDashboard.return_on_invested_capital),
       tooltip: "ROIC (≥15%)",
       definition: "ROIC = Operating Income / (Debt + Equity)",
-      description:
-        "Efektywność wykorzystania całego zainwestowanego kapitału; powyżej kosztu kapitału oznacza tworzenie wartości.",
+      description: "Efficiency of allocated capital.",
       meets,
       status: statusFromMeets(meets),
-      icon: <Cog6ToothIcon className="h-8 w-8" />,
+      icon: <Icons.Cog />,
     };
   })(),
   (() => {
@@ -70,11 +269,10 @@ const buildProfitabilityGrowthMetrics = (
       value: formatPercentage(financialPerformance.operating_margin),
       tooltip: "Operating Margin (≥20%)",
       definition: "Operating Margin = Operating Income / Revenue",
-      description:
-        "Marża operacyjna po kosztach działalności podstawowej; wysoka oznacza efektywność i/lub siłę cenową.",
+      description: "Profit after core operations costs.",
       meets,
       status: statusFromMeets(meets),
-      icon: <ChartPieIcon className="h-8 w-8" />,
+      icon: <Icons.Pie />,
     };
   })(),
   (() => {
@@ -83,128 +281,72 @@ const buildProfitabilityGrowthMetrics = (
       label: "Revenue CAGR (2Y)",
       value: formatPercentage(analysisDashboard.forecast_revenue_growth_rate),
       tooltip: "Revenue CAGR 2Y (≥5%)",
-      definition: "Compound annual revenue growth over the last 2 years.",
-      description: "Średnioroczny wzrost przychodów (CAGR) z ostatnich 2 lat.",
+      definition: "Compound annual revenue growth over last 2 years.",
+      description: "Average annual revenue growth rate.",
       meets,
       status: statusFromMeets(meets),
-      icon: <ArrowTrendingUpIcon className="h-8 w-8" />,
-    };
-  })(),
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.forecast_eps_growth_rate_long, 0.1);
-    return {
-      label: "EPS CAGR (5Y)",
-      value: formatPercentage(analysisDashboard.forecast_eps_growth_rate_long),
-      tooltip: "EPS CAGR 5Y (≥10%)",
-      definition: "Compound annual EPS growth over the last 5 years.",
-      description:
-        "Średnioroczny wzrost EPS z ostatnich 5 lat; dobrze, gdy rośnie szybciej niż przychody.",
-      meets,
-      status: statusFromMeets(meets),
-      icon: <ArrowTrendingUpIcon className="h-8 w-8" />,
+      icon: <Icons.TrendingUp />,
     };
   })(),
   {
-    label: "Operating Cash Flow (ttm)",
+    label: "Operating Cash Flow",
     value: formatCompactCurrencyValue(analysisDashboard.operating_cash_flow, currencyCode),
-    tooltip: "Operating cash flow over the trailing twelve months.",
-    definition: "CFO (ttm) = Cash generated from operations in the last 12 months.",
-    description:
-      "Gotówka generowana z podstawowej działalności firmy (ważniejsza niż zysk księgowy netto).",
-    icon: <BanknotesIcon className="h-8 w-8" />,
-  },
-  {
-    label: "Forecast Revision Direction",
-    value: analysisDashboard.forecast_revision_direction || "N/A",
-    tooltip: "Recent direction of analyst EPS estimate revisions (Up/Down).",
-    definition: "Trend of analyst estimate changes for EPS (Up/Down/Flat).",
-    description: "Trend zmian prognoz EPS od analityków (w górę/w dół); wzrost poprawia sentyment.",
-    icon: <ChartBarIcon className="h-8 w-8" />,
+    tooltip: "Operating cash flow (ttm).",
+    definition: "CFO (ttm) = Cash from operations.",
+    description: "Cash generated from core business activities.",
+    icon: <Icons.Banknote />,
+    status: "neutral",
   },
 ];
 
 const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard, currencyCode: string) => {
   const currentRatioValue = formatNumber(analysisDashboard.current_ratio, 2);
   const currentRatioMeets = meetsThreshold(analysisDashboard.current_ratio, 1);
-
   const debtToAssetsMeets = meetsThreshold(analysisDashboard.debt_to_assets, 0.4, true);
-
   const interestCoverageFormatted = formatNumber(analysisDashboard.interest_coverage, 2);
   const interestCoverageMeets = meetsThreshold(analysisDashboard.interest_coverage, 3);
-
-  const cfoDebtMeets = meetsThreshold(analysisDashboard.cfo_to_total_debt, 0.3);
-
-  const debtChange = analysisDashboard.total_debt_trend?.change ?? null;
-  const debtTrendMeets = meetsThreshold(debtChange, 0, true);
-  const debtTrendDisplay = formatCompactCurrencyValue(debtChange, currencyCode);
-  const debtDirection = analysisDashboard.total_debt_trend?.direction;
-
   const ohlsonMeets = meetsThreshold(analysisDashboard.ohlson_indicator_score, 0.02, true);
 
   return [
     {
       label: "Current Ratio",
-      value: currentRatioValue === "N/A" ? currentRatioValue : `${currentRatioValue}x`,
+      value: `${currentRatioValue}x`,
       tooltip: "Current Ratio (>1.0)",
-      description:
-        "Stosunek bieżących aktywów do bieżących pasywów (zobowiązań do spłaty w ciągu 12 miesięcy). Powyżej 1 oznacza, że firma ma z czego sfinansować swoje zobowiązania",
+      description: "Ability to pay short-term obligations.",
       definition: "Current Ratio = Current Assets / Current Liabilities",
       meets: currentRatioMeets,
       status: statusFromMeets(currentRatioMeets),
-      icon: <ShieldExclamationIcon className="h-8 w-8" />,
+      icon: <Icons.Shield />,
     },
     {
       label: "Debt to Assets",
       value: formatPercentage(analysisDashboard.debt_to_assets),
       tooltip: "Debt to Assets (<40%)",
-      description:
-        "Stosunek zadłużenia do aktywów; niższa wartość oznacza mniejsze obciążenie aktywów długiem.",
+      description: "Proportion of assets financed by debt.",
       definition: "Debt to Assets = Total Debt / Total Assets",
       meets: debtToAssetsMeets,
       status: statusFromMeets(debtToAssetsMeets),
-      icon: <ScaleIcon className="h-8 w-8" />,
+      icon: <Icons.Scale />,
     },
     {
       label: "Interest Coverage",
-      value: interestCoverageFormatted === "N/A" ? interestCoverageFormatted : `${interestCoverageFormatted}x`,
+      value: `${interestCoverageFormatted}x`,
       tooltip: "Interest Coverage (>3x)",
-      description:
-        "Pokazuje, ile razy wynik pokrywa koszty odsetek; poziom ≥3 daje zapas bezpieczeństwa.",
+      description: "Ability to pay interest on outstanding debt.",
       definition: "Interest Coverage = Operating Income / Interest Expense",
       meets: interestCoverageMeets,
       status: statusFromMeets(interestCoverageMeets),
-      icon: <ChartBarIcon className="h-8 w-8" />,
-    },
-    {
-      label: "CFO to Total Debt",
-      value: formatPercentage(analysisDashboard.cfo_to_total_debt),
-      tooltip: "CFO / Debt (>30%)",
-      description:
-        "Ile lat gotówka z działalności operacyjnej pokrywa całe zadłużenie; wyższy poziom = szybsza spłata.",
-      definition: "CFO to Total Debt = Operating Cash Flow / Total Debt",
-      meets: cfoDebtMeets,
-      status: statusFromMeets(cfoDebtMeets),
-      icon: <BanknotesIcon className="h-8 w-8" />,
-    },
-    {
-      label: "Debt Trend",
-      value: debtDirection ? `${debtDirection} ${debtTrendDisplay}` : debtTrendDisplay,
-      tooltip: "Debt Trend (prefer ≤ 0)",
-      description: "Czy poziom zadłużenia rośnie czy maleje względem poprzedniego okresu.",
-      definition: "Change in total debt compared to the previous period.",
-      meets: debtTrendMeets,
-      status: statusFromMeets(debtTrendMeets),
-      icon: <ArrowTrendingDownIcon className="h-8 w-8" />,
+      icon: <Icons.ChartBar />,
     },
     {
       label: "Ohlson Score",
       value: formatPercentage(analysisDashboard.ohlson_indicator_score),
       tooltip: "Ohlson Score (<2%)",
-      description: "Zbiorczy wskaźnik prawdopodobieństwa bankructwa; im niżej, tym bezpieczniej.",
-      definition: "Probabilistic bankruptcy risk score (Ohlson O-Score).",
+      description: "Probability of bankruptcy.",
+      definition: "Ohlson O-Score model.",
       meets: ohlsonMeets,
       status: statusFromMeets(ohlsonMeets),
-      icon: <ShieldExclamationIcon className="h-8 w-8" />,
+      icon: <Icons.Shield />,
     },
   ];
 };
@@ -212,253 +354,139 @@ const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard, currencyCode: 
 const buildValuationTimingMetrics = (
   analysisDashboard: AnalysisDashboard,
   currencyCode: string
-) => [
-  (() => {
-    const meets = meetsThreshold(analysisDashboard.upside, 0.1);
-    return {
-      label: "Upside vs Current Price",
+) => {
+  const meets = meetsThreshold(analysisDashboard.upside, 0.1);
+  return [
+    {
+      label: "Upside Potential",
       value: formatPercentage(analysisDashboard.upside),
       tooltip: "Upside (≥10%)",
-      definition: "Upside = (Target Price − Current Price) / Current Price",
-      description:
-        "Potencjalny wzrost wobec obecnego kursu na bazie wyceny/price target; wyższy = większa szansa na zysk.",
+      definition: "Upside = (Target - Current) / Current",
+      description: "Potential gain to analyst target price.",
       meets,
       status: statusFromMeets(meets),
-      icon: <ArrowTrendingUpIcon className="h-8 w-8" />,
-    };
-  })(),
-  {
-    label: "Analyst Price Target (mean)",
-    value: formatCurrency({
-      value: analysisDashboard.analyst_price_target,
-      currency: currencyCode,
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }),
-    tooltip: "Consensus analyst price target.",
-    definition: "Średnia 12-miesięczna cena docelowa od analityków.",
-    description:
-      "Średnia cena docelowa analityków; użyteczna jako punkt odniesienia do własnej wyceny.",
-    icon: <CurrencyDollarIcon className="h-8 w-8" />,
-  },
-];
+      icon: <Icons.TrendingUp />,
+    },
+    {
+      label: "Analyst Target",
+      value: formatCurrency({
+        value: analysisDashboard.analyst_price_target,
+        currency: currencyCode,
+        notation: "compact",
+      }),
+      tooltip: "Consensus Price Target.",
+      definition: "Mean analyst 12-month price target.",
+      description: "Average price target from Wall St analysts.",
+      icon: <Icons.Dollar />,
+      status: "neutral",
+    },
+  ];
+};
 
 const buildValuationMetrics = (valuationMetrics: ValuationMetrics) => [
   {
     label: "P/E Ratio",
     value: valuationMetrics.pe_ratio?.toFixed(2) || "N/A",
-    icon: <ScaleIcon className="h-8 w-8" />,
-    tooltip: "Price to Earnings ratio.",
-    definition: "P/E = Price per Share / Earnings per Share (EPS)",
-    description: "Stosunek ceny akcji do zysków; pokazuje ile płacisz za 1 USD zysku.",
+    icon: <Icons.Scale />,
+    tooltip: "Price to Earnings.",
+    definition: "P/E = Price / EPS",
+    description: "Price paid for $1 of earnings.",
     status: getMetricStatus("P/E Ratio", valuationMetrics.pe_ratio),
   },
   {
     label: "EV/EBITDA",
     value: valuationMetrics.ev_ebitda?.toFixed(2) || "N/A",
-    icon: <CurrencyDollarIcon className="h-8 w-8" />,
-    tooltip: "Enterprise Value / EBITDA.",
-    definition: "EV/EBITDA = Enterprise Value / EBITDA",
-    description:
-      "Wycena względna wobec EBITDA, neutralna na strukturę kapitału; dobra do porównań branżowych.",
+    icon: <Icons.Dollar />,
+    tooltip: "EV / EBITDA.",
+    definition: "Enterprise Value / EBITDA",
+    description: "Capital-structure neutral valuation.",
     status: getMetricStatus("EV/EBITDA", valuationMetrics.ev_ebitda),
   },
   {
-    label: "PEG Ratio",
-    value: valuationMetrics.peg_ratio?.toFixed(2) || "N/A",
-    icon: <ArrowTrendingUpIcon className="h-8 w-8" />,
-    tooltip: "P/E ratio adjusted for growth.",
-    definition: "PEG = P/E Ratio / EPS Growth Rate",
-    description: "P/E skorygowany o tempo wzrostu EPS; poziom ~1 bywa uznawany za „fair”.",
-    status: getMetricStatus("PEG Ratio", valuationMetrics.peg_ratio),
-  },
-  {
-    label: "Dividend Yield",
-    value:
-      valuationMetrics.dividend_yield !== null
-        ? formatPercentage(valuationMetrics.dividend_yield)
-        : "N/A",
-    icon: <BanknotesIcon className="h-8 w-8" />,
-    tooltip: "Dividends relative to share price.",
-    definition: "Dividend Yield = Annual Dividend per Share / Price per Share",
-    description: "Gotówka wypłacana w dywidendach w relacji do bieżącego kursu.",
+    label: "Div Yield",
+    value: valuationMetrics.dividend_yield
+      ? formatPercentage(valuationMetrics.dividend_yield)
+      : "N/A",
+    icon: <Icons.Banknote />,
+    tooltip: "Dividend Yield.",
+    definition: "Div Yield = Dividend / Price",
+    description: "Annual return from dividends.",
     status: getMetricStatus("Dividend Yield", valuationMetrics.dividend_yield),
-  },
-];
-
-const buildFinancialPerformanceMetrics = (financialPerformance: FinancialPerformance) => [
-  {
-    label: "Gross Margin",
-    value: formatPercentage(financialPerformance.gross_margin),
-    icon: <ChartPieIcon className="h-8 w-8" />,
-    tooltip: "Percentage of revenue remaining after cost of goods sold.",
-    definition: "Gross Margin = (Revenue − COGS) / Revenue",
-    description:
-      "Marża brutto po kosztach wytworzenia; odzwierciedla siłę cenową i efektywność produkcji.",
-    status: getMetricStatus("Gross Margin", financialPerformance.gross_margin),
-  },
-  {
-    label: "Operating Margin",
-    value: formatPercentage(financialPerformance.operating_margin),
-    icon: <Cog6ToothIcon className="h-8 w-8" />,
-    tooltip: "Profitability from core operations.",
-    definition: "Operating Margin = Operating Income / Revenue",
-    description: "Zysk operacyjny po kosztach działalności, przed odsetkami i podatkami.",
-    status: getMetricStatus("Operating Margin", financialPerformance.operating_margin),
-  },
-  {
-    label: "Net Margin",
-    value: formatPercentage(financialPerformance.net_margin),
-    icon: <BanknotesIcon className="h-8 w-8" />,
-    tooltip: "Net income as a percentage of revenue.",
-    definition: "Net Margin = Net Income / Revenue",
-    description: "Rentowność netto po wszystkich kosztach i podatkach.",
-    status: getMetricStatus("Net Margin", financialPerformance.net_margin),
-  },
-];
-
-const buildInvestorMetrics = (investorMetrics: InvestorMetrics) => [
-  {
-    label: "Rule of 40",
-    value: `${investorMetrics.rule_of_40.toFixed(2)}%`,
-    icon: <ScaleIcon className="h-8 w-8" />,
-    tooltip: "Growth + profitability should exceed 40%.",
-    definition: "Rule of 40 = Revenue Growth + Profit Margin (najczęściej FCF lub EBITDA).",
-    description: "Heurystyka równowagi wzrostu i rentowności; powyżej 40% uznawane za zdrowy miks.",
-    status: getMetricStatus("Rule of 40", investorMetrics.rule_of_40),
-  },
-  {
-    label: "EBITDA Margin",
-    value: formatPercentage(investorMetrics.ebitda_margin),
-    icon: <CurrencyDollarIcon className="h-8 w-8" />,
-    tooltip: "Earnings before interest & taxes.",
-    definition: "EBITDA Margin = EBITDA / Revenue",
-    description: "Rentowność operacyjna liczone na poziomie EBITDA (przed D&A).",
-    status: getMetricStatus("EBITDA Margin", investorMetrics.ebitda_margin),
-  },
-  {
-    label: "Revenue Growth",
-    value: `${investorMetrics.revenue_growth.toFixed(2)}%`,
-    icon:
-      investorMetrics.revenue_growth >= 0 ? (
-        <ArrowTrendingUpIcon className="h-8 w-8" />
-      ) : (
-        <ArrowTrendingDownIcon className="h-8 w-8" />
-      ),
-    tooltip: "YoY revenue growth.",
-    definition: "Year-over-year change in revenue.",
-    description: "Tempo wzrostu przychodu rok do roku; powinno być dodatnie.",
-    status: getMetricStatus("Revenue Growth", investorMetrics.revenue_growth / 100),
-  },
-  {
-    label: "FCF Margin",
-    value: formatPercentage(investorMetrics.fcf_margin),
-    icon: <BanknotesIcon className="h-8 w-8" />,
-    tooltip: "Free cash flow to revenue ratio.",
-    definition: "FCF Margin = Free Cash Flow / Revenue",
-    description: "Ile wolnej gotówki generuje spółka z każdej jednostki przychodu.",
-    status: getMetricStatus("FCF Margin", investorMetrics.fcf_margin),
   },
 ];
 
 const buildRiskMetrics = (riskMetrics: RiskMetrics) => [
   {
-    label: "Annual Volatility",
+    label: "Volatility (Ann)",
     value: formatPercentage(riskMetrics.annual_volatility),
-    icon: <ShieldExclamationIcon className="h-8 w-8" />,
-    tooltip: "How much the stock price moves over time.",
-    definition: "Odchylenie standardowe stóp zwrotu w skali roku.",
-    description: "Miara zmienności kursu; wyższa oznacza szersze wahania.",
+    icon: <Icons.Shield />,
+    tooltip: "Annualized Standard Deviation.",
+    definition: "Std Dev of returns * sqrt(252).",
+    description: "Measure of price variation.",
     status: getMetricStatus("Annual Volatility", riskMetrics.annual_volatility),
   },
   {
     label: "Max Drawdown",
     value: formatPercentage(riskMetrics.max_drawdown),
-    icon: <ArrowTrendingDownIcon className="h-8 w-8" />,
-    tooltip: "Largest observed price drop from a peak.",
-    definition: "Największy spadek od szczytu do dołka w danym okresie.",
-    description: "Najgłębszy spadek ceny od szczytu do dołka; im większy, tym większe ryzyko.",
+    icon: <Icons.TrendingDown />,
+    tooltip: "Max loss from peak.",
+    definition: "Peak to trough decline.",
+    description: "Deepest drop in the period.",
     status: getMetricStatus("Max Drawdown", riskMetrics.max_drawdown),
   },
   {
     label: "Beta",
-    value: riskMetrics.beta ? riskMetrics.beta.toFixed(2) : "N/A",
-    icon: <ChartBarIcon className="h-8 w-8" />,
-    tooltip: "Stock's sensitivity to market movements.",
-    definition: "Beta mierzy wrażliwość kursu na ruchy rynku (1.0 = rynek).",
-    description: "1.0 oznacza ruch zgodny z rynkiem; powyżej 1.0 to większa zmienność niż rynek.",
+    value: riskMetrics.beta?.toFixed(2) || "N/A",
+    icon: <Icons.ChartBar />,
+    tooltip: "Market sensitivity.",
+    definition: "Covariance / Variance of market.",
+    description: "Volatility relative to market (1.0).",
     status: getMetricStatus("Beta", riskMetrics.beta),
   },
 ];
 
-export const MetricsColumn = ({
+export const MetricsColumn: React.FC<MetricsColumnProps> = ({
   analysisDashboard,
   currencyCode,
   valuationMetrics,
   financialPerformance,
-  investorMetrics,
   riskMetrics,
-}: MetricsColumnProps) => {
-  const profitabilityGrowthMetrics = analysisDashboard
-    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance, currencyCode)
-    : [];
+}) => {
   const safetyMetrics = analysisDashboard
     ? buildSafetyMetrics(analysisDashboard, currencyCode)
     : [];
   const valuationTimingMetrics = analysisDashboard
     ? buildValuationTimingMetrics(analysisDashboard, currencyCode)
     : [];
-
-  const valuationMetricsList = buildValuationMetrics(valuationMetrics);
-  const financialPerformanceMetrics = buildFinancialPerformanceMetrics(financialPerformance);
-  const investorMetricsList = buildInvestorMetrics(investorMetrics);
-  const riskMetricsList = buildRiskMetrics(riskMetrics);
+  const profitabilityMetrics = analysisDashboard
+    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance, currencyCode)
+    : [];
+  const valuationList = buildValuationMetrics(valuationMetrics);
+  const riskList = buildRiskMetrics(riskMetrics);
 
   return (
-    <>
+    <div className="space-y-6">
       {analysisDashboard && (
         <>
           <MetricsCard
             title="Safety Filters"
-            titleIcon={<ShieldExclamationIcon className="h-5 w-5 text-primary" />}
+            titleIcon={<Icons.Shield />}
             metrics={safetyMetrics}
           />
           <MetricsCard
             title="Valuation & Timing"
-            titleIcon={<ScaleIcon className="h-5 w-5 text-primary" />}
+            titleIcon={<Icons.Scale />}
             metrics={valuationTimingMetrics}
           />
           <MetricsCard
             title="Profitability & Growth"
-            titleIcon={<ArrowTrendingUpIcon className="h-5 w-5 text-primary" />}
-            metrics={profitabilityGrowthMetrics}
+            titleIcon={<Icons.TrendingUp />}
+            metrics={profitabilityMetrics}
           />
         </>
       )}
-
-      <MetricsCard
-        title="Valuation Metrics"
-        titleIcon={<ScaleIcon className="h-5 w-5 text-primary" />}
-        metrics={valuationMetricsList}
-      />
-
-      <MetricsCard
-        title="Financial Performance"
-        titleIcon={<ChartPieIcon className="h-5 w-5 text-primary" />}
-        metrics={financialPerformanceMetrics}
-      />
-
-      <MetricsCard
-        title="Investor Metrics"
-        titleIcon={<CurrencyDollarIcon className="h-5 w-5 text-primary" />}
-        metrics={investorMetricsList}
-      />
-
-      <MetricsCard
-        title="Risk Metrics"
-        titleIcon={<ShieldExclamationIcon className="h-5 w-5 text-primary" />}
-        metrics={riskMetricsList}
-      />
-    </>
+      <MetricsCard title="Valuation Ratios" titleIcon={<Icons.Scale />} metrics={valuationList} />
+      <MetricsCard title="Risk Analysis" titleIcon={<Icons.Shield />} metrics={riskList} />
+    </div>
   );
 };

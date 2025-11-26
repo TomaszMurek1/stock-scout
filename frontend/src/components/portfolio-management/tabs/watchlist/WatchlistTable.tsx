@@ -27,7 +27,7 @@ export function WatchlistTable() {
       try {
         await apiClient.delete(`/watchlist/${stock.ticker}`);
         await refreshWatchlist();
-      } catch (error) {
+      } catch {
         toggleWatchlist(stock);
       }
     },

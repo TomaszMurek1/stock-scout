@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import LoadingScreen from "../shared/loading-screen";
 import ErrorScreen from "../shared/error-screen";
@@ -12,14 +12,29 @@ import TechnicalIndicatorsCard from "./technical-indicators-card";
 import TradePanel from "./trade-panel";
 import { GrowthChart } from "./growth-chart";
 import { MetricsColumn } from "./metrics-column";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompanyNotes } from "./company-notes";
 
 export const StockOnePager: FC = () => {
   const { ticker } = useParams();
   const [searchParams] = useSearchParams();
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [tradeAction, setTradeAction] = useState<"buy" | "sell">("buy");
 
   const shortWindow = Number(searchParams.get("short_window") ?? 50);
   const longWindow = Number(searchParams.get("long_window") ?? 200);
-  const { stock, isLoading, error } = useStockData(ticker, shortWindow, longWindow);
+  const { stock, isLoading, error } = useStockData(
+    ticker,
+    shortWindow,
+    longWindow
+  );
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={error} />;
@@ -38,6 +53,22 @@ export const StockOnePager: FC = () => {
   } = stock;
 
   const currencyCode = executive_summary?.currency ?? "USD";
+  const latestPrice =
+    technical_analysis.historical.length > 0
+      ? technical_analysis.historical[
+          technical_analysis.historical.length - 1
+        ].close
+      : 0;
+
+  const openBuyModal = () => {
+    setTradeAction("buy");
+    setIsTradeModalOpen(true);
+  };
+
+  const openSellModal = () => {
+    setTradeAction("sell");
+    setIsTradeModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 text-slate-900">
@@ -49,31 +80,54 @@ export const StockOnePager: FC = () => {
           technicalAnalysis={technical_analysis}
           riskMetrics={risk_metrics}
           sharesOutstanding={financial_performance?.shares_outstanding}
+          onBuyClick={openBuyModal}
+          onSellClick={openSellModal}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <CompanyOverviewCard description={company_overview?.description} />
-            <TechnicalAnalysisChartCard
-              technicalAnalysis={technical_analysis}
-              executiveSummary={executive_summary}
-              riskMetrics={risk_metrics}
-              shortWindow={shortWindow}
-              longWindow={longWindow}
-            />
-
-            {analysis_dashboard && (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div className="xl:col-span-3">
-                  <GrowthChart trends={financial_trends} currency={currencyCode} />
+            <Tabs defaultValue="overview" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="financials">Financials</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="space-y-4">
+                <div className="space-y-6">
+                  <CompanyOverviewCard
+                    description={company_overview?.description}
+                  />
+                  <TechnicalAnalysisChartCard
+                    technicalAnalysis={technical_analysis}
+                    riskMetrics={risk_metrics}
+                    shortWindow={shortWindow}
+                    longWindow={longWindow}
+                  />
                 </div>
-              </div>
-            )}
+              </TabsContent>
+              <TabsContent value="financials" className="space-y-4">
+                <div className="space-y-6">
+                  {analysis_dashboard && (
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                      <div className="xl-col-span-3">
+                        <GrowthChart
+                          trends={financial_trends}
+                          currency={currencyCode}
+                        />
+                      </div>
+                    </div>
+                  )}
 
-            <FinancialTrendsCard
-              financialTrends={financial_trends}
-              currency={executive_summary?.currency}
-            />
+                  <FinancialTrendsCard
+                    financialTrends={financial_trends}
+                    currency={executive_summary?.currency}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="notes">
+                <CompanyNotes ticker={ticker} />
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="space-y-6">
@@ -93,11 +147,29 @@ export const StockOnePager: FC = () => {
             />
 
             <TechnicalIndicatorsCard technicalAnalysis={technical_analysis} />
-            {/* TODO: Placeholder, not working yet */}
-            <TradePanel companyId={1} currentPrice={10} />
           </div>
         </div>
       </div>
+
+      <Dialog open={isTradeModalOpen} onOpenChange={setIsTradeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {tradeAction === "buy" ? "Buy" : "Sell"} {ticker}
+            </DialogTitle>
+            <DialogDescription>
+              You are about to {tradeAction} shares of{" "}
+              {executive_summary.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <TradePanel
+            companyId={company_overview.id}
+            currentPrice={latestPrice}
+            action={tradeAction}
+            onTrade={() => setIsTradeModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -5,9 +5,7 @@ import {
 } from "@/components/portfolio-management/types";
 import { apiClient } from "@/services/apiClient";
 import {
-  HoldingItem,
   Transaction,
-  CurrencyRate,
   WatchlistStock,
 } from "@/components/portfolio-management/types";
 export type Holding = { shares: number; average_cost_currency: string };

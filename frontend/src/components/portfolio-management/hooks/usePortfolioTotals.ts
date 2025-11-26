@@ -1,21 +1,18 @@
 import { useMemo } from "react";
-import { calculateInvestedPerHolding } from "../utils/calculations";
-import { ApiHolding, Portfolio, PortfolioPerformance, Transaction } from "../types";
+import { ApiHolding, Portfolio, PortfolioPerformance } from "../types";
 
 export function usePortfolioTotals({
   portfolio,
   performance,
-  transactions,
   holdings,
 }: {
   portfolio: Portfolio;
   performance: PortfolioPerformance;
-  transactions: Transaction[];
   holdings: ApiHolding[];
 }) {
   const totals = useMemo(() => {
     if (!performance) return null;
-    const { total_value, cash_available, invested_value_current, net_invested_cash } = portfolio;
+    const { total_value, invested_value_current, net_invested_cash } = portfolio;
     const totalGainLoss = performance.breakdowns?.itd.pnl.unrealized_gains_residual || 0;
     const percentageChange = net_invested_cash > 0 ? (totalGainLoss / net_invested_cash) * 100 : 0;
     const byHolding = holdings;
@@ -27,7 +24,7 @@ export function usePortfolioTotals({
       percentageChange,
       byHolding,
     };
-  }, [transactions, holdings, portfolio]);
+  }, [holdings, portfolio, performance]);
 
   return totals;
 }

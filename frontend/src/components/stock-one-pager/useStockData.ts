@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import type { StockData } from "./stock-one-pager.types";
 import { apiClient } from "@/services/apiClient";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
 export function useStockData(
   ticker: string | undefined,
   shortWindow = 50,

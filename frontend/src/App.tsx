@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./App.css";
 import SignIn from "./components/sign-in-form/sign-in";
 import { ThemeProvider, CssBaseline } from "@mui/material";
@@ -21,7 +21,7 @@ import AdminYFinanceProbe from "./components/admin/admin-yfinance-probe/AdminYFi
 import AdminFinancialRefresh from "./components/admin/admin-financial-refresh/AdminFinancialRefresh";
 import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
-import { useAuth } from "./services/AuthContext";
+import { useAuth } from "./services/Auth.hooks";
 import PortfolioManagement from "./components/portfolio-management/PortfolioManagement";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
@@ -35,7 +35,7 @@ function App() {
     try {
       login(tokenData);
       navigate("/");
-    } catch (error) {
+    } catch {
       handleError("Login failed");
     }
   };

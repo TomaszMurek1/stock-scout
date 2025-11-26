@@ -1,7 +1,6 @@
 import { FC } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, Badge } from "@/components/ui/Layout";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ChartBarIcon } from "@heroicons/react/24/outline";
 import type { StockData } from "./stock-one-pager.types";
@@ -11,14 +10,14 @@ interface TechnicalIndicatorsCardProps {
 }
 
 const TechnicalIndicatorsCard: FC<TechnicalIndicatorsCardProps> = ({ technicalAnalysis }) => (
-  <Card className="border-gray-200 shadow-sm">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+  <Card>
+    <div className="p-4 border-b border-slate-100">
+      <h3 className="font-semibold text-slate-900 flex items-center gap-2">
         <ChartBarIcon className="h-5 w-5 text-primary" />
         Technical Indicators
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="pt-4">
+      </h3>
+    </div>
+    <div className="p-4">
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="flex justify-between">
@@ -65,20 +64,20 @@ const TechnicalIndicatorsCard: FC<TechnicalIndicatorsCardProps> = ({ technicalAn
         <div className="pt-2">
           <div className="flex items-center justify-between py-2">
             <span className="text-sm text-gray-600">Golden Cross</span>
-            <Badge variant={technicalAnalysis.golden_cross ? "success" : "outline"}>
+            <Badge variant={technicalAnalysis.golden_cross ? "success" : "default"}>
               {technicalAnalysis.golden_cross ? "Yes" : "No"}
             </Badge>
           </div>
           <Separator />
           <div className="flex items-center justify-between py-2">
             <span className="text-sm text-gray-600">Death Cross</span>
-            <Badge variant={technicalAnalysis.death_cross ? "destructive" : "outline"}>
+            <Badge variant={technicalAnalysis.death_cross ? "danger" : "default"}>
               {technicalAnalysis.death_cross ? "Yes" : "No"}
             </Badge>
           </div>
         </div>
       </div>
-    </CardContent>
+    </div>
   </Card>
 );
 

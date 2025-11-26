@@ -73,7 +73,7 @@ const filterDuplicateYears = (): YearFilter => {
                     return year
                 }
                 return ""
-            } catch (e) {
+            } catch {
                 return dateStr
             }
         },
@@ -288,7 +288,6 @@ export const GroupedBar: FC<GroupedBarChartProps> = ({
     yAxisFormatter,
     xAxisFormatter = (v: any) => String(v),
     tooltipFormatter = (v: number | null) => (v !== null ? v.toFixed(1) : "--"),
-    hideXAxis = false, // Show X axis for categories
     hideYAxis = true,
     showGridY = false,
     showGridX = false,
@@ -300,8 +299,7 @@ export const GroupedBar: FC<GroupedBarChartProps> = ({
     labelA = "A", // Default labels
     labelB = "B",
     autoYAxisDomain = true,
-}) => {
-    // Calculate appropriate Y-axis domain if autoYAxisDomain is true
+}) => {    // Calculate appropriate Y-axis domain if autoYAxisDomain is true
     const calculatedDomain = autoYAxisDomain ? calculateYAxisDomain(data, [valueKeyA, valueKeyB]) : yAxisDomain
 
     return (

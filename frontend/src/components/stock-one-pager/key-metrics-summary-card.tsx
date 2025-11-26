@@ -1,7 +1,6 @@
 import { FC } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, Tooltip } from "@/components/ui/Layout";
 import { TagIcon } from "@heroicons/react/24/outline";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { StockData } from "./stock-one-pager.types";
 import { formatPercentage } from "@/utils/formatting";
 
@@ -68,63 +67,61 @@ const KeyMetricsSummaryCard: FC<KeyMetricsSummaryCardProps> = ({
   ];
 
   return (
-    <Card className="border-gray-200 shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+    <Card>
+      <div className="p-4 border-b border-slate-100">
+        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
           <TagIcon className="h-5 w-5 text-primary" />
           Key Metrics
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
+        </h3>
+      </div>
+      <div className="p-4">
         <div className="grid grid-cols-2 gap-4">
           {keyMetrics.map(({ label, value, description, definition, criterion, valueClass }) => (
-            <TooltipProvider key={label}>
-              <Tooltip delayDuration={200}>
-                <TooltipTrigger asChild>
-                  <div className="space-y-1 cursor-help">
-                    <p className="text-sm text-gray-500">{label}</p>
-                    <p className={`text-lg font-semibold ${valueClass}`}>{value}</p>
+            <Tooltip
+              key={label}
+              content={
+                <div className="space-y-3 break-words">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                      Wartość
+                    </h4>
+                    <p className="text-sm font-semibold text-gray-900 tabular-nums break-words">{value}</p>
                   </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[320px] bg-white border border-gray-200 p-4 rounded-lg shadow-xl">
-                  <div className="space-y-3 break-words">
+                  {description && (
                     <div>
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                        Wartość
+                        Co to znaczy?
                       </h4>
-                      <p className="text-sm font-semibold text-gray-900 tabular-nums break-words">{value}</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
                     </div>
-                    {description && (
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Co to znaczy?
-                        </h4>
-                        <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
-                      </div>
-                    )}
-                    {definition && (
-                      <div className="pt-2 border-t border-gray-100">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Definicja
-                        </h4>
-                        <p className="text-sm font-medium text-gray-900">{definition}</p>
-                      </div>
-                    )}
-                    {criterion && (
-                      <div className="pt-2 border-t border-gray-100">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Kryterium
-                        </h4>
-                        <p className="text-sm font-medium text-gray-900">{criterion}</p>
-                      </div>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  )}
+                  {definition && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Definicja
+                      </h4>
+                      <p className="text-sm font-medium text-gray-900">{definition}</p>
+                    </div>
+                  )}
+                  {criterion && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        Kryterium
+                      </h4>
+                      <p className="text-sm font-medium text-gray-900">{criterion}</p>
+                    </div>
+                  )}
+                </div>
+              }
+            >
+              <div className="space-y-1 cursor-help">
+                <p className="text-sm text-gray-500">{label}</p>
+                <p className={`text-lg font-semibold ${valueClass}`}>{value}</p>
+              </div>
+            </Tooltip>
           ))}
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 };

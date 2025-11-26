@@ -1,6 +1,5 @@
 
 import { apiClient } from "@/services/apiClient";
-import { StateCreator } from "zustand";
 
 
 export interface CurrencyRate {
@@ -19,7 +18,7 @@ export interface FxRatesSlice {
     getFxRatesBatch: (pairs: [string, string][]) => Promise<CurrencyRate[]>;
 
 }
-export const createFxRatesSlice = (set: any, get: any): FxRatesSlice => ({
+export const createFxRatesSlice = (set: any): FxRatesSlice => ({
     fxRates: {},
     fxRatesLastUpdated: {},
     getFxRatesBatch: async (pairs: [string, string][]) => {
