@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Database, LineChart, RefreshCw, Shield, Globe } from "lucide-react";
+import { Database, Globe, LineChart, RefreshCw, Search, Shield } from "lucide-react";
 
 const adminLinks = [
   {
@@ -27,6 +27,18 @@ const adminLinks = [
     description: "Detect real exchanges via Yahoo Finance and assign markets.",
     href: "/admin/sync-markets",
     icon: Globe,
+  },
+  {
+    title: "Inspect yfinance data",
+    description: "Preview Yahoo Finance payloads and derived metrics for a ticker.",
+    href: "/admin/yfinance-probe",
+    icon: Search,
+  },
+  {
+    title: "Refresh fundamentals",
+    description: "Trigger yfinance financial updates (annual + quarterly) across markets.",
+    href: "/admin/financial-refresh",
+    icon: RefreshCw,
   },
 ];
 

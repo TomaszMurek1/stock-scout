@@ -9,7 +9,7 @@ export interface PerformanceSlice {
     getPriceHistory: any;
 }
 
-export const createPerformanceSlice = (set: any, get: any): PerformanceSlice => ({
+export const createPerformanceSlice = (set: any): PerformanceSlice => ({
     priceHistory: {},
     getPriceHistory: async (tickers: string[], start_date: string) => {
         // Only step 3: fetch price history

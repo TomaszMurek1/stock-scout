@@ -7,7 +7,13 @@ from datetime import datetime, timezone
 from typing import List, Dict
 
 from utils.sanitize import sanitize_numpy_types
-from database.financials import CompanyFinancialHistory, CompanyFinancials
+from database.financials import (
+    CompanyEpsRevisionHistory,
+    CompanyEstimateHistory,
+    CompanyFinancialHistory,
+    CompanyFinancials,
+    CompanyRecommendationHistory,
+)
 from database.company import Company
 from database.market import Market
 from database.stock_data import CompanyMarketData
@@ -21,6 +27,10 @@ from services.fundamentals.fetch_financial_data_executor import (
 from utils.db_retry import retry_on_db_lock
 
 logger = logging.getLogger(__name__)
+
+
+def _is_missing_number(value) -> bool:
+  return value is None or (isinstance(value, (float, int)) and (pd.isna(value) or value != value))
 
 
 def get_market_by_name(db: Session, market_name: str) -> Market:
@@ -43,36 +53,42 @@ def get_companies_by_tickers(db: Session, tickers: List[str]) -> List[Company]:
 
 def get_latest_report_dates(
     db: Session, company_ids: List[int]
-) -> Dict[int, datetime]:
-    """Return {company_id: latest_report_end_date} across all markets."""
+) -> Dict[int, Dict[str, datetime]]:
+    """Return {company_id: {period_type: latest_report_end_date}} for annual and quarterly."""
     rows = (
         db.query(
             CompanyFinancialHistory.company_id,
+            CompanyFinancialHistory.period_type,
             func.max(CompanyFinancialHistory.report_end_date),
         )
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
-        .group_by(CompanyFinancialHistory.company_id)
+        .group_by(CompanyFinancialHistory.company_id, CompanyFinancialHistory.period_type)
         .all()
     )
-    return {cid: dt for cid, dt in rows}
+    data: Dict[int, Dict[str, datetime]] = {}
+    for cid, period_type, dt in rows:
+        data.setdefault(cid, {})[period_type] = dt
+    return data
 
 
 
 def should_update_financials(
-    latest_report_date: datetime | None, today: datetime.date
+    latest_annual: datetime | None,
+    latest_quarter: datetime | None,
+    today: datetime.date,
 ) -> bool:
-    """True if update needed based on (year - 15 days) rule."""
-    if not latest_report_date:
-        return True
-    date_only = (
-        latest_report_date.date()
-        if isinstance(latest_report_date, datetime)
-        else latest_report_date
-    )
-    if date_only > today:
-        return False
-    # Only update if it's at least 350 days old
-    return (today - date_only).days >= 350
+    """True if update needed based on separate thresholds for annual vs quarterly."""
+
+    def needs_refresh(dt: datetime | None, threshold_days: int) -> bool:
+        if not dt:
+            return True
+        date_only = dt.date() if isinstance(dt, datetime) else dt
+        if date_only > today:
+            return False
+        return (today - date_only).days >= threshold_days
+
+    # Annual reports: ~350 days, quarterly: ~80 days
+    return needs_refresh(latest_annual, 350) or needs_refresh(latest_quarter, 80)
 
 
 def preload_existing_financials(
@@ -97,17 +113,56 @@ def preload_existing_financials(
         .all()
     }
 
-    # History keys are unique on (company_id, report_end_date)
+    # History keys are unique on (company_id, report_end_date, period_type)
     history_keys = set(
         db.query(
             CompanyFinancialHistory.company_id,
             CompanyFinancialHistory.report_end_date,
+            CompanyFinancialHistory.period_type,
         )
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
         .all()
     )
 
-    return market_data, financials, history_keys
+    reco_keys = set(
+        db.query(
+            CompanyRecommendationHistory.company_id,
+            CompanyRecommendationHistory.action_date,
+            CompanyRecommendationHistory.firm,
+            CompanyRecommendationHistory.action,
+            CompanyRecommendationHistory.to_grade,
+        )
+        .filter(CompanyRecommendationHistory.company_id.in_(company_ids))
+        .all()
+    )
+
+    estimate_keys = set(
+        db.query(
+            CompanyEstimateHistory.company_id,
+            CompanyEstimateHistory.estimate_type,
+            CompanyEstimateHistory.period_label,
+        )
+        .filter(CompanyEstimateHistory.company_id.in_(company_ids))
+        .all()
+    )
+
+    eps_revision_keys = set(
+        db.query(
+            CompanyEpsRevisionHistory.company_id,
+            CompanyEpsRevisionHistory.period_label,
+        )
+        .filter(CompanyEpsRevisionHistory.company_id.in_(company_ids))
+        .all()
+    )
+
+    return (
+        market_data,
+        financials,
+        history_keys,
+        reco_keys,
+        estimate_keys,
+        eps_revision_keys,
+    )
 
 
 
@@ -120,6 +175,7 @@ def build_financial_history_mappings(
     fast_info,
     now,
     existing_history_keys,
+    period_type: str,
 ) -> List[dict]:
     mappings = []
     if income_stmt is None or income_stmt.empty:
@@ -136,17 +192,34 @@ def build_financial_history_mappings(
             if hasattr(col, "to_pydatetime")
             else datetime.strptime(str(col), "%Y-%m-%d")
         )
-        key = (company.company_id, end_date)
+        key = (company.company_id, end_date, period_type)
         if key in existing_history_keys:
+            continue
+
+        # Skip rows with no revenue to avoid inserting empty/quarterly-like records
+        total_revenue_val = safe_get(income_stmt, "Total Revenue", col)
+        if _is_missing_number(total_revenue_val):
             continue
 
         hist_data = {
             "company_id": company.company_id,
             "report_end_date": end_date,
+            "period_type": period_type,
             "net_income": safe_get(income_stmt, "Net Income", col),
-            "total_revenue": safe_get(income_stmt, "Total Revenue", col),
+            "total_revenue": total_revenue_val,
             "ebitda": get_first_valid_row(
                 income_stmt, ["EBITDA", "Normalized EBITDA"], col
+            ),
+            "ebit": get_first_valid_row(
+                income_stmt,
+                [
+                    "EBIT",
+                    "Ebit",
+                    "Operating Income",
+                    "Earnings Before Interest And Taxes",
+                    "Earnings Before Interest And Tax",
+                ],
+                col,
             ),
             "diluted_eps": safe_get(income_stmt, "Diluted EPS", col),
             "basic_eps": safe_get(income_stmt, "Basic EPS", col),
@@ -164,6 +237,25 @@ def build_financial_history_mappings(
             "free_cash_flow": safe_get(cf_df, "Free Cash Flow", col),
             "capital_expenditure": safe_get(cf_df, "Capital Expenditure", col),
             "total_debt": safe_get(bs_df, "Total Debt", col),
+            "total_assets": safe_get(bs_df, "Total Assets", col),
+            "total_liabilities": get_first_valid_row(
+                bs_df, ["Total Liabilities Net Minority Interest", "Total Liabilities"], col
+            ),
+            "total_equity": get_first_valid_row(
+                bs_df,
+                ["Total Stockholder Equity", "Stockholders Equity", "Total Equity Gross Minority Interest"],
+                col,
+            ),
+            "current_assets": get_first_valid_row(
+                bs_df,
+                ["Total Current Assets", "Current Assets"],
+                col,
+            ),
+            "current_liabilities": get_first_valid_row(
+                bs_df,
+                ["Total Current Liabilities", "Current Liabilities"],
+                col,
+            ),
             "cash_and_cash_equivalents": get_first_valid_row(
                 bs_df,
                 [
@@ -173,13 +265,25 @@ def build_financial_history_mappings(
                 ],
                 col,
             ),
+            "operating_cash_flow": get_first_valid_row(
+                cf_df,
+                ["Operating Cash Flow", "Cash Flow From Continuing Operating Activities"],
+                col,
+            ),
+            "working_capital": None,
             "shares_outstanding": fast_info.get("shares"),
             "last_updated": now,
         }
+        if hist_data["current_assets"] is not None and hist_data["current_liabilities"] is not None:
+            hist_data["working_capital"] = hist_data["current_assets"] - hist_data["current_liabilities"]
 
         mappings.append(hist_data)
         existing_history_keys.add(key)
         added_count += 1
+    # Fallback: if EBIT missing but EBITA and depreciation available, fill it
+    for item in mappings:
+        if item.get("ebit") is None and item.get("ebitda") is not None and item.get("depreciation_amortization") is not None:
+            item["ebit"] = item["ebitda"] - item["depreciation_amortization"]
         
     logger.info(
         f"[{company.ticker}] Prepared {added_count} new CompanyFinancialHistory row(s)."
@@ -215,7 +319,7 @@ def is_missing_or_delisted_fast_info(
 
 @retry_on_db_lock
 def fetch_and_save_financial_data_for_list_of_tickers(
-    tickers: List[str], market_name: str, db: Session
+    tickers: List[str], market_name: str, db: Session, include_quarterly: bool = True
 ) -> Dict:
     """
     For a list of tickers, fetch and upsert financials and market data using yfinance.
@@ -230,9 +334,14 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         return {"status": "error", "message": "No valid tickers found"}
 
     comp_ids = [c.company_id for c in companies]
-    market_data, financials, history_keys = preload_existing_financials(
-        db, comp_ids
-    )
+    (
+        market_data,
+        financials,
+        history_keys,
+        reco_keys,
+        estimate_keys,
+        eps_revision_keys,
+    ) = preload_existing_financials(db, comp_ids)
 
     logger.info(
         f"Initiating yf.Tickers batch fetch for {len(tickers)} tickers: {tickers}"
@@ -241,70 +350,234 @@ def fetch_and_save_financial_data_for_list_of_tickers(
 
     now = datetime.now(timezone.utc)
     history_mappings = []
+    reco_mappings = []
+    estimate_mappings = []
+    eps_revision_mappings = []
     total_mappings = 0
+    per_ticker_errors: list[dict] = []
+
     for comp in companies:
         ticker = comp.ticker
 
+        # Skip explicitly delisted companies if flagged
+        if comp.yfinance_market and "delist" in comp.yfinance_market.lower():
+            logger.info("[%s] Skipping delisted ticker (yfinance_market=%s)", ticker, comp.yfinance_market)
+            continue
+
         # yfinance interaction:
         y_t = yf_batch.tickers.get(ticker) or yf.Ticker(ticker)
+
+        def _safe_stmt(method_name: str, attr_name: str, freq: str | None = None):
+            try:
+                method = getattr(y_t, method_name, None)
+                if callable(method):
+                    return method(freq=freq) if freq else method()
+            except Exception:
+                pass
+            try:
+                return getattr(y_t, attr_name)
+            except Exception:
+                return None
+
         try:
             fast_info = getattr(y_t, "fast_info", {}) or {}
             income_stmt = getattr(y_t, "income_stmt", None)
             balance_sheet = getattr(y_t, "balance_sheet", None)
             cashflow = getattr(y_t, "cashflow", None)
             info_dict = getattr(y_t, "get_info", lambda: {})() or {}
+            q_income_stmt = (
+                _safe_stmt("get_income_stmt", "quarterly_income_stmt", freq="quarterly")
+                if include_quarterly
+                else None
+            )
+            q_balance_sheet = (
+                _safe_stmt("get_balance_sheet", "quarterly_balance_sheet", freq="quarterly")
+                if include_quarterly
+                else None
+            )
+            q_cashflow = (
+                _safe_stmt("get_cash_flow", "quarterly_cashflow", freq="quarterly")
+                if include_quarterly
+                else None
+            )
+            if include_quarterly and (q_cashflow is None or (hasattr(q_cashflow, "empty") and q_cashflow.empty)):
+                q_cashflow = _safe_stmt(
+                    "get_cash_flow", "quarterly_cash_flow", freq="quarterly"
+                )
+            earnings_estimate = getattr(y_t, "earnings_estimate", None)
+            revenue_estimate = getattr(y_t, "revenue_estimate", None)
+            upgrades_downgrades = getattr(y_t, "upgrades_downgrades", None)
+            analyst_price_targets = getattr(y_t, "analyst_price_targets", None)
+            eps_revisions = getattr(y_t, "eps_revisions", None)
 
         except Exception as e:
             logger.error(f"Failed to fetch yfinance data for {ticker}: {e}")
+            per_ticker_errors.append({"ticker": ticker, "error": str(e)})
             continue  # Skip this ticker if yfinance throws an error
 
-        # Market data upsert
-        md = market_data.get(comp.company_id) or CompanyMarketData(
-            company_id=comp.company_id
-)
-        if is_missing_or_delisted_fast_info(fast_info):
-            logger.warning(
-                f"No valid fast_info for ticker {ticker} (may be delisted or invalid)"
+        try:
+            # Market data upsert
+            md = market_data.get(comp.company_id) or CompanyMarketData(
+                company_id=comp.company_id
             )
-            md.current_price = None
-            md.last_updated = datetime.now(timezone.utc)
-            if hasattr(md, "is_delisted"):
-                md.is_delisted = True
+            if is_missing_or_delisted_fast_info(fast_info):
+                logger.warning(
+                    f"No valid fast_info for ticker {ticker} (may be delisted or invalid)"
+                )
+                md.current_price = None
+                md.last_updated = datetime.now(timezone.utc)
+                if hasattr(md, "is_delisted"):
+                    md.is_delisted = True
+                db.add(md)
+                continue
+
+            update_market_data(md, fast_info)
             db.add(md)
+
+            # Financials snapshot upsert
+            fn = financials.get(comp.company_id) or CompanyFinancials(
+                company_id=comp.company_id
+            )
+            if income_stmt is not None and not income_stmt.empty:
+                col = get_most_recent_column(income_stmt.columns)
+                bs_df = (
+                    balance_sheet
+                    if isinstance(balance_sheet, pd.DataFrame)
+                    else pd.DataFrame()
+                )
+                cf_df = cashflow if isinstance(cashflow, pd.DataFrame) else pd.DataFrame()
+                update_financial_snapshot(
+                    ticker, fn, income_stmt, cf_df, bs_df, info_dict, fast_info, col
+                )
+            db.add(fn)
+
+            # Build new financial history (no duplicates)
+            mappings = build_financial_history_mappings(
+                comp,
+                income_stmt,
+                balance_sheet,
+                cashflow,
+                fast_info,
+                now,
+                history_keys,
+                "annual",
+            )
+            total_mappings += len(mappings)
+            history_mappings.extend(mappings)
+
+            # Quarterly mappings
+            if include_quarterly:
+                q_mappings = build_financial_history_mappings(
+                    comp,
+                    q_income_stmt,
+                    q_balance_sheet,
+                    q_cashflow,
+                    fast_info,
+                    now,
+                    history_keys,
+                    "quarterly",
+                )
+                total_mappings += len(q_mappings)
+                history_mappings.extend(q_mappings)
+
+            # Recommendations
+            if isinstance(upgrades_downgrades, pd.DataFrame) and not upgrades_downgrades.empty:
+                for idx, row in upgrades_downgrades.iterrows():
+                    try:
+                        action_date = (
+                            idx.to_pydatetime()
+                            if hasattr(idx, "to_pydatetime")
+                            else datetime.strptime(str(idx), "%Y-%m-%d")
+                        )
+                    except Exception:
+                        continue
+                    key = (
+                        comp.company_id,
+                        action_date,
+                        row.get("Firm"),
+                        row.get("Action"),
+                        row.get("To Grade"),
+                    )
+                    if key in reco_keys:
+                        continue
+                    reco_keys.add(key)
+                    reco_mappings.append(
+                        {
+                            "company_id": comp.company_id,
+                            "action_date": action_date,
+                            "firm": row.get("Firm"),
+                            "action": row.get("Action"),
+                            "from_grade": row.get("From Grade"),
+                            "to_grade": row.get("To Grade"),
+                            "created_at": now,
+                        }
+                    )
+
+            def add_estimate_rows(df: pd.DataFrame | None, est_type: str):
+                if not isinstance(df, pd.DataFrame) or df.empty:
+                    return
+                for idx, row in df.iterrows():
+                    period_label = str(idx)
+                    key = (comp.company_id, est_type, period_label)
+                    if key in estimate_keys:
+                        continue
+                    estimate_keys.add(key)
+                    estimate_mappings.append(
+                        {
+                            "company_id": comp.company_id,
+                            "estimate_type": est_type,
+                            "period_label": period_label,
+                            "average": row.get("avg") or row.get("Average Estimate"),
+                            "low": row.get("low") or row.get("Low Estimate"),
+                            "high": row.get("high") or row.get("High Estimate"),
+                            "number_of_analysts": row.get("numberOfAnalysts")
+                            or row.get("No. of Analysts"),
+                            "year_ago": row.get("yearAgoEps")
+                            or row.get("Year Ago EPS")
+                            or row.get("yearAgoRevenue")
+                            or row.get("Year Ago Revenue"),
+                            "growth": row.get("growth") or row.get("Growth"),
+                            "currency": row.get("currency") or row.get("Currency"),
+                            "created_at": now,
+                        }
+                    )
+
+            add_estimate_rows(earnings_estimate, "earnings")
+            add_estimate_rows(revenue_estimate, "revenue")
+            add_estimate_rows(analyst_price_targets, "price_target")
+
+            # EPS revisions: store up/down counts per period_label
+            if isinstance(eps_revisions, pd.DataFrame) and not eps_revisions.empty:
+                idx_lookup = {str(i).strip().lower(): i for i in eps_revisions.index}
+                up_row = eps_revisions.loc[idx_lookup.get("uplast7days")] if idx_lookup.get("uplast7days") in eps_revisions.index else None
+                down_row = eps_revisions.loc[idx_lookup.get("downlast7days")] if idx_lookup.get("downlast7days") in eps_revisions.index else None
+
+                for col in eps_revisions.columns:
+                    up_val = None
+                    down_val = None
+                    if up_row is not None and col in up_row:
+                        up_val = up_row[col]
+                    if down_row is not None and col in down_row:
+                        down_val = down_row[col]
+                    key = (comp.company_id, str(col))
+                    if key in eps_revision_keys:
+                        continue
+                    eps_revision_keys.add(key)
+                    eps_revision_mappings.append(
+                        {
+                            "company_id": comp.company_id,
+                            "period_label": str(col),
+                            "revision_up": up_val,
+                            "revision_down": down_val,
+                            "created_at": now,
+                        }
+                    )
+
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Failed while processing ticker %s", ticker)
+            per_ticker_errors.append({"ticker": ticker, "error": str(exc)})
+            db.rollback()
             continue
-
-        update_market_data(md, fast_info)
-        db.add(md)
-
-        # Financials snapshot upsert
-        fn = financials.get(comp.company_id) or CompanyFinancials(
-            company_id=comp.company_id
-        )
-        if income_stmt is not None and not income_stmt.empty:
-            col = get_most_recent_column(income_stmt.columns)
-            bs_df = (
-                balance_sheet
-                if isinstance(balance_sheet, pd.DataFrame)
-                else pd.DataFrame()
-            )
-            cf_df = cashflow if isinstance(cashflow, pd.DataFrame) else pd.DataFrame()
-            update_financial_snapshot(
-                ticker, fn, income_stmt, cf_df, bs_df, info_dict, fast_info, col
-            )
-        db.add(fn)
-
-        # Build new financial history (no duplicates)
-        mappings = build_financial_history_mappings(
-            comp,
-            income_stmt,
-            balance_sheet,
-            cashflow,
-            fast_info,
-            now,
-            history_keys,
-        )
-        total_mappings += len(mappings)
-        history_mappings.extend(mappings)
         
         # Sanitize numpy types on ORM objects (snapshot + market data)
         for obj in db.new.union(db.dirty):
@@ -315,28 +588,79 @@ def fetch_and_save_financial_data_for_list_of_tickers(
 
     # Count actual inserted rows by comparing before/after count
     inserted_count = 0
+    inserted_recos = 0
+    inserted_estimates = 0
+    inserted_eps_revisions = 0
     if history_mappings:
-        # 🔑 IMPORTANT: sanitize mappings before bulk_insert_mappings
         history_mappings = sanitize_numpy_types(history_mappings)
-
-        before = db.query(CompanyFinancialHistory).count()
-        db.bulk_insert_mappings(CompanyFinancialHistory, history_mappings)
-        db.commit()
-        after = db.query(CompanyFinancialHistory).count()
-        inserted_count = after - before
-        logger.info(
-            (
-                f"Attempted to insert {total_mappings} row(s); actually inserted "
-                f"{inserted_count} to CompanyFinancialHistory for tickers: {tickers}"
+        try:
+            before = db.query(CompanyFinancialHistory).count()
+            db.bulk_insert_mappings(CompanyFinancialHistory, history_mappings)
+            db.commit()
+            after = db.query(CompanyFinancialHistory).count()
+            inserted_count = after - before
+            logger.info(
+                (
+                    f"Attempted to insert {total_mappings} row(s); actually inserted "
+                    f"{inserted_count} to CompanyFinancialHistory for tickers: {tickers}"
+                )
             )
-        )
-        return {"status": "success", "inserted_history": inserted_count}
+        except Exception as exc:  # noqa: BLE001
+            db.rollback()
+            logger.exception("Bulk insert failed for financial history: %s", exc)
 
-    logger.info(
-        f"No new CompanyFinancialHistory rows to insert for tickers:"
-        f"{tickers} (prepared: {total_mappings})"
-    )
-    return {"status": "success", "inserted_history": 0}
+    if reco_mappings:
+        reco_mappings = sanitize_numpy_types(reco_mappings)
+        try:
+            before = db.query(CompanyRecommendationHistory).count()
+            db.bulk_insert_mappings(CompanyRecommendationHistory, reco_mappings)
+            db.commit()
+            after = db.query(CompanyRecommendationHistory).count()
+            inserted_recos = after - before
+            logger.info(f"Inserted {inserted_recos} recommendation rows for {tickers}")
+        except Exception as exc:  # noqa: BLE001
+            db.rollback()
+            logger.exception("Bulk insert failed for recommendations: %s", exc)
+
+    if estimate_mappings:
+        estimate_mappings = sanitize_numpy_types(estimate_mappings)
+        try:
+            before = db.query(CompanyEstimateHistory).count()
+            db.bulk_insert_mappings(CompanyEstimateHistory, estimate_mappings)
+            db.commit()
+            after = db.query(CompanyEstimateHistory).count()
+            inserted_estimates = after - before
+            logger.info(f"Inserted {inserted_estimates} estimate rows for {tickers}")
+        except Exception as exc:  # noqa: BLE001
+            db.rollback()
+            logger.exception("Bulk insert failed for estimates: %s", exc)
+
+    if eps_revision_mappings:
+        eps_revision_mappings = sanitize_numpy_types(eps_revision_mappings)
+        try:
+            before = db.query(CompanyEpsRevisionHistory).count()
+            db.bulk_insert_mappings(CompanyEpsRevisionHistory, eps_revision_mappings)
+            db.commit()
+            after = db.query(CompanyEpsRevisionHistory).count()
+            inserted_eps_revisions = after - before
+            logger.info(f"Inserted {inserted_eps_revisions} eps revision rows for {tickers}")
+        except Exception as exc:  # noqa: BLE001
+            db.rollback()
+            logger.exception("Bulk insert failed for eps revisions: %s", exc)
+
+    if not history_mappings:
+        logger.info(
+            f"No new CompanyFinancialHistory rows to insert for tickers:"
+            f"{tickers} (prepared: {total_mappings})"
+        )
+    return {
+        "status": "success",
+        "inserted_history": inserted_count,
+        "inserted_recommendations": inserted_recos,
+        "inserted_estimates": inserted_estimates,
+        "inserted_eps_revisions": inserted_eps_revisions,
+        "errors": per_ticker_errors,
+    }
 
 
 def update_financials_for_tickers(
@@ -345,6 +669,7 @@ def update_financials_for_tickers(
     market_name: str,
     batch_size: int = 50,
     log_skips: bool = False,
+    include_quarterly: bool = True,
 ):
     """
     For each ticker, checks latest report_end_date in DB:
@@ -368,19 +693,24 @@ def update_financials_for_tickers(
 
     eligible_tickers = []
     for comp in companies:
-        last_dt = latest_reports.get(comp.company_id)
-        if should_update_financials(last_dt, today):
-            logger.info(f"[{comp.ticker}] Needs financial data update. {last_dt}")
+        last_map = latest_reports.get(comp.company_id, {})
+        last_annual = last_map.get("annual")
+        last_quarter = last_map.get("quarterly")
+        if should_update_financials(last_annual, last_quarter, today):
+            logger.info(
+                f"[{comp.ticker}] Needs financial data update. "
+                f"annual={last_annual}, quarterly={last_quarter}"
+            )
             eligible_tickers.append(comp.ticker)
         else:
             if log_skips:
-                if not last_dt:
+                if not last_annual and not last_quarter:
                     logger.info(f"[{comp.ticker}] No previous reports; will update.")
                 else:
                     logger.info(
                         (
                             f"[{comp.ticker}] Last report "
-                            f"{last_dt.date() if last_dt else None} is recent/future, "
+                            f"(annual={last_annual}, quarterly={last_quarter}) is recent/future, "
                             "skipping."
                         )
                     )
@@ -400,6 +730,7 @@ def update_financials_for_tickers(
             tickers=chunk,
             market_name=market_name,
             db=db,
+            include_quarterly=include_quarterly,
         )
         logger.info(
             f"Batch completed: {res.get('inserted_history', 0)} "

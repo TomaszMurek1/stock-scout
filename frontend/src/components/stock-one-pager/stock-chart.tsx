@@ -171,16 +171,13 @@ export default function StockChart({
   );
 
   const { maxPrice, minPrice } = useMemo(() => {
+    if (!filteredData.length) return { maxPrice: 0, minPrice: 0 };
     const prices = filteredData.map((d) => d.price);
     return {
       maxPrice: Math.max(...prices),
       minPrice: Math.min(...prices),
     };
   }, [filteredData]);
-
-  if (!filteredData.length) {
-    return <div className="text-gray-500">No data available</div>;
-  }
 
   const priceFormatter = getPriceFormatter(maxPrice);
   const { niceMin: yAxisMin, niceMax: yAxisMax, step: yAxisStep } = calculateYAxisDomain(
@@ -207,6 +204,10 @@ export default function StockChart({
       bearish: crossover?.bearish || null,
     };
   });
+
+  if (!filteredData.length) {
+    return <div className="text-gray-500">No data available</div>;
+  }
 
   return (
     <div className="w-full h-full">

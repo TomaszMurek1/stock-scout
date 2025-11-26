@@ -1,3 +1,4 @@
+import logging
 import secrets
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -7,17 +8,29 @@ from schemas.user_schemas import InvitationCreate, InvitationOut
 from database.user import Invitation
 from services.auth.auth import get_current_user
 from services.company_market_sync import sync_company_markets
+from services.fundamentals.financials_batch_update_service import (
+    update_financials_for_tickers,
+)
+from services.admin_yfinance_probe import gather_yfinance_snapshot
+from services.basket_resolver import resolve_baskets_to_companies
 
 
 class SyncCompanyMarketsRequest(BaseModel):
     force: bool = False
     limit: int | None = None
-from services.fundamentals.financials_batch_update_service import (
-    update_financials_for_tickers,
-)
+
+
+class YFinanceProbeRequest(BaseModel):
+    ticker: str
+    include_quarterly: bool = True
+
+
+class BasketRefreshRequest(BaseModel):
+    basket_ids: list[int]
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/health-check")
@@ -48,7 +61,7 @@ def create_invitation(
 
 @router.post("/run-financials-market-update")
 def run_financials_batch_update(
-    market_name: str,
+    market_name: str | None = None,
     db: Session = Depends(get_db),
     _: str = Depends(get_current_user),
 ):
@@ -58,6 +71,8 @@ def run_financials_batch_update(
 
         results = []
         markets = db.query(Market).all()
+        if market_name:
+            markets = [m for m in markets if m.name == market_name]
         for market in markets:
             tickers = [
                 c.ticker
@@ -75,6 +90,35 @@ def run_financials_batch_update(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/run-financials-baskets")
+def run_financials_for_baskets(
+    payload: BasketRefreshRequest,
+    db: Session = Depends(get_db),
+    _: str = Depends(get_current_user),
+):
+    if not payload.basket_ids:
+        raise HTTPException(status_code=400, detail="basket_ids are required")
+    market_ids, companies = resolve_baskets_to_companies(db, payload.basket_ids)
+    if not companies:
+        return {"status": "success", "results": [], "message": "No companies resolved"}
+
+    from collections import defaultdict
+
+    tickers_by_market: dict[str, list[str]] = defaultdict(list)
+    for comp in companies:
+        if comp.market and comp.market.name:
+            tickers_by_market[comp.market.name].append(comp.ticker)
+
+    if not tickers_by_market:
+        return {"status": "success", "results": [], "message": "No markets resolved"}
+
+    results = []
+    for market_name, tickers in tickers_by_market.items():
+        res = update_financials_for_tickers(db, tickers, market_name)
+        results.append({"market": market_name, "tickers": tickers, "result": res})
+    return {"status": "success", "results": results}
+
+
 @router.post("/sync-company-markets")
 def sync_companies_to_markets(
     payload: SyncCompanyMarketsRequest,
@@ -83,3 +127,19 @@ def sync_companies_to_markets(
 ):
     result = sync_company_markets(db, force=payload.force, limit=payload.limit)
     return result
+
+
+@router.post("/yfinance-probe")
+def yfinance_probe(
+    payload: YFinanceProbeRequest,
+    _: str = Depends(get_current_user),
+):
+    try:
+        return gather_yfinance_snapshot(
+            payload.ticker, include_quarterly=payload.include_quarterly
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("yfinance probe failed for %s", payload.ticker)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch yfinance data: {exc}"
+        ) from exc

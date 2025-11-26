@@ -17,7 +17,7 @@ interface Transaction {
 }
 
 export default function TransactionsHistory() {
-    const [transactions, setTransactions] = useState<Transaction[]>([
+    const [transactions] = useState<Transaction[]>([
         {
             id: "1",
             date: "2023-04-15",

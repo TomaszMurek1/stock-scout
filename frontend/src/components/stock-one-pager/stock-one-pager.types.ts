@@ -1,11 +1,11 @@
 import { Nullable } from "../types/shared.types";
 
 export interface ExecutiveSummary {
-  ticker: Nullable<string>,
-  name: Nullable<string>,
-  sector: Nullable<string>,
-  industry: Nullable<string>,
-  currency: Nullable<string>
+  ticker: Nullable<string>;
+  name: Nullable<string>;
+  sector: Nullable<string>;
+  industry: Nullable<string>;
+  currency: Nullable<string>;
 }
 
 export interface CompanyOverview {
@@ -48,28 +48,27 @@ export interface RiskMetrics {
 }
 
 interface HistoricalData {
-  date: string
-  close: number
-  sma_short?: number
-  sma_long?: number
+  date: string;
+  close: number;
+  sma_short?: number;
+  sma_long?: number;
 }
 
 export interface TechnicalAnalysis {
-  momentum_30d: number,
-  momentum_90d: number,
-  volatility_30d: number,
-  range_position_52w: number,
-  golden_cross: boolean,
-  death_cross: boolean,
+  momentum_30d: number;
+  momentum_90d: number;
+  volatility_30d: number;
+  range_position_52w: number;
+  golden_cross: boolean;
+  death_cross: boolean;
   historical: HistoricalData[];
-
 }
 interface TrendItem {
   year: number;
   value: number;
 }
 
-interface FinancialTrends {
+export interface FinancialTrends {
   revenue: TrendItem[];
   net_income: TrendItem[];
   ebitda: TrendItem[];
@@ -85,4 +84,34 @@ export interface StockData {
   risk_metrics: RiskMetrics;
   technical_analysis: TechnicalAnalysis;
   financial_trends: FinancialTrends;
+  analysis_dashboard?: AnalysisDashboard;
+}
+
+export interface DebtTrend {
+  latest?: number | null;
+  previous?: number | null;
+  change?: number | null;
+  direction?: string | null;
+}
+
+export interface AnalysisDashboard {
+  total_revenue?: Nullable<number>;
+  net_income?: Nullable<number>;
+  eps?: Nullable<number>;
+  operating_income?: Nullable<number>;
+  operating_cash_flow?: Nullable<number>;
+  forecast_revenue_growth_rate?: Nullable<number>;
+  forecast_eps_growth_rate_short?: Nullable<number>;
+  forecast_eps_growth_rate_long?: Nullable<number>;
+  forecast_revision_direction?: Nullable<string>;
+  return_on_assets?: Nullable<number>;
+  return_on_invested_capital?: Nullable<number>;
+  interest_coverage?: Nullable<number>;
+  cfo_to_total_debt?: Nullable<number>;
+  total_debt_trend?: DebtTrend | null;
+  current_ratio?: Nullable<number>;
+  debt_to_assets?: Nullable<number>;
+  ohlson_indicator_score?: Nullable<number>;
+  analyst_price_target?: Nullable<number>;
+  upside?: Nullable<number>;
 }

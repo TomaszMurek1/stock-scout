@@ -1,9 +1,7 @@
 import { Nullable } from "@/components/types/shared.types";
 
 export function formatPercentage(value: number | null | undefined): string {
-  return value !== null && value !== undefined
-    ? `${(value * 100).toFixed(2)}%`
-    : "N/A";
+  return value !== null && value !== undefined ? `${(value * 100).toFixed(2)}%` : "N/A";
 }
 
 interface FormatCurrencyOptions {
@@ -28,7 +26,7 @@ export function formatCurrency({
   }).format(value);
 }
 
-export function formatNumber(value: number | null, decimals = 2): string {
-  if (value === null) return "N/A";
+export function formatNumber(value: Nullable<number>, decimals = 2): string {
+  if (!value) return "N/A";
   return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
 }

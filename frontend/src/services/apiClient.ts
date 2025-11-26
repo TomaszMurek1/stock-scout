@@ -80,7 +80,7 @@ apiClient.interceptors.response.use(
 );
 
 
-let failedRequests: Array<() => void> = [];
+const failedRequests: Array<() => void> = [];
 let refreshAttempts = 0;
 let lastRefreshAttempt = 0;
 const MAX_REFRESH_ATTEMPTS = 2;

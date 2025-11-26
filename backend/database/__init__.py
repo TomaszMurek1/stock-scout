@@ -7,7 +7,13 @@ from .company import (
     company_stockindex_association,
 )
 from .company_note import CompanyNote
-from .financials import CompanyFinancials, CompanyFinancialHistory
+from .financials import (
+    CompanyEstimateHistory,
+    CompanyEpsRevisionHistory,
+    CompanyFinancials,
+    CompanyFinancialHistory,
+    CompanyRecommendationHistory,
+)
 from .market import Market, StockIndex
 from .portfolio import (
     Portfolio,

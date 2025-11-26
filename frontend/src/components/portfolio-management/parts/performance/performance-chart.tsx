@@ -93,7 +93,7 @@ export const Performance: React.FC = () => {
         const fullDates = getDateRange(new Date(firstDate), new Date(lastDate));
 
         // For each day, walk through transactions and build positions
-        let positions: Record<string, number> = {};
+        const positions: Record<string, number> = {};
         let txIdx = 0;
         const dailyValue: number[] = [];
         const dates: string[] = [];
@@ -152,8 +152,8 @@ export const Performance: React.FC = () => {
         }
 
         // Calculate performance % (relative to first non-zero value)
-        let startIdx = dailyValue.findIndex((v) => v > 0);
-        let initialValue = dailyValue[startIdx] || 1; // prevent div by 0
+        const startIdx = dailyValue.findIndex((v) => v > 0);
+        const initialValue = dailyValue[startIdx] || 1; // prevent div by 0
         const perfSeries = dailyValue.map((val, i) => ({
             date: dates[i],
             value: initialValue > 0 ? ((val - initialValue) / initialValue) * 100 : 0,

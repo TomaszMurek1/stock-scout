@@ -1,10 +1,5 @@
 import { FC } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/Layout";
 import {
   Tabs,
   TabsContent,
@@ -21,7 +16,7 @@ import {
 } from "@/components/ui/table";
 
 import type { StockData } from "./stock-one-pager.types";
-import { formatCurrency, formatNumber } from "@/utils/formatting";
+import { formatCurrency } from "@/utils/formatting";
 import { Nullable } from "../types/shared.types";
 
 interface FinancialTrendsCardProps {
@@ -33,13 +28,19 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
   financialTrends,
   currency,
 }) => {
+  const validRevenueYears = new Set(
+    (financialTrends.revenue || []).filter((item) => item.value != null).map((item) => item.year)
+  );
+
   const getTrendData = (
     key: "revenue" | "net_income" | "ebitda" | "free_cash_flow"
   ): { year: number; value: number }[] => {
-    return financialTrends[key].map((item) => ({
-      year: item.year,
-      value: item.value,
-    }));
+    return financialTrends[key]
+      .filter((item) => validRevenueYears.has(item.year) && item.value != null)
+      .map((item) => ({
+        year: item.year,
+        value: item.value,
+      }));
   };
 
   const renderTrendTable = (
@@ -86,13 +87,13 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
   };
 
   return (
-    <Card className="border-gray-200 shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+    <Card>
+      <div className="p-4 border-b border-slate-100">
+        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
           Financial Trends
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h3>
+      </div>
+      <div className="p-4">
         <Tabs defaultValue="revenue">
           <TabsList className="mb-4">
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
@@ -106,7 +107,7 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
           <TabsContent value="ebitda">{renderTrendTable("ebitda")}</TabsContent>
           <TabsContent value="free_cash_flow">{renderTrendTable("free_cash_flow")}</TabsContent>
         </Tabs>
-      </CardContent>
+      </div>
     </Card>
   );
 };

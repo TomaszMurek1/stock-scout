@@ -16,7 +16,7 @@ def clean_nan_dict(d: dict) -> dict:
 def build_financial_trends(db: Session, company_id: int) -> dict:
     records = (
         db.query(CompanyFinancialHistory)
-        .filter_by(company_id=company_id)
+        .filter_by(company_id=company_id, period_type="annual")
         .order_by(CompanyFinancialHistory.report_end_date.desc())
         .limit(6)
         .all()
@@ -108,7 +108,7 @@ def build_investor_metrics(
     growth_sustainability_index = safe_divide(net_income, capex)
 
     # Composite metric
-    rule_of_40 = (revenue_growth or 0) + (ebitda_margin * 100 if ebitda_margin else 0)
+    rule_of_40 = (revenue_growth or 0) + (fcf_margin * 100 if ebitda_margin else 0)
 
     # Final metrics dict
     metrics = {

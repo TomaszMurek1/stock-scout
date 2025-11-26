@@ -16,14 +16,12 @@ interface PortfolioTabsProps {
   byHolding?: ApiHolding[];
   transactions: Transaction[];
   onRemove: (ticker: string) => void;
-  onRefresh: () => void;
 }
 
 export default function PortfolioTabs({
   byHolding,
   transactions,
   onRemove,
-  onRefresh,
 }: PortfolioTabsProps) {
   const bgColor =
     "data-[state=active]:bg-gray-200 bg-gray-100 data-[state=active]:border data-[state=active]:border-gray-400";

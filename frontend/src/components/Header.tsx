@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/services/AuthContext";
+import { useAuth } from "../services/Auth.hooks";
 
 
 const Header: React.FC = () => {

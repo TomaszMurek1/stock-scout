@@ -2,14 +2,11 @@
 import { FC, useEffect, useState } from "react";
 
 import {
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   HeartIcon,
   GlobeAltIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button, Badge } from "@/components/ui/Layout";
 import type { MouseEvent } from 'react'
 import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
@@ -22,8 +19,9 @@ interface StockHeaderProps {
   executiveSummary: StockData["executive_summary"];
   companyOverview: StockData["company_overview"];
   technicalAnalysis: StockData["technical_analysis"];
-  riskMetrics: StockData["risk_metrics"];
   sharesOutstanding?: FinancialPerformance["shares_outstanding"];
+  onBuyClick?: () => void;
+  onSellClick?: () => void;
 }
 
 const StockHeader: FC<StockHeaderProps> = ({
@@ -31,8 +29,9 @@ const StockHeader: FC<StockHeaderProps> = ({
   executiveSummary,
   companyOverview,
   technicalAnalysis,
-  riskMetrics,
   sharesOutstanding,
+  onBuyClick,
+  onSellClick,
 }) => {
 
   const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
@@ -129,7 +128,6 @@ const StockHeader: FC<StockHeaderProps> = ({
               </h1>
               <Button
                 variant="ghost"
-                size="icon"
                 className={isFavorite ? "text-green-700" : "text-gray-400"}
                 onClick={handleWatchlistClick}
               >
@@ -137,13 +135,13 @@ const StockHeader: FC<StockHeaderProps> = ({
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-1">
-              <Badge variant="outline" className="font-medium text-gray-700">
+              <Badge>
                 {executiveSummary.ticker}
               </Badge>
-              <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+              <Badge variant="neutral">
                 {companyOverview.sector}
               </Badge>
-              <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+              <Badge variant="neutral">
                 {companyOverview.industry}
               </Badge>
             </div>
@@ -168,43 +166,60 @@ const StockHeader: FC<StockHeaderProps> = ({
         </div>
 
         {/* Right: price, market cap, change and range */}
-        <div className="flex flex-col items-end">
-          {/* Latest price */}
-          <div className="text-3xl md:text-4xl font-bold text-gray-900">
-            {latestPrice != null &&
-              formatCurrency({ value: latestPrice, currency: executiveSummary.currency, notation: "compact" })}
-          </div>
-
-
-
-          {/* Price change */}
-          <div className={`flex items-center gap-1 text-lg ${priceChange.value >= 0 ? "text-green-600" : "text-red-600"}`}>
-            {priceChange.value >= 0 ? (
-              <ArrowTrendingUpIcon className="h-5 w-5" />
-            ) : (
-              <ArrowTrendingDownIcon className="h-5 w-5" />
-            )}
-            <span>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-4">
+            <div className="text-3xl md:text-4xl font-bold text-gray-900">
               {latestPrice != null &&
-                formatCurrency({ value: priceChange.value, currency: executiveSummary.currency })}
-            </span>
-            <span>({priceChange.percentage.toFixed(2)}%)</span>
+                formatCurrency({
+                  value: latestPrice,
+                  currency: executiveSummary.currency,
+                })}
+            </div>
+            <Badge
+              variant={priceChange.value >= 0 ? "success" : "danger"}
+              className="flex gap-2 text-base"
+            >
+              <span>
+                {latestPrice != null &&
+                  formatCurrency({
+                    value: priceChange.value,
+                    currency: executiveSummary.currency,
+                    signDisplay: "always",
+                  })}
+              </span>
+              <span>({priceChange.percentage.toFixed(2)}%)</span>
+            </Badge>
           </div>
 
           {/* Market Cap */}
-          <div className="text-sm text-gray-600 mt-1">
+          <div className="text-sm text-gray-600 text-right">
             Market Cap:{" "}
             {marketCap != null
-              ? formatCurrency({ value: marketCap, currency: executiveSummary.currency, notation: "compact", maximumFractionDigits: 3 })
+              ? formatCurrency({
+                  value: marketCap,
+                  currency: executiveSummary.currency,
+                  notation: "compact",
+                  maximumFractionDigits: 3,
+                })
               : "N/A"}
           </div>
 
           {/* 52-week range bar */}
-          <div className="mt-3 w-full max-w-[200px]">
+          <div className="mt-1 w-full max-w-[240px]">
             <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>{formatCurrency({ value: min52Week, currency: executiveSummary.currency })}</span>
+              <span>
+                {formatCurrency({
+                  value: min52Week,
+                  currency: executiveSummary.currency,
+                })}
+              </span>
               <span>52W Range</span>
-              <span>{formatCurrency({ value: max52Week, currency: executiveSummary.currency })}</span>
+              <span>
+                {formatCurrency({
+                  value: max52Week,
+                  currency: executiveSummary.currency,
+                })}
+              </span>
             </div>
             <div className="relative h-2 w-full bg-gray-200 rounded-full overflow-hidden">
               <div
@@ -212,6 +227,24 @@ const StockHeader: FC<StockHeaderProps> = ({
                 style={{ width: `${currentInRange}%` }}
               />
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="primary"
+              className="w-24"
+              onClick={onBuyClick}
+            >
+              Buy
+            </Button>
+            <Button
+              variant="danger"
+              className="w-24"
+              onClick={onSellClick}
+            >
+              Sell
+            </Button>
           </div>
         </div>
       </div>

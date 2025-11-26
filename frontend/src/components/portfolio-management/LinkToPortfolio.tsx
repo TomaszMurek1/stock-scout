@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { Link, useLocation } from "react-router-dom"
-import { useAuth } from "@/services/AuthContext"
+import { useAuth } from "../../services/Auth.hooks"
 import { BarChart3 } from "lucide-react"
 
 export const LinkToPortfolio: React.FC = () => {

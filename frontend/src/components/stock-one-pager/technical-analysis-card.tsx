@@ -1,12 +1,5 @@
 import { FC } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, Badge } from "@/components/ui/Layout";
 import { CalendarIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 import StockChart from "./stock-chart";
 import { formatPercentage } from "@/utils/formatting";
@@ -14,7 +7,6 @@ import type { StockData } from "./stock-one-pager.types";
 
 interface TechnicalAnalysisChartCardProps {
   technicalAnalysis: StockData["technical_analysis"];
-  executiveSummary: StockData["executive_summary"];
   riskMetrics: StockData["risk_metrics"];
   shortWindow?: number;
   longWindow?: number;
@@ -22,7 +14,6 @@ interface TechnicalAnalysisChartCardProps {
 
 const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
   technicalAnalysis,
-  executiveSummary,
   riskMetrics,
   shortWindow = 50,
   longWindow = 200,
@@ -35,29 +26,27 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
   }))
 
   return (
-    <Card className="border-gray-200 shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
-            <ChartBarIcon className="h-5 w-5 text-primary" />
-            Price Chart
-          </CardTitle>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700">
-              {`SMA ${shortWindow}`}
-            </Badge>
-            <Badge variant="outline" className="bg-purple-50 text-purple-700">
-              {`SMA ${longWindow}`}
-            </Badge>
-          </div>
+    <Card>
+      <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+          <ChartBarIcon className="h-5 w-5 text-primary" />
+          Price Chart
+        </h3>
+        <div className="flex gap-2">
+          <Badge variant="neutral">
+            {`SMA ${shortWindow}`}
+          </Badge>
+          <Badge variant="neutral">
+            {`SMA ${longWindow}`}
+          </Badge>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-4">
         <div className="h-[400px]">
           <StockChart historicalData={chartData} shortWindow={shortWindow} longWindow={longWindow} />
         </div>
-      </CardContent>
-      <CardFooter className="flex justify-between text-sm text-gray-500 border-t pt-4">
+      </div>
+      <div className="p-4 border-t border-slate-100 flex justify-between text-sm text-gray-500">
         <div className="flex items-center gap-1">
           <CalendarIcon className="h-4 w-4" />
           <span>1 Year Historical Data</span>
@@ -72,7 +61,7 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
             <span>{formatPercentage(riskMetrics.max_drawdown)}</span>
           </div>
         </div>
-      </CardFooter>
+      </div>
     </Card>
   );
 };

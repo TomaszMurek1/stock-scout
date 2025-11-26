@@ -1,7 +1,5 @@
 import {
-  CurrencyRates,
   HistoricalRate,
-  IByHolding,
   InvestedPerHolding,
   PriceHistoryEntry,
   Transaction,
