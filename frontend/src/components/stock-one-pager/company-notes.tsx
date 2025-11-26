@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Card, Button, Input, Textarea } from "@/components/ui/Layout";
 import { CompanyNote, Sentiment, ResearchStatus } from "@/types";
-// import { generateThesis } from "../services/geminiService";
+import { apiClient } from "@/services/apiClient";
+import { toast } from "react-toastify";
 
 interface Props {
   ticker: string;
@@ -70,9 +71,53 @@ const statusConfig: Record<ResearchStatus, string> = {
 // --- Main Component ---
 export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
   const [notes, setNotes] = useState<CompanyNote[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [activeNote, setActiveNote] = useState<CompanyNote | null>(null);
+
+  const fetchNotes = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.get(`/company-notes/${ticker}`);
+      const data = response.data;
+      
+      if (Array.isArray(data)) {
+        const mappedNotes: CompanyNote[] = data.map((item: any) => ({
+          id: item.id,
+          title: item.title || "",
+          researchStatus: (item.research_status as ResearchStatus) || "inbox",
+          thesis: item.thesis || "",
+          riskFactors: item.risk_factors || "",
+          nextCatalyst: item.next_catalyst || "",
+          targetPriceLow: item.target_price_low?.toString() || "",
+          targetPriceHigh: item.target_price_high?.toString() || "",
+          tags: item.tags || [],
+          lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : "",
+          sentiment: (item.sentiment as Sentiment) || "neutral",
+        }));
+        setNotes(mappedNotes);
+      } else {
+        // Fallback for single object response if API hasn't updated in some environment
+        setNotes([]);
+      }
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        setNotes([]);
+      } else {
+        console.error("Failed to fetch notes:", error);
+        toast.error("Failed to load research notes.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (ticker) {
+      fetchNotes();
+    }
+  }, [ticker]);
 
   const handleEdit = (note: CompanyNote) => {
     setActiveNote(note);
@@ -81,29 +126,91 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
 
   const handleCreate = () => {
     const newNote: CompanyNote = {
-      id: Date.now(),
+      id: 0, // Will be set by backend
       title: "",
       researchStatus: "inbox",
       thesis: "",
       riskFactors: "",
       lastUpdated: new Date().toISOString(),
       sentiment: "neutral",
+      targetPriceLow: "",
+      targetPriceHigh: "",
+      nextCatalyst: "",
+      tags: [],
     };
     setActiveNote(newNote);
     setIsSheetOpen(true);
   };
 
-  const handleSave = (note: CompanyNote) => {
-    setNotes((prev) => {
-      const exists = prev.find((n) => n.id === note.id);
-      if (exists) {
-        return prev.map((n) =>
-          n.id === note.id ? { ...note, lastUpdated: new Date().toISOString().slice(0, 10) } : n
-        );
+  const handleSave = async (noteData: CompanyNote) => {
+    try {
+      const payload = {
+        title: noteData.title,
+        research_status: noteData.researchStatus,
+        sentiment: noteData.sentiment,
+        thesis: noteData.thesis,
+        risk_factors: noteData.riskFactors,
+        target_price_low: noteData.targetPriceLow
+          ? parseFloat(noteData.targetPriceLow)
+          : null,
+        target_price_high: noteData.targetPriceHigh
+          ? parseFloat(noteData.targetPriceHigh)
+          : null,
+        next_catalyst: noteData.nextCatalyst,
+        tags: noteData.tags,
+      };
+
+      let savedNoteData;
+      if (noteData.id && noteData.id !== 0) {
+        // Update existing
+        const response = await apiClient.put(`/company-notes/note/${noteData.id}`, payload);
+        savedNoteData = response.data;
+      } else {
+        // Create new
+        const response = await apiClient.post(`/company-notes/${ticker}`, payload);
+        savedNoteData = response.data;
       }
-      return [note, ...prev];
-    });
-    setIsSheetOpen(false);
+
+      const savedNote: CompanyNote = {
+        id: savedNoteData.id,
+        title: savedNoteData.title || "",
+        researchStatus: (savedNoteData.research_status as ResearchStatus) || "inbox",
+        thesis: savedNoteData.thesis || "",
+        riskFactors: savedNoteData.risk_factors || "",
+        nextCatalyst: savedNoteData.next_catalyst || "",
+        targetPriceLow: savedNoteData.target_price_low?.toString() || "",
+        targetPriceHigh: savedNoteData.target_price_high?.toString() || "",
+        tags: savedNoteData.tags || [],
+        lastUpdated: savedNoteData.updated_at ? new Date(savedNoteData.updated_at).toLocaleDateString() : "",
+        sentiment: (savedNoteData.sentiment as Sentiment) || "neutral",
+      };
+
+      if (noteData.id && noteData.id !== 0) {
+        setNotes((prev) => prev.map((n) => (n.id === savedNote.id ? savedNote : n)));
+      } else {
+        setNotes((prev) => [savedNote, ...prev]);
+      }
+
+      setIsSheetOpen(false);
+      toast.success("Research note saved successfully.");
+    } catch (error) {
+      console.error("Failed to save note:", error);
+      toast.error("Failed to save research note.");
+    }
+  };
+
+  const handleDelete = async (noteId: number) => {
+    if (!confirm("Are you sure you want to delete this note?")) return;
+
+    try {
+      await apiClient.delete(`/company-notes/note/${noteId}`);
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      setIsSheetOpen(false);
+      toast.success("Note deleted.");
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+      toast.error("Failed to delete note.");
+    }
   };
 
   return (
@@ -137,7 +244,9 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
-          {notes.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-10 text-slate-400">Loading notes...</div>
+          ) : notes.length === 0 ? (
             <div className="text-center py-10 text-slate-400">
               <p>No notes yet. Start your research.</p>
             </div>
@@ -158,7 +267,9 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
                     </span>
                   </div>
                   <div
-                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${sentimentConfig[note.sentiment].bg} ${sentimentConfig[note.sentiment].color}`}
+                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${ 
+                      sentimentConfig[note.sentiment].bg
+                    } ${sentimentConfig[note.sentiment].color}`}
                   >
                     {sentimentConfig[note.sentiment].icon}
                     <span className="capitalize font-medium">{note.sentiment}</span>
@@ -192,6 +303,7 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
         onClose={() => setIsSheetOpen(false)}
         initialData={activeNote}
         onSave={handleSave}
+        onDelete={handleDelete}
         ticker={ticker}
       />
     </>
@@ -199,7 +311,7 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
 };
 
 // --- Editor Sheet Sub-Component ---
-const NoteEditorSheet = ({ isOpen, onClose, initialData, onSave, ticker }: any) => {
+const NoteEditorSheet = ({ isOpen, onClose, initialData, onSave, onDelete, ticker }: any) => {
   const [formData, setFormData] = useState<CompanyNote>(initialData || {});
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -237,6 +349,11 @@ const NoteEditorSheet = ({ isOpen, onClose, initialData, onSave, ticker }: any) 
             <p className="text-xs text-slate-500">Editing note for {ticker}</p>
           </div>
           <div className="flex gap-2">
+            {formData.id && formData.id !== 0 && (
+              <Button variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50" onClick={() => onDelete(formData.id)}>
+                Delete
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
