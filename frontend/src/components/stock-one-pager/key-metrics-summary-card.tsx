@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, Badge, Tooltip } from "@/components/ui/Layout";
+import { MetricTooltipContent } from "./metric-tooltip-content";
 import type { StockData } from "./stock-one-pager.types";
 import { formatPercentage } from "@/utils/formatting";
 
@@ -39,32 +40,13 @@ const MetricItem = ({ config }: { config: MetricConfig }) => {
   return (
     <Tooltip
       content={
-        <div className="space-y-3 text-left">
-          <div>
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-              Value
-            </h4>
-            <p className="font-mono text-emerald-400 font-semibold">{value}</p>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-              What it means
-            </h4>
-            <p className="text-slate-300 leading-snug">{description}</p>
-          </div>
-          <div className="border-t border-slate-700 pt-2">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-              Definition
-            </h4>
-            <p className="text-slate-400 italic">{definition}</p>
-          </div>
-          <div className="border-t border-slate-700 pt-2">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-              Criterion
-            </h4>
-            <p className="text-slate-300">{criterion}</p>
-          </div>
-        </div>
+        <MetricTooltipContent
+          value={value}
+          description={description}
+          definition={definition}
+          criterion={criterion}
+          labels={{ description: "What it means" }}
+        />
       }
     >
       <div className="group p-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-help">

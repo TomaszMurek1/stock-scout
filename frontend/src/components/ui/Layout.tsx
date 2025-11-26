@@ -121,9 +121,9 @@ export const Tooltip = ({
     >
       {children}
       {isVisible && (
-        <div className="absolute z-50 w-72 p-4 text-sm bg-slate-900 text-slate-50 rounded-lg shadow-xl -right-2 top-8 animate-in fade-in zoom-in-95 duration-200 border border-slate-700">
+        <div className="absolute z-50 w-72 p-4 text-sm bg-white text-slate-700 rounded-lg shadow-xl -right-2 top-8 animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
           {/* Triangle pointer */}
-          <div className="absolute -top-1.5 right-6 w-3 h-3 bg-slate-900 rotate-45 border-l border-t border-slate-700"></div>
+          <div className="absolute -top-1.5 right-6 w-3 h-3 bg-white rotate-45 border-l border-t border-slate-200"></div>
           <div className="relative z-10">{content}</div>
         </div>
       )}
