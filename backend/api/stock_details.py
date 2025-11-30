@@ -1,19 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from database.base import get_db
-from datetime import datetime, timedelta, timezone
 import logging
+import os
+from datetime import datetime, timedelta, timezone
+
+import requests
+import yfinance as yf
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from database.base import get_db
 from database.company import Company, CompanyOverview
-from database.market import Market
 from database.financials import (
     CompanyEstimateHistory,
     CompanyEpsRevisionHistory,
     CompanyFinancialHistory,
     CompanyFinancials,
 )
+from database.market import Market
 from database.stock_data import StockPriceHistory
-import requests
-import os
+from services.company_market_sync import (
+    YAHOO_TO_EXCHANGE,
+    _detect_yahoo_exchange,
+    _lookup_market,
+)
 from utils.cleaning import clean_nan_values
 from utils.comparables import build_peer_comparisons
 from utils.financial_utils import calculate_financial_ratios
@@ -82,6 +91,83 @@ def _empty_overview(ticker: str) -> dict:
     }
 
 
+def _create_company_from_yfinance(ticker: str, db: Session) -> Company:
+    """Create a Company record using yfinance metadata."""
+    try:
+        stock_info = getattr(yf.Ticker(ticker), "info", {}) or {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to fetch yfinance info for %s: %s", ticker, exc)
+        stock_info = {}
+
+    company = Company(
+        name=stock_info.get("longName") or stock_info.get("shortName") or ticker,
+        ticker=ticker,
+        sector=stock_info.get("sector"),
+        industry=stock_info.get("industry"),
+    )
+    db.add(company)
+    try:
+        db.commit()
+    except IntegrityError as exc:  # noqa: BLE001
+        db.rollback()
+        existing = db.query(Company).filter(Company.ticker == ticker).first()
+        if existing:
+            return existing
+        logger.error("Integrity error creating company %s: %s", ticker, exc)
+        raise HTTPException(
+            status_code=500, detail="Unable to create company record."
+        ) from exc
+
+    db.refresh(company)
+    logger.info("Created company %s from yfinance metadata", ticker)
+    return company
+
+
+def _assign_market_from_yfinance(company: Company, db: Session) -> Market | None:
+    """Assign market to company using the same logic as sync-company-markets."""
+    try:
+        exchange = _detect_yahoo_exchange(company.ticker)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Market detection failed for %s: %s", company.ticker, exc)
+        return company.market
+
+    if not exchange:
+        logger.warning("No exchange data for %s from yfinance", company.ticker)
+        return company.market
+
+    if exchange == "DELISTED":
+        if company.yfinance_market != "DELISTED":
+            company.yfinance_market = "DELISTED"
+            db.commit()
+        logger.warning("Ticker %s appears delisted", company.ticker)
+        return company.market
+
+    mapped_code = YAHOO_TO_EXCHANGE.get(exchange, exchange)
+    market = _lookup_market(db, mapped_code)
+    updated = False
+
+    if company.yfinance_market != mapped_code:
+        company.yfinance_market = mapped_code
+        updated = True
+
+    if market and company.market_id != market.market_id:
+        company.market = market
+        updated = True
+
+    if updated:
+        db.commit()
+        db.refresh(company)
+        logger.info("Assigned market %s to %s", mapped_code, company.ticker)
+
+    if not market:
+        logger.warning(
+            "Mapped exchange %s for %s but no matching market row found",
+            mapped_code,
+            company.ticker,
+        )
+    return company.market
+
+
 def get_or_fetch_stock_price_history(
     ticker: str, market_name: str, company_id: int, cutoff_date: datetime, db: Session
 ):
@@ -111,16 +197,18 @@ def get_or_fetch_stock_price_history(
 
 def get_company_by_ticker(ticker: str, db: Session) -> Company:
     company = db.query(Company).filter(Company.ticker == ticker).first()
-    if not company:
-        logger.error(f"Company not found for ticker {ticker}")
-        raise HTTPException(
-            status_code=404, detail="Company not found for this ticker."
-        )
-    return company
+    if company:
+        return company
+
+    logger.info("Company not found for %s. Creating entry.", ticker)
+    return _create_company_from_yfinance(ticker, db)
 
 
 def get_company_market(company: Company, db: Session) -> Market | None:
-    return company.market
+    if company.market:
+        return company.market
+
+    return _assign_market_from_yfinance(company, db)
 
 
 def get_company_financials(company: Company, db: Session) -> dict:
@@ -271,14 +359,32 @@ def get_stock_details(
     db: Session = Depends(get_db),
 ):
     company = get_company_by_ticker(ticker, db)
+
+    if company.yfinance_market == "DELISTED":
+        overview = company.overview
+        overview_payload = {
+            "description": overview.description if overview else "Company marked as delisted.",
+            "website": overview.website if overview else "",
+            "sector": overview.sector if overview else company.sector,
+            "industry": overview.industry if overview else company.industry,
+            "country": overview.headquarters_country if overview else "",
+        }
+        response = {
+            "delisted": True,
+            "message": "This ticker is marked as delisted.",
+            "executive_summary": build_executive_summary(company, company.market),
+            "company_overview": overview_payload,
+        }
+        return sanitize_numpy_types(response)
+
     market = get_company_market(company, db)
     if not market:
-        logger.warning(f"Market not found for ticker {ticker}")
+        logger.warning("Market not found for ticker %s after auto-detection", ticker)
         raise HTTPException(
             status_code=404,
             detail=(
                 "Market not found for this company. "
-                "The ticker may be delisted or market data unavailable."
+                "Could not resolve exchange automatically; please set a market first."
             ),
         )
 
@@ -299,13 +405,20 @@ def get_stock_details(
             db.refresh(existing)
             overview = existing
         else:
-            new_overview = CompanyOverview(
-                company_id=company.company_id, **overview_data
-            )
-            db.add(new_overview)
-            db.commit()
-            db.refresh(new_overview)
-            overview = new_overview
+            try:
+                new_overview = CompanyOverview(
+                    company_id=company.company_id, **overview_data
+                )
+                db.add(new_overview)
+                db.commit()
+                db.refresh(new_overview)
+                overview = new_overview
+            except IntegrityError as exc:  # noqa: BLE001
+                db.rollback()
+                logger.warning(
+                    "CompanyOverview insert race for %s: %s", company.ticker, exc
+                )
+                overview = db.query(CompanyOverview).get(company.company_id)
 
     executive_summary = build_executive_summary(company, market)
     financial_performance = get_company_financials(company, db)

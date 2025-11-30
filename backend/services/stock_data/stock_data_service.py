@@ -10,6 +10,8 @@ from datetime import date
 from services.company.company_service import get_or_create_company
 from services.market.market_service import get_or_create_market
 from utils.db_retry import retry_on_db_lock
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -162,7 +164,7 @@ def process_updates(
     forced_overwrite_dates: Set[date],
 ):
     """Insert or update records in StockPriceHistory."""
-    new_records = 0
+    rows: list[dict] = []
     for date_str, row in stock_data.iterrows():
         date_obj = date_str.date()
         if date_obj not in dates_to_update:
@@ -189,21 +191,36 @@ def process_updates(
             if exists:
                 continue
 
-        db.add(
-            StockPriceHistory(
-                company_id=company.company_id,
-                market_id=market.market_id,
-                date=date_obj,
-                open=round(float(row["Open"]), 2),
-                high=round(float(row["High"]), 2),
-                low=round(float(row["Low"]), 2),
-                close=round(float(row["Close"]), 2),
-                adjusted_close=round(float(row.get("Adj Close", row["Close"])), 2),
-                volume=int(row["Volume"]),
-                created_at=datetime.now(timezone.utc),
-            )
+        rows.append(
+            {
+                "company_id": company.company_id,
+                "market_id": market.market_id,
+                "date": date_obj,
+                "open": round(float(row["Open"]), 2),
+                "high": round(float(row["High"]), 2),
+                "low": round(float(row["Low"]), 2),
+                "close": round(float(row["Close"]), 2),
+                "adjusted_close": round(float(row.get("Adj Close", row["Close"])), 2),
+                "volume": int(row["Volume"]),
+                "created_at": datetime.now(timezone.utc),
+            }
         )
-        new_records += 1
 
-    db.commit()
-    logger.info(f"Processed_ {new_records} records")
+    if not rows:
+        logger.info("Processed_ 0 records")
+        return
+
+    stmt = (
+        insert(StockPriceHistory)
+        .values(rows)
+        .on_conflict_do_nothing(
+            index_elements=[StockPriceHistory.company_id, StockPriceHistory.market_id, StockPriceHistory.date]
+        )
+    )
+    try:
+        db.execute(stmt)
+        db.commit()
+        logger.info(f"Processed_ {len(rows)} records")
+    except IntegrityError as exc:  # noqa: BLE001
+        db.rollback()
+        logger.warning("Duplicate price rows skipped for %s: %s", company.ticker, exc)

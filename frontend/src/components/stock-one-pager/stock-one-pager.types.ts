@@ -76,6 +76,8 @@ export interface FinancialTrends {
 }
 
 export interface StockData {
+  delisted?: boolean;
+  message?: string;
   executive_summary: ExecutiveSummary;
   company_overview: CompanyOverview;
   financial_performance: FinancialPerformance;

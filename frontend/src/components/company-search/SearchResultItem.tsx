@@ -9,14 +9,12 @@ export function SearchResultItem({
   company: Company;
   onSelect: (c: Company) => void;
 }) {
-  console.log("company", company);
   const primaryMarket = company.market?.name || "";
   const MarketIcon = getMarketIcon(primaryMarket);
   const colorClass = getMarketColor(primaryMarket);
 
   return (
     <div
-      key={company.company_id}
       className="px-4 py-3 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm group"
       onClick={() => onSelect(company)}
     >
@@ -32,8 +30,19 @@ export function SearchResultItem({
               <span className="font-bold text-gray-900">{company.ticker}</span>
               <span className="text-gray-400">•</span>
               <span className="text-gray-700 truncate">{company.name}</span>
-              <span className="text-gray-400">•</span>
-              <span className="text-xs text-gray-500 flex-shrink-0">{company.market?.name}</span>
+              {primaryMarket && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-xs text-gray-500 flex-shrink-0">
+                    {primaryMarket}
+                  </span>
+                </>
+              )}
+              {company.source === "external" && (
+                <span className="ml-2 text-[10px] uppercase tracking-wide text-indigo-600 font-semibold">
+                  Search more
+                </span>
+              )}
             </div>
           </div>
         </div>

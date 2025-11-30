@@ -39,6 +39,20 @@ export const StockOnePager: FC = () => {
   if (isLoading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={error} />;
   if (!stock) return null;
+  if (stock.delisted) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <div className="bg-white rounded-lg shadow-lg max-w-xl w-full p-8 text-center space-y-3">
+          <p className="text-2xl font-semibold text-gray-900">
+            {ticker} is delisted
+          </p>
+          <p className="text-gray-600">
+            {stock.message || "This ticker is marked as delisted. No market data is available."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const {
     executive_summary,

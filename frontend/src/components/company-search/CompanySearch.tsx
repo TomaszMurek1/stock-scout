@@ -12,7 +12,6 @@ import {
 import { SearchInput } from "./SearchInput"
 import { SearchResultsDropdown } from "./SearchResultsDropdown"
 import { Company } from "./types"
-import { NoResultsDropdown } from "./NoResultDropdown"
 import { cn } from "@/lib/utils"
 
 interface CompanySearchProps {
@@ -36,23 +35,26 @@ export function CompanySearch({
     const [results, setResults] = useState<Company[]>([])
     const [selected, setSelected] = useState<Company | null>(null)
     const [loading, setLoading] = useState(false)
+    const [externalLoading, setExternalLoading] = useState(false)
+    const [externalSearched, setExternalSearched] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const navigate = useNavigate()
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
 
-    const fetchCompanies = useCallback(async (value: string) => {
-        setLoading(true)
+    const fetchCompanies = useCallback(async (value: string, includeExternal = false) => {
+        includeExternal ? setExternalLoading(true) : setLoading(true)
         try {
             const response = await apiClient.get<Company[]>("/companies", {
-                params: { search: value },
+                params: { search: value, include_external: includeExternal },
             })
             setResults(response.data)
             setIsOpen(true)
+            setExternalSearched(includeExternal)
         } catch {
             setResults([])
             setIsOpen(false)
         }
-        setLoading(false)
+        includeExternal ? setExternalLoading(false) : setLoading(false)
     }, [])
 
     // Debounced input handler
@@ -65,6 +67,7 @@ export function CompanySearch({
         if (!value) {
             setResults([])
             setIsOpen(false)
+            setExternalSearched(false)
             return
         }
         debounceTimeout.current = setTimeout(() => {
@@ -125,13 +128,24 @@ export function CompanySearch({
                             />
 
                             {/* Search Results Dropdown */}
-                            {!selected && isOpen && results.length > 0 && (
-                                <SearchResultsDropdown results={results} onSelect={handleCompanySelect} />
-                            )}
-
-                            {/* No Results */}
-                            {!loading && search && !selected && isOpen && results.length === 0 && (
-                                <NoResultsDropdown search={search} />
+                            {!selected && isOpen && Boolean(search) && (
+                                <SearchResultsDropdown
+                                    results={results}
+                                    onSelect={handleCompanySelect}
+                                    showSearchMore={
+                                        !selected &&
+                                        isOpen &&
+                                        !externalSearched &&
+                                        Boolean(search)
+                                    }
+                                    loadingMore={externalLoading}
+                                    onSearchMore={() => fetchCompanies(search, true)}
+                                    emptyMessage={
+                                        !loading && results.length === 0
+                                            ? `No companies found for "${search}"`
+                                            : undefined
+                                    }
+                                />
                             )}
                         </div>
                     </div>

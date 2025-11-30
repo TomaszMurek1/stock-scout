@@ -2,6 +2,7 @@ import logging
 import pandas as pd
 import yfinance as yf
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from typing import List, Dict
@@ -605,6 +606,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                     f"{inserted_count} to CompanyFinancialHistory for tickers: {tickers}"
                 )
             )
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Duplicate financial history rows skipped for %s: %s", tickers, exc
+            )
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for financial history: %s", exc)
@@ -618,6 +624,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             after = db.query(CompanyRecommendationHistory).count()
             inserted_recos = after - before
             logger.info(f"Inserted {inserted_recos} recommendation rows for {tickers}")
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Duplicate recommendation rows skipped for %s: %s", tickers, exc
+            )
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for recommendations: %s", exc)
@@ -631,6 +642,9 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             after = db.query(CompanyEstimateHistory).count()
             inserted_estimates = after - before
             logger.info(f"Inserted {inserted_estimates} estimate rows for {tickers}")
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning("Duplicate estimates skipped for %s: %s", tickers, exc)
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for estimates: %s", exc)
@@ -644,6 +658,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             after = db.query(CompanyEpsRevisionHistory).count()
             inserted_eps_revisions = after - before
             logger.info(f"Inserted {inserted_eps_revisions} eps revision rows for {tickers}")
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Duplicate eps revision rows skipped for %s: %s", tickers, exc
+            )
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for eps revisions: %s", exc)
