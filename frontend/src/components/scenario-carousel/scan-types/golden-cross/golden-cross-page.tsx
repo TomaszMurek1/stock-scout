@@ -12,6 +12,7 @@ import {
   GoldenCrossFormValues,
 } from "./golden-cross-page.helpers";
 import { apiClient } from "@/services/apiClient";
+import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 
 interface BasketOption {
   id: number;
@@ -47,7 +48,7 @@ export default function GoldenCrossScanPage() {
     fetchBaskets();
   }, []);
 
-  const formFields = useMemo(() => {
+  const formFields: IFormGeneratorField<GoldenCrossFormValues>[] = useMemo(() => {
     return [
       ...baseGoldenCrossFields,
       {

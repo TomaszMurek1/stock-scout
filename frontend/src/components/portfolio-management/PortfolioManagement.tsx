@@ -18,7 +18,6 @@ export default function PortfolioManagement() {
 
   const totals = usePortfolioTotals({
     performance,
-    transactions,
     holdings,
     portfolio,
   });
@@ -68,7 +67,6 @@ export default function PortfolioManagement() {
           <>
             <Summary
               invested_value_current={totals.invested_value_current}
-              totalValue={totals.totalValue}
               totalInvested={totals.totalInvested}
               totalGainLoss={totals.totalGainLoss}
               percentageChange={totals.percentageChange}
@@ -76,7 +74,6 @@ export default function PortfolioManagement() {
             />
             <PortfolioTabs
               onRemove={sell}
-              onRefresh={refreshPortfolio}
               byHolding={totals.byHolding}
               transactions={transactions}
             />

@@ -11,12 +11,12 @@ export type AppState = PerformanceSlice & PortfolioSlice & WatchlistSlice & FxRa
 
 export const useAppStore = create<AppState>()(
     devtools(
-        (set, get) => ({
-            ...createPortfolioPerformanceSlice(set, get),
+        (set, get, api) => ({
+            ...createPortfolioPerformanceSlice(set),
             ...createPortfolioSlice(set, get),
             ...createWatchlistSlice(set, get),
-            ...createFxRatesSlice(set, get),
-            ...createAnalyticsSlice(set, get),
+            ...createFxRatesSlice(set),
+            ...createAnalyticsSlice(set, get, api),
         }),
         { name: "AppStore" }
     )

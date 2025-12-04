@@ -9,6 +9,7 @@ import { BreakEvenPointOutput } from "../break-even-point-output/break-even-poin
 import { IBreakEvenPointData } from "../break-even-point-output/break-even-point-output.types";
 import { apiClient } from "@/services/apiClient";
 import { useAppStore } from "@/store/appStore";
+import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 
 export default function BreakEvenPointScanForm() {
   const [results, setResults] = useState<IBreakEvenPointData[]>([]);
@@ -37,7 +38,7 @@ export default function BreakEvenPointScanForm() {
     loadBaskets();
   }, []);
 
-  const formFields = useMemo(() => {
+  const formFields: IFormGeneratorField<BreakEvenPointValues>[] = useMemo(() => {
     return [
       ...BreakEvenBaseFields,
       {

@@ -37,7 +37,7 @@ export const StockOnePager: FC = () => {
   );
 
   if (isLoading) return <LoadingScreen />;
-  if (error) return <ErrorScreen error={error} />;
+  if (error) return <ErrorScreen error={new Error(error)} />;
   if (!stock) return null;
   if (stock.delisted) {
     return (
@@ -92,7 +92,6 @@ export const StockOnePager: FC = () => {
           executiveSummary={executive_summary}
           companyOverview={company_overview}
           technicalAnalysis={technical_analysis}
-          riskMetrics={risk_metrics}
           sharesOutstanding={financial_performance?.shares_outstanding}
           onBuyClick={openBuyModal}
           onSellClick={openSellModal}
@@ -139,7 +138,7 @@ export const StockOnePager: FC = () => {
                 </div>
               </TabsContent>
               <TabsContent value="notes">
-                <CompanyNotes ticker={ticker} />
+                <CompanyNotes ticker={ticker || ""} />
               </TabsContent>
             </Tabs>
           </div>
@@ -156,7 +155,6 @@ export const StockOnePager: FC = () => {
               currencyCode={currencyCode}
               valuationMetrics={valuation_metrics}
               financialPerformance={financial_performance}
-              investorMetrics={investor_metrics}
               riskMetrics={risk_metrics}
             />
 

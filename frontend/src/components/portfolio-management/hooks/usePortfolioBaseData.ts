@@ -9,6 +9,7 @@ export function usePortfolioBaseData() {
       holdings: state.holdings,
       transactions: state.transactions,
       priceHistory: state.priceHistory,
+      fxRates: state.fxRates,
       refreshPortfolio: state.refreshPortfolio,
       sell: state.sell,
     }))

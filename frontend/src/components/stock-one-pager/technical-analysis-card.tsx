@@ -94,20 +94,23 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
     return fullData.filter((d) => isAfter(parseISO(d.date), cutoffDate));
   }, [fullData, period]);
 
-  const { volatility, maxDrawdown, percentFromMin, percentFromMax } = useMemo(() => {
+  const { volatility, maxDrawdown, percentFromMin, percentFromMax, periodPerformance } = useMemo(() => {
     const prices = filteredData.map((d) => d.price);
     const currentPrice = prices.length > 0 ? prices[prices.length - 1] : 0;
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+    const startingPrice = prices.length > 0 ? prices[0] : 0;
 
     const pFromMin = minPrice > 0 ? (currentPrice - minPrice) / minPrice : 0;
     const pFromMax = maxPrice > 0 ? (currentPrice - maxPrice) / maxPrice : 0;
+    const performance = startingPrice > 0 ? (currentPrice - startingPrice) / startingPrice : 0;
 
     return {
       volatility: calculateVolatility(prices),
       maxDrawdown: calculateMaxDrawdown(prices),
       percentFromMin: pFromMin,
       percentFromMax: pFromMax,
+      periodPerformance: performance,
     };
   }, [filteredData]);
 
@@ -126,6 +129,14 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
 
       {/* Chart Section */}
       <div className="px-5 bg-white">
+        <div className="flex gap-2 mb-4 justify-end">
+          <Badge variant="neutral" className="bg-teal-50 text-teal-700 border-teal-100">
+            {`SMA ${shortWindow}`}
+          </Badge>
+          <Badge variant="neutral" className="bg-orange-50 text-orange-700 border-orange-100">
+            {`SMA ${longWindow}`}
+          </Badge>
+        </div>
         <div className="h-[400px] w-full">
           <StockChart
             historicalData={filteredData}
@@ -136,12 +147,13 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
       </div>
 
       {/* Metrics Footer */}
-      <div className="px-5 pb-5 bg-slate-50/50 border-t border-slate-100 rounded-b-xl">
+      <div className="px-5 pt-3 pb-5 bg-slate-50/50 border-t border-slate-100 rounded-b-xl">
         <ChartMetrics
           volatility={volatility}
           maxDrawdown={maxDrawdown}
           percentFromMin={percentFromMin}
           percentFromMax={percentFromMax}
+          periodPerformance={periodPerformance}
         />
       </div>
     </Card>

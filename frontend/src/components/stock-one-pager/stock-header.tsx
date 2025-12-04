@@ -36,7 +36,7 @@ const StockHeader: FC<StockHeaderProps> = ({
   const logoUrl = `${API_URL}/stock-details/${ticker}/logo`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
 
-  const { isFavorite, handleWatchlistClick } = useWatchlistActions(ticker, executiveSummary?.name);
+  const { isFavorite, handleWatchlistClick } = useWatchlistActions(ticker, executiveSummary?.name || undefined);
   
   const {
     latestPrice,
@@ -45,7 +45,7 @@ const StockHeader: FC<StockHeaderProps> = ({
     max52Week,
     currentInRange,
     marketCap
-  } = useStockMetrics(technicalAnalysis.historical, sharesOutstanding);
+  } = useStockMetrics(technicalAnalysis.historical, sharesOutstanding || undefined);
 
   return (
     <div className="mb-6 p-6 rounded-xl bg-white shadow-md border border-gray-100">

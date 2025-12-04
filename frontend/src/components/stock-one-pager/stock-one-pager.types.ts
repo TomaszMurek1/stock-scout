@@ -9,6 +9,7 @@ export interface ExecutiveSummary {
 }
 
 export interface CompanyOverview {
+  id: number;
   sector: Nullable<string>;
   industry: Nullable<string>;
   description: Nullable<string>;

@@ -72,7 +72,7 @@ export const Performance: React.FC = () => {
     const {
         portfolio,
         transactions,
-        currencyRates,
+        fxRates,
         priceHistory
     } = usePortfolioBaseData();
 
@@ -103,12 +103,12 @@ export const Performance: React.FC = () => {
             if (from === to) return val;
             const pair = from + '-' + to;
             const invPair = to + '-' + from;
-            if (currencyRates[pair]) {
-                const r = getRateOnDate(currencyRates[pair].historicalData, date);
+            if (fxRates[pair]) {
+                const r = getRateOnDate(fxRates[pair], date);
                 return r ? val * r : val;
             }
-            if (currencyRates[invPair]) {
-                const r = getRateOnDate(currencyRates[invPair].historicalData, date);
+            if (fxRates[invPair]) {
+                const r = getRateOnDate(fxRates[invPair], date);
                 return r ? val / r : val;
             }
             return val;
@@ -166,7 +166,7 @@ export const Performance: React.FC = () => {
         }));
 
         return { perfSeries, benchmarkSeries };
-    }, [transactions, priceHistory, currencyRates, portfolioCurrency]);
+    }, [transactions, priceHistory, fxRates, portfolioCurrency]);
 
     // --- PERIOD FILTER ---
     const filterSeries = (series: { date: string, value: number }[]) => {

@@ -9,6 +9,7 @@ interface FormatCurrencyOptions {
   currency?: string | null;
   notation?: Intl.NumberFormatOptions["notation"];
   maximumFractionDigits?: number;
+  signDisplay?: Intl.NumberFormatOptions["signDisplay"];
 }
 
 export function formatCurrency({
@@ -16,6 +17,7 @@ export function formatCurrency({
   currency = "USD",
   notation = "standard",
   maximumFractionDigits = 2,
+  signDisplay,
 }: FormatCurrencyOptions): string {
   if (value == null || !currency) return "N/A";
   return new Intl.NumberFormat("en-US", {
@@ -23,6 +25,7 @@ export function formatCurrency({
     currency,
     notation,
     maximumFractionDigits,
+    signDisplay,
   }).format(value);
 }
 
