@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, Button, Input, Textarea } from "@/components/ui/Layout";
 import { CompanyNote, Sentiment, ResearchStatus } from "@/types";
 import { apiClient } from "@/services/apiClient";
@@ -76,7 +76,7 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [activeNote, setActiveNote] = useState<CompanyNote | null>(null);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await apiClient.get(`/company-notes/${ticker}`);
@@ -111,13 +111,13 @@ export const CompanyNotes: React.FC<Props> = ({ ticker }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [ticker, setIsLoading, setNotes]);
 
   useEffect(() => {
     if (ticker) {
       fetchNotes();
     }
-  }, [ticker]);
+  }, [ticker, fetchNotes]);
 
   const handleEdit = (note: CompanyNote) => {
     setActiveNote(note);

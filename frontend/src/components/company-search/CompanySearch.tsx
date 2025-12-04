@@ -55,7 +55,11 @@ export function CompanySearch({
     }, [wrapperRef])
 
     const fetchCompanies = useCallback(async (value: string, includeExternal = false) => {
-        includeExternal ? setExternalLoading(true) : setLoading(true)
+        if (includeExternal) {
+            setExternalLoading(true);
+        } else {
+            setLoading(true);
+        }
         try {
             const response = await apiClient.get<Company[]>("/companies", {
                 params: { search: value, include_external: includeExternal },
@@ -67,7 +71,11 @@ export function CompanySearch({
             setResults([])
             setIsOpen(false)
         }
-        includeExternal ? setExternalLoading(false) : setLoading(false)
+        if (includeExternal) {
+            setExternalLoading(false);
+        } else {
+            setLoading(false);
+        }
     }, [])
 
     // Debounced input handler

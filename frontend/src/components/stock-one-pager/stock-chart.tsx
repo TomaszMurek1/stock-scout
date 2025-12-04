@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo } from "react";
 import {
   ComposedChart,
   CartesianGrid,
@@ -9,192 +9,77 @@ import {
   Area,
   Scatter,
   ResponsiveContainer,
-} from "recharts"
-import { addDays, format, parseISO, startOfMonth, subYears } from "date-fns"
-
-interface HistoricalData {
-  date: string
-  price: number
-  sma_short?: number
-  sma_long?: number
-}
+} from "recharts";
+import {
+  calculateYAxisDomain,
+  generateYAxisTicks,
+  getMonthlyTicks,
+  detectCrossovers,
+  fillHistoricalData,
+  formatDate,
+  type HistoricalData,
+} from "./stock-chart.helpers";
+import { StockChartLegend } from "./stock-chart-legend";
+import { StockChartTooltip } from "./stock-chart-tooltip";
 
 interface StockChartProps {
-  historicalData: HistoricalData[]
-  shortWindow?: number
-  longWindow?: number
-  showLastYear?: boolean
+  historicalData: HistoricalData[];
+  shortWindow?: number;
+  longWindow?: number;
 }
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("en-US", { month: "short" });
-
-const getPriceFormatter = (maxPrice: number) => {
-  if (maxPrice < 5) return (price: number) => price.toFixed(2);
-  if (maxPrice < 10) return (price: number) => price.toFixed(1);
-  return (price: number) => price.toFixed(0);
-};
-
-const filterLastYearData = (data: HistoricalData[], showLastYear: boolean) => {
-  if (!showLastYear) return data;
-  const oneYearAgo = subYears(new Date(), 1);
-  return data.filter((d) => new Date(d.date) >= oneYearAgo);
-};
-
-const calculateYAxisDomain = (min: number, max: number) => {
-  const range = max - min;
-  let step: number;
-
-  if (range <= 1) step = 0.1;
-  else if (range <= 5) step = 0.25;
-  else if (range <= 10) step = 1;
-  else if (range <= 25) step = 2.5;
-  else if (range <= 50) step = 5
-  else if (range <= 100) step = 10;
-  else if (range <= 250) step = 25
-  else step = 50;
-
-  const niceMin = Math.floor(min / step) * step;
-  const niceMax = Math.ceil(max / step) * step;
-
-  return { niceMin, niceMax, step };
-};
-
-const generateYAxisTicks = (min: number, max: number, step: number) => {
-  const ticks = [];
-  for (let tick = min; tick < max; tick += step) {
-    ticks.push(Number(tick.toFixed(2)));
-  }
-  console.log(ticks)
-  return ticks;
-};
-
-const getMonthlyTicks = (data: HistoricalData[]) => {
-  const months = new Set();
-  const monthlyTicks = data
-    .filter((entry) => {
-      const month = format(new Date(entry.date), "yyyy-MM");
-      if (!months.has(month)) {
-        months.add(month);
-        return true;
-      }
-      return false;
-    })
-    .map((entry) => format(startOfMonth(new Date(entry.date)), "yyyy-MM-dd"));
-  return monthlyTicks;
-};
-/**
- * Detect SMA50 / SMA200 crossovers and mark them.
- * If SMA50 crosses above SMA200 → Green dot (bullish)
- * If SMA50 crosses below SMA200 → Red dot (bearish)
- */
-const detectCrossovers = (data: HistoricalData[]) => {
-  const crossovers: { date: string; bullish?: number; bearish?: number }[] = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const prev = data[i - 1];
-    const curr = data[i];
-
-    if (prev.sma_short !== undefined && prev.sma_long !== undefined && curr.sma_short !== undefined && curr.sma_long !== undefined) {
-      // Detect crossovers
-      const wasBelow = prev.sma_short < prev.sma_long;
-      const isAbove = curr.sma_short > curr.sma_long;
-
-      const wasAbove = prev.sma_short > prev.sma_long;
-      const isBelow = curr.sma_short < curr.sma_long;
-
-      if (wasBelow && isAbove) {
-        // Bullish crossover (Golden Cross)
-        crossovers.push({ date: curr.date, bullish: curr.sma_short });
-      } else if (wasAbove && isBelow) {
-        // Bearish crossover (Death Cross)
-        crossovers.push({ date: curr.date, bearish: curr.sma_short });
-      }
-    }
-  }
-
-  return crossovers;
-};
-
-const fillHistoricalData = (data: HistoricalData[]): HistoricalData[] => {
-  if (data.length === 0) return [];
-
-  const filledData: HistoricalData[] = [];
-  let lastKnownPrice = data[0].price;
-  let lastKnownSMA50 = data[0].sma_short;
-  let lastKnownSMA200 = data[0].sma_long;
-
-  let currentDate = parseISO(data[0].date);
-  let lastIndex = 0;
-
-  while (lastIndex < data.length) {
-    const entry = data[lastIndex];
-    const entryDate = parseISO(entry.date);
-
-    while (currentDate < entryDate) {
-      // Fill missing day with last known data
-      filledData.push({
-        date: format(currentDate, "yyyy-MM-dd"),
-        price: lastKnownPrice,
-        sma_short: lastKnownSMA50,
-        sma_long: lastKnownSMA200,
-      });
-
-      // Move to next day
-      currentDate = addDays(currentDate, 1);
-    }
-
-    // Add actual stock data entry
-    filledData.push(entry);
-    lastKnownPrice = entry.price;
-    lastKnownSMA50 = entry.sma_short;
-    lastKnownSMA200 = entry.sma_long;
-
-    currentDate = addDays(entryDate, 1)
-    lastIndex++
-  }
-  return filledData;
-};
 
 export default function StockChart({
   historicalData,
   shortWindow = 50,
   longWindow = 200,
-  showLastYear = true,
 }: StockChartProps) {
 
-  const finalData = fillHistoricalData(historicalData)
+  const finalData = fillHistoricalData(historicalData);
 
-  const filteredData = useMemo(
-    () => filterLastYearData(finalData, showLastYear),
-    [finalData, showLastYear]
-  );
+  const filteredData = useMemo(() => finalData, [finalData]);
 
   const { maxPrice, minPrice } = useMemo(() => {
     if (!filteredData.length) return { maxPrice: 0, minPrice: 0 };
-    const prices = filteredData.map((d) => d.price);
+    
+    let min = Infinity;
+    let max = -Infinity;
+
+    for (const d of filteredData) {
+      const values = [d.price];
+      if (d.sma_short !== undefined) values.push(d.sma_short);
+      if (d.sma_long !== undefined) values.push(d.sma_long);
+      
+      for (const v of values) {
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+    }
+
     return {
-      maxPrice: Math.max(...prices),
-      minPrice: Math.min(...prices),
+      maxPrice: max === -Infinity ? 0 : max,
+      minPrice: min === Infinity ? 0 : min,
     };
   }, [filteredData]);
 
-  const priceFormatter = getPriceFormatter(maxPrice);
   const { niceMin: yAxisMin, niceMax: yAxisMax, step: yAxisStep } = calculateYAxisDomain(
     minPrice,
     maxPrice
   );
 
-  const yAxisTicks = useMemo(() => generateYAxisTicks(yAxisMin, yAxisMax, yAxisStep), [
-    yAxisMin,
-    yAxisMax,
-    yAxisStep,
-  ]);
-  console.log('yAxisTicks', yAxisTicks)
+  const yAxisTicks = useMemo(
+    () => generateYAxisTicks(yAxisMin, yAxisMax, yAxisStep),
+    [yAxisMin, yAxisMax, yAxisStep]
+  );
 
-  const monthlyTicks = useMemo(() => getMonthlyTicks(filteredData), [filteredData]);
+  const monthlyTicks = useMemo(
+    () => getMonthlyTicks(filteredData),
+    [filteredData]
+  );
 
-  const crossoverPoints = useMemo(() => detectCrossovers(filteredData), [filteredData]);
+  const crossoverPoints = useMemo(
+    () => detectCrossovers(filteredData),
+    [filteredData]
+  );
 
   const mergedData = filteredData.map((item) => {
     const crossover = crossoverPoints.find((c) => c.date === item.date);
@@ -212,38 +97,31 @@ export default function StockChart({
   return (
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={mergedData} margin={{ top: 20, right: 0, bottom: 20, left: 40 }}>
+        <ComposedChart
+          data={mergedData}
+          margin={{ top: 20, right: 0, bottom: 30, left: 10 }}
+        >
           <CartesianGrid strokeOpacity={0.3} stroke="#99a1af" />
           <XAxis
-            interval={0}
+            interval="preserveStartEnd"
             dataKey="date"
             ticks={monthlyTicks}
             tickFormatter={formatDate}
             tick={{ fontSize: 12, fill: "#334155" }}
             axisLine={{ stroke: "#CBD5E1" }}
+            tickMargin={10}
           />
           <YAxis
             interval={0}
             domain={[yAxisMin, yAxisMax]}
             ticks={yAxisTicks}
-            //tickFormatter={priceFormatter}
             tick={{ fontSize: 12, fill: "#334155" }}
             axisLine={{ stroke: "#CBD5E1" }}
             orientation="right"
+            type="number"
           />
-          <Tooltip
-            formatter={(value) => [`$${priceFormatter(Number(value))}`, ""]}
-            labelFormatter={(label) => format(new Date(label), "MMM d, yyyy")}
-            contentStyle={{
-              backgroundColor: "#FFFFFF",
-              borderColor: "#CBD5E1",
-              borderRadius: "4px",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-              color: "#1E293B", // Tailwind slate-800
-              fontSize: "13px",
-              padding: "8px 12px",
-            }}
-          />
+          <Tooltip content={<StockChartTooltip />} />
+          <Legend content={<StockChartLegend />} verticalAlign="top" />
 
           {/* Stock Price Area - Blue */}
           <Area
@@ -253,7 +131,12 @@ export default function StockChart({
             stroke="#3b82f6"
             strokeWidth={1.5}
             name="Stock Price"
-            activeDot={{ r: 6, stroke: "#2563EB", strokeWidth: 1, fill: "#3b82f6" }}
+            activeDot={{
+              r: 6,
+              stroke: "#2563EB",
+              strokeWidth: 1,
+              fill: "#3b82f6",
+            }}
           />
 
           {/* SMA 50 - Teal */}
@@ -284,8 +167,8 @@ export default function StockChart({
 
           <Scatter
             dataKey="bullish"
-            fill="#22c55e"
-            stroke="#ffffff"
+            fill="#FFD700"
+            stroke="#000000"
             strokeWidth={1.5}
             name="Golden Cross"
             shape="circle"
@@ -293,28 +176,15 @@ export default function StockChart({
           />
           <Scatter
             dataKey="bearish"
-            fill="#ef4444"
-            stroke="#ffffff"
+            fill="#000000"
+            stroke="#FFFFFF"
             strokeWidth={1.5}
             name="Death Cross"
             shape="circle"
             r={6}
           />
-          <Legend
-            verticalAlign="top"
-            height={36}
-            iconSize={10}
-            iconType="circle"
-            wrapperStyle={{
-              fontSize: "12px",
-              fontWeight: 500,
-              color: "#334155",
-              paddingBottom: "12px",
-            }}
-          />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }
-
