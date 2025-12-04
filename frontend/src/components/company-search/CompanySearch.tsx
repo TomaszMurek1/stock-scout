@@ -168,7 +168,7 @@ export function CompanySearch({
                         <button
                             onClick={handleAction}
                             disabled={!selected || actionLoading}
-                            className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center shadow-sm hover:shadow-md disabled:shadow-none"
+                            className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center shadow-sm hover:shadow-md disabled:shadow-none w-48 justify-center"
                         >
                             {actionLoading ? (
                                 <>
