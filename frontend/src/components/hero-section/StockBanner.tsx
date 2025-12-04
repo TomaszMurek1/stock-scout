@@ -72,14 +72,19 @@ export const StockBanner: React.FC<StockBannerProps> = ({
   const percentChange = previous.close ? (priceChange / previous.close) * 100 : 0;
   const isPositive = priceChange >= 0;
 
-  const minPrice = Math.min(...displayData.map((d) => d.low));
-  const maxPrice = Math.max(...displayData.map((d) => d.high));
-  const maxVolume = Math.max(...displayData.map((d) => d.volume));
-  const priceRange = maxPrice - minPrice || 1;
-
-  const chartWidth = 300;
-  const chartHeight = 80;
-  const candleWidth = Math.max(chartWidth / displayData.length - 1.5, 2);
+      const minPrice = Math.min(...displayData.map((d) => d.low));
+      const maxPrice = Math.max(...displayData.map((d) => d.high));
+      const maxVolume = Math.max(...displayData.map((d) => d.volume));
+      const priceRange = maxPrice - minPrice || 1;
+  
+      const firstCandle = displayData.length > 0 ? displayData[0] : null;
+      const perf52Week = (firstCandle && latest.close)
+          ? ((latest.close - firstCandle.open) / firstCandle.open) * 100
+          : 0;
+      const is52wPositive = perf52Week >= 0;
+  
+      const chartWidth = 300;
+      const chartHeight = 80;  const candleWidth = Math.max(chartWidth / displayData.length - 1.5, 2);
 
   if (loading || displayData.length === 0) {
     return (
@@ -257,7 +262,12 @@ export const StockBanner: React.FC<StockBannerProps> = ({
 
               {/* Chart Footer */}
               <div className="mt-4 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                <span>52-Week Perf.</span>
+                <div className="flex gap-2">
+                    <span>52-Week Perf.</span>
+                    <span className={`${is52wPositive ? "text-emerald-600" : "text-red-600"}`}>
+                        {is52wPositive ? "+" : ""}{perf52Week.toFixed(2)}%
+                    </span>
+                </div>
                 <div className="flex gap-2">
                   <span className="text-slate-500">
                     Vol: {(latest.volume / 1_000_000).toFixed(1)}M
