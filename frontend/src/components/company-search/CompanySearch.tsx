@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { apiClient } from "@/services/apiClient"
 import {
@@ -40,6 +40,19 @@ export function CompanySearch({
     const [isOpen, setIsOpen] = useState(false)
     const navigate = useNavigate()
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
+    const wrapperRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [wrapperRef])
 
     const fetchCompanies = useCallback(async (value: string, includeExternal = false) => {
         includeExternal ? setExternalLoading(true) : setLoading(true)
@@ -107,7 +120,7 @@ export function CompanySearch({
     const primaryMarket = selected?.market?.name || ""
 
     return (
-        <div className={cn("mx-auto px-4 py-6", containerClassName)}>
+        <div ref={wrapperRef} className={cn("mx-auto px-4 py-6", containerClassName)}>
             <div className={cn("bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4 shadow-sm", contentClassName)}>
                 <div className="flex justify-between items-center">
                     {/* Left side - Icon and Search */}

@@ -248,6 +248,7 @@ def search_companies(
             if item["ticker"] not in tickers
         ]
         if external:
-            _persist_external_results(external, db)
+            # _persist_external_results(external, db)
+            pass
         results.extend(external)
     return results

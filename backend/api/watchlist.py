@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
+from services.company.company_service import get_or_create_company
 from database.base import get_db
 from database.portfolio import FavoriteStock
 from database.position import PortfolioPositions
@@ -311,7 +312,7 @@ def add_to_watchlist_body(
             detail="ticker or company_symbol is required",
         )
 
-    company = db.query(Company).filter(Company.ticker == ticker).first()
+    company = get_or_create_company(ticker, db)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
