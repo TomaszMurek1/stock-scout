@@ -10,7 +10,7 @@ import { Button, Badge } from "@/components/ui/Layout";
 import type { MouseEvent } from 'react'
 import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
-import { apiClient } from "@/services/apiClient";
+import { apiClient, API_URL } from "@/services/apiClient";
 import { AppState, useAppStore } from "@/store/appStore";
 
 
@@ -34,7 +34,7 @@ const StockHeader: FC<StockHeaderProps> = ({
   onSellClick,
 }) => {
 
-  const logoUrl = `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+  const logoUrl = `${API_URL}/stock-details/${ticker}/logo`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
   const watchlist = useAppStore((state: AppState) => state.watchlist.data)
   const loadWatchlist = useAppStore(

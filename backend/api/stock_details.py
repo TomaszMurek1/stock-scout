@@ -4,7 +4,9 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 import yfinance as yf
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -19,9 +21,9 @@ from database.financials import (
 from database.market import Market
 from database.stock_data import StockPriceHistory
 from services.company_market_sync import (
-    YAHOO_TO_EXCHANGE,
     _detect_yahoo_exchange,
     _lookup_market,
+    get_available_markets,
 )
 from utils.cleaning import clean_nan_values
 from utils.comparables import build_peer_comparisons
@@ -142,7 +144,7 @@ def _assign_market_from_yfinance(company: Company, db: Session) -> Market | None
         logger.warning("Ticker %s appears delisted", company.ticker)
         return company.market
 
-    mapped_code = YAHOO_TO_EXCHANGE.get(exchange, exchange)
+    mapped_code = get_available_markets().get(exchange, exchange)
     market = _lookup_market(db, mapped_code)
     updated = False
 
@@ -349,6 +351,40 @@ def build_executive_summary(company: Company, market: Market | None) -> dict:
         "industry": company.industry,
         "currency": market.currency if market else "Unknown",
     }
+
+
+@router.get("/{ticker}/logo", response_class=FileResponse)
+def get_company_logo(ticker: str):
+    """
+    Returns the company logo.
+    If not present locally, attempts to download it from FMP.
+    """
+    # Basic sanitization
+    ticker = ticker.upper().strip()
+
+    # Define paths
+    static_dir = Path(__file__).resolve().parent.parent / "static" / "logos"
+    static_dir.mkdir(parents=True, exist_ok=True)
+
+    logo_path = static_dir / f"{ticker}.png"
+
+    if logo_path.exists():
+        return FileResponse(logo_path)
+
+    # Not found, try to fetch
+    url = f"https://financialmodelingprep.com/image-stock/{ticker}.png"
+    try:
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            with open(logo_path, "wb") as f:
+                f.write(resp.content)
+            return FileResponse(logo_path)
+        else:
+            logger.warning(f"Failed to download logo for {ticker}, status: {resp.status_code}")
+            raise HTTPException(status_code=404, detail="Logo not found")
+    except Exception as e:
+        logger.error(f"Error fetching logo for {ticker}: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching logo")
 
 
 @router.get("/{ticker}")

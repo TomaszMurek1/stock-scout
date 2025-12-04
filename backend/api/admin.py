@@ -7,7 +7,12 @@ from database.base import get_db
 from schemas.user_schemas import InvitationCreate, InvitationOut
 from database.user import Invitation
 from services.auth.auth import get_current_user
-from services.company_market_sync import sync_company_markets
+from services.company_market_sync import (
+    sync_company_markets,
+    add_companies_via_yfinance,
+    add_companies_for_market,
+    get_available_markets,
+)
 from services.fundamentals.financials_batch_update_service import (
     update_financials_for_tickers,
 )
@@ -18,6 +23,12 @@ from services.basket_resolver import resolve_baskets_to_companies
 class SyncCompanyMarketsRequest(BaseModel):
     force: bool = False
     limit: int | None = None
+    start_from_id: int | None = None
+
+
+class AddCompaniesRequest(BaseModel):
+    tickers: list[str] | None = None
+    market_code: str | None = None
 
 
 class YFinanceProbeRequest(BaseModel):
@@ -36,6 +47,14 @@ logger = logging.getLogger(__name__)
 @router.get("/health-check")
 async def health_check():
     return {"status": "Admin API is working!"}
+
+
+@router.get("/available-markets")
+def list_available_markets(
+    _: str = Depends(get_current_user),
+):
+    """List available markets for synchronization."""
+    return get_available_markets()
 
 
 @router.post("/invitations", response_model=InvitationOut)
@@ -125,8 +144,26 @@ def sync_companies_to_markets(
     db: Session = Depends(get_db),
     _: str = Depends(get_current_user),
 ):
-    result = sync_company_markets(db, force=payload.force, limit=payload.limit)
+    result = sync_company_markets(
+        db, force=payload.force, limit=payload.limit, start_from_id=payload.start_from_id
+    )
     return result
+
+
+@router.post("/add-companies")
+def add_companies(
+    payload: AddCompaniesRequest,
+    db: Session = Depends(get_db),
+    _: str = Depends(get_current_user),
+):
+    """Add new companies by ticker list OR by market code (fetches tickers)."""
+    if payload.market_code:
+        return add_companies_for_market(db, payload.market_code)
+
+    if payload.tickers:
+        return add_companies_via_yfinance(db, payload.tickers)
+
+    raise HTTPException(status_code=400, detail="Must provide tickers or market_code")
 
 
 @router.post("/yfinance-probe")

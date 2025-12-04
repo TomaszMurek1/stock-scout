@@ -51,6 +51,7 @@ class Company(Base):
     company_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     ticker = Column(String, nullable=False, index=True)
+    isin = Column(String, nullable=True, index=True)  # Added ISIN column
     sector = Column(String)
     industry = Column(String)
     yfinance_market = Column(String)
