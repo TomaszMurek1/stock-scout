@@ -199,16 +199,15 @@ def get_break_even_companies(
 
     for market_name, tickers in tickers_by_market.items():
         try:
-            fetch_and_save_stock_price_history_data_batch(
+            logger.info(f"Updating financials for market: {market_name} (tickers: {len(tickers)})")
+            update_financials_for_tickers(
+                db=db,
                 tickers=tickers,
                 market_name=market_name,
-                db=db,
-                start_date=None,
-                end_date=None,
-                force_update=False,
+                include_quarterly=True
             )
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Batch refresh failed for %s: %s", market_name, exc)
+            logger.warning("Batch financial refresh failed for %s: %s", market_name, exc)
 
     for comp in manual_refresh:
         market_name = comp.market.name if comp.market else "Unknown"

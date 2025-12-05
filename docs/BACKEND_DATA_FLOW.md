@@ -80,3 +80,46 @@ The system primarily uses a **Lazy Loading** strategy for data ingestion, supple
 | `backend/api/admin.py` | API Endpoints for triggering manual/batch updates. |
 | `backend/services/yfinance_data_update/data_update_service.py` | **Orchestrator**: Decides *when* to update and calls specific services. Handles Stock Price updates. |
 | `backend/services/fundamentals/financials_batch_update_service.py` | **Worker**: Handles parsing Yahoo financial statements and saving `CompanyFinancialHistory`. |
+
+---
+
+## 3. Scans & Analysis
+
+Certain "Scans" in the application also trigger data ingestion to ensure results are accurate.
+
+### Golden Cross Scan
+*   **Frontend**: `golden-cross-page.tsx`
+*   **Endpoint**: `POST /api/technical-analysis/golden-cross`
+*   **Data Refreshed**:
+    *   **Stock Prices**: **YES**. It checks for stale data and calls `fetch_and_save_stock_price_history_data_batch`.
+    *   **Financials**: **NO**. It relies on existing market metadata and computed moving averages.
+
+### Break Even Point Scan
+*   **Frontend**: `break-even-point-page.tsx`
+*   **Endpoint**: `POST /api/fundamentals/break-even-companies`
+*   **Data Refreshed**:
+    *   **Stock Prices**: **NO**.
+    *   **Financials**: **YES**. It now triggers `update_financials_for_tickers` for all involved markets, ensuring up-to-date quarterly reports.
+
+### Market Cap Filtering (Golden Cross)
+The Golden Cross scan includes a **Market Cap Filter** optimization.
+*   **Mechanism**: It filters companies *before* fetching prices by checking `CompanyMarketData.market_cap` in the database.
+*   **Optimization**: This significantly reduces API calls by ignoring small-cap stocks.
+
+---
+
+## 4. Company Market Data Lifecycle
+
+**`CompanyMarketData`** (including `market_cap`) is a special case.
+
+### Initialization & Updates
+*   **Does "Add Company" populate it?**: **NO**. Newly added companies have `NULL` market data.
+*   **Does "Golden Cross Scan" populate it?**: **NO**. Scans only fetch price history.
+*   **What populates it?**: ONLY the **Financials Market Update**.
+    *   **Endpoint**: `POST /admin/run-financials-market-update`
+    *   **Service**: `update_financials_for_tickers` calls `update_market_data` using the `fast_info` object from Yahoo Finance.
+
+### Maintenance Recommendation
+To keep `market_cap` and financial statements fresh without overloading the API:
+1.  **Frequency**: Run **"Financials Market Update"** in the Admin panel once per **Quarter** (or Monthly).
+2.  **Efficiency**: The system automatically skips companies with recent reports (< 80 days old), so running this frequently is low-cost after the initial population.

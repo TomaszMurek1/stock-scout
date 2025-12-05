@@ -32,6 +32,7 @@ export default function GoldenCrossScanPage() {
       longPeriod: 200,
       daysToLookBack: 60,
       basketIds: [],
+      minMarketCap: 0,
     },
   });
 
@@ -76,6 +77,7 @@ export default function GoldenCrossScanPage() {
           min_volume: 1000000,
           adjusted: false, //use true iof you want adjusted_close be used for caalculations instead of close
           basket_ids: data.basketIds.map((id) => Number(id)),
+          min_market_cap: data.minMarketCap,
         }
       );
 

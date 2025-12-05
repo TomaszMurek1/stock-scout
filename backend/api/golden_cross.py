@@ -10,6 +10,7 @@ from database.base import get_db
 from database.user import User
 from database.market import Market
 from database.company import Company, company_stockindex_association
+from database.stock_data import CompanyMarketData
 from services.analysis_results.analysis_results import get_or_update_analysis_result
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
@@ -77,7 +78,33 @@ def _resolve_baskets_or_404(db: Session, basket_ids: list[int]):
         return resolve_baskets_to_companies(db, basket_ids)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+
+def filter_by_market_cap(db: Session, companies: list[Company], min_cap_billions: float) -> list[Company]:
+    """Filter companies by market cap (in billions)."""
+    if not companies:
+        return []
+    
+    # min_cap is in billions, but DB stores likely in raw units (or millions? let's assume raw based on typical yahoo data)
+    # Yahoo usually returns raw float. So 1B = 1,000,000,000.
+    min_cap_raw = min_cap_billions * 1_000_000_000
+    
+    comp_ids = [c.company_id for c in companies]
+    
+    # Query matching market data
+    valid_ids = (
+        db.query(CompanyMarketData.company_id)
+        .filter(CompanyMarketData.company_id.in_(comp_ids))
+        .filter(CompanyMarketData.market_cap >= min_cap_raw)
+        .all()
+    )
+    valid_id_set = {r[0] for r in valid_ids}
+    
+    filtered = [c for c in companies if c.company_id in valid_id_set]
+    logger.info(f"Market Cap Filter: {len(companies)} -> {len(filtered)} (min {min_cap_billions}B)")
+    return filtered
 
 def load_existing_golden_cross_analysis(
     db, market_ids, companies, short_window, long_window
@@ -246,6 +273,14 @@ def cached_golden_cross(
     market_ids, companies = resolve_universe(db, request.markets, request.basket_ids)
     if not companies:
         return {"status": "success", "data": []}
+
+    # 1.5) Filter by Market Cap if requested
+    if request.min_market_cap:
+        companies = filter_by_market_cap(db, companies, request.min_market_cap)
+        if not companies:
+             logger.info("No companies left after market cap filter.")
+             return {"status": "success", "data": []}
+
     # 2) Preload existing analysis so we only re-analyze stale/missing
     analysis_map = load_existing_golden_cross_analysis(
         db, market_ids, companies, short_window, long_window

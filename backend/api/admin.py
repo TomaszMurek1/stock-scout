@@ -90,7 +90,7 @@ def run_financials_batch_update(
 
         results = []
         markets = db.query(Market).all()
-        if market_name:
+        if market_name and market_name.lower() != "all":
             markets = [m for m in markets if m.name == market_name]
         for market in markets:
             tickers = [

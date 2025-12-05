@@ -10,6 +10,7 @@ export const goldenCrossFormSchema = z.object({
   longPeriod: z.coerce.number().int().positive().min(1),
   daysToLookBack: z.coerce.number().int().positive(),
   basketIds: z.array(z.string()).nonempty("Select at least one basket"),
+  minMarketCap: z.coerce.number().min(0).optional(),
 });
 export type GoldenCrossFormValues = z.infer<typeof goldenCrossFormSchema>;
 
@@ -33,6 +34,12 @@ export const baseGoldenCrossFields: IFormGeneratorField<GoldenCrossFormValues>[]
     label: "Days to Look Back",
     description:
       "The number of days in the past to analyze for the Golden Cross pattern.",
+    type: "number",
+  },
+  {
+    name: "minMarketCap",
+    label: "Min Market Cap (Billions)",
+    description: "Filter companies with market cap below this value (in Billions). Leave 0 or empty to ignore.",
     type: "number",
   },
 ];

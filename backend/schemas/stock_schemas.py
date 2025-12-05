@@ -17,6 +17,7 @@ class GoldenCrossRequest(BaseModel):
     adjusted: bool = True
     markets: List[str] | None = None
     basket_ids: List[int] | None = None
+    min_market_cap: float | None = None
 
 
 class TickerRequestAdmin(BaseModel):
