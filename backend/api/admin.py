@@ -150,6 +150,26 @@ def sync_companies_to_markets(
     return result
 
 
+class FetchMarketTickersRequest(BaseModel):
+    market_code: str
+
+
+@router.post("/fetch-market-tickers")
+def fetch_tickers_from_market_code(
+    payload: FetchMarketTickersRequest,
+    _: str = Depends(get_current_user),
+):
+    """Fetch all tickers for a given market code (e.g. 'NMS', 'NYQ')."""
+    from services.ticker_discovery_service import fetch_tickers_by_market
+    
+    try:
+        tickers = fetch_tickers_by_market(payload.market_code)
+        return {"tickers": tickers, "count": len(tickers)}
+    except Exception as e:
+        logger.error(f"Failed to fetch tickers for {payload.market_code}: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/add-companies")
 def add_companies(
     payload: AddCompaniesRequest,

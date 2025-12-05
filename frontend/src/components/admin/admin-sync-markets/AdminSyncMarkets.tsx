@@ -28,11 +28,13 @@ interface AddResult {
     message?: string;
     name?: string;
   }>;
+  message?: string;
 }
 
 const BATCH_SIZE = 50;
 
 export default function AdminSyncMarkets() {
+
   // Sync State
   const [force, setForce] = useState(false);
   const [limit, setLimit] = useState<string>(""); // User's total limit
@@ -129,22 +131,119 @@ export default function AdminSyncMarkets() {
     await processSyncBatch(null, initialResult, userLimit);
   };
 
+  /* Batch Processing State */
+  const [batchStatus, setBatchStatus] = useState<{
+    total: number;
+    processed: number;
+    success: number;
+    failed: number;
+    isProcessing: boolean;
+    currentBatch: number;
+  } | null>(null);
+
+  const processTickerBatch = async (
+    tickers: string[], 
+    accumulatedSummary: AddResult['summary'], 
+    accumulatedDetails: AddResult['details']
+  ) => {
+    // Process in chunks
+    const CHUNK_SIZE = 10;
+    const total = tickers.length;
+    
+    setBatchStatus({
+      total,
+      processed: 0,
+      success: 0,
+      failed: 0,
+      isProcessing: true,
+      currentBatch: 0
+    });
+
+    for (let i = 0; i < total; i += CHUNK_SIZE) {
+      const chunk = tickers.slice(i, i + CHUNK_SIZE);
+      const batchNum = Math.floor(i / CHUNK_SIZE) + 1;
+      
+      try {
+        const { data } = await apiClient.post<AddResult>("/admin/add-companies", { tickers: chunk });
+        
+        accumulatedSummary.added += data.summary.added;
+        accumulatedSummary.existing += data.summary.existing;
+        accumulatedSummary.failed += data.summary.failed;
+        accumulatedDetails.push(...data.details);
+        
+        setBatchStatus(prev => prev ? ({
+          ...prev,
+          processed: Math.min(prev.processed + CHUNK_SIZE, total),
+          success: prev.success + data.summary.added + data.summary.existing, // treat existing as "success" for progress
+          failed: prev.failed + data.summary.failed,
+          currentBatch: batchNum
+        }) : null);
+
+      } catch (error: any) {
+        console.error(`Batch ${batchNum} failed`, error);
+        accumulatedSummary.failed += chunk.length;
+        // Add artificial error details for this chunk
+        chunk.forEach(t => accumulatedDetails.push({ 
+          ticker: t, 
+          status: 'error', 
+          message: error?.message || 'Batch failed' 
+        }));
+        
+        setBatchStatus(prev => prev ? ({
+            ...prev,
+            processed: Math.min(prev.processed + CHUNK_SIZE, total),
+            failed: prev.failed + chunk.length,
+            currentBatch: batchNum
+        }) : null);
+      }
+      
+      // Small delay to be nice to the server/API
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    setBatchStatus(prev => prev ? ({ ...prev, isProcessing: false }) : null);
+  };
+
   const handleAddSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setAddLoading(true);
     setAddResult(null);
+    setBatchStatus(null);
 
     try {
-      let payload: any = {};
-      
+      const resultStructure: AddResult = {
+         summary: { added: 0, existing: 0, failed: 0, total: 0 },
+         details: []
+      };
+
       if (importMethod === "market") {
         if (!selectedMarket) {
            toast.warning("Please select a market");
            setAddLoading(false);
            return;
         }
-        payload = { market_code: selectedMarket };
+
+        // 1. Fetch Tickers
+        toast.info(`Fetching tickers for ${selectedMarket}...`);
+        const { data: { tickers } } = await apiClient.post<{ tickers: string[], count: number }>("/admin/fetch-market-tickers", { 
+          market_code: selectedMarket 
+        });
+
+        if (!tickers || tickers.length === 0) {
+          toast.warning("No tickers found for this market.");
+          setAddLoading(false);
+          return;
+        }
+
+        toast.success(`Found ${tickers.length} tickers. Starting batch import...`);
+        
+        // 2. Start Batch Processing
+        await processTickerBatch(tickers, resultStructure.summary, resultStructure.details);
+        
+        resultStructure.summary.total = tickers.length;
+        
       } else {
+        // ... existing "By Ticker" logic ...
         if (!tickersInput.trim()) {
            setAddLoading(false);
            return;
@@ -159,20 +258,26 @@ export default function AdminSyncMarkets() {
           setAddLoading(false);
           return;
         }
-        payload = { tickers };
+        
+        // Even for manual list, we can use the batch processor if list is long? 
+        // Or keep simple endpoint for small manual lists. Let's use batch processor for consistency/safety.
+        await processTickerBatch(tickers, resultStructure.summary, resultStructure.details);
+        resultStructure.summary.total = tickers.length;
+        
+        if (resultStructure.summary.added > 0) {
+            setTickersInput(""); 
+        }
       }
 
-      const { data } = await apiClient.post<AddResult>("/admin/add-companies", payload);
-      setAddResult(data);
-      toast.success(`Added ${data.summary.added} companies`);
+      setAddResult(resultStructure);
+      toast.success(`Processing complete. Added ${resultStructure.summary.added}, Failed ${resultStructure.summary.failed}`);
       
-      if (data.summary.added > 0 && importMethod === "tickers") {
-        setTickersInput(""); 
-      }
     } catch (error: any) {
       console.error("Add companies error", error);
       const message = error?.response?.data?.detail || error.message || "Failed to add companies";
       toast.error(message);
+      // Even if main flow errored, show what we have
+      setAddResult((prev) => prev); 
     } finally {
       setAddLoading(false);
     }
@@ -314,19 +419,38 @@ export default function AdminSyncMarkets() {
             </FormControl>
           )}
 
-          <MuiButton
-            onClick={handleAddSubmit}
-            variant="contained"
-            className="bg-green-700 hover:bg-green-800"
-            disabled={addLoading || (importMethod === "tickers" && !tickersInput.trim()) || (importMethod === "market" && !selectedMarket)}
-            startIcon={addLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
-          >
-            {addLoading ? "Adding..." : "Add Companies"}
-          </MuiButton>
+          <div className="space-y-2">
+             <MuiButton
+              onClick={handleAddSubmit}
+              variant="contained"
+              className="bg-green-700 hover:bg-green-800"
+              disabled={addLoading || (importMethod === "tickers" && !tickersInput.trim()) || (importMethod === "market" && !selectedMarket)}
+              startIcon={addLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            >
+              {addLoading ? (batchStatus ? "Processing..." : "Adding...") : "Add Companies"}
+            </MuiButton>
+            
+            {batchStatus && batchStatus.isProcessing && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${(batchStatus.processed / batchStatus.total) * 100}%` }}
+                ></div>
+                <p className="text-xs text-center mt-1 text-gray-600">
+                  Processed {batchStatus.processed} / {batchStatus.total} (Success: {batchStatus.success}, Failed: {batchStatus.failed})
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {addResult && (
           <div className="mt-6 space-y-3 text-sm text-slate-700">
+            {addResult.message && (
+              <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-md">
+                <strong>Error:</strong> {addResult.message}
+              </div>
+            )}
             <p>
               <strong>Summary:</strong> Added {addResult.summary.added}, Existing {addResult.summary.existing}, Failed {addResult.summary.failed}.
             </p>
