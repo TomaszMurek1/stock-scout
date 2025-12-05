@@ -1,0 +1,4152 @@
+{
+  "ticker": "SOFI",
+  "fetched_at": "2025-12-05T08:10:45.405957+00:00",
+  "basic": {
+    "fast_info": {
+      "currency": "USD",
+      "dayHigh": 29.700000762939453,
+      "dayLow": 28.479999542236328,
+      "exchange": "NMS",
+      "fiftyDayAverage": 28.199200057983397,
+      "lastPrice": 29.600000381469727,
+      "lastVolume": 61987400,
+      "marketCap": 35694730562.415504,
+      "open": 29.03499984741211,
+      "previousClose": 29.18,
+      "quoteType": "EQUITY",
+      "regularMarketPreviousClose": 29.06999969482422,
+      "shares": 1205903044,
+      "tenDayAverageVolume": 61320030,
+      "threeMonthAverageVolume": 72100550,
+      "timezone": "America/New_York",
+      "twoHundredDayAverage": 19.996050004959105,
+      "yearChange": 0.8476903580314734,
+      "yearHigh": 32.72999954223633,
+      "yearLow": 8.600000381469727
+    },
+    "info": {
+      "address1": "234 1st Street",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94105",
+      "country": "United States",
+      "phone": "855 456 7634",
+      "website": "https://www.sofi.com",
+      "industry": "Credit Services",
+      "industryKey": "credit-services",
+      "industryDisp": "Credit Services",
+      "sector": "Financial Services",
+      "sectorKey": "financial-services",
+      "sectorDisp": "Financial Services",
+      "longBusinessSummary": "SoFi Technologies, Inc. provides various financial services in the United States, Latin America, Canada, and Hong Kong. It operates through three segments: Lending, Technology Platform, and Financial Services. The company offers lending and financial services and products that allows its members to borrow, save, spend, invest, and protect money; and personal loans, student loans, home loans, and related services. The company also operates Galileo, a technology platform that offers services to financial and non-financial institution; and Technisys, a cloud-native digital and core banking platform that provides software licenses and associated services, including implementation and maintenance. In addition, it provides SoFi Money offers checking and savings accounts, and cash management products; and SoFi Invest, a mobile-first investment platform that offers access to trading and advisory solutions, such as investing and robo-advisory. Further, the company offers SoFi Credit Card that provides cash back rewards on every purchase; Sofi Relay, a personal finance management product that allows to track all of their financial accounts comprising credit score and spending behaviors; SoFi Protect which offers insurance product; SoFi Travel, an application that manages travel search and booking experience; SoFi At Work provides financial benefits to employees, including student loan payments made on their employees' behalf; Lantern Credit, a financial services marketplace platform for seeking alternative products and provide product comparisons; and other lending as a service that offers pre-qualified borrower referrals and offers loans to third-party partner. The company was founded in 2011 and is based in San Francisco, California.",
+      "fullTimeEmployees": 5000,
+      "companyOfficers": [
+        {
+          "maxAge": 1,
+          "name": "Mr. George Thompson Hutton",
+          "age": 68,
+          "title": "Independent Non Executive Chairman",
+          "yearBorn": 1956,
+          "fiscalYear": 2024,
+          "totalPay": 160000,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Mr. Anthony J. Noto",
+          "age": 55,
+          "title": "CEO & Director",
+          "yearBorn": 1969,
+          "fiscalYear": 2024,
+          "totalPay": 3940000,
+          "exercisedValue": 0,
+          "unexercisedValue": 83877480
+        },
+        {
+          "maxAge": 1,
+          "name": "Mr. Christopher  Lapointe",
+          "age": 40,
+          "title": "Chief Financial Officer",
+          "yearBorn": 1984,
+          "fiscalYear": 2024,
+          "totalPay": 1125000,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Mr. Stephen  Simcock",
+          "age": 61,
+          "title": "General Counsel & Secretary",
+          "yearBorn": 1963,
+          "fiscalYear": 2024,
+          "totalPay": 819614,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Mr. Arun  Pinto",
+          "age": 45,
+          "title": "Chief Risk Officer",
+          "yearBorn": 1979,
+          "fiscalYear": 2024,
+          "totalPay": 1026207,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Mr. Eric J. Schuppenhauer",
+          "age": 53,
+          "title": "Executive VP & Group Business Unit Leader of Borrow",
+          "yearBorn": 1971,
+          "fiscalYear": 2024,
+          "totalPay": 569260,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Ms. Diane  Tucker",
+          "title": "Senior Vice President of Global Operations",
+          "fiscalYear": 2024,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Mr. Jeremy  Rishel",
+          "age": 51,
+          "title": "Chief Technology Officer",
+          "yearBorn": 1973,
+          "fiscalYear": 2024,
+          "totalPay": 2613461,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Paulina  Gutierrez",
+          "title": "Investor Relations",
+          "fiscalYear": 2024,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        },
+        {
+          "maxAge": 1,
+          "name": "Ms. Lauren Stafford Webb",
+          "age": 39,
+          "title": "Chief Marketing Officer",
+          "yearBorn": 1985,
+          "fiscalYear": 2024,
+          "exercisedValue": 0,
+          "unexercisedValue": 0
+        }
+      ],
+      "auditRisk": 6,
+      "boardRisk": 7,
+      "compensationRisk": 10,
+      "shareHolderRightsRisk": 7,
+      "overallRisk": 9,
+      "governanceEpochDate": 1764547200,
+      "compensationAsOfEpochDate": 1735603200,
+      "executiveTeam": [],
+      "maxAge": 86400,
+      "priceHint": 2,
+      "previousClose": 29.07,
+      "open": 29.035,
+      "dayLow": 28.48,
+      "dayHigh": 29.7,
+      "regularMarketPreviousClose": 29.07,
+      "regularMarketOpen": 29.035,
+      "regularMarketDayLow": 28.48,
+      "regularMarketDayHigh": 29.7,
+      "payoutRatio": 0.0,
+      "beta": 1.941,
+      "trailingPE": 52.857143,
+      "forwardPE": 102.06897,
+      "volume": 55670795,
+      "regularMarketVolume": 55670795,
+      "averageVolume": 72276379,
+      "averageVolume10days": 61423930,
+      "averageDailyVolume10Day": 61423930,
+      "bid": 28.85,
+      "ask": 30.08,
+      "bidSize": 4,
+      "askSize": 11,
+      "marketCap": 35694731264,
+      "fiftyTwoWeekLow": 8.6,
+      "fiftyTwoWeekHigh": 32.73,
+      "allTimeHigh": 32.73,
+      "allTimeLow": 4.24,
+      "priceToSalesTrailing12Months": 10.847355,
+      "fiftyDayAverage": 28.176,
+      "twoHundredDayAverage": 19.92895,
+      "trailingAnnualDividendRate": 0.0,
+      "trailingAnnualDividendYield": 0.0,
+      "currency": "USD",
+      "tradeable": false,
+      "enterpriseValue": 35235803136,
+      "profitMargins": 0.19457,
+      "floatShares": 1184474147,
+      "sharesOutstanding": 1205903044,
+      "sharesShort": 116122820,
+      "sharesShortPriorMonth": 100293155,
+      "sharesShortPreviousMonthDate": 1760486400,
+      "dateShortInterest": 1763078400,
+      "sharesPercentSharesOut": 0.0963,
+      "heldPercentInsiders": 0.03148,
+      "heldPercentInstitutions": 0.54377997,
+      "shortRatio": 1.45,
+      "shortPercentOfFloat": 0.0975,
+      "impliedSharesOutstanding": 1205903044,
+      "bookValue": 7.289,
+      "priceToBook": 4.0609136,
+      "lastFiscalYearEnd": 1735603200,
+      "nextFiscalYearEnd": 1767139200,
+      "mostRecentQuarter": 1759190400,
+      "earningsQuarterlyGrowth": 1.295,
+      "netIncomeToCommon": 640243968,
+      "trailingEps": 0.56,
+      "forwardEps": 0.29,
+      "enterpriseToRevenue": 10.708,
+      "52WeekChange": 0.8146068,
+      "SandP52WeekChange": 0.12469888,
+      "quoteType": "EQUITY",
+      "currentPrice": 29.6,
+      "targetHighPrice": 38.0,
+      "targetLowPrice": 12.0,
+      "targetMeanPrice": 26.97059,
+      "targetMedianPrice": 27.5,
+      "recommendationMean": 2.7619,
+      "recommendationKey": "hold",
+      "numberOfAnalystOpinions": 17,
+      "totalCash": 3268465920,
+      "totalCashPerShare": 2.71,
+      "totalDebt": 2809537024,
+      "quickRatio": 0.494,
+      "currentRatio": 1.15,
+      "totalRevenue": 3290639104,
+      "debtToEquity": 31.999,
+      "revenuePerShare": 2.948,
+      "returnOnAssets": 0.01607,
+      "returnOnEquity": 0.085930005,
+      "grossProfits": 2715104000,
+      "operatingCashflow": -2951383040,
+      "earningsGrowth": 1.059,
+      "revenueGrowth": 0.378,
+      "grossMargins": 0.8251,
+      "ebitdaMargins": 0.0,
+      "operatingMargins": 0.15597999,
+      "financialCurrency": "USD",
+      "symbol": "SOFI",
+      "language": "en-US",
+      "region": "US",
+      "typeDisp": "Equity",
+      "quoteSourceName": "Nasdaq Real Time Price",
+      "triggerable": true,
+      "customPriceAlertConfidence": "HIGH",
+      "sourceInterval": 15,
+      "exchangeDataDelayedBy": 0,
+      "ipoExpectedDate": "2021-06-01",
+      "prevName": "Social Capital Hedosophia Holdings Corp. V",
+      "nameChangeDate": "2025-12-04",
+      "averageAnalystRating": "2.8 - Hold",
+      "cryptoTradeable": false,
+      "shortName": "SoFi Technologies, Inc.",
+      "corporateActions": [],
+      "postMarketTime": 1764896399,
+      "regularMarketTime": 1764882000,
+      "exchange": "NMS",
+      "exchangeTimezoneName": "America/New_York",
+      "exchangeTimezoneShortName": "EST",
+      "gmtOffSetMilliseconds": -18000000,
+      "esgPopulated": false,
+      "regularMarketChangePercent": 1.82319,
+      "regularMarketPrice": 29.6,
+      "longName": "SoFi Technologies, Inc.",
+      "hasPrePostMarketData": true,
+      "firstTradeDateMilliseconds": 1609770600000,
+      "postMarketChangePercent": -6.182432,
+      "postMarketPrice": 27.77,
+      "postMarketChange": -1.8299999,
+      "regularMarketChange": 0.530001,
+      "regularMarketDayRange": "28.48 - 29.7",
+      "fullExchangeName": "NasdaqGS",
+      "averageDailyVolume3Month": 72276379,
+      "fiftyTwoWeekLowChange": 21.0,
+      "fiftyTwoWeekLowChangePercent": 2.4418604,
+      "fiftyTwoWeekRange": "8.6 - 32.73",
+      "fiftyTwoWeekHighChange": -3.1299992,
+      "fiftyTwoWeekHighChangePercent": -0.09563089,
+      "fiftyTwoWeekChangePercent": 81.46068,
+      "earningsTimestamp": 1761654600,
+      "earningsTimestampStart": 1769434200,
+      "earningsTimestampEnd": 1769434200,
+      "earningsCallTimestampStart": 1761652800,
+      "earningsCallTimestampEnd": 1761652800,
+      "isEarningsDateEstimate": true,
+      "epsTrailingTwelveMonths": 0.56,
+      "epsForward": 0.29,
+      "epsCurrentYear": 0.36758,
+      "priceEpsCurrentYear": 80.52669,
+      "fiftyDayAverageChange": 1.4239998,
+      "fiftyDayAverageChangePercent": 0.050539456,
+      "twoHundredDayAverageChange": 9.671051,
+      "twoHundredDayAverageChangePercent": 0.48527652,
+      "messageBoardId": "finmb_141582707",
+      "market": "us_market",
+      "marketState": "PREPRE",
+      "displayName": "SoFi",
+      "trailingPegRatio": 2.2208
+    }
+  },
+  "statements": {
+    "income_statement": [
+      {
+        "label": "Tax Effect Of Unusual Items",
+        "2024-12-31T00:00:00": 12324690.0,
+        "2023-12-31T00:00:00": -360787.0,
+        "2022-12-31T00:00:00": -4056780.0,
+        "2021-12-31T00:00:00": -7379910.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Tax Rate For Calcs",
+        "2024-12-31T00:00:00": 0.21,
+        "2023-12-31T00:00:00": 0.0014,
+        "2022-12-31T00:00:00": 0.21,
+        "2021-12-31T00:00:00": 0.27,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Unusual Items",
+        "2024-12-31T00:00:00": 58689000.0,
+        "2023-12-31T00:00:00": -257705000.0,
+        "2022-12-31T00:00:00": -19318000.0,
+        "2021-12-31T00:00:00": -27333000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Unusual Items Excluding Goodwill",
+        "2024-12-31T00:00:00": 58689000.0,
+        "2023-12-31T00:00:00": -257705000.0,
+        "2022-12-31T00:00:00": -19318000.0,
+        "2021-12-31T00:00:00": -27333000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Income From Continuing Operation Net Minority Interest",
+        "2024-12-31T00:00:00": 498665000.0,
+        "2023-12-31T00:00:00": -300742000.0,
+        "2022-12-31T00:00:00": -320407000.0,
+        "2021-12-31T00:00:00": -483937000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Reconciled Depreciation",
+        "2024-12-31T00:00:00": 203498000.0,
+        "2023-12-31T00:00:00": 201416000.0,
+        "2022-12-31T00:00:00": 151360000.0,
+        "2021-12-31T00:00:00": 101568000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Interest Income",
+        "2024-12-31T00:00:00": 1716481000.0,
+        "2023-12-31T00:00:00": 1261740000.0,
+        "2022-12-31T00:00:00": 584096000.0,
+        "2021-12-31T00:00:00": 252244000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Interest Expense",
+        "2024-12-31T00:00:00": 1091336000.0,
+        "2023-12-31T00:00:00": 789327000.0,
+        "2022-12-31T00:00:00": 189275000.0,
+        "2021-12-31T00:00:00": 102776000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Interest Income",
+        "2024-12-31T00:00:00": 2807817000.0,
+        "2023-12-31T00:00:00": 2051067000.0,
+        "2022-12-31T00:00:00": 773371000.0,
+        "2021-12-31T00:00:00": 355020000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Normalized Income",
+        "2024-12-31T00:00:00": 452300690.0,
+        "2023-12-31T00:00:00": -43397787.0,
+        "2022-12-31T00:00:00": -305145780.0,
+        "2021-12-31T00:00:00": -463983910.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Income From Continuing And Discontinued Operation",
+        "2024-12-31T00:00:00": 498665000.0,
+        "2023-12-31T00:00:00": -300742000.0,
+        "2022-12-31T00:00:00": -320407000.0,
+        "2021-12-31T00:00:00": -483937000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Diluted Average Shares",
+        "2024-12-31T00:00:00": 1101390000.0,
+        "2023-12-31T00:00:00": 945024160.0,
+        "2022-12-31T00:00:00": 900886113.0,
+        "2021-12-31T00:00:00": 526730261.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Basic Average Shares",
+        "2024-12-31T00:00:00": 1050219000.0,
+        "2023-12-31T00:00:00": 945024160.0,
+        "2022-12-31T00:00:00": 900886113.0,
+        "2021-12-31T00:00:00": 526730261.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Diluted EPS",
+        "2024-12-31T00:00:00": 0.39,
+        "2023-12-31T00:00:00": -0.36,
+        "2022-12-31T00:00:00": -0.4,
+        "2021-12-31T00:00:00": -1.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Basic EPS",
+        "2024-12-31T00:00:00": 0.46,
+        "2023-12-31T00:00:00": -0.36,
+        "2022-12-31T00:00:00": -0.4,
+        "2021-12-31T00:00:00": -1.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Diluted NI Availto Com Stockholders",
+        "2024-12-31T00:00:00": 434776000.0,
+        "2023-12-31T00:00:00": -341167000.0,
+        "2022-12-31T00:00:00": -360832000.0,
+        "2021-12-31T00:00:00": -524363000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Average Dilution Earnings",
+        "2024-12-31T00:00:00": -44360000.0,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": null,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Income Common Stockholders",
+        "2024-12-31T00:00:00": 479136000.0,
+        "2023-12-31T00:00:00": -341167000.0,
+        "2022-12-31T00:00:00": -360832000.0,
+        "2021-12-31T00:00:00": -524363000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Otherunder Preferred Stock Dividend",
+        "2024-12-31T00:00:00": 3026000.0,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": null,
+        "2020-12-31T00:00:00": 52658000.0
+      },
+      {
+        "label": "Preferred Stock Dividends",
+        "2024-12-31T00:00:00": 16503000.0,
+        "2023-12-31T00:00:00": 40425000.0,
+        "2022-12-31T00:00:00": 40425000.0,
+        "2021-12-31T00:00:00": 40426000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Income",
+        "2024-12-31T00:00:00": 498665000.0,
+        "2023-12-31T00:00:00": -300742000.0,
+        "2022-12-31T00:00:00": -320407000.0,
+        "2021-12-31T00:00:00": -483937000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Income Including Noncontrolling Interests",
+        "2024-12-31T00:00:00": 498665000.0,
+        "2023-12-31T00:00:00": -300742000.0,
+        "2022-12-31T00:00:00": -320407000.0,
+        "2021-12-31T00:00:00": -483937000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Income Continuous Operations",
+        "2024-12-31T00:00:00": 498665000.0,
+        "2023-12-31T00:00:00": -300742000.0,
+        "2022-12-31T00:00:00": -320407000.0,
+        "2021-12-31T00:00:00": -483937000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Tax Provision",
+        "2024-12-31T00:00:00": -265320000.0,
+        "2023-12-31T00:00:00": -416000.0,
+        "2022-12-31T00:00:00": 1686000.0,
+        "2021-12-31T00:00:00": 2760000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Pretax Income",
+        "2024-12-31T00:00:00": 233345000.0,
+        "2023-12-31T00:00:00": -301158000.0,
+        "2022-12-31T00:00:00": -318721000.0,
+        "2021-12-31T00:00:00": -481177000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Special Income Charges",
+        "2024-12-31T00:00:00": 58689000.0,
+        "2023-12-31T00:00:00": -257705000.0,
+        "2022-12-31T00:00:00": -19318000.0,
+        "2021-12-31T00:00:00": -27333000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Special Charges",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 10971000.0,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": null,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Impairment Of Capital Assets",
+        "2024-12-31T00:00:00": 0.0,
+        "2023-12-31T00:00:00": 248417000.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Restructuring And Mergern Acquisition",
+        "2024-12-31T00:00:00": 3828000.0,
+        "2023-12-31T00:00:00": 23862000.0,
+        "2022-12-31T00:00:00": 19318000.0,
+        "2021-12-31T00:00:00": 27333000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Gain On Sale Of Security",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": -40031000.0,
+        "2021-12-31T00:00:00": -14862000.0,
+        "2020-12-31T00:00:00": -70251000.0
+      },
+      {
+        "label": "Selling General And Administration",
+        "2024-12-31T00:00:00": 1396382000.0,
+        "2023-12-31T00:00:00": 1230411000.0,
+        "2022-12-31T00:00:00": 1119441000.0,
+        "2021-12-31T00:00:00": 925409000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Selling And Marketing Expense",
+        "2024-12-31T00:00:00": 796293000.0,
+        "2023-12-31T00:00:00": 719400000.0,
+        "2022-12-31T00:00:00": 617823000.0,
+        "2021-12-31T00:00:00": 426875000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "General And Administrative Expense",
+        "2024-12-31T00:00:00": 600089000.0,
+        "2023-12-31T00:00:00": 511011000.0,
+        "2022-12-31T00:00:00": 501618000.0,
+        "2021-12-31T00:00:00": 498534000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Gand A",
+        "2024-12-31T00:00:00": 600089000.0,
+        "2023-12-31T00:00:00": 511011000.0,
+        "2022-12-31T00:00:00": 501618000.0,
+        "2021-12-31T00:00:00": 498534000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Revenue",
+        "2024-12-31T00:00:00": 2612342000.0,
+        "2023-12-31T00:00:00": 2108215000.0,
+        "2022-12-31T00:00:00": 1573535000.0,
+        "2021-12-31T00:00:00": 984872000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Operating Revenue",
+        "2024-12-31T00:00:00": 2612342000.0,
+        "2023-12-31T00:00:00": 2108215000.0,
+        "2022-12-31T00:00:00": 1573535000.0,
+        "2021-12-31T00:00:00": 984872000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Non Interest Expense",
+        "2024-12-31T00:00:00": 1009592000.0,
+        "2023-12-31T00:00:00": 866312000.0,
+        "2022-12-31T00:00:00": 699165000.0,
+        "2021-12-31T00:00:00": 505734000.0,
+        "2020-12-31T00:00:00": null
+      }
+    ],
+    "balance_sheet": [
+      {
+        "label": "Treasury Shares Number",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": null,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Shares Number",
+        "2024-12-31T00:00:00": 3234000.0,
+        "2023-12-31T00:00:00": 3234000.0,
+        "2022-12-31T00:00:00": 3234000.0,
+        "2021-12-31T00:00:00": 3234000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Ordinary Shares Number",
+        "2024-12-31T00:00:00": 1095357781.0,
+        "2023-12-31T00:00:00": 975861793.0,
+        "2022-12-31T00:00:00": 933896120.0,
+        "2021-12-31T00:00:00": 828154462.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Share Issued",
+        "2024-12-31T00:00:00": 1095357781.0,
+        "2023-12-31T00:00:00": 975861793.0,
+        "2022-12-31T00:00:00": 933896120.0,
+        "2021-12-31T00:00:00": 828154462.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Debt",
+        "2024-12-31T00:00:00": 555008000.0,
+        "2023-12-31T00:00:00": 2155792000.0,
+        "2022-12-31T00:00:00": 4081023000.0,
+        "2021-12-31T00:00:00": 3546954000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Debt",
+        "2024-12-31T00:00:00": 3204210000.0,
+        "2023-12-31T00:00:00": 5362633000.0,
+        "2022-12-31T00:00:00": 5634371000.0,
+        "2021-12-31T00:00:00": 4194633000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Tangible Book Value",
+        "2024-12-31T00:00:00": 4491707000.0,
+        "2023-12-31T00:00:00": 3296590000.0,
+        "2022-12-31T00:00:00": 2993102000.0,
+        "2021-12-31T00:00:00": 3025964000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Invested Capital",
+        "2024-12-31T00:00:00": 9618435000.0,
+        "2023-12-31T00:00:00": 10475424000.0,
+        "2022-12-31T00:00:00": 10711032000.0,
+        "2021-12-31T00:00:00": 8418994000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Tangible Assets",
+        "2024-12-31T00:00:00": 4491707000.0,
+        "2023-12-31T00:00:00": 3616964000.0,
+        "2022-12-31T00:00:00": 3313476000.0,
+        "2021-12-31T00:00:00": 3346338000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Capital Lease Obligations",
+        "2024-12-31T00:00:00": 110909000.0,
+        "2023-12-31T00:00:00": 121821000.0,
+        "2022-12-31T00:00:00": 131441000.0,
+        "2021-12-31T00:00:00": 152968000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Common Stock Equity",
+        "2024-12-31T00:00:00": 6525134000.0,
+        "2023-12-31T00:00:00": 5234612000.0,
+        "2022-12-31T00:00:00": 5208102000.0,
+        "2021-12-31T00:00:00": 4377329000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Stock Equity",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 320374000.0,
+        "2022-12-31T00:00:00": 320374000.0,
+        "2021-12-31T00:00:00": 320374000.0,
+        "2020-12-31T00:00:00": 3173686000.0
+      },
+      {
+        "label": "Total Capitalization",
+        "2024-12-31T00:00:00": 9132435000.0,
+        "2023-12-31T00:00:00": 10309798000.0,
+        "2022-12-31T00:00:00": 10545406000.0,
+        "2021-12-31T00:00:00": 8241558000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Equity Gross Minority Interest",
+        "2024-12-31T00:00:00": 6525134000.0,
+        "2023-12-31T00:00:00": 5554986000.0,
+        "2022-12-31T00:00:00": 5528476000.0,
+        "2021-12-31T00:00:00": 4697703000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Stockholders Equity",
+        "2024-12-31T00:00:00": 6525134000.0,
+        "2023-12-31T00:00:00": 5554986000.0,
+        "2022-12-31T00:00:00": 5528476000.0,
+        "2021-12-31T00:00:00": 4697703000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Gains Losses Not Affecting Retained Earnings",
+        "2024-12-31T00:00:00": -8365000.0,
+        "2023-12-31T00:00:00": -1209000.0,
+        "2022-12-31T00:00:00": -8296000.0,
+        "2021-12-31T00:00:00": -1471000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Retained Earnings",
+        "2024-12-31T00:00:00": -1305598000.0,
+        "2023-12-31T00:00:00": -1804263000.0,
+        "2022-12-31T00:00:00": -1503521000.0,
+        "2021-12-31T00:00:00": -1183114000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Additional Paid In Capital",
+        "2024-12-31T00:00:00": 7838988000.0,
+        "2023-12-31T00:00:00": 7039987000.0,
+        "2022-12-31T00:00:00": 6719826000.0,
+        "2021-12-31T00:00:00": 5561831000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Capital Stock",
+        "2024-12-31T00:00:00": 109000.0,
+        "2023-12-31T00:00:00": 320471000.0,
+        "2022-12-31T00:00:00": 320467000.0,
+        "2021-12-31T00:00:00": 320457000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Common Stock",
+        "2024-12-31T00:00:00": 109000.0,
+        "2023-12-31T00:00:00": 97000.0,
+        "2022-12-31T00:00:00": 93000.0,
+        "2021-12-31T00:00:00": 83000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Stock",
+        "2024-12-31T00:00:00": 0.0,
+        "2023-12-31T00:00:00": 320374000.0,
+        "2022-12-31T00:00:00": 320374000.0,
+        "2021-12-31T00:00:00": 320374000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Liabilities Net Minority Interest",
+        "2024-12-31T00:00:00": 29725817000.0,
+        "2023-12-31T00:00:00": 24519872000.0,
+        "2022-12-31T00:00:00": 13479199000.0,
+        "2021-12-31T00:00:00": 4478623000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Securities Outside Stock Equity",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 320374000.0,
+        "2020-12-31T00:00:00": 3173686000.0
+      },
+      {
+        "label": "Derivative Product Liabilities",
+        "2024-12-31T00:00:00": 91206000.0,
+        "2023-12-31T00:00:00": 107808000.0,
+        "2022-12-31T00:00:00": 9251000.0,
+        "2021-12-31T00:00:00": 864000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Non Current Deferred Liabilities",
+        "2024-12-31T00:00:00": 27638000.0,
+        "2023-12-31T00:00:00": 45947000.0,
+        "2022-12-31T00:00:00": 66510000.0,
+        "2021-12-31T00:00:00": 4340000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Non Current Deferred Revenue",
+        "2024-12-31T00:00:00": 7474000.0,
+        "2023-12-31T00:00:00": 5718000.0,
+        "2022-12-31T00:00:00": 10028000.0,
+        "2021-12-31T00:00:00": 2553000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Non Current Deferred Taxes Liabilities",
+        "2024-12-31T00:00:00": 20164000.0,
+        "2023-12-31T00:00:00": 40229000.0,
+        "2022-12-31T00:00:00": 56482000.0,
+        "2021-12-31T00:00:00": 1787000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Long Term Debt And Capital Lease Obligation",
+        "2024-12-31T00:00:00": 2718210000.0,
+        "2023-12-31T00:00:00": 4876633000.0,
+        "2022-12-31T00:00:00": 5148371000.0,
+        "2021-12-31T00:00:00": 3696823000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Long Term Capital Lease Obligation",
+        "2024-12-31T00:00:00": 110909000.0,
+        "2023-12-31T00:00:00": 121821000.0,
+        "2022-12-31T00:00:00": 131441000.0,
+        "2021-12-31T00:00:00": 152968000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Long Term Debt",
+        "2024-12-31T00:00:00": 2607301000.0,
+        "2023-12-31T00:00:00": 4754812000.0,
+        "2022-12-31T00:00:00": 5016930000.0,
+        "2021-12-31T00:00:00": 3543855000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Current Debt And Capital Lease Obligation",
+        "2024-12-31T00:00:00": 486000000.0,
+        "2023-12-31T00:00:00": 486000000.0,
+        "2022-12-31T00:00:00": 486000000.0,
+        "2021-12-31T00:00:00": 497810000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Current Debt",
+        "2024-12-31T00:00:00": 486000000.0,
+        "2023-12-31T00:00:00": 486000000.0,
+        "2022-12-31T00:00:00": 486000000.0,
+        "2021-12-31T00:00:00": 497810000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Line Of Credit",
+        "2024-12-31T00:00:00": 486000000.0,
+        "2023-12-31T00:00:00": 486000000.0,
+        "2022-12-31T00:00:00": 486000000.0,
+        "2021-12-31T00:00:00": 497810000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Payables And Accrued Expenses",
+        "2024-12-31T00:00:00": 398100000.0,
+        "2023-12-31T00:00:00": 362174000.0,
+        "2022-12-31T00:00:00": 290546000.0,
+        "2021-12-31T00:00:00": 252262000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Current Accrued Expenses",
+        "2024-12-31T00:00:00": 265316000.0,
+        "2023-12-31T00:00:00": 202259000.0,
+        "2022-12-31T00:00:00": 145971000.0,
+        "2021-12-31T00:00:00": 94199000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Payables",
+        "2024-12-31T00:00:00": 132784000.0,
+        "2023-12-31T00:00:00": 159915000.0,
+        "2022-12-31T00:00:00": 144575000.0,
+        "2021-12-31T00:00:00": 158063000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Accounts Payable",
+        "2024-12-31T00:00:00": 132784000.0,
+        "2023-12-31T00:00:00": 159915000.0,
+        "2022-12-31T00:00:00": 144575000.0,
+        "2021-12-31T00:00:00": 158063000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Total Assets",
+        "2024-12-31T00:00:00": 36250951000.0,
+        "2023-12-31T00:00:00": 30074858000.0,
+        "2022-12-31T00:00:00": 19007675000.0,
+        "2021-12-31T00:00:00": 9176326000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Investments And Advances",
+        "2024-12-31T00:00:00": 1925189000.0,
+        "2023-12-31T00:00:00": 724855000.0,
+        "2022-12-31T00:00:00": 419594000.0,
+        "2021-12-31T00:00:00": 595388000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Available For Sale Securities",
+        "2024-12-31T00:00:00": 91646000.0,
+        "2023-12-31T00:00:00": 200993000.0,
+        "2022-12-31T00:00:00": 357337000.0,
+        "2021-12-31T00:00:00": 374688000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Long Term Equity Investment",
+        "2024-12-31T00:00:00": 29500000.0,
+        "2023-12-31T00:00:00": 22920000.0,
+        "2022-12-31T00:00:00": 22825000.0,
+        "2021-12-31T00:00:00": 25793000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Goodwill And Other Intangible Assets",
+        "2024-12-31T00:00:00": 2033427000.0,
+        "2023-12-31T00:00:00": 1938022000.0,
+        "2022-12-31T00:00:00": 2215000000.0,
+        "2021-12-31T00:00:00": 1351365000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Intangible Assets",
+        "2024-12-31T00:00:00": 639922000.0,
+        "2023-12-31T00:00:00": 544517000.0,
+        "2022-12-31T00:00:00": 592009000.0,
+        "2021-12-31T00:00:00": 452838000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Goodwill",
+        "2024-12-31T00:00:00": 1393505000.0,
+        "2023-12-31T00:00:00": 1393505000.0,
+        "2022-12-31T00:00:00": 1622991000.0,
+        "2021-12-31T00:00:00": 898527000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net PPE",
+        "2024-12-31T00:00:00": 369088000.0,
+        "2023-12-31T00:00:00": 306543000.0,
+        "2022-12-31T00:00:00": 267239000.0,
+        "2021-12-31T00:00:00": 227064000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Accumulated Depreciation",
+        "2024-12-31T00:00:00": -216905000.0,
+        "2023-12-31T00:00:00": -174599000.0,
+        "2022-12-31T00:00:00": -100619000.0,
+        "2021-12-31T00:00:00": -54436000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Gross PPE",
+        "2024-12-31T00:00:00": 585993000.0,
+        "2023-12-31T00:00:00": 481142000.0,
+        "2022-12-31T00:00:00": 367858000.0,
+        "2021-12-31T00:00:00": 281500000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Leases",
+        "2024-12-31T00:00:00": 38625000.0,
+        "2023-12-31T00:00:00": 39046000.0,
+        "2022-12-31T00:00:00": 40257000.0,
+        "2021-12-31T00:00:00": 39726000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Construction In Progress",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 661000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Properties",
+        "2024-12-31T00:00:00": 97197000.0,
+        "2023-12-31T00:00:00": 104735000.0,
+        "2022-12-31T00:00:00": 112235000.0,
+        "2021-12-31T00:00:00": 130291000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Machinery Furniture Equipment",
+        "2024-12-31T00:00:00": 446972000.0,
+        "2023-12-31T00:00:00": 334169000.0,
+        "2022-12-31T00:00:00": 212174000.0,
+        "2021-12-31T00:00:00": 110822000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Buildings And Improvements",
+        "2024-12-31T00:00:00": 3199000.0,
+        "2023-12-31T00:00:00": 3192000.0,
+        "2022-12-31T00:00:00": 3192000.0,
+        "2021-12-31T00:00:00": null,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Prepaid Assets",
+        "2024-12-31T00:00:00": 276931000.0,
+        "2023-12-31T00:00:00": 112748000.0,
+        "2022-12-31T00:00:00": 73429000.0,
+        "2021-12-31T00:00:00": 57903000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Receivables",
+        "2024-12-31T00:00:00": 587496000.0,
+        "2023-12-31T00:00:00": 169852000.0,
+        "2022-12-31T00:00:00": 127050000.0,
+        "2021-12-31T00:00:00": 85523000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Receivables",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 462000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Notes Receivable",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": 17923000.0
+      },
+      {
+        "label": "Accounts Receivable",
+        "2024-12-31T00:00:00": 587496000.0,
+        "2023-12-31T00:00:00": 169852000.0,
+        "2022-12-31T00:00:00": 127050000.0,
+        "2021-12-31T00:00:00": 85523000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Other Short Term Investments",
+        "2024-12-31T00:00:00": 1804043000.0,
+        "2023-12-31T00:00:00": 500942000.0,
+        "2022-12-31T00:00:00": 39432000.0,
+        "2021-12-31T00:00:00": 194907000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Cash And Cash Equivalents",
+        "2024-12-31T00:00:00": 2538293000.0,
+        "2023-12-31T00:00:00": 3085020000.0,
+        "2022-12-31T00:00:00": 1421907000.0,
+        "2021-12-31T00:00:00": 494711000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Cash Cash Equivalents And Federal Funds Sold",
+        "2024-12-31T00:00:00": 2818777000.0,
+        "2023-12-31T00:00:00": 3699129000.0,
+        "2022-12-31T00:00:00": 1874953000.0,
+        "2021-12-31T00:00:00": 768437000.0,
+        "2020-12-31T00:00:00": null
+      }
+    ],
+    "cash_flow": [
+      {
+        "label": "Free Cash Flow",
+        "2024-12-31T00:00:00": -1283424000.0,
+        "2023-12-31T00:00:00": -7348331000.0,
+        "2022-12-31T00:00:00": -7359591000.0,
+        "2021-12-31T00:00:00": -1402478000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Repurchase Of Capital Stock",
+        "2024-12-31T00:00:00": -323400000.0,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": -283385000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Repayment Of Debt",
+        "2024-12-31T00:00:00": -2335971000.0,
+        "2023-12-31T00:00:00": -800368000.0,
+        "2022-12-31T00:00:00": -516851000.0,
+        "2021-12-31T00:00:00": -2100286000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Issuance Of Debt",
+        "2024-12-31T00:00:00": 845250000.0,
+        "2023-12-31T00:00:00": 520549000.0,
+        "2022-12-31T00:00:00": 1858446000.0,
+        "2021-12-31T00:00:00": 1191908000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Issuance Of Capital Stock",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": 369840000.0
+      },
+      {
+        "label": "Capital Expenditure",
+        "2024-12-31T00:00:00": -163617000.0,
+        "2023-12-31T00:00:00": -121192000.0,
+        "2022-12-31T00:00:00": -103733000.0,
+        "2021-12-31T00:00:00": -52261000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Interest Paid Supplemental Data",
+        "2024-12-31T00:00:00": 1118032000.0,
+        "2023-12-31T00:00:00": 720163000.0,
+        "2022-12-31T00:00:00": 150866000.0,
+        "2021-12-31T00:00:00": 94795000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Income Tax Paid Supplemental Data",
+        "2024-12-31T00:00:00": 26910000.0,
+        "2023-12-31T00:00:00": 14326000.0,
+        "2022-12-31T00:00:00": 2567000.0,
+        "2021-12-31T00:00:00": 1759000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "End Cash Position",
+        "2024-12-31T00:00:00": 2709360000.0,
+        "2023-12-31T00:00:00": 3615578000.0,
+        "2022-12-31T00:00:00": 1846302000.0,
+        "2021-12-31T00:00:00": 768437000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Beginning Cash Position",
+        "2024-12-31T00:00:00": 3615578000.0,
+        "2023-12-31T00:00:00": 1846302000.0,
+        "2022-12-31T00:00:00": 768437000.0,
+        "2021-12-31T00:00:00": 1323428000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Effect Of Exchange Rate Changes",
+        "2024-12-31T00:00:00": 2000.0,
+        "2023-12-31T00:00:00": 677000.0,
+        "2022-12-31T00:00:00": 571000.0,
+        "2021-12-31T00:00:00": 46000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Changes In Cash",
+        "2024-12-31T00:00:00": -906220000.0,
+        "2023-12-31T00:00:00": 1768599000.0,
+        "2022-12-31T00:00:00": 1077294000.0,
+        "2021-12-31T00:00:00": -555037000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Financing Cash Flow",
+        "2024-12-31T00:00:00": 5034577000.0,
+        "2023-12-31T00:00:00": 10885602000.0,
+        "2022-12-31T00:00:00": 8439485000.0,
+        "2021-12-31T00:00:00": 684987000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Cash Flow From Continuing Financing Activities",
+        "2024-12-31T00:00:00": 5034577000.0,
+        "2023-12-31T00:00:00": 10885602000.0,
+        "2022-12-31T00:00:00": 8439485000.0,
+        "2021-12-31T00:00:00": 684987000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Other Financing Charges",
+        "2024-12-31T00:00:00": -30221000.0,
+        "2023-12-31T00:00:00": -27203000.0,
+        "2022-12-31T00:00:00": -17270000.0,
+        "2021-12-31T00:00:00": 1910735000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Proceeds From Stock Option Exercised",
+        "2024-12-31T00:00:00": -59062000.0,
+        "2023-12-31T00:00:00": 1145000.0,
+        "2022-12-31T00:00:00": 2610000.0,
+        "2021-12-31T00:00:00": 6441000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Cash Dividends Paid",
+        "2024-12-31T00:00:00": -16503000.0,
+        "2023-12-31T00:00:00": -40425000.0,
+        "2022-12-31T00:00:00": -40425000.0,
+        "2021-12-31T00:00:00": -40426000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Stock Dividend Paid",
+        "2024-12-31T00:00:00": -16503000.0,
+        "2023-12-31T00:00:00": -40425000.0,
+        "2022-12-31T00:00:00": -40425000.0,
+        "2021-12-31T00:00:00": -40426000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Preferred Stock Issuance",
+        "2024-12-31T00:00:00": -323400000.0,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Stock Payments",
+        "2024-12-31T00:00:00": -323400000.0,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": -40426000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Preferred Stock Issuance",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": 0.0
+      },
+      {
+        "label": "Net Common Stock Issuance",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": -283385000.0,
+        "2020-12-31T00:00:00": 369800000.0
+      },
+      {
+        "label": "Common Stock Payments",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": -283385000.0,
+        "2020-12-31T00:00:00": -40000.0
+      },
+      {
+        "label": "Common Stock Issuance",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": 369840000.0
+      },
+      {
+        "label": "Net Issuance Payments Of Debt",
+        "2024-12-31T00:00:00": -1490721000.0,
+        "2023-12-31T00:00:00": -279819000.0,
+        "2022-12-31T00:00:00": 1341595000.0,
+        "2021-12-31T00:00:00": -908378000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Long Term Debt Issuance",
+        "2024-12-31T00:00:00": -1490721000.0,
+        "2023-12-31T00:00:00": -279819000.0,
+        "2022-12-31T00:00:00": 1341595000.0,
+        "2021-12-31T00:00:00": -908378000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Long Term Debt Payments",
+        "2024-12-31T00:00:00": -2335971000.0,
+        "2023-12-31T00:00:00": -800368000.0,
+        "2022-12-31T00:00:00": -516851000.0,
+        "2021-12-31T00:00:00": -2100286000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Long Term Debt Issuance",
+        "2024-12-31T00:00:00": 845250000.0,
+        "2023-12-31T00:00:00": 520549000.0,
+        "2022-12-31T00:00:00": 1858446000.0,
+        "2021-12-31T00:00:00": 1191908000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Investing Cash Flow",
+        "2024-12-31T00:00:00": -4820990000.0,
+        "2023-12-31T00:00:00": -1889864000.0,
+        "2022-12-31T00:00:00": -106333000.0,
+        "2021-12-31T00:00:00": 110193000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Cash Flow From Continuing Investing Activities",
+        "2024-12-31T00:00:00": -4820990000.0,
+        "2023-12-31T00:00:00": -1889864000.0,
+        "2022-12-31T00:00:00": -106333000.0,
+        "2021-12-31T00:00:00": 110193000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Other Investing Changes",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 16693000.0,
+        "2020-12-31T00:00:00": -7643000.0
+      },
+      {
+        "label": "Net Investment Purchase And Sale",
+        "2024-12-31T00:00:00": -1151581000.0,
+        "2023-12-31T00:00:00": -333953000.0,
+        "2022-12-31T00:00:00": 112588000.0,
+        "2021-12-31T00:00:00": 145761000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Sale Of Investment",
+        "2024-12-31T00:00:00": 1076716000.0,
+        "2023-12-31T00:00:00": 533107000.0,
+        "2022-12-31T00:00:00": 157562000.0,
+        "2021-12-31T00:00:00": 414133000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Purchase Of Investment",
+        "2024-12-31T00:00:00": -2228297000.0,
+        "2023-12-31T00:00:00": -867060000.0,
+        "2022-12-31T00:00:00": -44974000.0,
+        "2021-12-31T00:00:00": -268372000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Net Business Purchase And Sale",
+        "2024-12-31T00:00:00": 0.0,
+        "2023-12-31T00:00:00": -72301000.0,
+        "2022-12-31T00:00:00": 58540000.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Sale Of Business",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": null,
+        "2022-12-31T00:00:00": 58540000.0,
+        "2021-12-31T00:00:00": null,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Purchase Of Business",
+        "2024-12-31T00:00:00": 0.0,
+        "2023-12-31T00:00:00": -72301000.0,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": -32392000.0
+      },
+      {
+        "label": "Net PPE Purchase And Sale",
+        "2024-12-31T00:00:00": -154265000.0,
+        "2023-12-31T00:00:00": -111409000.0,
+        "2022-12-31T00:00:00": -93201000.0,
+        "2021-12-31T00:00:00": -52261000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Purchase Of PPE",
+        "2024-12-31T00:00:00": -154265000.0,
+        "2023-12-31T00:00:00": -111409000.0,
+        "2022-12-31T00:00:00": -93201000.0,
+        "2021-12-31T00:00:00": -52261000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Capital Expenditure Reported",
+        "2024-12-31T00:00:00": -9352000.0,
+        "2023-12-31T00:00:00": -9783000.0,
+        "2022-12-31T00:00:00": -10532000.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Operating Cash Flow",
+        "2024-12-31T00:00:00": -1119807000.0,
+        "2023-12-31T00:00:00": -7227139000.0,
+        "2022-12-31T00:00:00": -7255858000.0,
+        "2021-12-31T00:00:00": -1350217000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Cash Flow From Continuing Operating Activities",
+        "2024-12-31T00:00:00": -1119807000.0,
+        "2023-12-31T00:00:00": -7227139000.0,
+        "2022-12-31T00:00:00": -7255858000.0,
+        "2021-12-31T00:00:00": -1350217000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Change In Working Capital",
+        "2024-12-31T00:00:00": -1612860000.0,
+        "2023-12-31T00:00:00": -7633174000.0,
+        "2022-12-31T00:00:00": -7495565000.0,
+        "2021-12-31T00:00:00": -1345314000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Change In Other Current Assets",
+        "2024-12-31T00:00:00": -620109000.0,
+        "2023-12-31T00:00:00": -37110000.0,
+        "2022-12-31T00:00:00": -38456000.0,
+        "2021-12-31T00:00:00": -29362000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Change In Payables And Accrued Expense",
+        "2024-12-31T00:00:00": 23552000.0,
+        "2023-12-31T00:00:00": 42088000.0,
+        "2022-12-31T00:00:00": 6365000.0,
+        "2021-12-31T00:00:00": -9022000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Change In Payable",
+        "2024-12-31T00:00:00": 23552000.0,
+        "2023-12-31T00:00:00": 42088000.0,
+        "2022-12-31T00:00:00": 6365000.0,
+        "2021-12-31T00:00:00": -9022000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Change In Account Payable",
+        "2024-12-31T00:00:00": 23552000.0,
+        "2023-12-31T00:00:00": 42088000.0,
+        "2022-12-31T00:00:00": 6365000.0,
+        "2021-12-31T00:00:00": -9022000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Change In Receivables",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 1399000.0,
+        "2020-12-31T00:00:00": 1121000.0
+      },
+      {
+        "label": "Changes In Account Receivables",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 1399000.0,
+        "2020-12-31T00:00:00": 1121000.0
+      },
+      {
+        "label": "Other Non Cash Items",
+        "2024-12-31T00:00:00": -134698000.0,
+        "2023-12-31T00:00:00": -37524000.0,
+        "2022-12-31T00:00:00": 38326000.0,
+        "2021-12-31T00:00:00": 28627000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Stock Based Compensation",
+        "2024-12-31T00:00:00": 246152000.0,
+        "2023-12-31T00:00:00": 271216000.0,
+        "2022-12-31T00:00:00": 305994000.0,
+        "2021-12-31T00:00:00": 239011000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Unrealized Gain Loss On Investment Securities",
+        "2024-12-31T00:00:00": -2842000.0,
+        "2023-12-31T00:00:00": -48000.0,
+        "2022-12-31T00:00:00": 13600000.0,
+        "2021-12-31T00:00:00": -6538000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Asset Impairment Charge",
+        "2024-12-31T00:00:00": 0.0,
+        "2023-12-31T00:00:00": 247174000.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 0.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Deferred Tax",
+        "2024-12-31T00:00:00": -286917000.0,
+        "2023-12-31T00:00:00": -15828000.0,
+        "2022-12-31T00:00:00": -3498000.0,
+        "2021-12-31T00:00:00": 1204000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Deferred Income Tax",
+        "2024-12-31T00:00:00": -286917000.0,
+        "2023-12-31T00:00:00": -15828000.0,
+        "2022-12-31T00:00:00": -3498000.0,
+        "2021-12-31T00:00:00": 1204000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Depreciation Amortization Depletion",
+        "2024-12-31T00:00:00": 203498000.0,
+        "2023-12-31T00:00:00": 201416000.0,
+        "2022-12-31T00:00:00": 151360000.0,
+        "2021-12-31T00:00:00": 101568000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Depreciation And Amortization",
+        "2024-12-31T00:00:00": 203498000.0,
+        "2023-12-31T00:00:00": 201416000.0,
+        "2022-12-31T00:00:00": 151360000.0,
+        "2021-12-31T00:00:00": 101568000.0,
+        "2020-12-31T00:00:00": null
+      },
+      {
+        "label": "Operating Gains Losses",
+        "2024-12-31T00:00:00": -62517000.0,
+        "2023-12-31T00:00:00": -14574000.0,
+        "2022-12-31T00:00:00": null,
+        "2021-12-31T00:00:00": 107589000.0,
+        "2020-12-31T00:00:00": 16211000.0
+      },
+      {
+        "label": "Earnings Losses From Equity Investments",
+        "2024-12-31T00:00:00": null,
+        "2023-12-31T00:00:00": 0.0,
+        "2022-12-31T00:00:00": 0.0,
+        "2021-12-31T00:00:00": 261000.0,
+        "2020-12-31T00:00:00": -4314000.0
+      },
+      {
+        "label": "Net Income From Continuing Operations",
+        "2024-12-31T00:00:00": 498665000.0,
+        "2023-12-31T00:00:00": -300742000.0,
+        "2022-12-31T00:00:00": -320407000.0,
+        "2021-12-31T00:00:00": -483937000.0,
+        "2020-12-31T00:00:00": null
+      }
+    ]
+  },
+  "quarterly": {
+    "income_statement": [
+      {
+        "label": "TaxEffectOfUnusualItems",
+        "2025-09-30T00:00:00": -184658.501121,
+        "2025-06-30T00:00:00": -279705.843554,
+        "2025-03-31T00:00:00": -122415.858214,
+        "2024-12-31T00:00:00": -229950.0,
+        "2024-09-30T00:00:00": 76611.541774,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TaxRateForCalcs",
+        "2025-09-30T00:00:00": 0.061656,
+        "2025-06-30T00:00:00": 0.133067,
+        "2025-03-31T00:00:00": 0.108621,
+        "2024-12-31T00:00:00": 0.21,
+        "2024-09-30T00:00:00": 0.048704,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TotalUnusualItems",
+        "2025-09-30T00:00:00": -2995000.0,
+        "2025-06-30T00:00:00": -2102000.0,
+        "2025-03-31T00:00:00": -1127000.0,
+        "2024-12-31T00:00:00": -1095000.0,
+        "2024-09-30T00:00:00": 1573000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TotalUnusualItemsExcludingGoodwill",
+        "2025-09-30T00:00:00": -2995000.0,
+        "2025-06-30T00:00:00": -2102000.0,
+        "2025-03-31T00:00:00": -1127000.0,
+        "2024-12-31T00:00:00": -1095000.0,
+        "2024-09-30T00:00:00": 1573000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIncomeFromContinuingOperationNetMinorityInterest",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ReconciledDepreciation",
+        "2025-09-30T00:00:00": 59245000.0,
+        "2025-06-30T00:00:00": 56743000.0,
+        "2025-03-31T00:00:00": 55283000.0,
+        "2024-12-31T00:00:00": 53545000.0,
+        "2024-09-30T00:00:00": 51791000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetInterestIncome",
+        "2025-09-30T00:00:00": 585114000.0,
+        "2025-06-30T00:00:00": 517837000.0,
+        "2025-03-31T00:00:00": 498726000.0,
+        "2024-12-31T00:00:00": 470169000.0,
+        "2024-09-30T00:00:00": 431010000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "InterestExpense",
+        "2025-09-30T00:00:00": 306447000.0,
+        "2025-06-30T00:00:00": 274568000.0,
+        "2025-03-31T00:00:00": 265086000.0,
+        "2024-12-31T00:00:00": 273768000.0,
+        "2024-09-30T00:00:00": 292364000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "InterestIncome",
+        "2025-09-30T00:00:00": 891561000.0,
+        "2025-06-30T00:00:00": 792405000.0,
+        "2025-03-31T00:00:00": 763812000.0,
+        "2024-12-31T00:00:00": 743937000.0,
+        "2024-09-30T00:00:00": 723374000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NormalizedIncome",
+        "2025-09-30T00:00:00": 142202341.498879,
+        "2025-06-30T00:00:00": 99085294.156446,
+        "2025-03-31T00:00:00": 72120584.141786,
+        "2024-12-31T00:00:00": 333338050.0,
+        "2024-09-30T00:00:00": 59248611.541774,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIncomeFromContinuingAndDiscontinuedOperation",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DilutedAverageShares",
+        "2025-09-30T00:00:00": 1291011000.0,
+        "2025-06-30T00:00:00": 1182877000.0,
+        "2025-03-31T00:00:00": 1185466000.0,
+        "2024-12-31T00:00:00": 1151047000.0,
+        "2024-09-30T00:00:00": 1104450416.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "BasicAverageShares",
+        "2025-09-30T00:00:00": 1171205000.0,
+        "2025-06-30T00:00:00": 1107006000.0,
+        "2025-03-31T00:00:00": 1097994000.0,
+        "2024-12-31T00:00:00": 1087863000.0,
+        "2024-09-30T00:00:00": 1071159746.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DilutedEPS",
+        "2025-09-30T00:00:00": 0.11,
+        "2025-06-30T00:00:00": 0.08,
+        "2025-03-31T00:00:00": 0.06,
+        "2024-12-31T00:00:00": 0.29,
+        "2024-09-30T00:00:00": 0.05,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "BasicEPS",
+        "2025-09-30T00:00:00": 0.12,
+        "2025-06-30T00:00:00": 0.09,
+        "2025-03-31T00:00:00": 0.06,
+        "2024-12-31T00:00:00": 0.31,
+        "2024-09-30T00:00:00": 0.06,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DilutedNIAvailtoComStockholders",
+        "2025-09-30T00:00:00": 139738000.0,
+        "2025-06-30T00:00:00": 97614000.0,
+        "2025-03-31T00:00:00": 71455000.0,
+        "2024-12-31T00:00:00": 345848000.0,
+        "2024-09-30T00:00:00": 58059000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "AverageDilutionEarnings",
+        "2025-09-30T00:00:00": 346000.0,
+        "2025-06-30T00:00:00": 351000.0,
+        "2025-03-31T00:00:00": 339000.0,
+        "2024-12-31T00:00:00": 13375000.0,
+        "2024-09-30T00:00:00": -2686000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIncomeCommonStockholders",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherunderPreferredStockDividend",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": 3026000.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PreferredStockDividends",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": 6424000.0,
+        "2024-03-31T00:00:00": 10079000.0
+      },
+      {
+        "label": "NetIncome",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIncomeIncludingNoncontrollingInterests",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIncomeContinuousOperations",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TaxProvision",
+        "2025-09-30T00:00:00": 9159000.0,
+        "2025-06-30T00:00:00": 14929000.0,
+        "2025-03-31T00:00:00": 8666000.0,
+        "2024-12-31T00:00:00": -272549000.0,
+        "2024-09-30T00:00:00": 3110000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PretaxIncome",
+        "2025-09-30T00:00:00": 148551000.0,
+        "2025-06-30T00:00:00": 112192000.0,
+        "2025-03-31T00:00:00": 79782000.0,
+        "2024-12-31T00:00:00": 59924000.0,
+        "2024-09-30T00:00:00": 63855000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "SpecialIncomeCharges",
+        "2025-09-30T00:00:00": -2995000.0,
+        "2025-06-30T00:00:00": -2102000.0,
+        "2025-03-31T00:00:00": -1127000.0,
+        "2024-12-31T00:00:00": -1095000.0,
+        "2024-09-30T00:00:00": 1573000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherSpecialCharges",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": null,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": 194000.0,
+        "2024-03-31T00:00:00": 174000.0
+      },
+      {
+        "label": "ImpairmentOfCapitalAssets",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": 0.0,
+        "2024-03-31T00:00:00": 0.0
+      },
+      {
+        "label": "RestructuringAndMergernAcquisition",
+        "2025-09-30T00:00:00": 2995000.0,
+        "2025-06-30T00:00:00": 2102000.0,
+        "2025-03-31T00:00:00": 1127000.0,
+        "2024-12-31T00:00:00": 1095000.0,
+        "2024-09-30T00:00:00": 1750000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "SellingGeneralAndAdministration",
+        "2025-09-30T00:00:00": 475283000.0,
+        "2025-06-30T00:00:00": 430134000.0,
+        "2025-03-31T00:00:00": 394573000.0,
+        "2024-12-31T00:00:00": 390183000.0,
+        "2024-09-30T00:00:00": 363825000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "SellingAndMarketingExpense",
+        "2025-09-30T00:00:00": 286878000.0,
+        "2025-06-30T00:00:00": 264744000.0,
+        "2025-03-31T00:00:00": 238176000.0,
+        "2024-12-31T00:00:00": 229261000.0,
+        "2024-09-30T00:00:00": 214904000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "GeneralAndAdministrativeExpense",
+        "2025-09-30T00:00:00": 188405000.0,
+        "2025-06-30T00:00:00": 165390000.0,
+        "2025-03-31T00:00:00": 156397000.0,
+        "2024-12-31T00:00:00": 160922000.0,
+        "2024-09-30T00:00:00": 148921000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherGandA",
+        "2025-09-30T00:00:00": 188405000.0,
+        "2025-06-30T00:00:00": 165390000.0,
+        "2025-03-31T00:00:00": 156397000.0,
+        "2024-12-31T00:00:00": 160922000.0,
+        "2024-09-30T00:00:00": 148921000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TotalRevenue",
+        "2025-09-30T00:00:00": 961600000.0,
+        "2025-06-30T00:00:00": 854944000.0,
+        "2025-03-31T00:00:00": 771759000.0,
+        "2024-12-31T00:00:00": 734125000.0,
+        "2024-09-30T00:00:00": 693798000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OperatingRevenue",
+        "2025-09-30T00:00:00": 961600000.0,
+        "2025-06-30T00:00:00": 854944000.0,
+        "2025-03-31T00:00:00": 771759000.0,
+        "2024-12-31T00:00:00": 734125000.0,
+        "2024-09-30T00:00:00": 693798000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherNonInterestExpense",
+        "2025-09-30T00:00:00": 325572000.0,
+        "2025-06-30T00:00:00": 300481000.0,
+        "2025-03-31T00:00:00": 290599000.0,
+        "2024-12-31T00:00:00": 276046000.0,
+        "2024-09-30T00:00:00": 261678000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      }
+    ],
+    "balance_sheet": [
+      {
+        "label": "TreasurySharesNumber",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": null,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": 0.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PreferredSharesNumber",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 3234000.0,
+        "2024-09-30T00:00:00": 3234000.0,
+        "2024-06-30T00:00:00": 3234000.0,
+        "2024-03-31T00:00:00": 3234000.0
+      },
+      {
+        "label": "OrdinarySharesNumber",
+        "2025-09-30T00:00:00": 1204569655.0,
+        "2025-06-30T00:00:00": 1113442968.0,
+        "2025-03-31T00:00:00": 1104104203.0,
+        "2024-12-31T00:00:00": 1095357781.0,
+        "2024-09-30T00:00:00": 1084136516.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ShareIssued",
+        "2025-09-30T00:00:00": 1204569655.0,
+        "2025-06-30T00:00:00": 1113442968.0,
+        "2025-03-31T00:00:00": 1104104203.0,
+        "2024-12-31T00:00:00": 1095357781.0,
+        "2024-09-30T00:00:00": 1084136516.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetDebt",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": 1820688000.0,
+        "2025-03-31T00:00:00": 961027000.0,
+        "2024-12-31T00:00:00": 555008000.0,
+        "2024-09-30T00:00:00": 825898000.0,
+        "2024-06-30T00:00:00": 772764000.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TotalDebt",
+        "2025-09-30T00:00:00": 2807476000.0,
+        "2025-06-30T00:00:00": 4034624000.0,
+        "2025-03-31T00:00:00": 3139859000.0,
+        "2024-12-31T00:00:00": 3204210000.0,
+        "2024-09-30T00:00:00": 3281891000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TangibleBookValue",
+        "2025-09-30T00:00:00": 6755087000.0,
+        "2025-06-30T00:00:00": 4828547000.0,
+        "2025-03-31T00:00:00": 4615472000.0,
+        "2024-12-31T00:00:00": 4491707000.0,
+        "2024-09-30T00:00:00": 4116890000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "InvestedCapital",
+        "2025-09-30T00:00:00": 11494435000.0,
+        "2025-06-30T00:00:00": 10803770000.0,
+        "2025-03-31T00:00:00": 9725238000.0,
+        "2024-12-31T00:00:00": 9618435000.0,
+        "2024-09-30T00:00:00": 9302344000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetTangibleAssets",
+        "2025-09-30T00:00:00": 6755087000.0,
+        "2025-06-30T00:00:00": 4828547000.0,
+        "2025-03-31T00:00:00": 4615472000.0,
+        "2024-12-31T00:00:00": 4491707000.0,
+        "2024-09-30T00:00:00": 4116890000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CapitalLeaseObligations",
+        "2025-09-30T00:00:00": 93004000.0,
+        "2025-06-30T00:00:00": 91434000.0,
+        "2025-03-31T00:00:00": 93135000.0,
+        "2024-12-31T00:00:00": 110909000.0,
+        "2024-09-30T00:00:00": 101028000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CommonStockEquity",
+        "2025-09-30T00:00:00": 8779963000.0,
+        "2025-06-30T00:00:00": 6860580000.0,
+        "2025-03-31T00:00:00": 6678514000.0,
+        "2024-12-31T00:00:00": 6525134000.0,
+        "2024-09-30T00:00:00": 6121481000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PreferredStockEquity",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": null,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": 320374000.0
+      },
+      {
+        "label": "TotalCapitalization",
+        "2025-09-30T00:00:00": 11008435000.0,
+        "2025-06-30T00:00:00": 10317770000.0,
+        "2025-03-31T00:00:00": 9239238000.0,
+        "2024-12-31T00:00:00": 9132435000.0,
+        "2024-09-30T00:00:00": 8816344000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "TotalEquityGrossMinorityInterest",
+        "2025-09-30T00:00:00": 8779963000.0,
+        "2025-06-30T00:00:00": 6860580000.0,
+        "2025-03-31T00:00:00": 6678514000.0,
+        "2024-12-31T00:00:00": 6525134000.0,
+        "2024-09-30T00:00:00": 6121481000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "StockholdersEquity",
+        "2025-09-30T00:00:00": 8779963000.0,
+        "2025-06-30T00:00:00": 6860580000.0,
+        "2025-03-31T00:00:00": 6678514000.0,
+        "2024-12-31T00:00:00": 6525134000.0,
+        "2024-09-30T00:00:00": 6121481000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "GainsLossesNotAffectingRetainedEarnings",
+        "2025-09-30T00:00:00": 9548000.0,
+        "2025-06-30T00:00:00": 3593000.0,
+        "2025-03-31T00:00:00": 2828000.0,
+        "2024-12-31T00:00:00": -8365000.0,
+        "2024-09-30T00:00:00": 8109000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "RetainedEarnings",
+        "2025-09-30T00:00:00": -997827000.0,
+        "2025-06-30T00:00:00": -1137219000.0,
+        "2025-03-31T00:00:00": -1234482000.0,
+        "2024-12-31T00:00:00": -1305598000.0,
+        "2024-09-30T00:00:00": -1638071000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "AdditionalPaidInCapital",
+        "2025-09-30T00:00:00": 9768122000.0,
+        "2025-06-30T00:00:00": 7994095000.0,
+        "2025-03-31T00:00:00": 7910058000.0,
+        "2024-12-31T00:00:00": 7838988000.0,
+        "2024-09-30T00:00:00": 7751335000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CapitalStock",
+        "2025-09-30T00:00:00": 120000.0,
+        "2025-06-30T00:00:00": 111000.0,
+        "2025-03-31T00:00:00": 110000.0,
+        "2024-12-31T00:00:00": 109000.0,
+        "2024-09-30T00:00:00": 108000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CommonStock",
+        "2025-09-30T00:00:00": 120000.0,
+        "2025-06-30T00:00:00": 111000.0,
+        "2025-03-31T00:00:00": 110000.0,
+        "2024-12-31T00:00:00": 109000.0,
+        "2024-09-30T00:00:00": 108000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PreferredStock",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": 0.0,
+        "2024-03-31T00:00:00": 320374000.0
+      },
+      {
+        "label": "TotalLiabilitiesNetMinorityInterest",
+        "2025-09-30T00:00:00": 36513487000.0,
+        "2025-06-30T00:00:00": 34251591000.0,
+        "2025-03-31T00:00:00": 31070772000.0,
+        "2024-12-31T00:00:00": 29725817000.0,
+        "2024-09-30T00:00:00": 28258695000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DerivativeProductLiabilities",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 91206000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NonCurrentDeferredLiabilities",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 27638000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NonCurrentDeferredRevenue",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 7474000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NonCurrentDeferredTaxesLiabilities",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 20164000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LongTermDebtAndCapitalLeaseObligation",
+        "2025-09-30T00:00:00": 2321476000.0,
+        "2025-06-30T00:00:00": 3548624000.0,
+        "2025-03-31T00:00:00": 2653859000.0,
+        "2024-12-31T00:00:00": 2718210000.0,
+        "2024-09-30T00:00:00": 2795891000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LongTermCapitalLeaseObligation",
+        "2025-09-30T00:00:00": 93004000.0,
+        "2025-06-30T00:00:00": 91434000.0,
+        "2025-03-31T00:00:00": 93135000.0,
+        "2024-12-31T00:00:00": 110909000.0,
+        "2024-09-30T00:00:00": 101028000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LongTermDebt",
+        "2025-09-30T00:00:00": 2228472000.0,
+        "2025-06-30T00:00:00": 3457190000.0,
+        "2025-03-31T00:00:00": 2560724000.0,
+        "2024-12-31T00:00:00": 2607301000.0,
+        "2024-09-30T00:00:00": 2694863000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CurrentDebtAndCapitalLeaseObligation",
+        "2025-09-30T00:00:00": 486000000.0,
+        "2025-06-30T00:00:00": 486000000.0,
+        "2025-03-31T00:00:00": 486000000.0,
+        "2024-12-31T00:00:00": 486000000.0,
+        "2024-09-30T00:00:00": 486000000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CurrentDebt",
+        "2025-09-30T00:00:00": 486000000.0,
+        "2025-06-30T00:00:00": 486000000.0,
+        "2025-03-31T00:00:00": 486000000.0,
+        "2024-12-31T00:00:00": 486000000.0,
+        "2024-09-30T00:00:00": 486000000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LineOfCredit",
+        "2025-09-30T00:00:00": 486000000.0,
+        "2025-06-30T00:00:00": 486000000.0,
+        "2025-03-31T00:00:00": 486000000.0,
+        "2024-12-31T00:00:00": 486000000.0,
+        "2024-09-30T00:00:00": 486000000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PayablesAndAccruedExpenses",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 398100000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": 554185000.0
+      },
+      {
+        "label": "CurrentAccruedExpenses",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 265316000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "Payables",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 132784000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": 554185000.0
+      },
+      {
+        "label": "AccountsPayable",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 132784000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": 554185000.0
+      },
+      {
+        "label": "TotalAssets",
+        "2025-09-30T00:00:00": 45293450000.0,
+        "2025-06-30T00:00:00": 41112171000.0,
+        "2025-03-31T00:00:00": 37749286000.0,
+        "2024-12-31T00:00:00": 36250951000.0,
+        "2024-09-30T00:00:00": 34380176000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "InvestmentsAndAdvances",
+        "2025-09-30T00:00:00": 2512437000.0,
+        "2025-06-30T00:00:00": 2374810000.0,
+        "2025-03-31T00:00:00": 2153456000.0,
+        "2024-12-31T00:00:00": 1925189000.0,
+        "2024-09-30T00:00:00": 1554285000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "AvailableForSaleSecurities",
+        "2025-09-30T00:00:00": 119195000.0,
+        "2025-06-30T00:00:00": 108222000.0,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 91646000.0,
+        "2024-09-30T00:00:00": 76219000.0,
+        "2024-06-30T00:00:00": 121864000.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LongTermEquityInvestment",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 29500000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "GoodwillAndOtherIntangibleAssets",
+        "2025-09-30T00:00:00": 2024876000.0,
+        "2025-06-30T00:00:00": 2032033000.0,
+        "2025-03-31T00:00:00": 2063042000.0,
+        "2024-12-31T00:00:00": 2033427000.0,
+        "2024-09-30T00:00:00": 2004591000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherIntangibleAssets",
+        "2025-09-30T00:00:00": 631371000.0,
+        "2025-06-30T00:00:00": 638528000.0,
+        "2025-03-31T00:00:00": 669537000.0,
+        "2024-12-31T00:00:00": 639922000.0,
+        "2024-09-30T00:00:00": 611086000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "Goodwill",
+        "2025-09-30T00:00:00": 1393505000.0,
+        "2025-06-30T00:00:00": 1393505000.0,
+        "2025-03-31T00:00:00": 1393505000.0,
+        "2024-12-31T00:00:00": 1393505000.0,
+        "2024-09-30T00:00:00": 1393505000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetPPE",
+        "2025-09-30T00:00:00": 466048000.0,
+        "2025-06-30T00:00:00": 431968000.0,
+        "2025-03-31T00:00:00": 394440000.0,
+        "2024-12-31T00:00:00": 369088000.0,
+        "2024-09-30T00:00:00": 350375000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "AccumulatedDepreciation",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": -216905000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "GrossPPE",
+        "2025-09-30T00:00:00": 466048000.0,
+        "2025-06-30T00:00:00": 431968000.0,
+        "2025-03-31T00:00:00": 394440000.0,
+        "2024-12-31T00:00:00": 585993000.0,
+        "2024-09-30T00:00:00": 350375000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "Leases",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 38625000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherProperties",
+        "2025-09-30T00:00:00": 466048000.0,
+        "2025-06-30T00:00:00": 431968000.0,
+        "2025-03-31T00:00:00": 394440000.0,
+        "2024-12-31T00:00:00": 97197000.0,
+        "2024-09-30T00:00:00": 350375000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "MachineryFurnitureEquipment",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 446972000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "BuildingsAndImprovements",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 3199000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PrepaidAssets",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 276931000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "Receivables",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 587496000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "AccountsReceivable",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 587496000.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherShortTermInvestments",
+        "2025-09-30T00:00:00": 2393242000.0,
+        "2025-06-30T00:00:00": 2266588000.0,
+        "2025-03-31T00:00:00": 2153456000.0,
+        "2024-12-31T00:00:00": 1804043000.0,
+        "2024-09-30T00:00:00": 1478066000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CashAndCashEquivalents",
+        "2025-09-30T00:00:00": 3246351000.0,
+        "2025-06-30T00:00:00": 2122502000.0,
+        "2025-03-31T00:00:00": 2085697000.0,
+        "2024-12-31T00:00:00": 2538293000.0,
+        "2024-09-30T00:00:00": 2354965000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CashCashEquivalentsAndFederalFundsSold",
+        "2025-09-30T00:00:00": 3746447000.0,
+        "2025-06-30T00:00:00": 2714603000.0,
+        "2025-03-31T00:00:00": 2716136000.0,
+        "2024-12-31T00:00:00": 2818777000.0,
+        "2024-09-30T00:00:00": 2969759000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      }
+    ],
+    "cash_flow": [
+      {
+        "label": "FreeCashFlow",
+        "2025-09-30T00:00:00": -1369032000.0,
+        "2025-06-30T00:00:00": -1532900000.0,
+        "2025-03-31T00:00:00": -32746000.0,
+        "2024-12-31T00:00:00": -244334000.0,
+        "2024-09-30T00:00:00": -1219382000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "RepurchaseOfCapitalStock",
+        "2025-09-30T00:00:00": -1620000.0,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "RepaymentOfDebt",
+        "2025-09-30T00:00:00": -362461000.0,
+        "2025-06-30T00:00:00": 26582000.0,
+        "2025-03-31T00:00:00": -49114000.0,
+        "2024-12-31T00:00:00": -88583000.0,
+        "2024-09-30T00:00:00": 143262000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "IssuanceOfDebt",
+        "2025-09-30T00:00:00": -868016000.0,
+        "2025-06-30T00:00:00": 868016000.0,
+        "2025-03-31T00:00:00": 0.0,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CapitalExpenditure",
+        "2025-09-30T00:00:00": -63158000.0,
+        "2025-06-30T00:00:00": -65992000.0,
+        "2025-03-31T00:00:00": -54248000.0,
+        "2024-12-31T00:00:00": -44231000.0,
+        "2024-09-30T00:00:00": -45801000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "EndCashPosition",
+        "2025-09-30T00:00:00": 3746447000.0,
+        "2025-06-30T00:00:00": 2714603000.0,
+        "2025-03-31T00:00:00": 2716136000.0,
+        "2024-12-31T00:00:00": 2709360000.0,
+        "2024-09-30T00:00:00": 2969759000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "BeginningCashPosition",
+        "2025-09-30T00:00:00": 2714603000.0,
+        "2025-06-30T00:00:00": 2716136000.0,
+        "2025-03-31T00:00:00": 2709360000.0,
+        "2024-12-31T00:00:00": 2969759000.0,
+        "2024-09-30T00:00:00": 2731632000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "EffectOfExchangeRateChanges",
+        "2025-09-30T00:00:00": -228000.0,
+        "2025-06-30T00:00:00": -563000.0,
+        "2025-03-31T00:00:00": -269000.0,
+        "2024-12-31T00:00:00": -246000.0,
+        "2024-09-30T00:00:00": 563000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ChangesInCash",
+        "2025-09-30T00:00:00": 1032072000.0,
+        "2025-06-30T00:00:00": -970000.0,
+        "2025-03-31T00:00:00": 7045000.0,
+        "2024-12-31T00:00:00": -260153000.0,
+        "2024-09-30T00:00:00": 237564000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "FinancingCashFlow",
+        "2025-09-30T00:00:00": 3797410000.0,
+        "2025-06-30T00:00:00": 3188409000.0,
+        "2025-03-31T00:00:00": 1425763000.0,
+        "2024-12-31T00:00:00": 1220834000.0,
+        "2024-09-30T00:00:00": 1495150000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CashFlowFromContinuingFinancingActivities",
+        "2025-09-30T00:00:00": 3797410000.0,
+        "2025-06-30T00:00:00": 3188409000.0,
+        "2025-03-31T00:00:00": 1425763000.0,
+        "2024-12-31T00:00:00": 1220834000.0,
+        "2024-09-30T00:00:00": 1495150000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetOtherFinancingCharges",
+        "2025-09-30T00:00:00": -11570000.0,
+        "2025-06-30T00:00:00": -4393000.0,
+        "2025-03-31T00:00:00": -5892000.0,
+        "2024-12-31T00:00:00": -11685000.0,
+        "2024-09-30T00:00:00": -4933000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ProceedsFromStockOptionExercised",
+        "2025-09-30T00:00:00": 5852000.0,
+        "2025-06-30T00:00:00": 12364000.0,
+        "2025-03-31T00:00:00": 195000.0,
+        "2024-12-31T00:00:00": 20637000.0,
+        "2024-09-30T00:00:00": 138000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CashDividendsPaid",
+        "2025-09-30T00:00:00": 0.0,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PreferredStockDividendPaid",
+        "2025-09-30T00:00:00": 0.0,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetPreferredStockIssuance",
+        "2025-09-30T00:00:00": 0.0,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PreferredStockPayments",
+        "2025-09-30T00:00:00": 0.0,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIssuancePaymentsOfDebt",
+        "2025-09-30T00:00:00": -1230477000.0,
+        "2025-06-30T00:00:00": 894598000.0,
+        "2025-03-31T00:00:00": -49114000.0,
+        "2024-12-31T00:00:00": -88583000.0,
+        "2024-09-30T00:00:00": 143262000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetLongTermDebtIssuance",
+        "2025-09-30T00:00:00": -1230477000.0,
+        "2025-06-30T00:00:00": 894598000.0,
+        "2025-03-31T00:00:00": -49114000.0,
+        "2024-12-31T00:00:00": -88583000.0,
+        "2024-09-30T00:00:00": 143262000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LongTermDebtPayments",
+        "2025-09-30T00:00:00": -362461000.0,
+        "2025-06-30T00:00:00": 26582000.0,
+        "2025-03-31T00:00:00": -49114000.0,
+        "2024-12-31T00:00:00": -88583000.0,
+        "2024-09-30T00:00:00": 143262000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "LongTermDebtIssuance",
+        "2025-09-30T00:00:00": -868016000.0,
+        "2025-06-30T00:00:00": 868016000.0,
+        "2025-03-31T00:00:00": 0.0,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "InvestingCashFlow",
+        "2025-09-30T00:00:00": -1459464000.0,
+        "2025-06-30T00:00:00": -1722471000.0,
+        "2025-03-31T00:00:00": -1440220000.0,
+        "2024-12-31T00:00:00": -1280884000.0,
+        "2024-09-30T00:00:00": -84005000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CashFlowFromContinuingInvestingActivities",
+        "2025-09-30T00:00:00": -1459464000.0,
+        "2025-06-30T00:00:00": -1722471000.0,
+        "2025-03-31T00:00:00": -1440220000.0,
+        "2024-12-31T00:00:00": -1280884000.0,
+        "2024-09-30T00:00:00": -84005000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetInvestmentPurchaseAndSale",
+        "2025-09-30T00:00:00": -107845000.0,
+        "2025-06-30T00:00:00": -199987000.0,
+        "2025-03-31T00:00:00": -224515000.0,
+        "2024-12-31T00:00:00": -325773000.0,
+        "2024-09-30T00:00:00": 447000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "SaleOfInvestment",
+        "2025-09-30T00:00:00": 173342000.0,
+        "2025-06-30T00:00:00": 346957000.0,
+        "2025-03-31T00:00:00": 133942000.0,
+        "2024-12-31T00:00:00": 222608000.0,
+        "2024-09-30T00:00:00": 357893000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PurchaseOfInvestment",
+        "2025-09-30T00:00:00": -281187000.0,
+        "2025-06-30T00:00:00": -546944000.0,
+        "2025-03-31T00:00:00": -358457000.0,
+        "2024-12-31T00:00:00": -548381000.0,
+        "2024-09-30T00:00:00": -357446000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetBusinessPurchaseAndSale",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": 0.0,
+        "2024-03-31T00:00:00": 0.0
+      },
+      {
+        "label": "PurchaseOfBusiness",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": 0.0,
+        "2024-06-30T00:00:00": 0.0,
+        "2024-03-31T00:00:00": 0.0
+      },
+      {
+        "label": "NetPPEPurchaseAndSale",
+        "2025-09-30T00:00:00": -59978000.0,
+        "2025-06-30T00:00:00": -63465000.0,
+        "2025-03-31T00:00:00": -52604000.0,
+        "2024-12-31T00:00:00": -42263000.0,
+        "2024-09-30T00:00:00": -43306000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "PurchaseOfPPE",
+        "2025-09-30T00:00:00": -59978000.0,
+        "2025-06-30T00:00:00": -63465000.0,
+        "2025-03-31T00:00:00": -52604000.0,
+        "2024-12-31T00:00:00": -42263000.0,
+        "2024-09-30T00:00:00": -43306000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CapitalExpenditureReported",
+        "2025-09-30T00:00:00": -3180000.0,
+        "2025-06-30T00:00:00": -2527000.0,
+        "2025-03-31T00:00:00": -1644000.0,
+        "2024-12-31T00:00:00": -1968000.0,
+        "2024-09-30T00:00:00": -2495000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OperatingCashFlow",
+        "2025-09-30T00:00:00": -1305874000.0,
+        "2025-06-30T00:00:00": -1466908000.0,
+        "2025-03-31T00:00:00": 21502000.0,
+        "2024-12-31T00:00:00": -200103000.0,
+        "2024-09-30T00:00:00": -1173581000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "CashFlowFromContinuingOperatingActivities",
+        "2025-09-30T00:00:00": -1305874000.0,
+        "2025-06-30T00:00:00": -1466908000.0,
+        "2025-03-31T00:00:00": 21502000.0,
+        "2024-12-31T00:00:00": -200103000.0,
+        "2024-09-30T00:00:00": -1173581000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ChangeInWorkingCapital",
+        "2025-09-30T00:00:00": -1545876000.0,
+        "2025-06-30T00:00:00": -1574785000.0,
+        "2025-03-31T00:00:00": -100095000.0,
+        "2024-12-31T00:00:00": -380068000.0,
+        "2024-09-30T00:00:00": -1266838000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ChangeInOtherCurrentAssets",
+        "2025-09-30T00:00:00": -235819000.0,
+        "2025-06-30T00:00:00": 18244000.0,
+        "2025-03-31T00:00:00": 154963000.0,
+        "2024-12-31T00:00:00": -337896000.0,
+        "2024-09-30T00:00:00": -74146000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ChangeInPayablesAndAccruedExpense",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": -2443000.0,
+        "2025-03-31T00:00:00": 101019000.0,
+        "2024-12-31T00:00:00": -6042000.0,
+        "2024-09-30T00:00:00": 43867000.0,
+        "2024-06-30T00:00:00": -6862000.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ChangeInPayable",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": -2443000.0,
+        "2025-03-31T00:00:00": 101019000.0,
+        "2024-12-31T00:00:00": -6042000.0,
+        "2024-09-30T00:00:00": 43867000.0,
+        "2024-06-30T00:00:00": -6862000.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "ChangeInAccountPayable",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": -2443000.0,
+        "2025-03-31T00:00:00": 101019000.0,
+        "2024-12-31T00:00:00": -6042000.0,
+        "2024-09-30T00:00:00": 43867000.0,
+        "2024-06-30T00:00:00": -6862000.0,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OtherNonCashItems",
+        "2025-09-30T00:00:00": -41247000.0,
+        "2025-06-30T00:00:00": -129542000.0,
+        "2025-03-31T00:00:00": -82146000.0,
+        "2024-12-31T00:00:00": 4217000.0,
+        "2024-09-30T00:00:00": -84674000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "StockBasedCompensation",
+        "2025-09-30T00:00:00": 66469000.0,
+        "2025-06-30T00:00:00": 63256000.0,
+        "2025-03-31T00:00:00": 63756000.0,
+        "2024-12-31T00:00:00": 66367000.0,
+        "2024-09-30T00:00:00": 63646000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "AssetImpairmentCharge",
+        "2025-09-30T00:00:00": null,
+        "2025-06-30T00:00:00": null,
+        "2025-03-31T00:00:00": null,
+        "2024-12-31T00:00:00": 0.0,
+        "2024-09-30T00:00:00": null,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DeferredTax",
+        "2025-09-30T00:00:00": 7389000.0,
+        "2025-06-30T00:00:00": 10375000.0,
+        "2025-03-31T00:00:00": 8794000.0,
+        "2024-12-31T00:00:00": -283983000.0,
+        "2024-09-30T00:00:00": 176000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DeferredIncomeTax",
+        "2025-09-30T00:00:00": 7389000.0,
+        "2025-06-30T00:00:00": 10375000.0,
+        "2025-03-31T00:00:00": 8794000.0,
+        "2024-12-31T00:00:00": -283983000.0,
+        "2024-09-30T00:00:00": 176000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DepreciationAmortizationDepletion",
+        "2025-09-30T00:00:00": 59245000.0,
+        "2025-06-30T00:00:00": 56743000.0,
+        "2025-03-31T00:00:00": 55283000.0,
+        "2024-12-31T00:00:00": 53545000.0,
+        "2024-09-30T00:00:00": 51791000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "DepreciationAndAmortization",
+        "2025-09-30T00:00:00": 59245000.0,
+        "2025-06-30T00:00:00": 56743000.0,
+        "2025-03-31T00:00:00": 55283000.0,
+        "2024-12-31T00:00:00": 53545000.0,
+        "2024-09-30T00:00:00": 51791000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "OperatingGainsLosses",
+        "2025-09-30T00:00:00": -445000.0,
+        "2025-06-30T00:00:00": -253000.0,
+        "2025-03-31T00:00:00": -884000.0,
+        "2024-12-31T00:00:00": 3311000.0,
+        "2024-09-30T00:00:00": -4440000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      },
+      {
+        "label": "NetIncomeFromContinuingOperations",
+        "2025-09-30T00:00:00": 139392000.0,
+        "2025-06-30T00:00:00": 97263000.0,
+        "2025-03-31T00:00:00": 71116000.0,
+        "2024-12-31T00:00:00": 332473000.0,
+        "2024-09-30T00:00:00": 60745000.0,
+        "2024-06-30T00:00:00": null,
+        "2024-03-31T00:00:00": null
+      }
+    ],
+    "earnings": []
+  },
+  "estimates": {
+    "earnings_dates": [],
+    "earnings_estimate": [
+      {
+        "label": "0q",
+        "avg": 0.11643,
+        "low": 0.11,
+        "high": 0.12,
+        "yearAgoEps": 0.05,
+        "numberOfAnalysts": 7,
+        "growth": 1.3286
+      },
+      {
+        "label": "+1q",
+        "avg": 0.12729,
+        "low": 0.11,
+        "high": 0.141,
+        "yearAgoEps": 0.0601,
+        "numberOfAnalysts": 7,
+        "growth": 1.118
+      },
+      {
+        "label": "0y",
+        "avg": 0.36758,
+        "low": 0.33922,
+        "high": 0.39,
+        "yearAgoEps": 0.15,
+        "numberOfAnalysts": 9,
+        "growth": 1.4505
+      },
+      {
+        "label": "+1y",
+        "avg": 0.57961,
+        "low": 0.47,
+        "high": 0.7,
+        "yearAgoEps": 0.36758,
+        "numberOfAnalysts": 9,
+        "growth": 0.5768
+      }
+    ],
+    "revenue_estimate": [
+      {
+        "label": "0q",
+        "avg": 986429820,
+        "low": 959000000,
+        "high": 1097200000,
+        "numberOfAnalysts": 12,
+        "yearAgoRevenue": 739112000,
+        "growth": 0.3346
+      },
+      {
+        "label": "+1q",
+        "avg": 1008279860,
+        "low": 907505000,
+        "high": 1047600000,
+        "numberOfAnalysts": 11,
+        "yearAgoRevenue": 770720000,
+        "growth": 0.3082
+      },
+      {
+        "label": "0y",
+        "avg": 3566385000,
+        "low": 3503159510,
+        "high": 3675800000,
+        "numberOfAnalysts": 16,
+        "yearAgoRevenue": 2606170000,
+        "growth": 0.3684
+      },
+      {
+        "label": "+1y",
+        "avg": 4449955660,
+        "low": 3911108000,
+        "high": 4904866760,
+        "numberOfAnalysts": 17,
+        "yearAgoRevenue": 3566385000,
+        "growth": 0.2477
+      }
+    ],
+    "eps_trend": [
+      {
+        "label": "0q",
+        "current": 0.11643,
+        "7daysAgo": 0.11643,
+        "30daysAgo": 0.11583,
+        "60daysAgo": 0.08744,
+        "90daysAgo": 0.08744
+      },
+      {
+        "label": "+1q",
+        "current": 0.12729,
+        "7daysAgo": 0.13017,
+        "30daysAgo": 0.1322,
+        "60daysAgo": 0.10775,
+        "90daysAgo": 0.10457
+      },
+      {
+        "label": "0y",
+        "current": 0.36758,
+        "7daysAgo": 0.36758,
+        "30daysAgo": 0.37129,
+        "60daysAgo": 0.31451,
+        "90daysAgo": 0.31451
+      },
+      {
+        "label": "+1y",
+        "current": 0.57961,
+        "7daysAgo": 0.5785,
+        "30daysAgo": 0.58045,
+        "60daysAgo": 0.52227,
+        "90daysAgo": 0.52136
+      }
+    ],
+    "eps_revisions": [
+      {
+        "label": "0q",
+        "upLast7days": 6,
+        "upLast30days": 6,
+        "downLast30days": 0,
+        "downLast7Days": 0
+      },
+      {
+        "label": "+1q",
+        "upLast7days": 4,
+        "upLast30days": 5,
+        "downLast30days": 0,
+        "downLast7Days": 0
+      },
+      {
+        "label": "0y",
+        "upLast7days": 6,
+        "upLast30days": 7,
+        "downLast30days": 0,
+        "downLast7Days": 0
+      },
+      {
+        "label": "+1y",
+        "upLast7days": 0,
+        "upLast30days": 7,
+        "downLast30days": 1,
+        "downLast7Days": 1
+      }
+    ],
+    "growth_estimates": [
+      {
+        "label": "0q",
+        "stockTrend": 1.3286,
+        "indexTrend": 0.1505
+      },
+      {
+        "label": "+1q",
+        "stockTrend": 1.118,
+        "indexTrend": 0.0674
+      },
+      {
+        "label": "0y",
+        "stockTrend": 1.4505,
+        "indexTrend": 0.1093
+      },
+      {
+        "label": "+1y",
+        "stockTrend": 0.5768,
+        "indexTrend": 0.1456
+      },
+      {
+        "label": "LTG",
+        "stockTrend": null,
+        "indexTrend": 0.122
+      }
+    ],
+    "analyst_price_targets": [],
+    "recommendations": [
+      {
+        "label": 0,
+        "period": "0m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 2
+      },
+      {
+        "label": 1,
+        "period": "-1m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 3
+      },
+      {
+        "label": 2,
+        "period": "-2m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 3
+      },
+      {
+        "label": 3,
+        "period": "-3m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 3
+      }
+    ],
+    "recommendations_summary": [
+      {
+        "label": 0,
+        "period": "0m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 2
+      },
+      {
+        "label": 1,
+        "period": "-1m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 3
+      },
+      {
+        "label": 2,
+        "period": "-2m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 3
+      },
+      {
+        "label": 3,
+        "period": "-3m",
+        "strongBuy": 1,
+        "buy": 5,
+        "hold": 11,
+        "sell": 2,
+        "strongSell": 3
+      }
+    ],
+    "upgrades_downgrades": [
+      {
+        "label": "2025-11-25T18:07:16",
+        "Firm": "Truist Securities",
+        "ToGrade": "Hold",
+        "FromGrade": "Hold",
+        "Action": "main",
+        "priceTargetAction": "Lowers",
+        "currentPriceTarget": 28.0,
+        "priorPriceTarget": 31.0
+      },
+      {
+        "label": "2025-11-04T15:59:55",
+        "Firm": "Truist Securities",
+        "ToGrade": "Hold",
+        "FromGrade": "Hold",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 31.0,
+        "priorPriceTarget": 29.0
+      },
+      {
+        "label": "2025-10-30T19:28:54",
+        "Firm": "UBS",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 27.5,
+        "priorPriceTarget": 20.5
+      },
+      {
+        "label": "2025-10-29T19:52:00",
+        "Firm": "Citigroup",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 37.0,
+        "priorPriceTarget": 28.0
+      },
+      {
+        "label": "2025-10-29T18:11:38",
+        "Firm": "Goldman Sachs",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 27.0,
+        "priorPriceTarget": 24.0
+      },
+      {
+        "label": "2025-10-29T17:58:25",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Underperform",
+        "FromGrade": "Underperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 20.0,
+        "priorPriceTarget": 18.0
+      },
+      {
+        "label": "2025-10-29T15:19:15",
+        "Firm": "JP Morgan",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 28.0,
+        "priorPriceTarget": 26.0
+      },
+      {
+        "label": "2025-10-29T13:35:00",
+        "Firm": "Barclays",
+        "ToGrade": "Equal-Weight",
+        "FromGrade": "Equal-Weight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 23.0,
+        "priorPriceTarget": 21.0
+      },
+      {
+        "label": "2025-10-29T10:07:05",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 36.0,
+        "priorPriceTarget": 29.0
+      },
+      {
+        "label": "2025-10-29T09:27:19",
+        "Firm": "BTIG",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "reit",
+        "priceTargetAction": "",
+        "currentPriceTarget": 0.0,
+        "priorPriceTarget": 0.0
+      },
+      {
+        "label": "2025-10-24T20:03:30",
+        "Firm": "Truist Securities",
+        "ToGrade": "Hold",
+        "FromGrade": "Hold",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 29.0,
+        "priorPriceTarget": 23.0
+      },
+      {
+        "label": "2025-10-24T12:27:29",
+        "Firm": "JP Morgan",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 26.0,
+        "priorPriceTarget": 24.0
+      },
+      {
+        "label": "2025-10-15T12:42:20",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Underperform",
+        "FromGrade": "Underperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 18.0,
+        "priorPriceTarget": 14.0
+      },
+      {
+        "label": "2025-10-13T17:34:54",
+        "Firm": "Goldman Sachs",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 24.0,
+        "priorPriceTarget": 21.0
+      },
+      {
+        "label": "2025-09-29T17:43:30",
+        "Firm": "Morgan Stanley",
+        "ToGrade": "Underweight",
+        "FromGrade": "Underweight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 18.0,
+        "priorPriceTarget": 13.0
+      },
+      {
+        "label": "2025-09-18T11:28:55",
+        "Firm": "Mizuho",
+        "ToGrade": "Outperform",
+        "FromGrade": "Outperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 31.0,
+        "priorPriceTarget": 26.0
+      },
+      {
+        "label": "2025-09-10T10:24:37",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 29.0,
+        "priorPriceTarget": 25.0
+      },
+      {
+        "label": "2025-08-20T16:07:00",
+        "Firm": "Citigroup",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 28.0,
+        "priorPriceTarget": 18.0
+      },
+      {
+        "label": "2025-08-20T14:46:18",
+        "Firm": "JP Morgan",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 24.0,
+        "priorPriceTarget": 22.0
+      },
+      {
+        "label": "2025-08-05T10:57:59",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Underperform",
+        "FromGrade": "Underperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 14.0,
+        "priorPriceTarget": 13.0
+      },
+      {
+        "label": "2025-07-31T12:00:16",
+        "Firm": "Mizuho",
+        "ToGrade": "Outperform",
+        "FromGrade": "Outperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 26.0,
+        "priorPriceTarget": 20.0
+      },
+      {
+        "label": "2025-07-30T15:51:43",
+        "Firm": "Barclays",
+        "ToGrade": "Equal-Weight",
+        "FromGrade": "Equal-Weight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 21.0,
+        "priorPriceTarget": 18.0
+      },
+      {
+        "label": "2025-07-30T15:25:55",
+        "Firm": "Morgan Stanley",
+        "ToGrade": "Underweight",
+        "FromGrade": "Underweight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 13.0,
+        "priorPriceTarget": 11.0
+      },
+      {
+        "label": "2025-07-30T10:47:08",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 25.0,
+        "priorPriceTarget": 20.0
+      },
+      {
+        "label": "2025-07-17T14:26:28",
+        "Firm": "Truist Securities",
+        "ToGrade": "Hold",
+        "FromGrade": "Hold",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 20.0,
+        "priorPriceTarget": 14.0
+      },
+      {
+        "label": "2025-07-14T13:54:59",
+        "Firm": "JMP Securities",
+        "ToGrade": "Market Perform",
+        "FromGrade": "Market Outperform",
+        "Action": "down",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 17.0,
+        "priorPriceTarget": 17.0
+      },
+      {
+        "label": "2025-07-11T13:07:45",
+        "Firm": "TD Cowen",
+        "ToGrade": "Hold",
+        "FromGrade": "",
+        "Action": "init",
+        "priceTargetAction": "Announces",
+        "currentPriceTarget": 21.0,
+        "priorPriceTarget": 0.0
+      },
+      {
+        "label": "2025-07-10T14:49:27",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Underperform",
+        "FromGrade": "Underperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 13.0,
+        "priorPriceTarget": 9.0
+      },
+      {
+        "label": "2025-07-09T10:55:11",
+        "Firm": "JP Morgan",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 16.0,
+        "priorPriceTarget": 16.0
+      },
+      {
+        "label": "2025-07-08T18:38:03",
+        "Firm": "Barclays",
+        "ToGrade": "Equal-Weight",
+        "FromGrade": "Equal-Weight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 18.0,
+        "priorPriceTarget": 12.0
+      },
+      {
+        "label": "2025-06-02T11:39:52",
+        "Firm": "Truist Securities",
+        "ToGrade": "Hold",
+        "FromGrade": "",
+        "Action": "init",
+        "priceTargetAction": "Announces",
+        "currentPriceTarget": 14.0,
+        "priorPriceTarget": 0.0
+      },
+      {
+        "label": "2025-04-30T22:30:39",
+        "Firm": "Barclays",
+        "ToGrade": "Equal-Weight",
+        "FromGrade": "Equal-Weight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 12.0,
+        "priorPriceTarget": 11.0
+      },
+      {
+        "label": "2025-04-30T14:09:16",
+        "Firm": "UBS",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 15.5,
+        "priorPriceTarget": 14.0
+      },
+      {
+        "label": "2025-04-30T12:22:24",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "reit",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 20.0,
+        "priorPriceTarget": 20.0
+      },
+      {
+        "label": "2025-04-25T15:32:59",
+        "Firm": "JMP Securities",
+        "ToGrade": "Market Outperform",
+        "FromGrade": "",
+        "Action": "init",
+        "priceTargetAction": "Announces",
+        "currentPriceTarget": 17.0,
+        "priorPriceTarget": 0.0
+      },
+      {
+        "label": "2025-01-28T15:45:58",
+        "Firm": "Goldman Sachs",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 9.5,
+        "priorPriceTarget": 8.5
+      },
+      {
+        "label": "2025-01-28T14:35:58",
+        "Firm": "UBS",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 14.0,
+        "priorPriceTarget": 10.5
+      },
+      {
+        "label": "2025-01-28T11:26:23",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 20.0,
+        "priorPriceTarget": 13.0
+      },
+      {
+        "label": "2025-01-15T12:18:32",
+        "Firm": "William Blair",
+        "ToGrade": "Outperform",
+        "FromGrade": "",
+        "Action": "init",
+        "priceTargetAction": "",
+        "currentPriceTarget": 0.0,
+        "priorPriceTarget": 0.0
+      },
+      {
+        "label": "2025-01-14T19:00:40",
+        "Firm": "Citigroup",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 18.0,
+        "priorPriceTarget": 12.5
+      },
+      {
+        "label": "2025-01-02T12:50:32",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Underperform",
+        "FromGrade": "Market Perform",
+        "Action": "down",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 8.0,
+        "priorPriceTarget": 7.0
+      },
+      {
+        "label": "2024-12-19T17:31:41",
+        "Firm": "Morgan Stanley",
+        "ToGrade": "Underweight",
+        "FromGrade": "Underweight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 13.0,
+        "priorPriceTarget": 7.5
+      },
+      {
+        "label": "2024-12-09T11:49:09",
+        "Firm": "B of A Securities",
+        "ToGrade": "Underperform",
+        "FromGrade": "Neutral",
+        "Action": "down",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 12.0,
+        "priorPriceTarget": 12.0
+      },
+      {
+        "label": "2024-12-02T13:39:18",
+        "Firm": "JP Morgan",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 16.0,
+        "priorPriceTarget": 9.0
+      },
+      {
+        "label": "2024-11-19T12:32:17",
+        "Firm": "Mizuho",
+        "ToGrade": "Outperform",
+        "FromGrade": "Outperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 16.0,
+        "priorPriceTarget": 14.0
+      },
+      {
+        "label": "2024-10-31T16:54:40",
+        "Firm": "UBS",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 10.5,
+        "priorPriceTarget": 7.5
+      },
+      {
+        "label": "2024-10-30T17:50:16",
+        "Firm": "Barclays",
+        "ToGrade": "Equal-Weight",
+        "FromGrade": "Equal-Weight",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 9.0,
+        "priorPriceTarget": 8.0
+      },
+      {
+        "label": "2024-10-30T17:08:05",
+        "Firm": "Goldman Sachs",
+        "ToGrade": "Neutral",
+        "FromGrade": "Neutral",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 8.5,
+        "priorPriceTarget": 7.5
+      },
+      {
+        "label": "2024-10-30T10:40:59",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 13.0,
+        "priorPriceTarget": 10.0
+      },
+      {
+        "label": "2024-10-29T21:39:10",
+        "Firm": "Jefferies",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 13.0,
+        "priorPriceTarget": 12.0
+      },
+      {
+        "label": "2024-10-29T16:49:45",
+        "Firm": "Mizuho",
+        "ToGrade": "Outperform",
+        "FromGrade": "Outperform",
+        "Action": "reit",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 14.0,
+        "priorPriceTarget": 14.0
+      },
+      {
+        "label": "2024-10-25T16:56:44",
+        "Firm": "Mizuho",
+        "ToGrade": "Outperform",
+        "FromGrade": "Outperform",
+        "Action": "main",
+        "priceTargetAction": "Raises",
+        "currentPriceTarget": 14.0,
+        "priorPriceTarget": 12.0
+      },
+      {
+        "label": "2024-10-14T16:52:34",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Market Perform",
+        "FromGrade": "Market Perform",
+        "Action": "reit",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 7.0,
+        "priorPriceTarget": 7.0
+      },
+      {
+        "label": "2024-08-05T10:20:56",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "reit",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 10.0,
+        "priorPriceTarget": 10.0
+      },
+      {
+        "label": "2024-07-31T10:45:28",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "reit",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 10.0,
+        "priorPriceTarget": 10.0
+      },
+      {
+        "label": "2024-07-09T14:41:29",
+        "Firm": "Barclays",
+        "ToGrade": "Equal-Weight",
+        "FromGrade": "Equal-Weight",
+        "Action": "main",
+        "priceTargetAction": "Lowers",
+        "currentPriceTarget": 8.0,
+        "priorPriceTarget": 10.0
+      },
+      {
+        "label": "2024-07-09T12:49:53",
+        "Firm": "Keefe, Bruyette & Woods",
+        "ToGrade": "Market Perform",
+        "FromGrade": "Market Perform",
+        "Action": "main",
+        "priceTargetAction": "Lowers",
+        "currentPriceTarget": 7.0,
+        "priorPriceTarget": 7.5
+      },
+      {
+        "label": "2024-07-02T09:29:11",
+        "Firm": "Needham",
+        "ToGrade": "Buy",
+        "FromGrade": "Buy",
+        "Action": "reit",
+        "priceTargetAction": "Maintains",
+        "currentPriceTarget": 10.0,
+        "priorPriceTarget": 10.0
+      }
+    ],
+    "calendar": []
+  },
+  "market_data": {
+    "one_month_history": [
+      {
+        "Date": "2025-11-24T00:00:00-05:00",
+        "Open": 25.829999923706055,
+        "High": 27.610000610351562,
+        "Low": 25.655000686645508,
+        "Close": 27.399999618530273,
+        "Volume": 63707200,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-11-25T00:00:00-05:00",
+        "Open": 26.979999542236328,
+        "High": 28.450000762939453,
+        "Low": 26.6299991607666,
+        "Close": 28.329999923706055,
+        "Volume": 56810400,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-11-26T00:00:00-05:00",
+        "Open": 28.709999084472656,
+        "High": 29.25,
+        "Low": 28.309999465942383,
+        "Close": 28.489999771118164,
+        "Volume": 56355000,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-11-28T00:00:00-05:00",
+        "Open": 28.790000915527344,
+        "High": 29.75,
+        "Low": 28.454999923706055,
+        "Close": 29.719999313354492,
+        "Volume": 26903900,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-12-01T00:00:00-05:00",
+        "Open": 28.829999923706055,
+        "High": 29.700000762939453,
+        "Low": 28.670000076293945,
+        "Close": 29.030000686645508,
+        "Volume": 47130600,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-12-02T00:00:00-05:00",
+        "Open": 29.389999389648438,
+        "High": 30.420000076293945,
+        "Low": 29.315000534057617,
+        "Close": 29.510000228881836,
+        "Volume": 59744800,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-12-03T00:00:00-05:00",
+        "Open": 29.424999237060547,
+        "High": 29.93000030517578,
+        "Low": 29.020000457763672,
+        "Close": 29.06999969482422,
+        "Volume": 52091100,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      },
+      {
+        "Date": "2025-12-04T00:00:00-05:00",
+        "Open": 29.03499984741211,
+        "High": 29.700000762939453,
+        "Low": 28.479999542236328,
+        "Close": 29.600000381469727,
+        "Volume": 61987400,
+        "Dividends": 0.0,
+        "Stock Splits": 0.0
+      }
+    ],
+    "dividends": [],
+    "splits": [],
+    "actions": []
+  },
+  "options": {
+    "expirations": [
+      "2025-12-05",
+      "2025-12-12",
+      "2025-12-19",
+      "2025-12-26",
+      "2026-01-02",
+      "2026-01-09",
+      "2026-01-16",
+      "2026-02-20",
+      "2026-03-20",
+      "2026-04-17",
+      "2026-05-15",
+      "2026-06-18",
+      "2026-07-17",
+      "2026-09-18",
+      "2026-12-18",
+      "2027-01-15",
+      "2027-06-17",
+      "2027-12-17",
+      "2028-01-21",
+      "2028-06-16"
+    ],
+    "first_chain": {
+      "calls": [
+        {
+          "index": 46,
+          "contractSymbol": "SOFI251205C00043000",
+          "lastTradeDate": "2025-12-02T14:30:18+00:00",
+          "strike": 43.0,
+          "lastPrice": 0.01,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 3.0,
+          "openInterest": 0,
+          "impliedVolatility": 0.500005,
+          "inTheMoney": false,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 47,
+          "contractSymbol": "SOFI251205C00044000",
+          "lastTradeDate": "2025-11-25T15:01:57+00:00",
+          "strike": 44.0,
+          "lastPrice": 0.01,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 3.0,
+          "openInterest": 0,
+          "impliedVolatility": 0.500005,
+          "inTheMoney": false,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 48,
+          "contractSymbol": "SOFI251205C00045000",
+          "lastTradeDate": "2025-12-03T14:30:15+00:00",
+          "strike": 45.0,
+          "lastPrice": 0.01,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 3.0,
+          "openInterest": 0,
+          "impliedVolatility": 0.500005,
+          "inTheMoney": false,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 49,
+          "contractSymbol": "SOFI251205C00046000",
+          "lastTradeDate": "2025-11-25T14:54:22+00:00",
+          "strike": 46.0,
+          "lastPrice": 0.03,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 2.0,
+          "openInterest": 0,
+          "impliedVolatility": 0.500005,
+          "inTheMoney": false,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 50,
+          "contractSymbol": "SOFI251205C00047000",
+          "lastTradeDate": "2025-11-26T14:40:48+00:00",
+          "strike": 47.0,
+          "lastPrice": 0.02,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 5.0,
+          "openInterest": 0,
+          "impliedVolatility": 0.500005,
+          "inTheMoney": false,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        }
+      ],
+      "puts": [
+        {
+          "index": 43,
+          "contractSymbol": "SOFI251205P00040000",
+          "lastTradeDate": "2025-12-02T18:11:16+00:00",
+          "strike": 40.0,
+          "lastPrice": 9.82,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 2.0,
+          "openInterest": 0,
+          "impliedVolatility": 1.0000000000000003e-5,
+          "inTheMoney": true,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 44,
+          "contractSymbol": "SOFI251205P00041000",
+          "lastTradeDate": "2025-12-02T18:11:16+00:00",
+          "strike": 41.0,
+          "lastPrice": 10.76,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 1.0,
+          "openInterest": 0,
+          "impliedVolatility": 1.0000000000000003e-5,
+          "inTheMoney": true,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 45,
+          "contractSymbol": "SOFI251205P00045000",
+          "lastTradeDate": "2025-12-01T20:03:28+00:00",
+          "strike": 45.0,
+          "lastPrice": 15.47,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": null,
+          "openInterest": 0,
+          "impliedVolatility": 1.0000000000000003e-5,
+          "inTheMoney": true,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 46,
+          "contractSymbol": "SOFI251205P00046000",
+          "lastTradeDate": "2025-12-01T20:03:28+00:00",
+          "strike": 46.0,
+          "lastPrice": 16.46,
+          "bid": 0.0,
+          "ask": 0.0,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": null,
+          "openInterest": 0,
+          "impliedVolatility": 1.0000000000000003e-5,
+          "inTheMoney": true,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        },
+        {
+          "index": 47,
+          "contractSymbol": "SOFI251205P00047000",
+          "lastTradeDate": "2025-10-29T18:40:21+00:00",
+          "strike": 47.0,
+          "lastPrice": 16.6,
+          "bid": 15.5,
+          "ask": 19.05,
+          "change": 0.0,
+          "percentChange": 0.0,
+          "volume": 2.0,
+          "openInterest": 0,
+          "impliedVolatility": 9.335941665039064,
+          "inTheMoney": true,
+          "contractSize": "REGULAR",
+          "currency": "USD"
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "total_revenue": 2612342000.0,
+    "net_income": 498665000.0,
+    "eps": 0.39,
+    "operating_income": null,
+    "operating_cash_flow": -1119807000.0,
+    "forecast_revenue_growth_rate": 0.3346,
+    "forecast_eps_growth_rate_short": 1.3286,
+    "forecast_eps_growth_rate_long": null,
+    "forecast_revision_direction": "upward",
+    "return_on_assets": 0.013755914982754521,
+    "return_on_invested_capital": null,
+    "interest_coverage": null,
+    "cfo_to_total_debt": -0.34947990300261217,
+    "total_debt_trend": {
+      "latest": 3204210000.0,
+      "previous": 5362633000.0,
+      "change": -2158423000.0,
+      "direction": "down"
+    },
+    "current_ratio": null,
+    "debt_to_assets": 0.08838968114243403,
+    "ohlson_o_score": null,
+    "analyst_price_target": 26.97059,
+    "historical_revenue_growth_rate": 0.2391250418007651,
+    "shares_outstanding": 1205903044
+  },
+  "news": [
+    {
+      "title": null,
+      "link": null,
+      "publisher": null,
+      "providerPublishTime": null
+    },
+    {
+      "title": null,
+      "link": null,
+      "publisher": null,
+      "providerPublishTime": null
+    },
+    {
+      "title": null,
+      "link": null,
+      "publisher": null,
+      "providerPublishTime": null
+    },
+    {
+      "title": null,
+      "link": null,
+      "publisher": null,
+      "providerPublishTime": null
+    },
+    {
+      "title": null,
+      "link": null,
+      "publisher": null,
+      "providerPublishTime": null
+    }
+  ],
+  "sustainability": [],
+  "meta": {
+    "errors": [
+      "Failed to fetch shares: Have not implemented fetching 'shares' from Yahoo API",
+      "Failed to fetch earnings_dates: Missing optional dependency 'lxml'.  Use pip or conda to install lxml."
+    ]
+  }
+}

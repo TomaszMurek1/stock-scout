@@ -99,11 +99,27 @@ def update_financial_snapshot(
         ],
         col,
     )
+    # Fallback for EBIT: Pretax Income + Interest Expense
+    if fin_record.ebit is None:
+        pretax = safe_get(income_stmt, "Pretax Income", col)
+        interest = safe_get(income_stmt, "Interest Expense", col)
+        if pretax is not None and interest is not None:
+            fin_record.ebit = pretax + interest
+
     fin_record.ebitda = get_first_valid_row(
         income_stmt, ["EBITDA", "Normalized EBITDA"], col
     )
+    fin_record.depreciation_amortization = safe_get(
+        income_stmt, "Reconciled Depreciation", col
+    ) or safe_get(cashflow, "Depreciation And Amortization", col)
+
     if fin_record.ebit is None and fin_record.ebitda is not None and fin_record.depreciation_amortization is not None:
         fin_record.ebit = fin_record.ebitda - fin_record.depreciation_amortization
+    
+    # Fallback for EBITDA: EBIT + D&A
+    if fin_record.ebitda is None and fin_record.ebit is not None and fin_record.depreciation_amortization is not None:
+        fin_record.ebitda = fin_record.ebit + fin_record.depreciation_amortization
+
     fin_record.diluted_eps = safe_get(income_stmt, "Diluted EPS", col)
     fin_record.basic_eps = safe_get(income_stmt, "Basic EPS", col)
     fin_record.interest_income = safe_get(income_stmt, "Interest Income", col)
@@ -155,11 +171,13 @@ def update_financial_snapshot(
         cost_of_revenue = safe_get(income_stmt, "Cost Of Revenue", col)
         if revenue is not None and cost_of_revenue is not None:
             gross_profit = revenue - cost_of_revenue
+    
+    # Fallback to fast_info for gross_profit (common for some tickers where it's not in DataFrame)
+    if gross_profit is None:
+        gross_profit = fast_info.get("grossProfits")
+
     fin_record.gross_profit = gross_profit
 
-    fin_record.depreciation_amortization = safe_get(
-        income_stmt, "Reconciled Depreciation", col
-    ) or safe_get(cashflow, "Depreciation And Amortization", col)
     fin_record.free_cash_flow = safe_get(cashflow, "Free Cash Flow", col)
     fin_record.operating_cash_flow = get_first_valid_row(
         cashflow,
@@ -167,6 +185,13 @@ def update_financial_snapshot(
         col,
     )
     fin_record.capital_expenditure = safe_get(cashflow, "Capital Expenditure", col)
+    
+    fin_record.dividends_paid = get_first_valid_row(
+        cashflow,
+        ["Cash Dividends Paid", "Common Stock Dividend Paid"],
+        col
+    )
+
     fin_record.enterprise_value = info_dict.get("enterpriseValue")
     fin_record.last_updated = datetime.now(timezone.utc)
 
