@@ -8,6 +8,7 @@ import AddStockModal from "./modals/AddStockModal";
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData";
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function PortfolioManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -34,37 +35,35 @@ export default function PortfolioManagement() {
   };
 
   return (
-    <div className="container mx-auto space-y-8 px-4 py-8">
-      <Header onAdd={() => setIsAddModalOpen(true)} />
-
-      <div className="space-y-4">
-        {/* Tab Switcher */}
-        <div className="flex space-x-4 border-b pb-2">
-          <button
-            onClick={() => setActiveTab("portfolio")}
-            className={`px-4 py-2 font-medium ${
-              activeTab === "portfolio"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-600"
-            }`}
-          >
-            Portfolio
-          </button>
-          <button
-            onClick={() => setActiveTab("performance")}
-            className={`px-4 py-2 font-medium ${
-              activeTab === "performance"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-600"
-            }`}
-          >
-            Performance
-          </button>
+    <div className="min-h-screen bg-gray-100 text-slate-900">
+      <div className="max-w-[1600px] mx-auto px-4 py-8 space-y-8">
+        {/* Header Card */}
+        <div className="p-6 rounded-xl bg-white shadow-sm border border-gray-200">
+          <Header onAdd={() => setIsAddModalOpen(true)} />
         </div>
 
-        {/* Conditional Rendering */}
-        {activeTab === "portfolio" && (
-          <>
+        <Tabs
+          defaultValue="portfolio"
+          value={activeTab}
+          onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
+          className="space-y-6"
+        >
+          <TabsList className="bg-slate-100/50 p-1 h-auto inline-flex">
+            <TabsTrigger
+              value="portfolio"
+              className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+            >
+              Portfolio
+            </TabsTrigger>
+            <TabsTrigger
+              value="performance"
+              className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+            >
+              Performance
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
             <Summary
               invested_value_current={totals.invested_value_current}
               totalInvested={totals.totalInvested}
@@ -77,17 +76,19 @@ export default function PortfolioManagement() {
               byHolding={totals.byHolding}
               transactions={transactions}
             />
-          </>
-        )}
+          </TabsContent>
 
-        {activeTab === "performance" && <Performance />}
+          <TabsContent value="performance" className="space-y-6 animate-in fade-in-0 mt-0">
+            <Performance />
+          </TabsContent>
+        </Tabs>
+
+        <AddStockModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+        />
       </div>
-
-      <AddStockModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-      />
     </div>
   );
 }

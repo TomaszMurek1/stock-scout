@@ -75,11 +75,11 @@ export const Summary: React.FC<SummaryProps> = ({
   currency,
 }) => {
   const isPositiveGL = totalGainLoss >= 0;
-  const bgColor = "bg-gray-200";
+  const bgColor = "bg-white";
   const padding = "p-6";
-  const borderRadius = "rounded-lg";
-  const boxShadow = "shadow-md";
-  const border = "border border-gray-400";
+  const borderRadius = "rounded-xl";
+  const boxShadow = "shadow-sm";
+  const border = "border border-gray-200";
 
   return (
     <div className="space-y-8">
