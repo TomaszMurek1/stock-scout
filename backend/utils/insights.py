@@ -14,50 +14,63 @@ def clean_nan_dict(d: dict) -> dict:
 
 
 def build_financial_trends(db: Session, company_id: int) -> dict:
-    records = (
-        db.query(CompanyFinancialHistory)
-        .filter_by(company_id=company_id, period_type="annual")
-        .order_by(CompanyFinancialHistory.report_end_date.desc())
-        .limit(6)
-        .all()
-    )
+    def get_trends(period_type: str, limit: int = 12):
+        records = (
+            db.query(CompanyFinancialHistory)
+            .filter_by(company_id=company_id, period_type=period_type)
+            .order_by(CompanyFinancialHistory.report_end_date.desc())
+            .limit(limit)
+            .all()
+        )
 
-    if len(records) < 2:
-        return {}
+        if not records:
+            return {}
 
-    def trend_series(primary_metric, fallback_metric=None):
-        trend = []
-        for r in records:
-            year = r.report_end_date.year
-            value = getattr(r, primary_metric, None)
-            if (
-                value is None
-                or (isinstance(value, float) and (pd.isna(value) or value != value))
-            ) and fallback_metric:
-                value = getattr(r, fallback_metric, None)
+        def trend_series(primary_metric, fallback_metric=None):
+            trend = []
+            # Sort ascending by date for charts
+            sorted_records = sorted(records, key=lambda r: r.report_end_date)
+            for r in sorted_records:
+                year = r.report_end_date.year
+                date_str = r.report_end_date.strftime("%Y-%m-%d")
+                value = getattr(r, primary_metric, None)
+                if (
+                    value is None
+                    or (isinstance(value, float) and (pd.isna(value) or value != value))
+                ) and fallback_metric:
+                    value = getattr(r, fallback_metric, None)
 
-            trend.append(
-                {
-                    "year": year,
-                    "value": (
-                        None
-                        if value is None
-                        or (
-                            isinstance(value, float)
-                            and (pd.isna(value) or value != value)
-                        )
-                        else value
-                    ),
-                }
-            )
-        return trend
+                trend.append(
+                    {
+                        "year": year,
+                        "date": date_str,
+                        "value": (
+                            None
+                            if value is None
+                            or (
+                                isinstance(value, float)
+                                and (pd.isna(value) or value != value)
+                            )
+                            else value
+                        ),
+                    }
+                )
+            return trend
+
+        return {
+            "revenue": trend_series("total_revenue"),
+            "net_income": trend_series("net_income"),
+            "ebitda": trend_series("ebitda"),
+            "free_cash_flow": trend_series("free_cash_flow"),
+            "eps": trend_series("diluted_eps", "basic_eps"),
+            "gross_profit": trend_series("gross_profit"),
+            "operating_income": trend_series("operating_income"),
+            "dividends_paid": trend_series("dividends_paid"),
+        }
 
     return {
-        "revenue": trend_series("total_revenue"),
-        "net_income": trend_series("net_income"),
-        "ebitda": trend_series("ebitda"),
-        "free_cash_flow": trend_series("free_cash_flow"),
-        "eps": trend_series("diluted_eps", "basic_eps"),
+        "annual": get_trends("annual", limit=10),
+        "quarterly": get_trends("quarterly", limit=20),
     }
 
 
@@ -70,8 +83,12 @@ def build_investor_metrics(
         return numerator / denominator
 
     def get_recent_and_previous(history_list):
-        recent = history_list[0]["value"] if history_list else None
-        previous = history_list[1]["value"] if len(history_list) > 1 else None
+        if not history_list or len(history_list) < 2:
+            return None, None
+        # History is now sorted ascending by date in build_financial_trends
+        # So the last item is the recent one
+        recent = history_list[-1]["value"]
+        previous = history_list[-2]["value"]
         return recent, previous
 
     def round_or_none(value, digits=4):
@@ -87,8 +104,9 @@ def build_investor_metrics(
     capex = financials.capital_expenditure
 
     # Revenue growth
+    annual_trends = financial_history.get("annual", {})
     recent_year, previous_year = get_recent_and_previous(
-        financial_history.get("revenue", [])
+        annual_trends.get("revenue", [])
     )
     revenue_growth = (
         ((recent_year - previous_year) / abs(previous_year)) * 100

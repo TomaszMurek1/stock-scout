@@ -30,11 +30,7 @@ export const StockOnePager: FC = () => {
 
   const shortWindow = Number(searchParams.get("short_window") ?? 50);
   const longWindow = Number(searchParams.get("long_window") ?? 200);
-  const { stock, isLoading, error } = useStockData(
-    ticker,
-    shortWindow,
-    longWindow
-  );
+  const { stock, isLoading, error } = useStockData(ticker, shortWindow, longWindow);
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={new Error(error)} />;
@@ -43,9 +39,7 @@ export const StockOnePager: FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
         <div className="bg-white rounded-lg shadow-lg max-w-xl w-full p-8 text-center space-y-3">
-          <p className="text-2xl font-semibold text-gray-900">
-            {ticker} is delisted
-          </p>
+          <p className="text-2xl font-semibold text-gray-900">{ticker} is delisted</p>
           <p className="text-gray-600">
             {stock.message || "This ticker is marked as delisted. No market data is available."}
           </p>
@@ -69,9 +63,7 @@ export const StockOnePager: FC = () => {
   const currencyCode = executive_summary?.currency ?? "USD";
   const latestPrice =
     technical_analysis.historical.length > 0
-      ? technical_analysis.historical[
-          technical_analysis.historical.length - 1
-        ].close
+      ? technical_analysis.historical[technical_analysis.historical.length - 1].close
       : 0;
 
   const openBuyModal = () => {
@@ -100,16 +92,29 @@ export const StockOnePager: FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="financials">Financials</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsList className="grid grid-cols-3 h-auto bg-slate-100/50 p-1">
+                <TabsTrigger 
+                  value="overview"
+                  className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+                >
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="financials"
+                  className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+                >
+                  Financials
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="notes"
+                  className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+                >
+                  Notes
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="space-y-4">
                 <div className="space-y-6">
-                  <CompanyOverviewCard
-                    description={company_overview?.description}
-                  />
+                  <CompanyOverviewCard description={company_overview?.description} />
                   <TechnicalAnalysisChartCard
                     technicalAnalysis={technical_analysis}
                     riskMetrics={risk_metrics}
@@ -121,14 +126,7 @@ export const StockOnePager: FC = () => {
               <TabsContent value="financials" className="space-y-4">
                 <div className="space-y-6">
                   {analysis_dashboard && (
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                      <div className="xl-col-span-3">
-                        <GrowthChart
-                          trends={financial_trends}
-                          currency={currencyCode}
-                        />
-                      </div>
-                    </div>
+                    <GrowthChart trends={financial_trends} currency={currencyCode} />
                   )}
 
                   <FinancialTrendsCard
@@ -170,8 +168,7 @@ export const StockOnePager: FC = () => {
               {tradeAction === "buy" ? "Buy" : "Sell"} {ticker}
             </DialogTitle>
             <DialogDescription>
-              You are about to {tradeAction} shares of{" "}
-              {executive_summary.name}.
+              You are about to {tradeAction} shares of {executive_summary.name}.
             </DialogDescription>
           </DialogHeader>
           <TradePanel

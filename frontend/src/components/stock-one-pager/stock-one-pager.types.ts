@@ -66,14 +66,24 @@ export interface TechnicalAnalysis {
 }
 interface TrendItem {
   year: number;
+  date?: string;
   value: number;
 }
 
-export interface FinancialTrends {
+export interface MetricTrends {
   revenue: TrendItem[];
   net_income: TrendItem[];
   ebitda: TrendItem[];
   free_cash_flow: TrendItem[];
+  eps?: TrendItem[];
+  gross_profit?: TrendItem[];
+  operating_income?: TrendItem[];
+  dividends_paid?: TrendItem[];
+}
+
+export interface FinancialTrends {
+  annual: MetricTrends;
+  quarterly: MetricTrends;
 }
 
 export interface StockData {
