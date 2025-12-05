@@ -76,7 +76,7 @@ export default function HoldingsTab({ holdings, transactions, onRemove }: Holdin
                     })}
                   </td>
                   <td className="py-2 pr-4">
-                    {tx.timestamp ? new Date(tx.timestamp).toLocaleString() : "—"}
+                    {tx.timestamp ? tx.timestamp.replace("T", " ").slice(0, 16) : "—"}
                   </td>
                   <td className="py-2 pr-4">{tx.currency}</td>
                 </tr>
