@@ -2,6 +2,7 @@ import logging
 import pandas as pd
 import yfinance as yf
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from typing import List, Dict
@@ -236,6 +237,11 @@ def build_financial_history_mappings(
             or safe_get(cf_df, "Depreciation And Amortization", col),
             "free_cash_flow": safe_get(cf_df, "Free Cash Flow", col),
             "capital_expenditure": safe_get(cf_df, "Capital Expenditure", col),
+            "dividends_paid": get_first_valid_row(
+                cf_df,
+                ["Cash Dividends Paid", "Common Stock Dividend Paid"],
+                col
+            ),
             "total_debt": safe_get(bs_df, "Total Debt", col),
             "total_assets": safe_get(bs_df, "Total Assets", col),
             "total_liabilities": get_first_valid_row(
@@ -274,16 +280,35 @@ def build_financial_history_mappings(
             "shares_outstanding": fast_info.get("shares"),
             "last_updated": now,
         }
+
+        # Try extracting Gross Profit or calculate from Revenue - Cost Of Revenue
+        gross_profit = safe_get(income_stmt, "Gross Profit", col)
+        if gross_profit is None:
+            cost_of_rev = safe_get(income_stmt, "Cost Of Revenue", col)
+            if total_revenue_val is not None and cost_of_rev is not None:
+                gross_profit = total_revenue_val - cost_of_rev
+        hist_data["gross_profit"] = gross_profit
+
         if hist_data["current_assets"] is not None and hist_data["current_liabilities"] is not None:
             hist_data["working_capital"] = hist_data["current_assets"] - hist_data["current_liabilities"]
+        
+        # Fallback for EBIT: Pretax Income + Interest Expense
+        if hist_data["ebit"] is None:
+            pretax = safe_get(income_stmt, "Pretax Income", col)
+            interest = safe_get(income_stmt, "Interest Expense", col)
+            if pretax is not None and interest is not None:
+                hist_data["ebit"] = pretax + interest
 
         mappings.append(hist_data)
         existing_history_keys.add(key)
         added_count += 1
     # Fallback: if EBIT missing but EBITA and depreciation available, fill it
+    # Also Fallback: if EBITDA missing but EBIT and depreciation available, fill it
     for item in mappings:
         if item.get("ebit") is None and item.get("ebitda") is not None and item.get("depreciation_amortization") is not None:
             item["ebit"] = item["ebitda"] - item["depreciation_amortization"]
+        if item.get("ebitda") is None and item.get("ebit") is not None and item.get("depreciation_amortization") is not None:
+            item["ebitda"] = item["ebit"] + item["depreciation_amortization"]
         
     logger.info(
         f"[{company.ticker}] Prepared {added_count} new CompanyFinancialHistory row(s)."
@@ -605,6 +630,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                     f"{inserted_count} to CompanyFinancialHistory for tickers: {tickers}"
                 )
             )
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Duplicate financial history rows skipped for %s: %s", tickers, exc
+            )
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for financial history: %s", exc)
@@ -618,6 +648,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             after = db.query(CompanyRecommendationHistory).count()
             inserted_recos = after - before
             logger.info(f"Inserted {inserted_recos} recommendation rows for {tickers}")
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Duplicate recommendation rows skipped for %s: %s", tickers, exc
+            )
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for recommendations: %s", exc)
@@ -631,6 +666,9 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             after = db.query(CompanyEstimateHistory).count()
             inserted_estimates = after - before
             logger.info(f"Inserted {inserted_estimates} estimate rows for {tickers}")
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning("Duplicate estimates skipped for %s: %s", tickers, exc)
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for estimates: %s", exc)
@@ -644,6 +682,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             after = db.query(CompanyEpsRevisionHistory).count()
             inserted_eps_revisions = after - before
             logger.info(f"Inserted {inserted_eps_revisions} eps revision rows for {tickers}")
+        except IntegrityError as exc:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Duplicate eps revision rows skipped for %s: %s", tickers, exc
+            )
         except Exception as exc:  # noqa: BLE001
             db.rollback()
             logger.exception("Bulk insert failed for eps revisions: %s", exc)

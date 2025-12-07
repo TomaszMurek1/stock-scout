@@ -1,11 +1,8 @@
 import React from "react";
 import { Card, Tooltip } from "@/components/ui/Layout";
-import {
-  formatCurrency,
-  formatNumber,
-  formatPercentage,
-} from "@/utils/formatting";
-import { formatCompactCurrencyValue, meetsThreshold, statusFromMeets } from "./metric-helpers";
+import { MetricTooltipContent } from "./metric-tooltip-content";
+import { formatCurrency, formatNumber, formatPercentage } from "@/utils/formatting";
+import { meetsThreshold, statusFromMeets } from "./metric-helpers";
 import { getMetricStatus } from "./metric-utils";
 import type {
   AnalysisDashboard,
@@ -150,34 +147,13 @@ const MetricsCard = ({
                 <span className="text-sm font-medium text-slate-700">{metric.label}</span>
                 <Tooltip
                   content={
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                          Value
-                        </h4>
-                        <p className="font-mono text-emerald-400 font-semibold">{metric.value}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                          Description
-                        </h4>
-                        <p className="text-slate-300 text-xs leading-snug">{metric.description}</p>
-                      </div>
-                      <div className="border-t border-slate-700 pt-2">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                          Formula
-                        </h4>
-                        <p className="text-slate-400 text-xs italic">{metric.definition}</p>
-                      </div>
-                      {metric.tooltip && (
-                        <div className="border-t border-slate-700 pt-2">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                            Threshold
-                          </h4>
-                          <p className="text-slate-300 text-xs">{metric.tooltip}</p>
-                        </div>
-                      )}
-                    </div>
+                    <MetricTooltipContent
+                      value={metric.value}
+                      description={metric.description}
+                      definition={metric.definition}
+                      criterion={metric.tooltip}
+                      labels={{ definition: "Formula", criterion: "Threshold" }}
+                    />
                   }
                 >
                   <svg
@@ -233,8 +209,7 @@ interface MetricsColumnProps {
 
 const buildProfitabilityGrowthMetrics = (
   analysisDashboard: AnalysisDashboard,
-  financialPerformance: FinancialPerformance,
-  currencyCode: string
+  financialPerformance: FinancialPerformance
 ) => [
   (() => {
     const meets = meetsThreshold(analysisDashboard.return_on_assets, 0.15);
@@ -288,18 +263,9 @@ const buildProfitabilityGrowthMetrics = (
       icon: <Icons.TrendingUp />,
     };
   })(),
-  {
-    label: "Operating Cash Flow",
-    value: formatCompactCurrencyValue(analysisDashboard.operating_cash_flow, currencyCode),
-    tooltip: "Operating cash flow (ttm).",
-    definition: "CFO (ttm) = Cash from operations.",
-    description: "Cash generated from core business activities.",
-    icon: <Icons.Banknote />,
-    status: "neutral",
-  },
 ];
 
-const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard, currencyCode: string) => {
+const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard) => {
   const currentRatioValue = formatNumber(analysisDashboard.current_ratio, 2);
   const currentRatioMeets = meetsThreshold(analysisDashboard.current_ratio, 1);
   const debtToAssetsMeets = meetsThreshold(analysisDashboard.debt_to_assets, 0.4, true);
@@ -452,14 +418,12 @@ export const MetricsColumn: React.FC<MetricsColumnProps> = ({
   financialPerformance,
   riskMetrics,
 }) => {
-  const safetyMetrics = analysisDashboard
-    ? buildSafetyMetrics(analysisDashboard, currencyCode)
-    : [];
+  const safetyMetrics = analysisDashboard ? buildSafetyMetrics(analysisDashboard) : [];
   const valuationTimingMetrics = analysisDashboard
     ? buildValuationTimingMetrics(analysisDashboard, currencyCode)
     : [];
   const profitabilityMetrics = analysisDashboard
-    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance, currencyCode)
+    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance)
     : [];
   const valuationList = buildValuationMetrics(valuationMetrics);
   const riskList = buildRiskMetrics(riskMetrics);

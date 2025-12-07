@@ -10,7 +10,7 @@ class CompanyFinancials(Base):
     __tablename__ = "company_financials"
 
     financials_id = Column(Integer, primary_key=True, autoincrement=True)
-    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False, unique=True)
 
     enterprise_value = Column(Float, nullable=True)
     total_revenue = Column(Float, nullable=True)

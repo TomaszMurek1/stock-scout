@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { MRT_ColumnDef } from "material-react-table"
 import type { WatchlistStock } from "./types"
+import { API_URL } from "@/services/apiClient"
 
 const formatCurrency = (value: number | null | undefined, currency?: string | null) => {
     if (value === null || value === undefined) {
@@ -20,17 +21,25 @@ const formatCurrency = (value: number | null | undefined, currency?: string | nu
 export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] { 
     return useMemo<MRT_ColumnDef<WatchlistStock>[]>(() => [
         {
-            accessorKey: "ticker",
-            header: "Ticker",
-            size: 80,
-            Cell: ({ cell }) => (
-                <span className="font-semibold text-gray-900">{cell.getValue<string>()}</span>
-            ),
-        },
-        {
             accessorKey: "name",
             header: "Company",
             enableSorting: true,
+            Cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <img
+                        src={`${API_URL}/stock-details/${row.original.ticker}/logo`}
+                        alt={row.original.ticker}
+                        className="w-8 h-8 object-contain bg-gray-200 rounded p-1"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                    />
+                    <div className="flex flex-col">
+                        <span className="font-medium">{row.original.name}</span>
+                        <span className="text-xs text-gray-500">{row.original.ticker}</span>
+                    </div>
+                </div>
+            ),
         },
         {
             header: "Last Price",

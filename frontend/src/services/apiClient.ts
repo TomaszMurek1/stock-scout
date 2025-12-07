@@ -2,7 +2,7 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 import { jwtDecode } from "jwt-decode";
 import { refreshTokenRequest } from "./authService";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 interface TokenPayload {
   exp: number;

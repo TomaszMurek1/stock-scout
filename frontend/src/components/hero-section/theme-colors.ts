@@ -2,8 +2,8 @@
 export const bannerColors = {
     light: {
         // Main background
-        background: "bg-neutral-200",
-        backgroundGradient: "from-neutral-200 to-slate-400",
+        background: "bg-neutral-300",
+        backgroundGradient: "from-gray-200 to-gray-300",
 
         // Accent gradients
         accentOverlay: "from-neutral-200/30 to-slate-200/20",

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
+from services.company.company_service import get_or_create_company
 from database.base import get_db
 from database.portfolio import FavoriteStock
 from database.position import PortfolioPositions
@@ -183,7 +184,7 @@ def _get_latest_market_data_for_company(
     }
 
 
-def _build_watchlist_full_for_user(db: Session, user: User) -> List[dict]:
+def build_watchlist_full_for_user(db: Session, user: User) -> List[dict]:
     """
     Returns a rich watchlist view for the user, combining:
     - FavoriteStock
@@ -231,10 +232,26 @@ def _build_watchlist_full_for_user(db: Session, user: User) -> List[dict]:
         note = notes_by_company.get(company.company_id)
         note_summary: Optional[dict] = None
         if note:
+            next_catalyst_str = None
+            if note.next_catalyst and isinstance(note.next_catalyst, dict):
+                next_catalyst_str = note.next_catalyst.get("event")
+            elif note.next_catalyst and isinstance(note.next_catalyst, str):
+                next_catalyst_str = note.next_catalyst
+
             note_summary = {
+                "title": note.notes,
                 "research_status": note.research_status,
                 "sentiment_score": note.sentiment_score,
                 "sentiment_trend": note.sentiment_trend,
+                "thesis": note.investment_thesis,
+                "risk_factors": note.risk_factors,
+                "next_catalyst": next_catalyst_str,
+                "target_price_low": float(note.intrinsic_value_low)
+                if note.intrinsic_value_low is not None
+                else None,
+                "target_price_high": float(note.intrinsic_value_high)
+                if note.intrinsic_value_high is not None
+                else None,
                 "intrinsic_value_low": float(note.intrinsic_value_low)
                 if note.intrinsic_value_low is not None
                 else None,
@@ -245,6 +262,7 @@ def _build_watchlist_full_for_user(db: Session, user: User) -> List[dict]:
                 if note.margin_of_safety is not None
                 else None,
                 "tags": note.tags,
+                "updated_at": note.updated_at.isoformat() if note.updated_at else None,
             }
 
         holding = holdings_by_ticker.get(ticker)
@@ -294,7 +312,7 @@ def add_to_watchlist_body(
             detail="ticker or company_symbol is required",
         )
 
-    company = db.query(Company).filter(Company.ticker == ticker).first()
+    company = get_or_create_company(ticker, db)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
@@ -345,7 +363,7 @@ def list_watchlist_full(
       ...
     ]
     """
-    return _build_watchlist_full_for_user(db, user)
+    return build_watchlist_full_for_user(db, user)
 
 
 @router.delete("/{ticker}")

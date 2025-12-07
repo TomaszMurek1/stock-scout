@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { apiClient } from "@/services/apiClient"
 import {
@@ -12,7 +12,6 @@ import {
 import { SearchInput } from "./SearchInput"
 import { SearchResultsDropdown } from "./SearchResultsDropdown"
 import { Company } from "./types"
-import { NoResultsDropdown } from "./NoResultDropdown"
 import { cn } from "@/lib/utils"
 
 interface CompanySearchProps {
@@ -36,23 +35,47 @@ export function CompanySearch({
     const [results, setResults] = useState<Company[]>([])
     const [selected, setSelected] = useState<Company | null>(null)
     const [loading, setLoading] = useState(false)
+    const [externalLoading, setExternalLoading] = useState(false)
+    const [externalSearched, setExternalSearched] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const navigate = useNavigate()
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
+    const wrapperRef = useRef<HTMLDivElement>(null)
 
-    const fetchCompanies = useCallback(async (value: string) => {
-        setLoading(true)
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [wrapperRef])
+
+    const fetchCompanies = useCallback(async (value: string, includeExternal = false) => {
+        if (includeExternal) {
+            setExternalLoading(true);
+        } else {
+            setLoading(true);
+        }
         try {
             const response = await apiClient.get<Company[]>("/companies", {
-                params: { search: value },
+                params: { search: value, include_external: includeExternal },
             })
             setResults(response.data)
             setIsOpen(true)
+            setExternalSearched(includeExternal)
         } catch {
             setResults([])
             setIsOpen(false)
         }
-        setLoading(false)
+        if (includeExternal) {
+            setExternalLoading(false);
+        } else {
+            setLoading(false);
+        }
     }, [])
 
     // Debounced input handler
@@ -65,6 +88,7 @@ export function CompanySearch({
         if (!value) {
             setResults([])
             setIsOpen(false)
+            setExternalSearched(false)
             return
         }
         debounceTimeout.current = setTimeout(() => {
@@ -104,7 +128,7 @@ export function CompanySearch({
     const primaryMarket = selected?.market?.name || ""
 
     return (
-        <div className={cn("mx-auto px-4 py-6", containerClassName)}>
+        <div ref={wrapperRef} className={cn("mx-auto px-4 py-6", containerClassName)}>
             <div className={cn("bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4 shadow-sm", contentClassName)}>
                 <div className="flex justify-between items-center">
                     {/* Left side - Icon and Search */}
@@ -125,13 +149,24 @@ export function CompanySearch({
                             />
 
                             {/* Search Results Dropdown */}
-                            {!selected && isOpen && results.length > 0 && (
-                                <SearchResultsDropdown results={results} onSelect={handleCompanySelect} />
-                            )}
-
-                            {/* No Results */}
-                            {!loading && search && !selected && isOpen && results.length === 0 && (
-                                <NoResultsDropdown search={search} />
+                            {!selected && isOpen && Boolean(search) && (
+                                <SearchResultsDropdown
+                                    results={results}
+                                    onSelect={handleCompanySelect}
+                                    showSearchMore={
+                                        !selected &&
+                                        isOpen &&
+                                        !externalSearched &&
+                                        Boolean(search)
+                                    }
+                                    loadingMore={externalLoading}
+                                    onSearchMore={() => fetchCompanies(search, true)}
+                                    emptyMessage={
+                                        !loading && results.length === 0
+                                            ? `No companies found for "${search}"`
+                                            : undefined
+                                    }
+                                />
                             )}
                         </div>
                     </div>
@@ -141,7 +176,7 @@ export function CompanySearch({
                         <button
                             onClick={handleAction}
                             disabled={!selected || actionLoading}
-                            className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center shadow-sm hover:shadow-md disabled:shadow-none"
+                            className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center shadow-sm hover:shadow-md disabled:shadow-none w-48 justify-center"
                         >
                             {actionLoading ? (
                                 <>

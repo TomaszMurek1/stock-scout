@@ -12,30 +12,34 @@ logger = logging.getLogger(__name__)
 
 def get_or_create_company(ticker: str, db: Session) -> Company:
     """Fetch a company by ticker, or create if not found."""
+    ticker = ticker.upper().strip()
     company = db.query(Company).filter(Company.ticker == ticker).first()
     if company:
         return company
 
     # If not found, try to fetch info from Yahoo
     logger.info(f"Company {ticker} not found in DB; fetching from yfinance.")
-    stock = yf.Ticker(ticker)
-    stock_info = stock.info or {}
-    if not stock_info:
-        logger.error(f"No company info found for ticker {ticker}.")
-        return None
+    try:
+        stock = yf.Ticker(ticker)
+        stock_info = stock.info or {}
+    except Exception as e:
+        logger.error(f"Error fetching yfinance info for {ticker}: {e}")
+        stock_info = {}
 
     company = Company(
-        name=stock_info.get('longName', 'Unknown'),
+        name=stock_info.get('longName') or stock_info.get('shortName') or ticker,
         ticker=ticker,
-        sector=stock_info.get('sector', 'Unknown'),
-        industry=stock_info.get('industry', 'Unknown')
+        sector=stock_info.get('sector'),
+        industry=stock_info.get('industry')
     )
     db.add(company)
     try:
         db.commit()
-    except IntegrityError as exc:
+        db.refresh(company)
+    except IntegrityError:
         db.rollback()
-        logger.error(f"Integrity error creating company {ticker}: {exc}")
-        return None
+        logger.info(f"Race condition encountered for {ticker}, retrieving existing record.")
+        company = db.query(Company).filter(Company.ticker == ticker).first()
+        
     return company
 

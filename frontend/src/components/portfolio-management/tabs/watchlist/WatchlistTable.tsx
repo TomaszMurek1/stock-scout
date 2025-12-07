@@ -37,35 +37,115 @@ export function WatchlistTable() {
   const renderDetailPanel = useCallback(({ row }: { row: MRT_Row<WatchlistStock> }) => {
     const { market_data, note } = row.original;
     return (
-      <div className="w-full p-4 grid gap-4 md:grid-cols-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
-        <div className="space-y-1">
-          <p className="font-semibold text-gray-900">Market data</p>
-          <p>
-            <span className="font-medium">Last price:</span>{" "}
-            {market_data?.last_price !== null && market_data?.last_price !== undefined
-              ? `${market_data.last_price} ${market_data?.currency ?? ""}`
-              : "—"}
-          </p>
-          <p>
-            <span className="font-medium">Last updated:</span>{" "}
-            {market_data?.last_updated ? new Date(market_data.last_updated).toLocaleString() : "—"}
-          </p>
-        </div>
-        <div className="space-y-1">
-          <p className="font-semibold text-gray-900">Research note</p>
-          <p>
-            <span className="font-medium">Status:</span> {note?.research_status ?? "—"}
-          </p>
-          <p>
-            <span className="font-medium">Sentiment:</span>{" "}
-            {note?.sentiment_score !== null && note?.sentiment_score !== undefined
-              ? `${note.sentiment_score} (${note.sentiment_trend ?? "stable"})`
-              : "—"}
-          </p>
-          <p>
-            <span className="font-medium">Tags:</span>{" "}
-            {note?.tags && note.tags.length > 0 ? note.tags.join(", ") : "—"}
-          </p>
+      <div className="w-full p-4 grid gap-6 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Left Column: Market Data & Status */}
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
+                Market Data
+              </p>
+              <p>
+                <span className="font-medium">Last price:</span>{" "}
+                {market_data?.last_price !== null && market_data?.last_price !== undefined
+                  ? `${market_data.last_price} ${market_data?.currency ?? ""}`
+                  : "—"}
+              </p>
+              <p>
+                <span className="font-medium">Last updated:</span>{" "}
+                {market_data?.last_updated
+                  ? new Date(market_data.last_updated).toLocaleString()
+                  : "—"}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
+                Research Status
+              </p>
+              {note ? (
+                <>
+                  <p>
+                    <span className="font-medium">Status:</span>{" "}
+                    <span className="capitalize">{note.research_status?.replace("_", " ") ?? "—"}</span>
+                  </p>
+                  <p>
+                    <span className="font-medium">Sentiment:</span>{" "}
+                    {note.sentiment_trend ? (
+                      <span
+                        className={`font-medium capitalize ${
+                          note.sentiment_trend === "bullish"
+                            ? "text-green-600"
+                            : note.sentiment_trend === "bearish"
+                            ? "text-red-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {note.sentiment_trend}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </p>
+                  <p>
+                    <span className="font-medium">Tags:</span>{" "}
+                    {note.tags && note.tags.length > 0 ? note.tags.join(", ") : "—"}
+                  </p>
+                  <p>
+                    <span className="font-medium">Last Updated:</span>{" "}
+                    {note.updated_at ? new Date(note.updated_at).toLocaleDateString() : "—"}
+                  </p>
+                </>
+              ) : (
+                <p className="text-gray-500 italic">No research note available.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Note Content */}
+          {note && (
+            <div className="space-y-4">
+               <div className="space-y-2">
+                 <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
+                   {note.title || "Untitled Note"}
+                 </p>
+                 
+                 {note.thesis && (
+                   <div>
+                     <span className="font-medium text-xs uppercase text-gray-500">Thesis</span>
+                     <p className="text-gray-800 mt-0.5 whitespace-pre-wrap text-sm leading-relaxed line-clamp-4 hover:line-clamp-none transition-all">
+                       {note.thesis}
+                     </p>
+                   </div>
+                 )}
+
+                 {note.next_catalyst && (
+                   <div>
+                      <span className="font-medium text-xs uppercase text-gray-500">Next Catalyst</span>
+                      <p className="text-gray-800 mt-0.5">{note.next_catalyst}</p>
+                   </div>
+                 )}
+
+                 <div className="grid grid-cols-2 gap-4 pt-2">
+                    {(note.target_price_low || note.target_price_high) && (
+                        <div>
+                            <span className="font-medium text-xs uppercase text-gray-500 block">Target Price</span>
+                            <span className="text-gray-800">
+                                {note.target_price_low ?? "?"} - {note.target_price_high ?? "?"}
+                            </span>
+                        </div>
+                    )}
+                     
+                    {note.risk_factors && (
+                        <div>
+                             <span className="font-medium text-xs uppercase text-gray-500 block">Risk Factors</span>
+                             <p className="text-gray-800 line-clamp-2 hover:line-clamp-none text-xs">{note.risk_factors}</p>
+                        </div>
+                    )}
+                 </div>
+               </div>
+            </div>
+          )}
         </div>
       </div>
     );

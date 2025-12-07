@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import clsx from "clsx";
+import * as TooltipRadix from "@radix-ui/react-tooltip";
 
 export const Button = React.forwardRef<
   HTMLButtonElement,
@@ -104,29 +105,21 @@ export const Textarea = React.forwardRef<
 ));
 Textarea.displayName = "Textarea";
 
-export const Tooltip = ({
-  content,
-  children,
-}: {
-  content: React.ReactNode;
-  children: React.ReactNode;
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-
+export const Tooltip = ({ content, children }: { content: React.ReactNode; children: React.ReactNode }) => {
   return (
-    <div
-      className="relative inline-block"
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      {children}
-      {isVisible && (
-        <div className="absolute z-50 w-72 p-4 text-sm bg-slate-900 text-slate-50 rounded-lg shadow-xl -right-2 top-8 animate-in fade-in zoom-in-95 duration-200 border border-slate-700">
-          {/* Triangle pointer */}
-          <div className="absolute -top-1.5 right-6 w-3 h-3 bg-slate-900 rotate-45 border-l border-t border-slate-700"></div>
-          <div className="relative z-10">{content}</div>
-        </div>
-      )}
-    </div>
+    <TooltipRadix.Tooltip delayDuration={300}>
+      <TooltipRadix.TooltipTrigger asChild>{children}</TooltipRadix.TooltipTrigger>
+      <TooltipRadix.TooltipPortal>
+        <TooltipRadix.TooltipContent
+          className="max-w-xs p-4 text-sm bg-white text-slate-700 rounded-lg shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200"
+          side="top"
+          align="center"
+          sideOffset={8}
+        >
+          {content}
+          <TooltipRadix.TooltipArrow className="fill-white relative right-1/2 border-l border-t border-slate-200" />
+        </TooltipRadix.TooltipContent>
+      </TooltipRadix.TooltipPortal>
+    </TooltipRadix.Tooltip>
   );
 };

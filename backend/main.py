@@ -25,6 +25,7 @@ from api import (
     fundamentals,
     fibonacci_elliott,
     watchlist,
+    company_notes,
 )
 from database.base import Base, engine
 from core.openapi_overrides import add_bearer_auth
@@ -61,6 +62,7 @@ app.include_router(golden_cross.router,               prefix="/api/technical-ana
 app.include_router(fundamentals.router,               prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(compare.router,                    prefix="/api/compare",      tags=["Comparison"])
 app.include_router(company_search.router,             prefix="/api/companies",    tags=["Company Search"])
+app.include_router(company_notes.router,              prefix="/api/company-notes", tags=["Company Notes"])
 app.include_router(fibonacci_elliott.router,          prefix="/api/fibo-waves",   tags=["Fibonacci & Elliott"])
 app.include_router(fx.router,                         prefix="/api/fx-rate",              tags=["FX Rates"])
 app.include_router(portfolio_management.router,       prefix="/api/portfolio-management", tags=["Portfolio"])

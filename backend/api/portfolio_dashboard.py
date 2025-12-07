@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from api.dependencies.portfolio import get_user_portfolio
-from api.watchlist import get_watchlist_companies_for_user
+from api.watchlist import build_watchlist_full_for_user
 from services.auth.auth import get_current_user
 from services.portfolio_positions_service import get_holdings_for_user
 from services.portfolio_snapshot_service import get_portfolio_snapshot
@@ -34,7 +34,7 @@ def get_portfolio_dashboard(
     )
 
     holdings = get_holdings_for_user(db, portfolio)
-    watchlist = get_watchlist_companies_for_user(db, user)
+    watchlist = build_watchlist_full_for_user(db, user)
     transactions = get_transactions_for_portfolio(db, portfolio_id)
 
     snapshot = get_portfolio_snapshot(db, portfolio)
