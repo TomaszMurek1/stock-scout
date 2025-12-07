@@ -9,7 +9,7 @@ import { BarChart } from "lucide-react";
 
 interface FormCardGeneratorProps {
   title: string;
-  subtitle: string;
+  subtitle: string | React.ReactNode;
   children: React.ReactNode;
 }
 

@@ -26,6 +26,7 @@ import PortfolioManagement from "./components/portfolio-management/PortfolioMana
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import { StockCompare } from "./components/comapre-stocks-page/StockCompare";
+import ChochScanPage from "./components/scenario-carousel/scan-types/choch/choch-page";
 
 function App() {
   const { login } = useAuth();
@@ -79,6 +80,10 @@ function App() {
               <Route
                 path="/scenarios/break-even-point"
                 element={<PrivateRoute element={<BreakEvenPointPage />} />}
+              />
+              <Route
+                path="/scenarios/choch"
+                element={<PrivateRoute element={<ChochScanPage />} />}
               />
               <Route path="/admin" element={<PrivateRoute element={<AdminDashboard />} />} />
               <Route

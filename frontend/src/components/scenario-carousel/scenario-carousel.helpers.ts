@@ -36,6 +36,14 @@ export const scenarios: Scenario[] = [
     type: "fibonacci-elliott",
   },
   {
+    title: "Change of Character",
+    description: "Detect Bearish to Bullish trend reversal patterns (CHoCH)",
+    icon: LineChart,
+    href: "/scenarios/choch",
+    color: "bg-blue-200 bg-opacity-50",
+    type: "choch",
+  },
+  {
     title: "EV to revenue",
     description: "Create desc later ",
     icon: BarChart,
