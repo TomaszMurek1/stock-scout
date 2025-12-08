@@ -61,8 +61,20 @@ export default function EvToRevenueScanForm() {
 
   return (
     <FormCardGenerator
-      title="EV to Revenue Scan"
-      subtitle=" Set parameters to scan for stocks showing a EV to Revenue pattern."
+      title="EV/Revenue Scan"
+      subtitle={
+        <div className="space-y-2">
+          <p>
+            Find potentially <strong>undervalued growth stocks</strong> using the Enterprise Value to Revenue (EV/Revenue) ratio.
+          </p>
+          <ul className="list-disc list-inside text-sm text-gray-700 ml-2">
+            <li><strong>What it measures:</strong> How much the market values each dollar of revenue the company generates.</li>
+            <li><strong>Lower ratios (1-3):</strong> May indicate undervalued companies with strong revenue growth potential.</li>
+            <li><strong>Higher ratios (5+):</strong> Suggest the market expects significant future growth or the stock may be overvalued.</li>
+            <li><strong>Best for:</strong> Evaluating growth companies, especially in tech and biotech sectors where earnings may be negative.</li>
+          </ul>
+        </div>
+      }
     >
       <FormFieldsGenerator<EvToRevenueValues>
         form={form}

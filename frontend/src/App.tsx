@@ -27,6 +27,7 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import { StockCompare } from "./components/comapre-stocks-page/StockCompare";
 import ChochScanPage from "./components/scenario-carousel/scan-types/choch/choch-page";
+import ConsolidationPage from "./components/scenario-carousel/scan-types/consolidation/consolidation-page";
 
 function App() {
   const { login } = useAuth();
@@ -84,6 +85,10 @@ function App() {
               <Route
                 path="/scenarios/choch"
                 element={<PrivateRoute element={<ChochScanPage />} />}
+              />
+              <Route
+                path="/scenarios/consolidation"
+                element={<PrivateRoute element={<ConsolidationPage />} />}
               />
               <Route path="/admin" element={<PrivateRoute element={<AdminDashboard />} />} />
               <Route
