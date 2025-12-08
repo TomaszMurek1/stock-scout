@@ -7,14 +7,9 @@ import {
   Control,
   Path,
 } from "react-hook-form";
-import {
-  TextField,
-  Button,
-  Typography,
-  Box,
-  FormControlLabel,
-  Checkbox,
-} from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { IFormGeneratorField } from "./form-field-generator.types";
 
 // Generic FormFieldsGeneratorProps
@@ -43,56 +38,54 @@ const FormField = <T extends FieldValues>({
   type,
   options,
 }: FormFieldProps<T>) => {
-  console.log(options);
   return (
     <Controller
       name={name}
       control={control}
       render={({ field }) => (
-        <Box className="space-y-1 m-4">
-          <Typography
-            variant="subtitle1"
-            className="text-slate-700 !font-bold flex justify-start"
-          >
+        <div className="grid gap-2 text-left">
+          <Label htmlFor={name as string} className="text-sm font-semibold text-zinc-800">
             {label}
-          </Typography>
+          </Label>
           {type === "checkbox" && options ? (
             // Render checkboxes when the type is 'checkbox' and options are available
-            options.map((option) => (
-              <FormControlLabel
-                key={option.value}
-                control={
-                  <Checkbox
+            <div className="space-y-2">
+              {options.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`${name}-${option.value}`}
                     checked={field.value?.includes(option.value)}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const newValue = e.target.checked
                         ? [...(field.value || []), option.value]
                         : field.value.filter((v: string) => v !== option.value);
                       field.onChange(newValue);
                     }}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
                   />
-                }
-                label={option.label} // Label for each checkbox
-              />
-            ))
+                  <label
+                    htmlFor={`${name}-${option.value}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
           ) : (
-            // Render TextField for other input types
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-              className="bg-zinc-100"
+            // Render Input for other input types
+            <Input
+              id={name as string}
+              className="bg-white"
               {...field}
               type={type}
             />
           )}
-          <Typography
-            variant="body2"
-            className="text-slate-500 flex justify-start"
-          >
-            {description}
-          </Typography>
-        </Box>
+          {description && (
+            <p className="text-xs text-zinc-700">{description}</p>
+          )}
+        </div>
       )}
     />
   );
@@ -105,7 +98,7 @@ const FormFieldsGenerator = <T extends FieldValues>({
   onSubmit,
 }: FormFieldsGeneratorProps<T>) => {
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
       {formFields.map(({ name, label, description, type, options }) => (
         <FormField
           key={name}
@@ -117,12 +110,10 @@ const FormFieldsGenerator = <T extends FieldValues>({
           options={options}
         />
       ))}
-      <div className="m-4 pt-8">
+      <div className="mt-4">
         <Button
           type="submit"
-          variant="contained"
-          fullWidth
-          className="bg-slate-700 text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+          className="w-full bg-zinc-800 hover:bg-zinc-900 text-white"
           disabled={isLoading}
         >
           {isLoading ? "Scanning..." : "Start Scan"}

@@ -21,6 +21,7 @@ from api import (
     fx,
     portfolio_management,
     golden_cross,
+    choch,
     admin,
     fundamentals,
     fibonacci_elliott,
@@ -59,6 +60,7 @@ Base.metadata.create_all(bind=engine)
 # Register routers
 app.include_router(accounts.router,                   prefix="/api/accounts",     tags=["Accounts"])
 app.include_router(golden_cross.router,               prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(choch.router,                      prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(fundamentals.router,               prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(compare.router,                    prefix="/api/compare",      tags=["Comparison"])
 app.include_router(company_search.router,             prefix="/api/companies",    tags=["Company Search"])
