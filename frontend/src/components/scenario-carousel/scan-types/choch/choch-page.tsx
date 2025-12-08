@@ -30,7 +30,7 @@ export default function ChochScanPage() {
       lookbackPeriod: 10,
       daysToCheck: 60,
       basketIds: [],
-      minMarketCap: 0,
+      minMarketCap: 1,
     },
   });
 
@@ -109,7 +109,7 @@ export default function ChochScanPage() {
           <p>
             Find stocks showing a probable trend reversal known as <strong>Change of Character (CHoCH)</strong>.
           </p>
-          <ul className="list-disc list-inside text-sm text-slate-600 ml-2">
+          <ul className="list-disc list-inside text-sm text-gray-700 ml-2">
             <li><strong>The Setup:</strong> The stock must be in a confirmed downtrend (Making Lower Highs and Lower Lows).</li>
             <li><strong>The Trigger:</strong> The price breaks <em>above</em> the most recent significant Lower High (LH).</li>
             <li><strong>The Signal:</strong> This "Break of Structure" suggests buyers are taking control, marking a potential shift from Bearish to Bullish.</li>
