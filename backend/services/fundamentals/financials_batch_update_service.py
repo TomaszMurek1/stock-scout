@@ -438,6 +438,18 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         except Exception as e:
             logger.error(f"Failed to fetch yfinance data for {ticker}: {e}")
             per_ticker_errors.append({"ticker": ticker, "error": str(e)})
+            # If yfinance fails (e.g. 404), mark as explicit 0 market cap so we don't retry endlessly in filtered scans
+            try:
+                md = market_data.get(comp.company_id) or CompanyMarketData(company_id=comp.company_id)
+                md.market_cap = 0.0
+                md.last_updated = datetime.now(timezone.utc)
+                if hasattr(md, "is_delisted"):
+                    md.is_delisted = True
+                db.add(md)
+                db.commit()
+            except Exception as db_exc:
+                logger.error(f"Failed to mark ticker {ticker} as failed in DB: {db_exc}")
+                db.rollback()
             continue  # Skip this ticker if yfinance throws an error
 
         try:
@@ -450,6 +462,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                     f"No valid fast_info for ticker {ticker} (may be delisted or invalid)"
                 )
                 md.current_price = None
+                md.market_cap = 0.0  # Explicitly set 0 to skip in filtered scans
                 md.last_updated = datetime.now(timezone.utc)
                 if hasattr(md, "is_delisted"):
                     md.is_delisted = True
