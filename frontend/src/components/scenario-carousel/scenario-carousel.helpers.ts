@@ -73,7 +73,7 @@ export const scenarios: Scenario[] = [
     icon: Activity,
     href: "/scenarios/consolidation",
     color: "bg-gray-200 bg-opacity-50",
-    type: "golden-cross",
+    type: "consolidation",
   },
   {
     title: "Break Even Point",

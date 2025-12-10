@@ -1,76 +1,113 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useEffect, useMemo, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
 import { toast } from "react-toastify";
+import {
+  BreakoutFormSchema,
+  BreakoutFormValues,
+  BreakoutFormFields,
+} from "./breakout-form.helpers";
+import { apiClient } from "@/services/apiClient";
+import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
+import { BreakoutScanResponse, IBreakoutResultItem } from "./breakout-form.types";
+import { BreakoutOutput } from "./breakout-output";
 
-type FormData = {
-  consolidationPeriod: string;
-  breakoutPercentage: string;
-  volumeIncrease: string;
-};
+interface BasketOption {
+  id: number;
+  name: string;
+  type: string;
+}
 
 const BreakoutForm: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>({
-    consolidationPeriod: "20",
-    breakoutPercentage: "5",
-    volumeIncrease: "200",
-  });
   const [isLoading, setIsLoading] = useState(false);
+  const [basketOptions, setBasketOptions] = useState<BasketOption[]>([]);
+  const [results, setResults] = useState<IBreakoutResultItem[]>([]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm<BreakoutFormValues>({
+    resolver: zodResolver(BreakoutFormSchema),
+    defaultValues: {
+      consolidationPeriod: 20,
+      thresholdPercentage: 5,
+      basketIds: [],
+      minMarketCap: 0,
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const fetchBaskets = async () => {
+      try {
+        const response = await apiClient.get("/baskets");
+        setBasketOptions(response.data || []);
+      } catch (error) {
+        console.error("Failed to load baskets", error);
+        toast.error("Unable to load baskets. Please try again later.");
+      }
+    };
+    fetchBaskets();
+  }, []);
+
+  const formFields: IFormGeneratorField<BreakoutFormValues>[] = useMemo(() => {
+    return [
+      ...BreakoutFormFields,
+      {
+        name: "basketIds",
+        label: "Select baskets",
+        description: "Choose one or more baskets to define the scan universe.",
+        type: "checkbox",
+        options: basketOptions.map((basket) => ({
+          label: `${basket.name} (${basket.type})`,
+          value: String(basket.id),
+        })),
+      },
+    ];
+  }, [basketOptions]);
+
+  const onSubmit: SubmitHandler<BreakoutFormValues> = async (data) => {
     setIsLoading(true);
+    setResults([]); // Clear previous results
+    
+    try {
+      const response = await apiClient.post<BreakoutScanResponse>(
+        "/technical-analysis/breakout",
+        {
+          consolidation_period: data.consolidationPeriod,
+          threshold_percentage: data.thresholdPercentage,
+          basket_ids: data.basketIds?.map((id) => Number(id)) || [],
+          min_market_cap: data.minMarketCap,
+        }
+      );
 
-    // TODO: Implement Breakout scan API call
-    toast.info("Breakout scan not implemented yet");
-    setIsLoading(false);
+      const scanData = response.data.data || [];
+      setResults(scanData);
+      
+      if (scanData.length > 0) {
+          toast.success(`Scan completed! Found ${scanData.length} matches.`);
+      } else {
+          toast.info("Scan completed. No breakout candidates found with current criteria.");
+      }
+      
+    } catch (error: any) {
+      console.error("API error:", error);
+      const errorMessage = error.response?.data?.detail
+        || error.message
+        || "Network error. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        name="consolidationPeriod"
-        type="number"
-        value={formData.consolidationPeriod}
-        onChange={handleInputChange}
-        placeholder="Consolidation Period (days)"
-        aria-label="Consolidation Period"
-        required
-        className="w-full"
+    <div className="space-y-6">
+      <FormFieldsGenerator<BreakoutFormValues>
+        form={form}
+        formFields={formFields} 
+        isLoading={isLoading}
+        onSubmit={onSubmit}
       />
-      <Input
-        name="breakoutPercentage"
-        type="number"
-        value={formData.breakoutPercentage}
-        onChange={handleInputChange}
-        placeholder="Breakout Percentage"
-        aria-label="Breakout Percentage"
-        required
-        className="w-full"
-      />
-      <Input
-        name="volumeIncrease"
-        type="number"
-        value={formData.volumeIncrease}
-        onChange={handleInputChange}
-        placeholder="Volume Increase (%)"
-        aria-label="Volume Increase"
-        required
-        className="w-full"
-      />
-      <Button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-green-600 text-white hover:bg-green-700"
-      >
-        {isLoading ? "Loading breakout..." : "Run Breakout Scan"}
-      </Button>
-    </form>
+      {results.length > 0 && <BreakoutOutput results={results} />}
+    </div>
   );
 };
 

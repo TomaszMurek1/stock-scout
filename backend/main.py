@@ -27,7 +27,9 @@ from api import (
     fibonacci_elliott,
     watchlist,
     company_notes,
+    breakout,
 )
+
 from database.base import Base, engine
 from core.openapi_overrides import add_bearer_auth
 
@@ -61,6 +63,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(accounts.router,                   prefix="/api/accounts",     tags=["Accounts"])
 app.include_router(golden_cross.router,               prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(choch.router,                      prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(breakout.router,                   prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(fundamentals.router,               prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(compare.router,                    prefix="/api/compare",      tags=["Comparison"])
 app.include_router(company_search.router,             prefix="/api/companies",    tags=["Company Search"])

@@ -20,6 +20,14 @@ class GoldenCrossRequest(BaseModel):
     min_market_cap: float | None = None
 
 
+class BreakoutRequest(BaseModel):
+    consolidation_period: int
+    threshold_percentage: float
+    basket_ids: List[int] | None = None
+    min_market_cap: float | None = None
+
+
+
 class TickerRequestAdmin(BaseModel):
     country: str
     market: str

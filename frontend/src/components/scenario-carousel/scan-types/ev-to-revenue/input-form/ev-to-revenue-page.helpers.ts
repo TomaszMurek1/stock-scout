@@ -14,27 +14,25 @@ export const EvToRevenueFormFields: IFormGeneratorField<EvToRevenueValues>[] =
     {
       name: "markets",
       label: "Select Markets",
-      description: "Choose one or more markets to scan.",
-      type: "checkbox", // Add this field
+      description: "Choose one or more stock exchanges to scan for undervalued companies.",
+      type: "checkbox",
       options: [
         { label: "Nasdaq", value: "XNAS" },
         { label: "NYSE", value: "XNYS" },
-        { label: "GPW", value: "XWAR" },
-        { label: "London", value: "XLON" },
+        { label: "GPW (Warsaw)", value: "XWAR" },
+        { label: "London Stock Exchange", value: "XLON" },
       ],
     },
     {
       name: "min_ev_to_revenue",
-      label: "min_ev_to_revenue",
-      description:
-        "The number",
+      label: "Minimum EV/Revenue Ratio",
+      description: "Lower bound for the Enterprise Value to Revenue ratio (e.g., 0 for no minimum).",
       type: "number",
     },
     {
       name: "max_ev_to_revenue",
-      label: "max_ev_to_revenue",
-      description:
-        "The number",
+      label: "Maximum EV/Revenue Ratio",
+      description: "Upper bound for the ratio. Lower values (e.g., 1-3) indicate potentially undervalued growth stocks.",
       type: "number",
     },
   ];
