@@ -65,11 +65,8 @@ export default function PortfolioManagement() {
 
           <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
             <Summary
-              invested_value_current={totals.invested_value_current}
-              totalInvested={totals.totalInvested}
-              totalGainLoss={totals.totalGainLoss}
-              percentageChange={totals.percentageChange}
-              currency={portfolio.currency}
+              portfolio={portfolio}
+              performance={performance}
             />
             <PortfolioTabs
               onRemove={sell}

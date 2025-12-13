@@ -78,7 +78,17 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
     },
     performance: {
       portfolio_id: 0,
-      performance: 0,
+      as_of_date: "",
+      unit: "fraction",
+      performance: {
+        ttwr: {},
+        ttwr_invested: {},
+        mwrr: {},
+      },
+      period_meta: {
+        start_date: {},
+        end_date: {},
+      },
     },
     transactions: [],
     currencyRates: {},

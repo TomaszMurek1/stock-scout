@@ -96,15 +96,23 @@ def valuation_series(
             total = Decimal(res["total_value"])
             if include_breakdown:
                 stock = Decimal(res["by_stock"])
+                etf = Decimal(res["by_etf"])
+                bond = Decimal(res["by_bond"])
+                crypto = Decimal(res["by_crypto"])
+                commodity = Decimal(res["by_commodity"])
                 cash = Decimal(res["by_cash"])
                 points.append({
                     "date": d.isoformat(),
                     "total": str(total),
                     "by_stock": str(stock),
+                    "by_etf": str(etf),
+                    "by_bond": str(bond),
+                    "by_crypto": str(crypto),
+                    "by_commodity": str(commodity),
                     "by_cash": str(cash),
                     "net_contributions": str(Decimal(res["net_contributions"])),
                 })
-                last_stock, last_cash = stock, cash
+                # last_stock etc could be tracked if needed, but primary loop covers it
             else:
                 points.append({"date": d.isoformat(), "total": str(total)})
             last_total = total
@@ -113,16 +121,17 @@ def valuation_series(
         # have a stored row
         total = r.total_value
         if include_breakdown:
-            stock = r.by_stock
-            cash = r.by_cash
             points.append({
                 "date": d.isoformat(),
                 "total": str(total),
-                "by_stock": str(stock),
-                "by_cash": str(cash),
+                "by_stock": str(r.by_stock),
+                "by_etf": str(r.by_etf),
+                "by_bond": str(r.by_bond),
+                "by_crypto": str(r.by_crypto),
+                "by_commodity": str(r.by_commodity),
+                "by_cash": str(r.by_cash),
                 "net_contributions": str(r.net_contributions),
             })
-            last_stock, last_cash = stock, cash
         else:
             points.append({"date": d.isoformat(), "total": str(total)})
         last_total = total

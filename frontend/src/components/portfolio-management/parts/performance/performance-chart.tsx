@@ -1,298 +1,195 @@
-import React, { useMemo, useState } from "react";
-import ReactECharts from "echarts-for-react";
-import { usePortfolioBaseData } from "../../hooks/usePortfolioBaseData";
+import { FC, useEffect, useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { format, subDays, subMonths, subYears, startOfYear, parseISO } from "date-fns";
+import { Card } from "@/components/ui/Layout";
+import { useAppStore } from "@/store/appStore";
+import { PeriodSelector } from "@/components/stock-one-pager/period-selector";
+import { apiClient } from "@/services/apiClient";
 
-// Utility: get list of dates between two
-const getDateRange = (start: Date, end: Date) => {
-    const arr = [];
-    for (
-        let dt = new Date(start);
-        dt <= end;
-        dt.setDate(dt.getDate() + 1)
-    ) {
-        arr.push(new Date(dt).toISOString().slice(0, 10));
-    }
-    return arr;
-};
+// Reuse the Period type from existing selector
+type Period = "1M" | "1Q" | "YTD" | "1Y" | "All";
 
-// Utility: get rate for date, fallback to previous if missing
-function getRateOnDate(
-    rates: { date: string, close: number }[],
-    date: string
-): number | null {
-    if (!rates?.length) return null;
-    // Find the latest rate <= date
-    let best = rates[0];
-    for (const r of rates) {
-        if (r.date <= date && r.date > best.date) best = r;
-    }
-    return best.close;
+interface ValuationPoint {
+  date: string;
+  total: string;
+  by_stock: string;
+  by_etf: string;
+  by_bond: string;
+  by_crypto: string;
+  by_commodity: string;
+  by_cash: string;
+  net_contributions: string;
 }
 
-// Utility: get price for date, fallback to previous if missing
-function getPriceOnDate(
-    prices: { date: string; close: number }[] = [],
-    date: string
-): number | null {
-    if (!prices?.length) return null;
-    let best = prices[0];
-    for (const p of prices) {
-        if (p.date <= date && p.date > best.date) best = p;
-    }
-    return best.close;
+interface ValuationSeriesResponse {
+  portfolio_id: number;
+  points: ValuationPoint[];
 }
 
-// Find the currency of a holding by latest transaction up to date
-function getHoldingCurrency(
-    ticker: string,
-    txs: any[],
-    date: string,
-    fallbackCurrency: string
-): string {
-    const relevantTxs = txs
-        .filter(tx => tx.ticker === ticker && tx.timestamp.slice(0, 10) <= date)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    return relevantTxs[0]?.currency || fallbackCurrency;
-}
+const PerformanceChart: FC = () => {
+  const portfolio = useAppStore((state) => state.portfolio);
+  const [period, setPeriod] = useState<Period>("1Y");
+  const [data, setData] = useState<ValuationPoint[]>([]);
+  const [loading, setLoading] = useState(false);
 
-// Supported periods
-const PERIODS = [
-    { key: "all", label: "All Time" },
-    { key: "ytd", label: "YTD" },
-    { key: "1y", label: "1Y" },
-    { key: "6m", label: "6M" },
-    { key: "3m", label: "3M" },
-    { key: "1m", label: "1M" },
-    { key: "1w", label: "1W" }
-];
+  useEffect(() => {
+    if (!portfolio?.id) return;
 
-// --- MAIN COMPONENT ---
-export const Performance: React.FC = () => {
-    // get data from Zustand (or as props)
-    const {
-        portfolio,
-        transactions,
-        fxRates,
-        priceHistory
-    } = usePortfolioBaseData();
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const now = new Date();
+        let start: Date;
 
-    const [period, setPeriod] = useState("all");
-    const portfolioCurrency = portfolio?.currency || "PLN";
-
-    // --- MEMOIZED CALCULATION ---
-    const { perfSeries, benchmarkSeries } = useMemo(() => {
-        if (!transactions?.length) return { perfSeries: [], benchmarkSeries: [] };
-
-        // sort transactions
-        const txs = [...transactions].sort((a, b) =>
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
-        const firstDate = txs[0].timestamp.slice(0, 10);
-        const lastDate = (new Date()).toISOString().slice(0, 10);
-
-        const fullDates = getDateRange(new Date(firstDate), new Date(lastDate));
-
-        // For each day, walk through transactions and build positions
-        const positions: Record<string, number> = {};
-        let txIdx = 0;
-        const dailyValue: number[] = [];
-        const dates: string[] = [];
-
-        // --- Currency Conversion ---
-        function convert(val: number, from: string, to: string, date: string) {
-            if (from === to) return val;
-            const pair = from + '-' + to;
-            const invPair = to + '-' + from;
-            if (fxRates[pair]) {
-                const r = getRateOnDate(fxRates[pair], date);
-                return r ? val * r : val;
-            }
-            if (fxRates[invPair]) {
-                const r = getRateOnDate(fxRates[invPair], date);
-                return r ? val / r : val;
-            }
-            return val;
-        }
-
-        for (let d = 0; d < fullDates.length; ++d) {
-            const date = fullDates[d];
-            // Apply all txs for today (accumulate positions)
-            while (txIdx < txs.length && txs[txIdx].timestamp.slice(0, 10) <= date) {
-                const tx = txs[txIdx];
-                switch (tx.transaction_type) {
-                    case "buy":
-                        positions[tx.ticker] = (positions[tx.ticker] || 0) + Number(tx.shares);
-                        break;
-                    case "sell":
-                        positions[tx.ticker] = (positions[tx.ticker] || 0) - Number(tx.shares);
-                        break;
-                    // handle dividends, deposits, withdrawals, etc. if needed
-                }
-                txIdx++;
-            }
-            // For each position, get price for date, convert to portfolioCurrency
-            let portfolioValue = 0;
-            for (const ticker in positions) {
-                const qty = positions[ticker];
-                if (!qty) continue;
-                const prices = priceHistory[ticker];
-                const price = getPriceOnDate(prices, date);
-                if (price === null) continue;
-                const holdingCurrency = getHoldingCurrency(
-                    ticker,
-                    txs,
-                    date,
-                    portfolioCurrency
-                );
-                const priceInPortfolioCurrency = convert(price, holdingCurrency, portfolioCurrency, date);
-                portfolioValue += qty * priceInPortfolioCurrency;
-            }
-            dailyValue.push(portfolioValue);
-            dates.push(date);
-        }
-
-        // Calculate performance % (relative to first non-zero value)
-        const startIdx = dailyValue.findIndex((v) => v > 0);
-        const initialValue = dailyValue[startIdx] || 1; // prevent div by 0
-        const perfSeries = dailyValue.map((val, i) => ({
-            date: dates[i],
-            value: initialValue > 0 ? ((val - initialValue) / initialValue) * 100 : 0,
-        }));
-
-        // Dummy benchmark (e.g., linear +10% over period)
-        const benchmarkSeries = perfSeries.map((pt, i, arr) => ({
-            date: pt.date,
-            value: (i / arr.length) * 10, // +10% over period
-        }));
-
-        return { perfSeries, benchmarkSeries };
-    }, [transactions, priceHistory, fxRates, portfolioCurrency]);
-
-    // --- PERIOD FILTER ---
-    const filterSeries = (series: { date: string, value: number }[]) => {
-        if (!series.length) return [];
-        const today = new Date();
-        let startIdx = 0;
+        // Calculate start date based on period
         switch (period) {
-            case "ytd": {
-                const ytd = new Date(today.getFullYear(), 0, 1).toISOString().slice(0, 10);
-                startIdx = series.findIndex((pt) => pt.date >= ytd);
-                break;
-            }
-            case "1y": {
-                const oneY = new Date(today);
-                oneY.setFullYear(today.getFullYear() - 1);
-                const oneYStr = oneY.toISOString().slice(0, 10);
-                startIdx = series.findIndex((pt) => pt.date >= oneYStr);
-                break;
-            }
-            case "6m": {
-                const sixM = new Date(today);
-                sixM.setMonth(today.getMonth() - 6);
-                const sixMStr = sixM.toISOString().slice(0, 10);
-                startIdx = series.findIndex((pt) => pt.date >= sixMStr);
-                break;
-            }
-            case "3m": {
-                const threeM = new Date(today);
-                threeM.setMonth(today.getMonth() - 3);
-                const threeMStr = threeM.toISOString().slice(0, 10);
-                startIdx = series.findIndex((pt) => pt.date >= threeMStr);
-                break;
-            }
-            case "1m": {
-                const oneM = new Date(today);
-                oneM.setMonth(today.getMonth() - 1);
-                const oneMStr = oneM.toISOString().slice(0, 10);
-                startIdx = series.findIndex((pt) => pt.date >= oneMStr);
-                break;
-            }
-            case "1w": {
-                const oneW = new Date(today);
-                oneW.setDate(today.getDate() - 7);
-                const oneWStr = oneW.toISOString().slice(0, 10);
-                startIdx = series.findIndex((pt) => pt.date >= oneWStr);
-                break;
-            }
-            default:
-                startIdx = 0;
+          case "1M":
+            start = subMonths(now, 1);
+            break;
+          case "1Q":
+            start = subMonths(now, 3);
+            break;
+          case "YTD":
+            start = startOfYear(now);
+            break;
+          case "1Y":
+            start = subYears(now, 1);
+            break;
+          case "All":
+            start = subYears(now, 10); // Or handled by backend logic if needed
+            break;
+          default:
+            start = subMonths(now, 1);
         }
-        if (startIdx < 0) startIdx = 0;
-        const sliced = series.slice(startIdx);
-        if (!sliced.length) return [];
-        const baseValue = sliced[0].value;
-        // Reset to zero
-        return sliced.map(pt => ({
-            ...pt,
-            value: pt.value - baseValue
-        }));
+
+        const formattedStart = format(start, "yyyy-MM-dd");
+        const formattedEnd = format(now, "yyyy-MM-dd");
+
+        const res = await apiClient.get<ValuationSeriesResponse>(`valuation/series`, {
+          params: {
+            portfolio_id: portfolio.id,
+            start: formattedStart,
+            end: formattedEnd,
+            carry_forward: true,
+            include_breakdown: true,
+          },
+        });
+
+        setData(res.data.points);
+      } catch (error) {
+        console.error("Failed to fetch valuation series:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const filteredPerf = filterSeries(perfSeries);
-    const filteredBenchmark = filterSeries(benchmarkSeries);
+    fetchData();
+  }, [portfolio?.id, period]);
 
-    // --- ECHARTS OPTIONS ---
-    const option = {
-        title: {
-            text: 'Portfolio Performance (%)',
-            left: 'center',
-        },
-        tooltip: {
-            trigger: 'axis',
-            formatter: (params: any) => {
-                return params.map((p: any) =>
-                    `${p.seriesName}: ${p.value[1]?.toFixed(2)}%`
-                ).join('<br/>');
-            }
-        },
-        legend: {
-            data: ['Portfolio', 'Benchmark'],
-            top: 30,
-        },
-        xAxis: {
-            type: 'category',
-            data: filteredPerf.map(d => d.date),
-        },
-        yAxis: {
-            type: 'value',
-            axisLabel: { formatter: '{value} %' },
-        },
-        series: [
-            {
-                name: 'Portfolio',
-                type: 'line',
-                smooth: true,
-                data: filteredPerf.map(d => [d.date, d.value]),
-                emphasis: { focus: 'series' },
-            },
-            {
-                name: 'Benchmark',
-                type: 'line',
-                smooth: true,
-                data: filteredBenchmark.map(d => [d.date, d.value]),
-                lineStyle: { type: 'dashed' },
-                emphasis: { focus: 'series' },
-            },
-        ],
-    };
+  // Transform data for Recharts (convert strings to numbers)
+  const chartData = useMemo(() => {
+    return data.map((d) => ({
+      ...d,
+      dateFormatted: format(parseISO(d.date), "MMM d"),
+      total: parseFloat(d.total),
+      Stocks: parseFloat(d.by_stock),
+      ETFs: parseFloat(d.by_etf),
+      Bonds: parseFloat(d.by_bond),
+      Crypto: parseFloat(d.by_crypto),
+      Commodities: parseFloat(d.by_commodity),
+      Cash: parseFloat(d.by_cash),
+    }));
+  }, [data]);
 
-    // --- RENDER ---
-    return (
-        <div className="bg-white rounded-xl shadow p-6">
-            <div className="flex gap-2 mb-4">
-                {PERIODS.map(p => (
-                    <button
-                        key={p.key}
-                        onClick={() => setPeriod(p.key)}
-                        className={`px-3 py-1 rounded ${period === p.key ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                    >
-                        {p.label}
-                    </button>
-                ))}
-            </div>
-            <ReactECharts option={option} style={{ height: 400 }} />
+  if (!portfolio) return null;
+
+  return (
+    <Card className="p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-slate-800">Portfolio Value Over Time</h3>
+          <p className="text-sm text-slate-500">Asset allocation history</p>
         </div>
-    );
+        <PeriodSelector selectedPeriod={period} onSelect={setPeriod} />
+      </div>
+
+      <div className="h-[400px] w-full">
+        {loading ? (
+          <div className="h-full flex items-center justify-center text-slate-400">Loading chart data...</div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorStocks" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+                {/* Add gradients for others if needed */}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="dateFormatted" 
+                tickLine={false} 
+                axisLine={false} 
+                tick={{ fill: "#64748b", fontSize: 12 }} 
+                minTickGap={30}
+              />
+              <YAxis 
+                tickLine={false} 
+                axisLine={false} 
+                tick={{ fill: "#64748b", fontSize: 12 }} 
+                tickFormatter={(value) => `$${value.toLocaleString()}`} // Assuming USD, could use portfolio.currency
+              />
+              <Tooltip 
+                contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                formatter={(value: number, name: string) => [`$${value.toLocaleString(undefined, {minimumFractionDigits: 2})}`, name]}
+              />
+              <Legend verticalAlign="top" height={36} iconType="circle" />
+              
+              {/* Dynamically render only active asset classes */}
+              {[
+                { key: "Cash", color: "#10b981", id: "colorCash" },
+                { key: "Bonds", color: "#f59e0b" },
+                { key: "Commodities", color: "#d97706" },
+                { key: "Crypto", color: "#8b5cf6" },
+                { key: "ETFs", color: "#6366f1" },
+                { key: "Stocks", color: "#3b82f6", id: "colorStocks" },
+              ].map((asset) => {
+                 // Check if this asset has any non-zero value in the dataset
+                 const hasData = chartData.some((point) => (point[asset.key as keyof typeof point] as number) > 0);
+                 if (!hasData) return null;
+
+                 return (
+                    <Area
+                      key={asset.key}
+                      type="monotone"
+                      dataKey={asset.key}
+                      stackId="1"
+                      stroke={asset.color}
+                      fill={asset.id ? `url(#${asset.id})` : asset.color}
+                      fillOpacity={asset.id ? 1 : 0.6}
+                    />
+                 );
+              })}
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </Card>
+  );
 };
 
-export default Performance;
+export default PerformanceChart;

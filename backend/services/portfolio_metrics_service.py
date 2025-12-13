@@ -451,18 +451,30 @@ class PortfolioMetricsService:
     def calculate_mwrr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
         try:
             flows = self._external_cash_flows_for_xirr(portfolio_id, start_date, end_date)
+            start_mv = self._valuation_as_of(portfolio_id, start_date)
             end_mv = self._valuation_as_of(portfolio_id, end_date)
 
             logger.info(
-                "MWRR window=%s..%s pid=%s flows=%s",
+                "MWRR window=%s..%s pid=%s start_mv=%s end_mv=%s flows=%s",
                 start_date, end_date, portfolio_id,
+                start_mv, end_mv,
                 [(d.isoformat(), float(v)) for d, v in flows],
             )
 
-            if end_mv is None or not flows:
+            # Treat beginning value as an initial investment (negative flow)
+            if start_mv and start_mv > 0:
+                start_mv_dec = start_mv if isinstance(start_mv, Decimal) else D(str(start_mv))
+                # Insert at the beginning
+                flows.insert(0, (start_date, -start_mv_dec))
+
+            if end_mv is None or (not flows and start_mv is None):
+                # No data start or end
                 return D("0")
 
-            flows = list(flows) + [(end_date, end_mv if isinstance(end_mv, Decimal) else D(str(end_mv)))]
+            # Add ending value as positive flow (cash out)
+            end_val_dec = end_mv if isinstance(end_mv, Decimal) else D(str(end_mv or 0))
+            flows.append((end_date, end_val_dec))
+
             neg = any(cf < 0 for _, cf in flows)
             pos = any(cf > 0 for _, cf in flows)
             if not (neg and pos):

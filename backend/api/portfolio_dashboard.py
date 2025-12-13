@@ -30,7 +30,7 @@ def get_portfolio_dashboard(
     performance = svc.build_performance_summary(
         portfolio_id,
         end_date,
-        include_all_breakdowns=False,
+        include_all_breakdowns=True,
     )
 
     holdings = get_holdings_for_user(db, portfolio)

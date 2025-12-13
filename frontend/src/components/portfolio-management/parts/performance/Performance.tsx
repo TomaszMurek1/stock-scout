@@ -3,10 +3,8 @@ const PerformanceChart = lazy(() => import("./performance-chart"))
 
 export default function Performance() {
     return (
-        <Suspense fallback={<div className="py-10 text-center">Loading chart…</div>}>
-            <PerformanceChart
-
-            />
+        <Suspense fallback={<div className="py-10 text-center animate-pulse text-gray-400">Loading chart...</div>}>
+            <PerformanceChart />
         </Suspense>
     )
 }
