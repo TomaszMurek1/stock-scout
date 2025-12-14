@@ -278,32 +278,58 @@ class PortfolioMetricsService:
     # =========================================================================
 
     def calculate_ttwr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
-        """Calculates Time-Weighted Return."""
-        # Anchor to known valuations
+        """Calculates Time-Weighted Return for total portfolio.
+        
+        Uses weighted average approach to avoid intraday valuation issues:
+        Portfolio TTWR = (Avg Cash %) × 0% + (Avg Invested %) × Invested TTWR
+        
+        This correctly reflects that cash earns 0% and stocks earn whatever
+        the Invested TTWR shows, weighted by actual allocation.
+        """
+        # 1. Get Invested TTWR (already correctly calculated)
+        invested_ttwr = self.calculate_ttwr_invested_only(portfolio_id, start_date, end_date)
+        
+        # 2. Calculate average cash allocation percentage
         eff_start_date = self._get_valuation_at_date(portfolio_id, start_date)
         eff_start = eff_start_date.date if eff_start_date else start_date
         
-        # 1. Fetch Daily Valuations
         pvd_rows = (
-            self.db.query(PortfolioValuationDaily.date, PortfolioValuationDaily.total_value)
+            self.db.query(PortfolioValuationDaily)
             .filter(
                 PortfolioValuationDaily.portfolio_id == portfolio_id,
                 PortfolioValuationDaily.date >= eff_start,
                 PortfolioValuationDaily.date <= end_date,
             )
-            .order_by(PortfolioValuationDaily.date.asc())
             .all()
         )
         
-        # 2. Fetch External Flows (Deposits/Withdrawals)
-        flow_map = self._get_daily_flows(portfolio_id, TWR_SIGN_NET_EXTERNAL, eff_start, end_date)
+        if not pvd_rows:
+            return D("0")
         
-        # 3. Combine
-        rows = []
-        for d, tot in pvd_rows:
-            rows.append((d, _to_d(tot), flow_map.get(d, D("0"))))
+        # Calculate average allocation
+        total_cash_pct = D("0")
+        count = 0
+        
+        for pvd in pvd_rows:
+            total_val = _to_d(pvd.total_value)
+            cash_val = _to_d(pvd.by_cash)
             
-        return self._chain_twr(rows)
+            if total_val > 0:
+                cash_pct = cash_val / total_val
+                total_cash_pct += cash_pct
+                count += 1
+        
+        if count == 0:
+            return D("0")
+        
+        avg_cash_pct = total_cash_pct / count
+        avg_invested_pct = D("1") - avg_cash_pct
+        
+        # 3. Weighted average
+        # Portfolio TTWR = Cash% × 0% + Invested% × Invested_TTWR
+        portfolio_ttwr = avg_invested_pct * invested_ttwr
+        
+        return portfolio_ttwr
 
     def calculate_ttwr_invested_only(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
         """Calculates TWR for Invested Capital (removing Cash Drag)."""

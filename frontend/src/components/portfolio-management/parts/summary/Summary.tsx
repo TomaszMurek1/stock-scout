@@ -52,7 +52,7 @@ const Label = ({ children, tooltip }: { children: React.ReactNode; tooltip?: str
           <TooltipTrigger>
             <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
           </TooltipTrigger>
-          <TooltipContent className="max-w-xs bg-slate-900 text-white p-3 rounded-lg text-xs leading-relaxed">
+          <TooltipContent className="max-w-xs bg-slate-900 text-white p-3 rounded-lg text-xs leading-relaxed whitespace-pre-line">
             {tooltip}
           </TooltipContent>
         </Tooltip>
@@ -188,7 +188,20 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
              ? 'border-l-4 border-emerald-500' 
              : 'border-l-4 border-red-500'
          }`}>
-           <Label tooltip="Did you make or lose money? This is the simplest measure: (Ending Value - Beginning Value - New Money Added) / Total Money Invested. Example: Started with 10k, added 140k, ended at 148k = Lost 2k on 150k invested = -1.3%">
+           <Label tooltip={`💰 ACTUAL MONEY GAINED/LOST
+           
+Did I make money?
+
+How it works:
+(Ending - Beginning - Money Added) ÷ Total Invested
+
+Example:
+Started 11k zł, added 142k zł, ended 152k zł
+= Lost 1.9k zł on 153k total = -1.2%
+
+Includes FX? YES - USD stocks lose value if PLN strengthens
+
+Why it differs: Cares about HOW MUCH money you had at different times. Adding 140k before a drop = bigger loss.`}>
               💰 Money Made/Lost
            </Label>
            <PercentValue 
@@ -224,7 +237,27 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
          
          {/* 2. TTWR Invested - Stock picking quality */}
          <Card>
-           <Label tooltip="How well did your stock picks perform, ignoring WHEN you added money? Measured using Time-Weighted Return on invested capital only (excludes cash). Example: If stocks went +7% for 2 months then -3% for 1 month = +4% TTWR (you were right more than wrong).">
+           <Label tooltip={`🎯 STOCK PICKING SKILL (HYPOTHETICAL)
+
+Were my stock picks good (ignoring when I bought)?
+
+How it works:
+Imagine 100 zł invested at START of period
+Each day: grows/shrinks by your portfolio's daily %
+
+Example (YTD):
+100 zł on Jan 1
+Day 1: +4% → 104 zł
+Day 2: -2% → 101.92 zł
+...
+Dec 14: 123.87 zł = +23.87%
+
+HYPOTHETICAL? YES - not your actual money, just a measurement tool
+
+Includes FX? YES - PLN strengthening = USD stocks lose PLN value
+
+Why can be positive when you lost money:
+Treats every day equally. 10 months up (small capital) outweighs 1 month down (large capital).`}>
               🎯 Pick Quality
            </Label>
            <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
@@ -233,7 +266,23 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
          
          {/* 3. TTWR Portfolio - Overall strategy including cash */}
          <Card>
-           <Label tooltip="Your overall portfolio performance including cash drag, ignoring timing of deposits/withdrawals. Best for comparing against benchmarks like S&P 500. Example: If you kept 20% in cash earning 0%, this will be lower than Pick Quality.">
+           <Label tooltip={`📊 OVERALL STRATEGY (HYPOTHETICAL)
+
+Was my strategy good (including keeping cash)?
+
+How it works:
+(Avg % Cash × 0%) + (Avg % Stocks × Pick Quality)
+
+Example:
+70% cash + 30% stocks at +24%
+= 30% × 24% = +7.2%
+
+HYPOTHETICAL? YES - same 100 zł concept
+
+Includes FX? YES - stocks and foreign cash both include FX
+
+Why POSITIVE when you LOST money:
+Measures strategy quality over TIME, not dollars. Like a fund manager's skill rating vs your account balance. Good strategies can lose money with bad timing.`}>
               📊 Strategy Quality
            </Label>
            <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
@@ -242,7 +291,25 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
          
          {/* 4. MWRR - Personal IRR */}
          <Card>
-           <Label tooltip="Your actual Internal Rate of Return (IRR) accounting for WHEN you added/withdrew money. If you bought low and sold high, this beats TTWR. If you bought high and sold low, this underperforms TTWR. Example: Adding 140k right before a -5% drop hurts MWRR but not TTWR.">
+           <Label tooltip={`🏦 YOUR PERSONAL IRR (ACTUAL)
+
+What was my return considering WHEN I invested?
+
+How it works:
+Interest rate that produces your exact results
+PUNISHES bad timing, REWARDS good timing
+
+Example:
+Added 140k on Nov 16
+Value dropped 5% by Dec 14
+That entire 140k sat through the drop
+
+ACTUAL? YES - uses your real amounts and dates
+
+Includes FX? YES - all holdings in PLN
+
+Why it's usually worst:
+Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL.`}>
               🏦 Personal Return
            </Label>
            <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
