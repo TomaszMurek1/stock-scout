@@ -9,11 +9,11 @@ def debug_ttwr():
     try:
         pid = 2  # Assuming portfolio 2 based on previous logs
         today = date.today()
-        # 6M period
+        # 3M period (user's example)
         svc = PortfolioMetricsService(db)
-        start_date = svc.get_period_start_date(pid, today, "6m")
+        start_date = svc.get_period_start_date(pid, today, "3m")
         
-        print(f"DEBUG TTWR 6M: {start_date} -> {today}")
+        print(f"DEBUG TTWR 3M: {start_date} -> {today}")
         
         eff_start = svc._get_valuation_at_date(pid, start_date).date
         print(f"Effective Start: {eff_start}")

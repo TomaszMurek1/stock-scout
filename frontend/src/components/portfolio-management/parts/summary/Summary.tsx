@@ -182,40 +182,71 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
         <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-         {/* 1. Simple Return - Most intuitive */}
-         <Card>
-           <Label tooltip="Simple percentage change in invested capital value during the period. This answers: 'Did I make or lose money?' Most intuitive for comparing periods.">
-              Simple Return
+         {/* 1. Simple Return - PRIMARY METRIC (most intuitive) */}
+         <Card className={`${
+           (breakdown.invested?.simple_return_pct || 0) >= 0 
+             ? 'border-l-4 border-emerald-500' 
+             : 'border-l-4 border-red-500'
+         }`}>
+           <Label tooltip="Did you make or lose money? This is the simplest measure: (Ending Value - Beginning Value - New Money Added) / Total Money Invested. Example: Started with 10k, added 140k, ended at 148k = Lost 2k on 150k invested = -1.3%">
+              💰 Money Made/Lost
            </Label>
-           <PercentValue value={breakdown.invested?.simple_return_pct ? parseFloat(breakdown.invested.simple_return_pct) : 0} />
-           <div className="text-xs text-gray-400 mt-1">Capital Growth</div>
+           <PercentValue 
+             value={breakdown.invested?.simple_return_pct ? parseFloat(breakdown.invested.simple_return_pct) : 0} 
+           />
+           <div className="text-xs text-gray-500 mt-1">Simple Return</div>
+           
+           {/* Warning badge for timing paradox */}
+           {breakdown.metrics_context?.warning_type === 'timing_paradox' && (
+             <div className="mt-3 p-2 bg-amber-50 border border-amber-300 rounded-md text-xs text-amber-800">
+               <div className="flex items-center gap-1.5">
+                 <span className="text-base">⚠️</span>
+                 <span className="font-semibold">Good picks, bad timing</span>
+               </div>
+               <div className="mt-1 text-amber-700">
+                 Your stocks performed well, but you added money right before a dip
+               </div>
+             </div>
+           )}
+           
+           {breakdown.metrics_context?.warning_type === 'timing_win' && (
+             <div className="mt-3 p-2 bg-emerald-50 border border-emerald-300 rounded-md text-xs text-emerald-800">
+               <div className="flex items-center gap-1.5">
+                 <span className="text-base">✅</span>
+                 <span className="font-semibold">Excellent timing!</span>
+               </div>
+               <div className="mt-1 text-emerald-700">
+                 You added money at the perfect time
+               </div>
+             </div>
+           )}
          </Card>
          
          {/* 2. TTWR Invested - Stock picking quality */}
          <Card>
-           <Label tooltip="Performance of only the invested portion of your portfolio, excluding the drag of uninvested cash.">
-              Invested Only (TTWR)
+           <Label tooltip="How well did your stock picks perform, ignoring WHEN you added money? Measured using Time-Weighted Return on invested capital only (excludes cash). Example: If stocks went +7% for 2 months then -3% for 1 month = +4% TTWR (you were right more than wrong).">
+              🎯 Pick Quality
            </Label>
            <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
-            <div className="text-xs text-gray-400 mt-1">Stock Pick Quality</div>
+            <div className="text-xs text-gray-500 mt-1">TTWR (Invested Only)</div>
          </Card>
          
-         {/* 3. TTWR Portfolio - Overall strategy */}
+         {/* 3. TTWR Portfolio - Overall strategy including cash */}
          <Card>
-           <Label tooltip="Time-Weighted Return: Measures the performance of your strategy, ignoring the size and timing of your deposits/withdrawals. Best for comparing against benchmarks.">
-              Strategy Return (TTWR)
+           <Label tooltip="Your overall portfolio performance including cash drag, ignoring timing of deposits/withdrawals. Best for comparing against benchmarks like S&P 500. Example: If you kept 20% in cash earning 0%, this will be lower than Pick Quality.">
+              📊 Strategy Quality
            </Label>
            <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
-           <div className="text-xs text-gray-400 mt-1">Portfolio Level</div>
+           <div className="text-xs text-gray-500 mt-1">TTWR (Portfolio)</div>
          </Card>
          
-         {/* 4. MWRR - Personal performance */}
+         {/* 4. MWRR - Personal IRR */}
          <Card>
-           <Label tooltip="Money-Weighted Return (XIRR): Measures YOUR actual return, accounting for the timing of your cash flows. Buying low and selling high improves this metric relative to TTWR.">
-              Investor Return (MWRR)
+           <Label tooltip="Your actual Internal Rate of Return (IRR) accounting for WHEN you added/withdrew money. If you bought low and sold high, this beats TTWR. If you bought high and sold low, this underperforms TTWR. Example: Adding 140k right before a -5% drop hurts MWRR but not TTWR.">
+              🏦 Personal Return
            </Label>
            <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
-            <div className="text-xs text-gray-400 mt-1">Personal Performance</div>
+            <div className="text-xs text-gray-500 mt-1">MWRR (IRR)</div>
          </Card>
        </div>
 

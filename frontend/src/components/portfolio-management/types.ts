@@ -95,6 +95,11 @@ export interface PortfolioBreakdown {
     capital_gains: number;
     simple_return_pct: number;
   };
+  metrics_context?: {
+    timing_quality: string;
+    warning_type: string | null;
+    simple_return_pct: number;
+  };
 }
 
 export interface PortfolioPerformance {

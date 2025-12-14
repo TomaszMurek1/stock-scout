@@ -402,6 +402,24 @@ class PortfolioMetricsService:
         # This answers: "What % did my capital grow, accounting for new money added?"
         simple_return_base = start_invested + net_trades
         simple_return_pct = (invested_pnl / simple_return_base) if simple_return_base != 0 else D("0")
+        
+        # Detect timing quality scenarios (for UI warnings)
+        timing_quality = "neutral"
+        warning_type = None
+        
+        simple_ret_float = float(simple_return_pct)
+        
+        # Scenario 1: Good picks, bad timing (positive skill, negative result)
+        # User picked winners but added money at wrong time
+        if simple_ret_float < -0.01:  # Lost more than 1%
+            timing_quality = "bad"
+            warning_type = "timing_paradox"
+            
+        # Scenario 2: Bad picks, good timing (negative skill, positive result)  
+        # User picked losers but added money at right time
+        elif simple_ret_float > 0.02:  # Made more than 2%
+            timing_quality = "excellent"  
+            warning_type = "timing_win"
 
         return {
             "beginning_value": start_val,
@@ -430,6 +448,11 @@ class PortfolioMetricsService:
                 "net_trades": net_trades,
                 "capital_gains": invested_pnl,
                 "simple_return_pct": simple_return_pct,  # NEW: Simple % return
+            },
+            "metrics_context": {
+                "timing_quality": timing_quality,
+                "warning_type": warning_type,
+                "simple_return_pct": float(simple_return_pct),
             }
         }
 

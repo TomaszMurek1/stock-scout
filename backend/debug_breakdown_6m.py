@@ -12,12 +12,41 @@ def debug_breakdown():
         pid = 2
         today = date.today()
         svc = PortfolioMetricsService(db)
-        start_date = svc.get_period_start_date(pid, today, "6m")
         
-        print(f"DEBUG BREAKDOWN 6M: {start_date} -> {today}\n")
+        print("=== CHECKING ALL PERIODS FOR SIMPLE RETURN -2.41% ===\n")
         
-        # Get the actual breakdown
-        breakdown = svc.calculate_returns_breakdown(pid, start_date, today)
+        for period in ["1d", "1w", "1m", "3m", "6m", "1y", "ytd"]:
+            start_date = svc.get_period_start_date(pid, today, period)
+            if not start_date:
+                continue
+                
+            breakdown = svc.calculate_returns_breakdown(pid, start_date, today)
+            if not breakdown.get('invested'):
+                continue
+                
+            simple_ret = float(breakdown['invested'].get('simple_return_pct', 0)) * 100
+            
+            print(f"{period.upper()}:")
+            print(f"  Simple Return: {simple_ret:.2f}%")
+            print(f"  Capital Gains: {breakdown['invested']['capital_gains']}")
+            print(f"  Beginning Invested: {breakdown['invested']['beginning_value']}")
+            print(f"  Net Purchases: {breakdown['invested']['net_trades']}")
+            print(f"  Ending Invested: {breakdown['invested']['ending_value']}")
+            print()
+            
+            # If this matches user's number, show detailed calculation
+            if abs(simple_ret - (-2.41)) < 0.1:
+                print(f"⭐ FOUND MATCHING PERIOD: {period.upper()} ⭐")
+                print(f"\nDetailed Calculation:")
+                print(f"  Formula: Capital Gains / (Beginning + Net Purchases)")
+                beg = float(breakdown['invested']['beginning_value'])
+                net = float(breakdown['invested']['net_trades'])
+                gains = float(breakdown['invested']['capital_gains'])
+                print(f"  = {gains:.2f} / ({beg:.2f} + {net:.2f})")
+                print(f"  = {gains:.2f} / {beg + net:.2f}")
+                print(f"  = {(gains / (beg + net) * 100) if (beg + net) != 0 else 0:.2f}%")
+                print()
+
         
         print("=== BREAKDOWN RESULT ===")
         print(f"Beginning Value: {breakdown['beginning_value']}")
