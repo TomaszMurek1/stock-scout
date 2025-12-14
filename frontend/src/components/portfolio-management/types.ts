@@ -61,6 +61,8 @@ export interface Portfolio {
   net_invested_cash: number;
 }
 
+<<<<<<< Updated upstream
+=======
 export interface PerformanceMetrics {
   ttwr: Record<string, number>;
   ttwr_invested: Record<string, number>;
@@ -95,6 +97,8 @@ export interface PortfolioBreakdown {
     capital_gains: number;
   };
 }
+
+>>>>>>> Stashed changes
 export interface PortfolioPerformance {
   portfolio_id: number;
   performance: any;
