@@ -244,6 +244,7 @@ Were my stock picks good (ignoring when I bought)?
 How it works:
 Imagine 100 zł invested at START of period
 Each day: grows/shrinks by your portfolio's daily %
+ASSUMES you bought all stocks on day 1 (not actual dates)
 
 Example (YTD):
 100 zł on Jan 1
@@ -272,6 +273,7 @@ Was my strategy good (including keeping cash)?
 
 How it works:
 (Avg % Cash × 0%) + (Avg % Stocks × Pick Quality)
+ASSUMES all purchases happened at period start
 
 Example:
 70% cash + 30% stocks at +24%
