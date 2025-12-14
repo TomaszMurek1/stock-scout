@@ -290,14 +290,20 @@ class PortfolioMetricsService:
     # Public: TTWR
     # =========================
     def calculate_ttwr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
+        # Anchor start date to the last known valuation to capture gaps (e.g. weekends)
+        effective_start = self._last_valuation_on_or_before(portfolio_id, start_date) or start_date
         effective_end = self._last_valuation_on_or_before(portfolio_id, end_date) or end_date
-        rows = self._rows_from_pvd_portfolio(portfolio_id, start_date, effective_end)
+        
+        rows = self._rows_from_pvd_portfolio(portfolio_id, effective_start, effective_end)
         twr = self._chain_twr(rows)
         return twr if twr is not None else D("0")
 
     def calculate_ttwr_invested_only(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
+        # Anchor start date to the last known valuation to capture gaps
+        effective_start = self._last_valuation_on_or_before(portfolio_id, start_date) or start_date
         effective_end = self._last_valuation_on_or_before(portfolio_id, end_date) or end_date
-        rows = self._rows_from_pvd_invested(portfolio_id, start_date, effective_end)
+        
+        rows = self._rows_from_pvd_invested(portfolio_id, effective_start, effective_end)
         twr = self._chain_twr(rows)
         return twr if twr is not None else D("0")
 
@@ -481,6 +487,17 @@ class PortfolioMetricsService:
     # =========================
     # Breakdown / Reconciliation
     # =========================
+    def _get_pvd_on_or_before(self, portfolio_id: int, day: date) -> Optional[PortfolioValuationDaily]:
+        return (
+            self.db.query(PortfolioValuationDaily)
+            .filter(
+                PortfolioValuationDaily.portfolio_id == portfolio_id,
+                PortfolioValuationDaily.date <= day,
+            )
+            .order_by(PortfolioValuationDaily.date.desc())
+            .first()
+        )
+
     def _sum_signed(
         self,
         portfolio_id: int,
@@ -509,14 +526,27 @@ class PortfolioMetricsService:
         return val if isinstance(val, Decimal) else D(str(val or 0))
 
     def calculate_returns_breakdown(self, portfolio_id: int, start_date: date, end_date: date) -> Dict:
-        start_val = self._valuation_as_of(portfolio_id, start_date)
-        end_val = self._valuation_as_of(portfolio_id, end_date)
-        if start_val is None or end_val is None:
+        start_pvd = self._get_pvd_on_or_before(portfolio_id, start_date)
+        end_pvd = self._get_pvd_on_or_before(portfolio_id, end_date)
+        
+        if not start_pvd or not end_pvd:
+            # Fallback if no PVD found (should handle gracefully)
             return {}
+
+        def to_dec(x): return x if isinstance(x, Decimal) else D(str(x or 0))
+        
+        start_val = to_dec(start_pvd.total_value)
+        end_val = to_dec(end_pvd.total_value)
+        
+        start_cash = to_dec(start_pvd.by_cash)
+        end_cash = to_dec(end_pvd.by_cash)
+        
+        start_invested = start_val - start_cash
+        end_invested = end_val - end_cash
 
         deposits = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.DEPOSIT], +1)
         withdrawals = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.WITHDRAWAL], +1)
-        net_external = deposits - withdrawals  # +deposit -withdrawal (TWR convention)
+        net_external = deposits - withdrawals  # +deposit -withdrawal
 
         dividends = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.DIVIDEND], +1)
         interest = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.INTEREST], +1)
@@ -529,7 +559,29 @@ class PortfolioMetricsService:
 
         total_pnl = (end_val - start_val) - net_external
 
-        realized_approx = D("0")  # lot engine not included here
+        # Invested Breakdown Logic
+        buys = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.BUY], +1)
+        # Sells: sum is usually positive amount? `amount` is Quantity * Price.
+        # Transaction amount logic in metrics rules:
+        # amount_base = (qty * price).
+        # We want Money IN/OUT.
+        # BUY: Money OUT (invested increases).
+        # SELL: Money IN (invested decreases).
+        # `_sum_signed` sums `amount`.
+        # Net Capital Invested = Buys - Sells.
+        sells = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.SELL], +1)
+        net_trades = buys - sells 
+        
+        # PnL on Invested = (EndInv - StartInv) - NetTrades
+        invested_pnl = (end_invested - start_invested) - net_trades
+
+        # Note: realized/unrealized split is approximated in total_pnl, but invested_pnl is purely price change (and realized PnL on exits)
+        # Actually realized PnL is: Sell Amount - Cost Basis.
+        # `net_trades` captures Sell Amount.
+        # So `invested_pnl` captures (EndInv + Sells) - (StartInv + Buys).
+        # This effectively captures Total Investment Return (Realized + Unrealized).
+        
+        realized_approx = D("0")  
         currency_effects = D("0")
         unrealized_residual = total_pnl - (realized_approx + dividends + interest - fees - taxes + currency_effects)
 
@@ -552,8 +604,13 @@ class PortfolioMetricsService:
                 "realized_gains_approx": realized_approx,
                 "unrealized_gains_residual": unrealized_residual,
                 "currency_effects": currency_effects,
-                "note_realized": "Realized gains require lot-level cost basis; set here to 0 (approx).",
             },
+            "invested": {
+                "beginning_value": start_invested,
+                "ending_value": end_invested,
+                "net_trades": net_trades,
+                "capital_gains": invested_pnl,
+            }
         }
 
     # =========================

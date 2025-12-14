@@ -1,5 +1,7 @@
 export type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
 
+export type Period = "1d" | "1w" | "1m" | "3m" | "6m" | "1y" | "ytd" | "itd";
+
 export interface PortfolioStock {
   shares_number: number;
   ticker: string;
@@ -59,6 +61,40 @@ export interface Portfolio {
   net_invested_cash: number;
 }
 
+export interface PerformanceMetrics {
+  ttwr: Record<string, number>;
+  ttwr_invested: Record<string, number>;
+  mwrr: Record<string, number>;
+}
+
+export interface PortfolioBreakdown {
+  beginning_value: number;
+  ending_value: number;
+  cash_flows: {
+    deposits: number;
+    withdrawals: number;
+    net_external: number;
+  };
+  income_expenses: {
+    dividends: number;
+    interest: number;
+    fees: number;
+    taxes: number;
+  };
+  pnl: {
+    total_pnl_ex_flows: number;
+    realized_gains_approx: number;
+    unrealized_gains_residual: number;
+    currency_effects: number;
+    note_realized?: string;
+  };
+  invested?: {
+    beginning_value: number;
+    ending_value: number;
+    net_trades: number;
+    capital_gains: number;
+  };
+}
 export interface PortfolioPerformance {
   portfolio_id: number;
   performance: any;
@@ -153,4 +189,6 @@ export type ApiHolding = {
   average_cost_instrument_ccy: number;
   fx_rate_to_portfolio_ccy: number;
   last_price: number;
+  period_pnl: Record<string, number>;
+  period_pnl_instrument_ccy: Record<string, number>;
 };

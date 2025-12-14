@@ -19,6 +19,7 @@ export interface PortfolioSlice {
   transactions: Transaction[];
   currencyRates: Record<string, CurrencyPair>;
   holdings: ApiHolding[];
+  isLoading: boolean;
   refreshPortfolio: () => Promise<void>;
   buy: (payload: any) => Promise<void>;
   sell: (payload: any) => Promise<void>;
@@ -49,6 +50,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
   };
 
   const fetchDashboard = async () => {
+    set({ isLoading: true });
     const setWatchlistLoadingState = get().setWatchlistLoadingState;
     setWatchlistLoadingState(true, "watchlist/dashboardPending");
     try {
@@ -59,10 +61,13 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         transactions: Transaction[];
         holdings: ApiHolding[];
       }>("/portfolio/dashboard");
+      
       applyDashboardData(data);
     } catch (error) {
       setWatchlistLoadingState(false, "watchlist/dashboardRejected");
       throw error;
+    } finally {
+      set({ isLoading: false });
     }
   };
 
@@ -83,17 +88,22 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
     transactions: [],
     currencyRates: {},
     holdings: [],
+    isLoading: false,
 
     refreshPortfolio: fetchDashboard,
 
     buy: async (payload: any) => {
+      set({ isLoading: true });
       await apiClient.post("/portfolio-management/buy", payload);
       await get().refreshPortfolio();
+      set({ isLoading: false });
     },
 
     sell: async (payload: any) => {
+      set({ isLoading: true });
       await apiClient.post("/portfolio-management/sell", payload);
       await get().refreshPortfolio();
+      set({ isLoading: false });
     },
   };
 };

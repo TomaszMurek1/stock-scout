@@ -12,6 +12,7 @@ export function usePortfolioBaseData() {
       fxRates: state.fxRates,
       refreshPortfolio: state.refreshPortfolio,
       sell: state.sell,
+      isLoading: state.isLoading,
     }))
   );
 }

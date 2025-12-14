@@ -3,7 +3,7 @@
 import React, { lazy, Suspense } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react";
-import { ApiHolding, Transaction } from "../types";
+import { ApiHolding, Transaction, Period } from "../types";
 
 const HoldingsTab = lazy(() => import("../tabs/holdings/HoldingsTab"));
 const WatchlistTab = lazy(() => import("../tabs/watchlist/WatchlistTab"));
@@ -16,12 +16,16 @@ interface PortfolioTabsProps {
   byHolding?: ApiHolding[];
   transactions: Transaction[];
   onRemove: (ticker: string) => void;
+  isLoading?: boolean;
+  selectedPeriod?: Period;
 }
 
 export default function PortfolioTabs({
   byHolding,
   transactions,
   onRemove,
+  isLoading,
+  selectedPeriod,
 }: PortfolioTabsProps) {
   const bgColor =
     "data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900";
@@ -32,6 +36,7 @@ export default function PortfolioTabs({
           <BarChart3 className="h-4 w-4" />
           <span className="font-medium">Your Stocks</span>
         </TabsTrigger>
+        {/* ... triggers ... */}
         <TabsTrigger value="watchlist" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <BarChart3 className="h-4 w-4" />
           <span className="font-medium">Watchlist</span>
@@ -56,7 +61,13 @@ export default function PortfolioTabs({
 
       <Suspense fallback={<div>Loading tab…</div>}>
         <TabsContent value="holdings">
-          <HoldingsTab holdings={byHolding ?? []} transactions={transactions} onRemove={onRemove} />
+          <HoldingsTab 
+             holdings={byHolding ?? []} 
+             transactions={transactions} 
+             onRemove={onRemove} 
+             isLoading={isLoading} 
+             selectedPeriod={selectedPeriod}
+          />
         </TabsContent>
         <TabsContent value="watchlist">
           <WatchlistTab />

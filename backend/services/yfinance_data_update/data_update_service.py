@@ -210,6 +210,48 @@ def fetch_and_save_stock_price_history_data_batch(
 
     # 6) Bulk insert to DB
     insert_start = time.time()
+
+    # 7) Update CompanyMarketData for all processed companies
+    # This ensures that even if history was up-to-date, the "Current Price" view is refreshed.
+    from database.stock_data import CompanyMarketData
+    
+    # Pre-fetch existing MD rows to minimize queries
+    md_map = {
+        md.company_id: md
+        for md in db.query(CompanyMarketData).filter(
+            CompanyMarketData.company_id.in_([c.company_id for c in companies])
+        ).all()
+    }
+
+    for comp in companies:
+        if comp.ticker not in raw.columns.get_level_values(0):
+            continue
+        
+        # Get latest valid close price
+        df = raw[comp.ticker]
+        if df.empty:
+            continue
+            
+        last_valid_idx = df["Close"].last_valid_index()
+        if not last_valid_idx:
+            continue
+            
+        latest_price = float(df.loc[last_valid_idx, "Close"])
+        
+        md = md_map.get(comp.company_id)
+        if not md:
+            md = CompanyMarketData(company_id=comp.company_id)
+            db.add(md)
+            
+        md.current_price = latest_price
+        md.last_updated = datetime.now(timezone.utc)
+    
+    try:
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to batch update CompanyMarketData: {e}")
+        # Don't fail the whole function if this optional update fails, but good to log.
+
     if mappings:
         db.bulk_insert_mappings(StockPriceHistory, mappings)
         db.commit()
