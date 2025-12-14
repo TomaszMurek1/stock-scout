@@ -209,14 +209,16 @@ class PortfolioMetricsService:
                 continue
             
             # Dietz / TWR formula for single sub-period
-            # r = (End - (Start + Flow)) / Start
-            # Here 'prev_mv' is effectively Start + Flow (if flow happened at start) logic specific
-            # But commonly: Return = (V_end - V_start - CF) / V_start
-            # If CF happens mid-day? Standard approximation:
-            # (V_end - (V_start + CF)) / (V_start + w*CF). Simplified to (V_end - (V_start + CF)) / V_start if CF at end.
+            # We use "Start of Day" flow assumption to handle large inflows responsibly.
+            # Denom = Start + Flow.
+            denom = prev_mv + flow
             
-            # Using standard implementation from original code:
-            r_t = (curr_mv - (prev_mv + flow)) / prev_mv
+            if denom == 0:
+                 # If base is zero, return is undefined (or 0)
+                 r_t = D("0")
+            else:
+                 r_t = (curr_mv - denom) / denom
+                 
             product *= (D("1") + r_t)
             prev_mv = curr_mv
             
@@ -395,6 +397,11 @@ class PortfolioMetricsService:
         
         # Invested PnL = Change in Invested Capital - Net Injection of Capital (Buys - Sells)
         invested_pnl = (end_invested - start_invested) - net_trades
+        
+        # Simple Return % = Capital Gains / (Beginning Invested + Net Trades)
+        # This answers: "What % did my capital grow, accounting for new money added?"
+        simple_return_base = start_invested + net_trades
+        simple_return_pct = (invested_pnl / simple_return_base) if simple_return_base != 0 else D("0")
 
         return {
             "beginning_value": start_val,
@@ -422,6 +429,7 @@ class PortfolioMetricsService:
                 "ending_value": end_invested,
                 "net_trades": net_trades,
                 "capital_gains": invested_pnl,
+                "simple_return_pct": simple_return_pct,  # NEW: Simple % return
             }
         }
 

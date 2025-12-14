@@ -181,30 +181,43 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
         </h3>
         <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+         {/* 1. Simple Return - Most intuitive */}
          <Card>
-          <Label tooltip="Performance of only the invested portion of your portfolio, excluding the drag of uninvested cash.">
-             Invested Only (TTWR)
-          </Label>
-          <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
-           <div className="text-xs text-gray-400 mt-1">Stock Pick Quality</div>
-        </Card>
-        <Card>
-          <Label tooltip="Time-Weighted Return: Measures the performance of your strategy, ignoring the size and timing of your deposits/withdrawals. Best for comparing against benchmarks.">
-             Strategy Return (TTWR)
-          </Label>
-          <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
-          <div className="text-xs text-gray-400 mt-1">Portfolio Level</div>
-        </Card>
-        <Card>
-          <Label tooltip="Money-Weighted Return (XIRR): Measures YOUR actual return, accounting for the timing of your cash flows. Buying low and selling high improves this metric relative to TTWR.">
-             Investor Return (MWRR)
-          </Label>
-          <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
-           <div className="text-xs text-gray-400 mt-1">Personal Performance</div>
-        </Card>
-       
-      </div>
+           <Label tooltip="Simple percentage change in invested capital value during the period. This answers: 'Did I make or lose money?' Most intuitive for comparing periods.">
+              Simple Return
+           </Label>
+           <PercentValue value={breakdown.invested?.simple_return_pct ? parseFloat(breakdown.invested.simple_return_pct) : 0} />
+           <div className="text-xs text-gray-400 mt-1">Capital Growth</div>
+         </Card>
+         
+         {/* 2. TTWR Invested - Stock picking quality */}
+         <Card>
+           <Label tooltip="Performance of only the invested portion of your portfolio, excluding the drag of uninvested cash.">
+              Invested Only (TTWR)
+           </Label>
+           <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
+            <div className="text-xs text-gray-400 mt-1">Stock Pick Quality</div>
+         </Card>
+         
+         {/* 3. TTWR Portfolio - Overall strategy */}
+         <Card>
+           <Label tooltip="Time-Weighted Return: Measures the performance of your strategy, ignoring the size and timing of your deposits/withdrawals. Best for comparing against benchmarks.">
+              Strategy Return (TTWR)
+           </Label>
+           <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
+           <div className="text-xs text-gray-400 mt-1">Portfolio Level</div>
+         </Card>
+         
+         {/* 4. MWRR - Personal performance */}
+         <Card>
+           <Label tooltip="Money-Weighted Return (XIRR): Measures YOUR actual return, accounting for the timing of your cash flows. Buying low and selling high improves this metric relative to TTWR.">
+              Investor Return (MWRR)
+           </Label>
+           <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
+            <div className="text-xs text-gray-400 mt-1">Personal Performance</div>
+         </Card>
+       </div>
 
        {/* Detailed Breakdown */}
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
