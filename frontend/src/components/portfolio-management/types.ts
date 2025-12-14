@@ -59,10 +59,45 @@ export interface Portfolio {
   net_invested_cash: number;
 }
 
+export interface PerformanceMetrics {
+  ttwr: Record<string, number>;
+  ttwr_invested: Record<string, number>;
+  mwrr: Record<string, number>;
+}
+
+export interface PortfolioBreakdown {
+  beginning_value: number;
+  ending_value: number;
+  cash_flows: {
+    deposits: number;
+    withdrawals: number;
+    net_external: number;
+  };
+  income_expenses: {
+    dividends: number;
+    interest: number;
+    fees: number;
+    taxes: number;
+  };
+  pnl: {
+    total_pnl_ex_flows: number;
+    realized_gains_approx: number;
+    unrealized_gains_residual: number;
+    currency_effects: number;
+    note_realized?: string;
+  };
+}
+
 export interface PortfolioPerformance {
   portfolio_id: number;
-  performance: any;
-  breakdowns?: any;
+  as_of_date: string;
+  unit: string;
+  performance: PerformanceMetrics;
+  period_meta: {
+    start_date: Record<string, string>;
+    end_date: Record<string, string>;
+  };
+  breakdowns?: Record<string, PortfolioBreakdown>;
 }
 
 export interface WatchlistStock {

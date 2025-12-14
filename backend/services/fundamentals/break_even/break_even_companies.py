@@ -13,6 +13,7 @@ def find_companies_near_break_even(
     months: int,
     company_ids: List[int],
     threshold_pct: float = 5.0,
+    min_market_cap: float | None = None,
 ) -> Tuple[List[dict], Dict[int, bool]]:
     """
     Finds companies whose most recent net income is within ±X% of revenue
@@ -25,14 +26,28 @@ def find_companies_near_break_even(
     recent_cutoff = datetime(now.year, now.month, 1, tzinfo=timezone.utc) - relativedelta(months=months)
     lookback_window = timedelta(days=150)  # ~5 months window to match ~1 year earlier
 
-    # Get all financials for target companies, sorted by date
-    financial_data = (
+    query = (
         db.query(CompanyFinancialHistory, Company, Market.currency)
         .join(Company, CompanyFinancialHistory.company_id == Company.company_id)
         .outerjoin(Market, Market.market_id == Company.market_id)
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
         .filter(CompanyFinancialHistory.net_income.isnot(None))
         .filter(CompanyFinancialHistory.total_revenue.isnot(None))
+    )
+
+    if min_market_cap is not None and min_market_cap > 0:
+        # Import here to avoid circular dependencies if placed at top level (sometimes happens)
+        from database.stock_data import CompanyMarketData
+        val_to_check = min_market_cap * 1_000_000
+        print(f"DEBUG: Filtering with market_cap >= {val_to_check}")
+        query = (
+            query
+            .join(CompanyMarketData, CompanyMarketData.company_id == Company.company_id)
+            .filter(CompanyMarketData.market_cap >= val_to_check)  # User passes millions
+        )
+
+    financial_data = (
+        query
         .order_by(CompanyFinancialHistory.company_id, CompanyFinancialHistory.report_end_date)
         .all()
     )

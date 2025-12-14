@@ -25,7 +25,7 @@ export interface AnalyticsSlice {
       error?: string;
     };
   };
-  fetchBreakEven: (basketIds: number[], thresholdPct: number) => Promise<IBreakEvenPointData[]>;
+  fetchBreakEven: (basketIds: number[], thresholdPct: number, minMarketCap?: number) => Promise<IBreakEvenPointData[]>;
 }
 
 export const createAnalyticsSlice: StateCreator<AnalyticsSlice, [["zustand/devtools", never]]> = (
@@ -39,8 +39,8 @@ export const createAnalyticsSlice: StateCreator<AnalyticsSlice, [["zustand/devto
       error: undefined,
     },
   },
-  async fetchBreakEven(basketIds: number[], thresholdPct: number) {
-    const key = `${basketIds.slice().sort((a, b) => a - b).join("-")}|${thresholdPct}`;
+  async fetchBreakEven(basketIds: number[], thresholdPct: number, minMarketCap?: number) {
+    const key = `${basketIds.slice().sort((a, b) => a - b).join("-")}|${thresholdPct}|${minMarketCap ?? 0}`;
     const cached = get().analysis.breakEven.cachePerBasketIdAndThreshold[key];
     if (cached && isSameDay(cached.fetchedAt)) {
       return cached.data;
@@ -68,6 +68,7 @@ export const createAnalyticsSlice: StateCreator<AnalyticsSlice, [["zustand/devto
       }>("/fundamentals/break-even-companies?months=12", {
         basket_ids: basketIds,
         threshold_pct: thresholdPct,
+        min_market_cap: minMarketCap,
       });
 
       const result = data?.data ?? [];

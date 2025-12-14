@@ -14,7 +14,10 @@ export const BreakEvenPointOutput = ({ data }: { data: IBreakEvenPointData[] }) 
             to={`/stock-details/${stock.ticker}`} // Internal navigation
             className="flex items-center justify-between bg-white p-4 rounded-lg border border-slate-300 hover:bg-slate-200 transition cursor-pointer shadow-sm"
           >
-            <div className="text-lg font-semibold text-slate-800">{stock.ticker}</div>
+            <div className="flex flex-col">
+              <span className="text-lg font-semibold text-slate-800">{stock.company_name}</span>
+              <span className="text-sm text-slate-500">{stock.ticker}</span>
+            </div>
             <div className="text-sm text-slate-600">
               Last Quarter Net Profit:{" "}
               <span className="font-semibold text-green-700">
