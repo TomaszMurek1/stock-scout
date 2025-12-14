@@ -457,18 +457,35 @@ class PortfolioMetricsService:
     def calculate_mwrr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
         try:
             flows = self._external_cash_flows_for_xirr(portfolio_id, start_date, end_date)
+            start_mv = self._valuation_as_of(portfolio_id, start_date)
             end_mv = self._valuation_as_of(portfolio_id, end_date)
 
             logger.info(
-                "MWRR window=%s..%s pid=%s flows=%s",
-                start_date, end_date, portfolio_id,
-                [(d.isoformat(), float(v)) for d, v in flows],
+                "MWRR window=%s..%s pid=%s start=%s flows=%s end=%s",
+                start_date, end_date, portfolio_id, start_mv,
+                [(d.isoformat(), float(v)) for d, v in flows], end_mv
             )
 
-            if end_mv is None or not flows:
-                return D("0")
+            # Build XIRR flows
+            xirr_flows = []
 
-            flows = list(flows) + [(end_date, end_mv if isinstance(end_mv, Decimal) else D(str(end_mv)))]
+            # 1. Initial Value as Investment (Negative)
+            if start_mv and start_mv > 0:
+                s_val = start_mv if isinstance(start_mv, Decimal) else D(str(start_mv))
+                xirr_flows.append((start_date, -s_val))
+            
+            # 2. Period Flows
+            xirr_flows.extend(flows)
+
+            # 3. Ending Value as Return (Positive)
+            if end_mv is not None:
+                e_val = end_mv if isinstance(end_mv, Decimal) else D(str(end_mv))
+                xirr_flows.append((end_date, e_val))
+            
+            flows = xirr_flows
+            
+            if not flows:
+                return D("0")
             neg = any(cf < 0 for _, cf in flows)
             pos = any(cf > 0 for _, cf in flows)
             if not (neg and pos):

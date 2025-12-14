@@ -1,8 +1,9 @@
 from typing import List, Optional
+from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy.orm import Session, joinedload
 from database.position import PortfolioPositions
 from database.company import Company
-from database.stock_data import CompanyMarketData
+from database.stock_data import StockPriceHistory, CompanyMarketData
 from database.fx import FxRate
 from datetime import datetime, timedelta, timezone
 from services.yfinance_data_update.data_update_service import fetch_and_save_stock_price_history_data_batch
@@ -194,25 +195,68 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
             for cid, close in rows:
                 if cid not in ref_prices:
                     ref_prices[cid] = {}
-                ref_prices[cid][p] = float(close)
+                # Keep as Decimal to avoid precision loss
+                ref_prices[cid][p] = close
+
+        # Fetch historical FX rates for periods
+        distinct_currencies = set(pos.instrument_currency_code for pos in positions)
+        distinct_currencies.discard(portfolio.currency)
+        
+        ref_fx_rates = {} # { ccy: { '1d': 1.0, ... } }
+        
+        if distinct_currencies:
+            for p in periods:
+                sd = period_start_dates.get(p)
+                if not sd:
+                    continue
+                fx_rows = (
+                    db.query(FxRate.base_currency, FxRate.close)
+                    .filter(
+                        FxRate.base_currency.in_(distinct_currencies),
+                        FxRate.quote_currency == portfolio.currency,
+                        FxRate.date <= sd
+                    )
+                    .order_by(FxRate.base_currency, FxRate.date.desc())
+                    .distinct(FxRate.base_currency)
+                    .all()
+                )
+                for base_ccy, rate in fx_rows:
+                    if base_ccy not in ref_fx_rates:
+                        ref_fx_rates[base_ccy] = {}
+                    # Keep as Decimal
+                    ref_fx_rates[base_ccy][p] = rate
 
     holdings = []
     portfolio_ccy = portfolio.currency
 
     for pos in positions:
-        # Latest market data
+        # Latest market data (Fallback)
         latest_md: Optional[CompanyMarketData] = (
             db.query(CompanyMarketData)
             .filter_by(company_id=pos.company_id)
             .order_by(CompanyMarketData.last_updated.desc())
             .first()
         )
-
-        current_price = (
-            float(latest_md.current_price)
-            if latest_md and latest_md.current_price is not None
-            else 0.0
+        
+        # Primary: StockPriceHistory (Matches Breakdown / PVD)
+        # Use price from as_of_date or latest available
+        # We can assume 'daily refresh' implies we want the recorded close for consistency
+        latest_hist: Optional[StockPriceHistory] = (
+            db.query(StockPriceHistory)
+            .filter(StockPriceHistory.company_id == pos.company_id)
+            .order_by(StockPriceHistory.date.desc())
+            .first()
         )
+
+        # Use Decimal for current price
+        # Priority: History > MarketData > 0
+        raw_price = Decimal("0")
+        if latest_hist and latest_hist.close is not None:
+             raw_price = latest_hist.close
+        elif latest_md and latest_md.current_price is not None:
+             raw_price = latest_md.current_price
+             
+        current_price = raw_price if isinstance(raw_price, Decimal) else Decimal(str(raw_price))
         
         # Determine FX rate instrument -> portfolio CCY
         instrument_ccy = pos.instrument_currency_code
@@ -229,7 +273,10 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                 .first()
             )
             if fx_row:
-                fx_rate_to_portfolio = float(fx_row.close)
+                # Keep as Decimal
+                fx_rate_to_portfolio = fx_row.close
+                if not isinstance(fx_rate_to_portfolio, Decimal):
+                    fx_rate_to_portfolio = Decimal(str(fx_rate_to_portfolio))
 
         # Calculate PnL for each period
         pnl_map = {}
@@ -247,32 +294,75 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
             p_start = period_start_dates.get(p)
             first_tx = first_tx_map.get(pos.company.ticker)
             
+            is_new_position = False
             if first_tx and p_start and first_tx > p_start:
                  # Position is newer than the period window -> Use Net Investment (Cost Basis) 
                  # to calculate PnL contribution.
                  ref_price = float(pos.avg_cost_instrument_ccy)
+                 is_new_position = True
 
-            val = 0.0
-            val_instrument = 0.0
-            if ref_price and current_price:
-                diff = current_price - ref_price
-                val_instrument = diff * float(pos.quantity)
-                val = val_instrument * fx_rate_to_portfolio
-            pnl_map[p] = val
-            pnl_map_instrument[p] = val_instrument
+            # Use Decimal for calculations to match PortfolioMetricsService and avoid rounding errors
+            val = Decimal("0")
+            val_instrument = Decimal("0")
+            
+            # Helper for safe decimal conversion
+            def to_d(x): return Decimal(str(x)) if x is not None else Decimal("0")
+            
+            # Accounting precision: specific to backend storage precision (4 decimals)
+            # Using 4 decimals ensures sums match the Breakdown (which uses PVD stored at 4 decimals).
+            FOUR_PLACES = Decimal("0.0001")
+
+            d_ref = to_d(ref_price)
+            d_curr = to_d(current_price)
+            d_qty = to_d(pos.quantity)
+            d_fx = to_d(fx_rate_to_portfolio)
+
+            if ref_price is not None and current_price is not None:
+                d_diff = d_curr - d_ref
+                val_instrument = d_diff * d_qty
+                
+                if is_new_position:
+                    d_avg_port = to_d(pos.avg_cost_portfolio_ccy)
+                    
+                    # No quantization to allow maximum precision alignment with Breakdown
+                    curr_val_base = d_curr * d_qty * d_fx
+                    cost_basis_base = d_avg_port * d_qty
+                    
+                    val = curr_val_base - cost_basis_base
+                else:
+                    d_hist_fx = Decimal("1.0")
+                    if instrument_ccy != portfolio_ccy:
+                         # ref_fx_rates holds Decimals or floats (depending on DB driver)
+                         raw_fx = ref_fx_rates.get(instrument_ccy, {}).get(p)
+                         d_hist_fx = to_d(raw_fx) if raw_fx is not None else d_fx
+                    
+                    # No quantization
+                    curr_val_base = d_curr * d_qty * d_fx
+                    hist_val_base = d_ref * d_qty * d_hist_fx
+                    
+                    val = curr_val_base - hist_val_base
+            
+            # current_price is Decimal now, but we'll include it in output as float
+            # For output, we can cast to float at the end
+            # Round to 2 decimals for display consistency
+            # Use ROUND_HALF_UP to ensure stable rounding
+            quant = Decimal("0.01")
+            
+            pnl_map[p] = float(val.quantize(quant, rounding=ROUND_HALF_UP))
+            pnl_map_instrument[p] = float(val_instrument.quantize(quant, rounding=ROUND_HALF_UP))
         
         # Calculate ITD (Inception to Date) PnL
-        # Instrument CCY: (Current Price - Avg Cost) * Shares
-        itd_pnl_inst = (current_price - float(pos.avg_cost_instrument_ccy)) * float(pos.quantity)
-        pnl_map_instrument["itd"] = itd_pnl_inst
+        current_price_d = to_d(current_price)
+        avg_cost_inst_d = to_d(pos.avg_cost_instrument_ccy)
+        qty_d = to_d(pos.quantity)
         
-        # Portfolio CCY: Current Value - Cost Basis
-        # Current Value = Price * Shares * Current FX
-        current_val_port = current_price * float(pos.quantity) * fx_rate_to_portfolio
-        # Cost Basis = Avg Cost (Portfolio) * Shares
-        cost_basis_port = float(pos.avg_cost_portfolio_ccy) * float(pos.quantity)
+        itd_pnl_inst = (current_price_d - avg_cost_inst_d) * qty_d
+        pnl_map_instrument["itd"] = float(itd_pnl_inst.quantize(quant, rounding=ROUND_HALF_UP))
         
-        pnl_map["itd"] = current_val_port - cost_basis_port
+        current_val_port = current_price_d * qty_d * to_d(fx_rate_to_portfolio)
+        cost_basis_port = to_d(pos.avg_cost_portfolio_ccy) * qty_d
+        
+        pnl_map["itd"] = float((current_val_port - cost_basis_port).quantize(quant, rounding=ROUND_HALF_UP))
 
         holdings.append(
             {
@@ -282,8 +372,8 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                 "instrument_ccy": instrument_ccy,
                 "average_cost_instrument_ccy": float(pos.avg_cost_instrument_ccy),
                 "average_cost_portfolio_ccy": float(pos.avg_cost_portfolio_ccy),
-                "last_price": current_price,
-                "fx_rate_to_portfolio_ccy": fx_rate_to_portfolio,
+                "last_price": float(current_price),
+                "fx_rate_to_portfolio_ccy": float(fx_rate_to_portfolio),
                 "period_pnl": pnl_map,
                 "period_pnl_instrument_ccy": pnl_map_instrument,
             }
