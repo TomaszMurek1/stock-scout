@@ -13,6 +13,7 @@ from database.fx import FxRate
 from database.portfolio import Transaction
 from services.yfinance_data_update.data_update_service import fetch_and_save_stock_price_history_data_batch
 from services.portfolio_metrics_service import PortfolioMetricsService
+from services.fx.fx_rate_helper import get_latest_fx_rate, get_fx_rates_batch_for_date
 
 logger = logging.getLogger(__name__)
 
@@ -102,23 +103,14 @@ def _fetch_historical_data(
     currencies_to_fetch = instrument_currencies - {portfolio_currency}
     if currencies_to_fetch:
         for p, sd in period_start_dates.items():
-            fx_rows = (
-                db.query(FxRate.base_currency, FxRate.close)
-                .filter(
-                    FxRate.base_currency.in_(currencies_to_fetch),
-                    FxRate.quote_currency == portfolio_currency,
-                    FxRate.date <= sd
-                )
-                .order_by(FxRate.base_currency, FxRate.date.desc())
-                .distinct(FxRate.base_currency)
-                .all()
-            )
-            for base_ccy, rate in fx_rows:
+            fx_rates = get_fx_rates_batch_for_date(db, currencies_to_fetch, portfolio_currency, sd)
+            for base_ccy, rate in fx_rates.items():
                 if base_ccy not in ref_fx_rates:
                     ref_fx_rates[base_ccy] = {}
                 ref_fx_rates[base_ccy][p] = _to_d(rate)
 
     return ref_prices, ref_fx_rates, period_start_dates
+
 
 
 def _get_current_price(db: Session, company_id: int) -> Decimal:
@@ -152,19 +144,9 @@ def _get_current_price(db: Session, company_id: int) -> Decimal:
 
 def _get_current_fx_rate(db: Session, from_ccy: str, to_ccy: str) -> Decimal:
     """Fetches the latest FX rate between two currencies."""
-    if from_ccy == to_ccy:
-        return Decimal("1.0")
-        
-    fx_row: Optional[FxRate] = (
-        db.query(FxRate)
-        .filter_by(base_currency=from_ccy, quote_currency=to_ccy)
-        .order_by(FxRate.date.desc())
-        .first()
-    )
-    if fx_row and fx_row.close is not None:
-        return _to_d(fx_row.close)
-        
-    return Decimal("1.0")
+    rate = get_latest_fx_rate(db, from_ccy, to_ccy)
+    return Decimal(str(rate)) if rate else Decimal("1.0")
+
 
 
 def ensure_portfolio_prices_fresh(db: Session, portfolio):

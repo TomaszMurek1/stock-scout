@@ -78,23 +78,28 @@ def get_fx_rates_batch(
         ]
         note = None
         if not historical_data:
-            # fallback to most recent available data
-            latest = (
-                db.query(FxRate)
-                .filter_by(base_currency=base, quote_currency=quote)
-                .order_by(FxRate.date.desc())
-                .first()
-            )
-            if latest:
-                historical_data = [
-                    {
-                        "date": latest.date.isoformat(),
-                        "close": latest.close,
-                    }
-                ]
-                note = (
-                    "Returned most recent available data; may be older than requested."
+            # fallback to most recent available data using helper
+            from services.fx.fx_rate_helper import get_latest_fx_rate
+            
+            latest_rate = get_latest_fx_rate(db, base, quote)
+            if latest_rate:
+                # Get the date of the latest rate
+                latest_record = (
+                    db.query(FxRate.date)
+                    .filter_by(base_currency=base, quote_currency=quote)
+                    .order_by(FxRate.date.desc())
+                    .first()
                 )
+                if latest_record:
+                    historical_data = [
+                        {
+                            "date": latest_record[0].isoformat(),
+                            "close": latest_rate,
+                        }
+                    ]
+                    note = (
+                        "Returned most recent available data; may be older than requested."
+                    )
 
         result[f"{base}-{quote}"] = {
             "base": base,

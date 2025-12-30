@@ -5,6 +5,8 @@ Provides utility functions for fetching and converting currency exchange rates.
 """
 from sqlalchemy.orm import Session
 from database.fx import FxRate
+from datetime import date
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -96,3 +98,99 @@ def get_fx_rates_batch(
             # If None, currency won't be in dict (caller should handle missing keys)
     
     return rates
+
+
+def get_fx_rate_for_date(
+    db: Session, 
+    from_currency: str, 
+    to_currency: str = "USD",
+    as_of_date: Optional[date] = None
+) -> Optional[float]:
+    """
+    Get FX rate for a specific date (or latest if None).
+    
+    Args:
+        db: Database session
+        from_currency: Source currency code (e.g., 'PLN')
+        to_currency: Target currency code (default 'USD')
+        as_of_date: Date for the rate (default: today)
+    
+    Returns:
+        Exchange rate as float, or None if not found
+        
+    Examples:
+        >>> get_fx_rate_for_date(db, 'PLN', 'USD', date(2024, 1, 15))
+        0.2513  # 1 PLN = 0.2513 USD
+    """
+    from_currency = from_currency.upper()
+    to_currency = to_currency.upper()
+    as_of_date = as_of_date or date.today()
+    
+    if from_currency == to_currency:
+        return 1.0
+    
+    # Try direct pair (PLN/USD)
+    rate = (
+        db.query(FxRate.close)
+        .filter_by(base_currency=from_currency, quote_currency=to_currency)
+        .filter(FxRate.date <= as_of_date)
+        .order_by(FxRate.date.desc())
+        .first()
+    )
+    
+    if rate and rate[0] is not None:
+        return float(rate[0])
+    
+    # Try inverse pair (USD/PLN), invert the result
+    inv_rate = (
+        db.query(FxRate.close)
+        .filter_by(base_currency=to_currency, quote_currency=from_currency)
+        .filter(FxRate.date <= as_of_date)
+        .order_by(FxRate.date.desc())
+        .first()
+    )
+    
+    if inv_rate and inv_rate[0] is not None and inv_rate[0] != 0:
+        return 1.0 / float(inv_rate[0])
+    
+    logger.warning(
+        f"No FX rate found for {from_currency}/{to_currency} as of {as_of_date}"
+    )
+    return None
+
+
+def get_fx_rates_batch_for_date(
+    db: Session,
+    currencies: set[str],
+    to_currency: str = "USD",
+    as_of_date: Optional[date] = None
+) -> dict[str, float]:
+    """
+    Batch fetch FX rates for multiple currencies as of a specific date.
+    
+    Args:
+        db: Database session
+        currencies: Set of currency codes to fetch
+        to_currency: Target currency (default 'USD')
+        as_of_date: Date for the rates (default: today)
+    
+    Returns:
+        Dictionary mapping currency code -> exchange rate
+        
+    Examples:
+        >>> get_fx_rates_batch_for_date(db, {'PLN', 'EUR', 'GBP'}, 'USD', date(2024, 1, 15))
+        {'PLN': 0.2513, 'EUR': 1.0876, 'GBP': 1.2654}
+    """
+    as_of_date = as_of_date or date.today()
+    result = {}
+    
+    for curr in currencies:
+        curr_upper = curr.upper()
+        if curr_upper == to_currency.upper():
+            result[curr_upper] = 1.0
+        else:
+            rate = get_fx_rate_for_date(db, curr_upper, to_currency, as_of_date)
+            if rate is not None:
+                result[curr_upper] = rate
+    
+    return result
