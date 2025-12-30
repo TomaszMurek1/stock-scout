@@ -438,6 +438,18 @@ def fetch_and_save_financial_data_for_list_of_tickers(
         except Exception as e:
             logger.error(f"Failed to fetch yfinance data for {ticker}: {e}")
             per_ticker_errors.append({"ticker": ticker, "error": str(e)})
+            # If yfinance fails (e.g. 404), mark as explicit 0 market cap so we don't retry endlessly in filtered scans
+            try:
+                md = market_data.get(comp.company_id) or CompanyMarketData(company_id=comp.company_id)
+                md.market_cap = 0.0
+                md.last_updated = datetime.now(timezone.utc)
+                if hasattr(md, "is_delisted"):
+                    md.is_delisted = True
+                db.add(md)
+                db.commit()
+            except Exception as db_exc:
+                logger.error(f"Failed to mark ticker {ticker} as failed in DB: {db_exc}")
+                db.rollback()
             continue  # Skip this ticker if yfinance throws an error
 
         try:
@@ -450,6 +462,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                     f"No valid fast_info for ticker {ticker} (may be delisted or invalid)"
                 )
                 md.current_price = None
+                md.market_cap = 0.0  # Explicitly set 0 to skip in filtered scans
                 md.last_updated = datetime.now(timezone.utc)
                 if hasattr(md, "is_delisted"):
                     md.is_delisted = True
@@ -602,6 +615,18 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             logger.exception("Failed while processing ticker %s", ticker)
             per_ticker_errors.append({"ticker": ticker, "error": str(exc)})
             db.rollback()
+            # Mark as failed in DB so we don't retry endlessly
+            try:
+                md = market_data.get(comp.company_id) or CompanyMarketData(company_id=comp.company_id)
+                md.market_cap = 0.0
+                md.last_updated = datetime.now(timezone.utc)
+                if hasattr(md, "is_delisted"):
+                    md.is_delisted = True
+                db.add(md)
+                db.commit()
+            except Exception as db_exc:
+                logger.error(f"Failed to mark ticker {ticker} as failed in DB after exception: {db_exc}")
+                db.rollback()
             continue
         
         # Sanitize numpy types on ORM objects (snapshot + market data)
@@ -732,10 +757,49 @@ def update_financials_for_tickers(
 
     company_ids = [c.company_id for c in companies]
     latest_reports = get_latest_report_dates(db, company_ids)
+    
+    # Preload market data to check for "known bad" tickers (market_cap=0)
+    market_data_map = {
+        md.company_id: md
+        for md in db.query(CompanyMarketData)
+        .filter(CompanyMarketData.company_id.in_(company_ids))
+        .all()
+    }
+    
+    # Preload last update time from CompanyFinancials to avoid re-scanning valid companies same-day
+    fin_updated_map = dict(
+        db.query(CompanyFinancials.company_id, CompanyFinancials.last_updated)
+        .filter(CompanyFinancials.company_id.in_(company_ids))
+        .all()
+    )
+
     today = datetime.now(timezone.utc).date()
+    now_utc = datetime.now(timezone.utc)
 
     eligible_tickers = []
     for comp in companies:
+        # Check if known bad/delisted (market_cap == 0 and updated recently)
+        md = market_data_map.get(comp.company_id)
+        if md and md.market_cap == 0:
+             if md.last_updated:
+                 last_up_md = md.last_updated
+                 if last_up_md.tzinfo is None:
+                     last_up_md = last_up_md.replace(tzinfo=timezone.utc)
+                 if (now_utc - last_up_md).days < 7:
+                     logger.info(f"[{comp.ticker}] Skipping known failed/delisted ticker (market_cap=0)")
+                     continue
+        
+        # Optimization: if we already successfully updated financials TODAY, skip re-check
+        # regardless of report date (prevents infinite loop for companies with old reports)
+        last_fin_update = fin_updated_map.get(comp.company_id)
+        if last_fin_update:
+             if last_fin_update.tzinfo is None:
+                 last_fin_update = last_fin_update.replace(tzinfo=timezone.utc)
+             
+             if last_fin_update.date() >= today:
+                 logger.debug(f"[{comp.ticker}] Financials already checked today, skipping.")
+                 continue
+
         last_map = latest_reports.get(comp.company_id, {})
         last_annual = last_map.get("annual")
         last_quarter = last_map.get("quarterly")

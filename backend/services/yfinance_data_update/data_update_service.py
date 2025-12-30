@@ -280,6 +280,21 @@ def ensure_fresh_data(
     if not company or not market:
         raise ValueError("Company or market not found!")
 
+    # Check for known bad/delisted ticker
+    from database.stock_data import CompanyMarketData
+    md = db.query(CompanyMarketData).filter(CompanyMarketData.company_id == company.company_id).first()
+    if md and md.market_cap == 0:
+         now_utc = datetime.now(timezone.utc)
+         # naive/aware check handled safely by subtracting aware from aware (assuming last_updated is stored as UTC or converting)
+         last_up = md.last_updated
+         if last_up:
+             if last_up.tzinfo is None:
+                 last_up = last_up.replace(tzinfo=timezone.utc)
+             
+             if (now_utc - last_up).days < 7:
+                 logger.info(f"Skipping known delisted/failed ticker {ticker} in ensure_fresh_data (market_cap=0)")
+                 return
+
     if use_batch_for_price_history_data:
         # Use batch method
         fetch_and_save_stock_price_history_data_batch(

@@ -22,6 +22,7 @@ export default function BreakEvenPointScanForm() {
     defaultValues: {
       basketIds: [],
       thresholdPct: 5,
+      minMarketCap: 100,
     },
   });
 
@@ -58,7 +59,7 @@ export default function BreakEvenPointScanForm() {
     setResults([]);
     try {
       const basketIds = data.basketIds.map((id) => Number(id));
-      const result = await fetchBreakEven(basketIds, data.thresholdPct);
+      const result = await fetchBreakEven(basketIds, data.thresholdPct, data.minMarketCap);
       setResults(result);
       toast.success("Break Even Point scan completed successfully");
     } catch (error: any) {

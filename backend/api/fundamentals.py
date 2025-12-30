@@ -191,7 +191,18 @@ def get_break_even_companies(
     tickers_by_market: dict[str, list[str]] = defaultdict(list)
     manual_refresh = []
 
+    val_to_check = (request.min_market_cap or 0) * 1_000_000
     for comp in companies:
+        if val_to_check > 0:
+            # Check market cap if available (eager loading might be needed, or manual join)
+            # Accessing comp.market_data triggers a lazy load if not loaded.
+            # market_data is a LIST.
+            md = comp.market_data[0] if comp.market_data else None
+            # If we HAVE market cap data, and it is less than threshold, skip update
+            # If we DON'T have market cap data, we must include it to let it update (and maybe find out it's small)
+            if md and md.market_cap is not None and md.market_cap < val_to_check:
+                continue
+
         if comp.market and comp.market.name:
             tickers_by_market[comp.market.name].append(comp.ticker)
         else:
@@ -240,7 +251,7 @@ def get_break_even_companies(
 
     if stale_company_ids:
         new_results, status_map = find_companies_near_break_even(
-            db, months, stale_company_ids, threshold_pct=threshold_pct
+            db, months, stale_company_ids, threshold_pct=threshold_pct, min_market_cap=request.min_market_cap
         )
         new_result_map = {item["company_id"]: item for item in new_results}
         for cid in stale_company_ids:
@@ -283,7 +294,7 @@ def get_break_even_companies(
 
     if fresh_positive_ids:
         cached_results, _ = find_companies_near_break_even(
-            db, months, fresh_positive_ids, threshold_pct=threshold_pct
+            db, months, fresh_positive_ids, threshold_pct=threshold_pct, min_market_cap=request.min_market_cap
         )
         combined_results.extend(cached_results)
 
