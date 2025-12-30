@@ -1,0 +1,31 @@
+"""
+TTWR Conceptual Analysis
+========================
+
+The fundamental question: How should Portfolio TTWR handle deposits?
+
+SCENARIO (User's case):
+- Nov 15: Portfolio = 45k (35k cash, 10k stocks)
+- Nov 16: DEPOSIT 100k → Portfolio = 145k (135k cash, 10k stocks)  
+- Nov 17: BUY 61k stocks → Portfolio = 145k (74k cash, 71k stocks)
+- Nov 18: DEPOSIT 40k, BUY 79k → Portfolio = 185k (35k cash, 150k stocks)
+
+PROBLEM:
+If we use NET_EXTERNAL flows (deposits only):
+- Nov 16: Flow = +100k, Value jumps 45k → 145k
+  - Formula: return = (145k - (45k + 100k)) / (45k + 100k) = 0 / 145k = 0%  ✓ CORRECT
+  
+But what if deposit goes to CASH first, then stocks later?
+- In PVD, total_value ALREADY includes the deposit
+- So we SHOULD use the flow adjustment
+
+WAIT - Let me check what PortfolioValuationDaily.total_value actually represents...
+
+If total_value = cash + invested_stocks, then:
+- Deposits increase total_value
+- But stock purchases DON'T change total_value (just move cash → stocks)
+
+So Portfolio TTWR with NET_EXTERNAL flows SHOULD work!
+
+The bug must be elsewhere. Let me check if PortfolioValuationDaily is being calculated correctly.
+"""

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { MaterialReactTable, type MRT_Row } from "material-react-table";
 import { Trash2 } from "lucide-react";
 import { IconButton, Tooltip } from "@mui/material";
-import type { ApiHolding, Transaction } from "../../types";
+import type { ApiHolding, Transaction, Period } from "../../types";
 import { useHoldingsColumns } from "./useHoldingsColumns";
 import { HoldingsEmptyState } from "./HoldingsEmptyState";
 
@@ -13,12 +13,13 @@ interface HoldingsTabProps {
   holdings: ApiHolding[];
   transactions: Transaction[];
   onRemove: (ticker: string) => void;
+  isLoading?: boolean;
+  selectedPeriod?: Period;
 }
 
-export default function HoldingsTab({ holdings, transactions, onRemove }: HoldingsTabProps) {
+export default function HoldingsTab({ holdings, transactions, onRemove, isLoading, selectedPeriod = "ytd" }: HoldingsTabProps) {
   const navigate = useNavigate();
-
-  const columns = useHoldingsColumns();
+  const columns = useHoldingsColumns({ selectedPeriod });
 
   const transactionsByTicker = useMemo(() => {
     return transactions.reduce<Record<string, Transaction[]>>((acc, tx) => {
@@ -89,6 +90,16 @@ export default function HoldingsTab({ holdings, transactions, onRemove }: Holdin
     [transactionsByTicker]
   );
 
+  if (isLoading && (!holdings || holdings.length === 0)) {
+     return (
+       <div className="space-y-4 p-4">
+         {[1, 2, 3].map((i) => (
+           <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+         ))}
+       </div>
+     );
+  }
+
   if (!holdings || holdings.length === 0) {
     return <HoldingsEmptyState />;
   }
@@ -101,6 +112,7 @@ export default function HoldingsTab({ holdings, transactions, onRemove }: Holdin
         enableRowActions
         enableExpanding
         positionActionsColumn="last"
+        state={{ isLoading }}
         renderRowActions={({ row }) => (
           <Tooltip title="Remove holding">
             <IconButton
@@ -115,13 +127,13 @@ export default function HoldingsTab({ holdings, transactions, onRemove }: Holdin
           </Tooltip>
         )}
         renderDetailPanel={renderDetailPanel}
-        muiTableBodyRowProps={({ row }) => ({
+        muiTableBodyRowProps={{
           sx: {
-            cursor: "pointer",
+            // cursor: "pointer", // Removed pointer cursor since row is not clickable for nav
             backgroundColor: "#fff",
           },
-          onClick: () => navigate(`/stock-details/${row.original.ticker}`),
-        })}
+          // onClick: () => navigate(`/stock-details/${row.original.ticker}`), // REMOVED
+        }}
         muiTopToolbarProps={{
           sx: {
             backgroundColor: "#e5e7eb",

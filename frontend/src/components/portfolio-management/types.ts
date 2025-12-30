@@ -1,5 +1,7 @@
 export type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
 
+export type Period = "1d" | "1w" | "1m" | "3m" | "6m" | "1y" | "ytd" | "itd";
+
 export interface PortfolioStock {
   shares_number: number;
   ticker: string;
@@ -86,18 +88,24 @@ export interface PortfolioBreakdown {
     currency_effects: number;
     note_realized?: string;
   };
+  invested?: {
+    beginning_value: number;
+    ending_value: number;
+    net_trades: number;
+    capital_gains: number;
+    simple_return_pct: number;
+  };
+  metrics_context?: {
+    timing_quality: string;
+    warning_type: string | null;
+    simple_return_pct: number;
+  };
 }
 
 export interface PortfolioPerformance {
   portfolio_id: number;
-  as_of_date: string;
-  unit: string;
-  performance: PerformanceMetrics;
-  period_meta: {
-    start_date: Record<string, string>;
-    end_date: Record<string, string>;
-  };
-  breakdowns?: Record<string, PortfolioBreakdown>;
+  performance: any;
+  breakdowns?: any;
 }
 
 export interface WatchlistStock {
@@ -188,4 +196,6 @@ export type ApiHolding = {
   average_cost_instrument_ccy: number;
   fx_rate_to_portfolio_ccy: number;
   last_price: number;
+  period_pnl: Record<string, number>;
+  period_pnl_instrument_ccy: Record<string, number>;
 };

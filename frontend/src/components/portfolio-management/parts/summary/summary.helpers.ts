@@ -12,7 +12,7 @@ export const formatCurrency = (
   currency: CurrencyCode,
   locale = currencyLocaleMap[currency]
 ): string =>
-  Math.abs(value).toLocaleString(locale, {
+  value.toLocaleString(locale, {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
@@ -20,4 +20,4 @@ export const formatCurrency = (
   });
 
 export const formatPercent = (value: number, decimals = 2): string =>
-  `${Math.abs(value).toFixed(decimals)}%`;
+  `${value.toFixed(decimals)}%`;

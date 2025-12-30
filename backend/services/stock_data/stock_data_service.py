@@ -142,6 +142,23 @@ def fetch_and_save_stock_price_history_data(
                 forced_overwrite_dates=forced_overwrite_dates,
             )
 
+        # Update CompanyMarketData with the latest available price from the fetched data
+        # This ensures that the current price view is consistent with stock history
+        if not stock_data.empty:
+            from database.stock_data import CompanyMarketData
+            latest_row = stock_data.iloc[-1]
+            latest_price = float(latest_row["Close"])
+            
+            md = db.query(CompanyMarketData).filter_by(company_id=company.company_id).first()
+            if not md:
+                md = CompanyMarketData(company_id=company.company_id)
+                db.add(md)
+            
+            md.current_price = latest_price
+            # md.market_cap can be updated if shares_outstanding is known, but we leave that to financials sync
+            md.last_updated = datetime.now(timezone.utc)
+            db.commit()
+
         return {
             "status": "success",
             "message": f"Updated {len(dates_to_update)} records",

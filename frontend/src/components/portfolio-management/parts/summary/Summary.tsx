@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, Wallet, PieChart, Info, HelpCircle } from "lucide-react";
+// src/components/Summary.tsx
+import React from "react";
+import { ArrowUpRight, ArrowDownRight, HelpCircle, PieChart, DollarSign, Wallet, TrendingUp } from "lucide-react";
 import { CurrencyCode, formatCurrency, formatPercent, currencyLocaleMap } from "./summary.helpers";
-import { Portfolio, PortfolioPerformance } from "../../types";
+import { Portfolio, PortfolioPerformance, Period } from "../../types";
 import {
   Tooltip,
   TooltipContent,
@@ -12,9 +13,9 @@ import {
 interface SummaryProps {
   portfolio: Portfolio;
   performance: PortfolioPerformance;
+  selectedPeriod: Period;
+  onPeriodChange: (p: Period) => void;
 }
-
-type Period = "1d" | "1w" | "1m" | "3m" | "6m" | "1y" | "ytd" | "itd";
 
 const PERIODS: Period[] = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"];
 
@@ -51,7 +52,7 @@ const Label = ({ children, tooltip }: { children: React.ReactNode; tooltip?: str
           <TooltipTrigger>
             <HelpCircle className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
           </TooltipTrigger>
-          <TooltipContent className="max-w-xs bg-slate-900 text-white p-3 rounded-lg text-xs leading-relaxed">
+          <TooltipContent className="max-w-xs bg-slate-900 text-white p-3 rounded-lg text-xs leading-relaxed whitespace-pre-line">
             {tooltip}
           </TooltipContent>
         </Tooltip>
@@ -76,7 +77,7 @@ const Value = ({
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })
-    : value.toLocaleString();
+    : value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return <div className={`text-2xl font-bold text-gray-900 ${className}`}>{formatted}</div>;
 };
 
@@ -91,10 +92,24 @@ const PercentValue = ({ value }: { value: number }) => {
   );
 };
 
-const DataRow = ({ label, value, currency, isBold = false }: { label: string; value: number; currency?: CurrencyCode; isBold?: boolean }) => (
-  <div className={`flex justify-between items-center py-2 border-b border-gray-50 last:border-0 ${isBold ? "font-bold" : ""}`}>
-    <span className="text-gray-600 text-sm">{label}</span>
-    <span className={isBold ? "text-gray-900" : "text-gray-700"}>
+const DataRow = ({
+  label,
+  value,
+  currency,
+  isBold = false,
+  className = "",
+  valueClassName = "",
+}: {
+  label: string;
+  value: number;
+  currency?: CurrencyCode;
+  isBold?: boolean;
+  className?: string;
+  valueClassName?: string;
+}) => (
+  <div className={`flex justify-between items-center py-2 border-b border-gray-50 last:border-0 ${className}`}>
+    <span className={`text-sm ${isBold ? "text-gray-800 font-medium" : "text-gray-500"}`}>{label}</span>
+    <span className={`${isBold ? "font-bold text-gray-900" : "text-gray-700 font-medium"} ${valueClassName}`}>
       {currency
         ? formatCurrency(value, currency)
         : value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -102,8 +117,8 @@ const DataRow = ({ label, value, currency, isBold = false }: { label: string; va
   </div>
 );
 
-export default function Summary({ portfolio, performance }: SummaryProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd");
+export default function Summary({ portfolio, performance, selectedPeriod, onPeriodChange }: SummaryProps) {
+  // const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd"); // Lifted up
 
   if (!performance || !performance.breakdowns) {
       return (
@@ -121,20 +136,14 @@ export default function Summary({ portfolio, performance }: SummaryProps) {
   if (!breakdown) return null; // Should not happen with backend fix
 
   return (
-    <div className="space-y-6">
-      {/* Top Header & Stats */}
-        <div className="text-left w-full">
-            <h2 className="text-xl font-bold text-gray-900">Portfolio Dashboard</h2>
-            <p className="text-sm text-gray-500">Overview of your holdings and performance</p>
-        </div>
-
+    <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Wallet size={20} /></div>
-            <Label>Total Value</Label>
+           <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><PieChart size={20} /></div>
+            <Label tooltip="Current market value of all your active holdings.">Invested Value</Label>
           </div>
-          <Value value={portfolio.total_value} currency={currency} />
+          <Value value={portfolio.invested_value_current} currency={currency} />
         </Card>
         <Card>
            <div className="flex items-center gap-3 mb-2">
@@ -144,21 +153,22 @@ export default function Summary({ portfolio, performance }: SummaryProps) {
           <Value value={portfolio.cash_available} currency={currency} />
         </Card>
         <Card>
-           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><PieChart size={20} /></div>
-            <Label>Net Invested</Label>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Wallet size={20} /></div>
+            <Label>Total Value</Label>
           </div>
-          <Value value={portfolio.net_invested_cash} currency={currency} />
+          <Value value={portfolio.total_value} currency={currency} />
         </Card>
+        
         <Card>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-orange-50 rounded-lg text-orange-600"><TrendingUp size={20} /></div>
-             <Label tooltip="Total Unrealized Profit/Loss since inception.">Unrealized PnL (ITD)</Label>
+             <Label tooltip="Total Profit or Loss on your investments (Current Value - Net Cost). Includes both realized and unrealized gains.">Total PnL (ITD)</Label>
           </div>
           <Value 
-            value={itd.pnl.unrealized_gains_residual} 
+            value={itd.invested ? itd.invested.capital_gains : itd.pnl.unrealized_gains_residual} 
             currency={currency} 
-            className={itd.pnl.unrealized_gains_residual >= 0 ? "text-green-600" : "text-red-600"}
+            className={(itd.invested ? itd.invested.capital_gains : itd.pnl.unrealized_gains_residual) >= 0 ? "text-green-600" : "text-red-600"}
           />
         </Card>
       </div>
@@ -169,72 +179,230 @@ export default function Summary({ portfolio, performance }: SummaryProps) {
             <TrendingUp className="w-5 h-5 text-gray-500" />
             Returns Analysis ({selectedPeriod.toUpperCase()})
         </h3>
-        <PeriodSelector selected={selectedPeriod} onSelect={setSelectedPeriod} />
+        <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <Label tooltip="Time-Weighted Return: Measures the performance of your strategy, ignoring the size and timing of your deposits/withdrawals. Best for comparing against benchmarks.">
-            Strategy Return (TTWR)
-          </Label>
-          <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
-          <div className="text-xs text-gray-400 mt-1">Portfolio Level</div>
-        </Card>
-        <Card>
-          <Label tooltip="Money-Weighted Return (XIRR): Measures YOUR actual return, accounting for the timing of your cash flows. Buying low and selling high improves this metric relative to TTWR.">
-             Investor Return (MWRR)
-          </Label>
-          <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
-           <div className="text-xs text-gray-400 mt-1">Personal Performance</div>
-        </Card>
-        <Card>
-          <Label tooltip="Performance of only the invested portion of your portfolio, excluding the drag of uninvested cash.">
-             Invested Only (TTWR)
-          </Label>
-          <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
-           <div className="text-xs text-gray-400 mt-1">Stock Pick Quality</div>
-        </Card>
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+         {/* 1. Simple Return - PRIMARY METRIC (most intuitive) */}
+         <Card className={`${
+           (breakdown.invested?.simple_return_pct || 0) >= 0 
+             ? 'border-l-4 border-emerald-500' 
+             : 'border-l-4 border-red-500'
+         }`}>
+           <Label tooltip={`💰 ACTUAL MONEY GAINED/LOST
+           
+Did I make money?
+
+How it works:
+(Ending - Beginning - Money Added) ÷ Total Invested
+
+Example:
+Started 11k zł, added 142k zł, ended 152k zł
+= Lost 1.9k zł on 153k total = -1.2%
+
+Includes FX? YES - USD stocks lose value if PLN strengthens
+
+Why it differs: Cares about HOW MUCH money you had at different times. Adding 140k before a drop = bigger loss.`}>
+              💰 Money Made/Lost
+           </Label>
+           <PercentValue 
+             value={breakdown.invested?.simple_return_pct ? parseFloat(breakdown.invested.simple_return_pct) : 0} 
+           />
+           <div className="text-xs text-gray-500 mt-1">Simple Return</div>
+           
+           {/* Warning badge for timing paradox */}
+           {breakdown.metrics_context?.warning_type === 'timing_paradox' && (
+             <div className="mt-3 p-2 bg-amber-50 border border-amber-300 rounded-md text-xs text-amber-800">
+               <div className="flex items-center gap-1.5">
+                 <span className="text-base">⚠️</span>
+                 <span className="font-semibold">Good picks, bad timing</span>
+               </div>
+               <div className="mt-1 text-amber-700">
+                 Your stocks performed well, but you added money right before a dip
+               </div>
+             </div>
+           )}
+           
+           {breakdown.metrics_context?.warning_type === 'timing_win' && (
+             <div className="mt-3 p-2 bg-emerald-50 border border-emerald-300 rounded-md text-xs text-emerald-800">
+               <div className="flex items-center gap-1.5">
+                 <span className="text-base">✅</span>
+                 <span className="font-semibold">Excellent timing!</span>
+               </div>
+               <div className="mt-1 text-emerald-700">
+                 You added money at the perfect time
+               </div>
+             </div>
+           )}
+         </Card>
+         
+         {/* 2. TTWR Invested - Stock picking quality */}
+         <Card>
+           <Label tooltip={`🎯 STOCK PICKING SKILL (HYPOTHETICAL)
+
+Were my stock picks good (ignoring when I bought)?
+
+How it works:
+Imagine 100 zł invested at START of period
+Each day: grows/shrinks by your portfolio's daily %
+ASSUMES you bought all stocks on day 1 (not actual dates)
+
+Example (YTD):
+100 zł on Jan 1
+Day 1: +4% → 104 zł
+Day 2: -2% → 101.92 zł
+...
+Dec 14: 123.87 zł = +23.87%
+
+HYPOTHETICAL? YES - not your actual money, just a measurement tool
+
+Includes FX? YES - PLN strengthening = USD stocks lose PLN value
+
+Why can be positive when you lost money:
+Treats every day equally. 10 months up (small capital) outweighs 1 month down (large capital).`}>
+              🎯 Pick Quality
+           </Label>
+           <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
+            <div className="text-xs text-gray-500 mt-1">TTWR (Invested Only)</div>
+         </Card>
+         
+         {/* 3. TTWR Portfolio - Overall strategy including cash */}
+         <Card>
+           <Label tooltip={`📊 OVERALL STRATEGY (HYPOTHETICAL)
+
+Was my strategy good (including keeping cash)?
+
+How it works:
+(Avg % Cash × 0%) + (Avg % Stocks × Pick Quality)
+ASSUMES all purchases happened at period start
+
+Example:
+70% cash + 30% stocks at +24%
+= 30% × 24% = +7.2%
+
+HYPOTHETICAL? YES - same 100 zł concept
+
+Includes FX? YES - stocks and foreign cash both include FX
+
+Why POSITIVE when you LOST money:
+Measures strategy quality over TIME, not dollars. Like a fund manager's skill rating vs your account balance. Good strategies can lose money with bad timing.`}>
+              📊 Strategy Quality
+           </Label>
+           <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
+           <div className="text-xs text-gray-500 mt-1">TTWR (Portfolio)</div>
+         </Card>
+         
+         {/* 4. MWRR - Personal IRR */}
+         <Card>
+           <Label tooltip={`🏦 YOUR PERSONAL IRR (ACTUAL)
+
+What was my return considering WHEN I invested?
+
+How it works:
+Interest rate that produces your exact results
+PUNISHES bad timing, REWARDS good timing
+
+Example:
+Added 140k on Nov 16
+Value dropped 5% by Dec 14
+That entire 140k sat through the drop
+
+ACTUAL? YES - uses your real amounts and dates
+
+Includes FX? YES - all holdings in PLN
+
+Why it's usually worst:
+Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL.`}>
+              🏦 Personal Return
+           </Label>
+           <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
+            <div className="text-xs text-gray-500 mt-1">MWRR (IRR)</div>
+         </Card>
+       </div>
 
        {/* Detailed Breakdown */}
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Selected Period Analysis */}
-          <Card>
-             <h4 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
-                {selectedPeriod.toUpperCase()} Analysis
+          <Card className="border-l-4 border-blue-500 pl-5">
+             <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                {selectedPeriod.toUpperCase()} Analysis (Invested)
              </h4>
-             <div className="space-y-1">
-                <DataRow label="Beginning Value" value={breakdown.beginning_value} currency={currency} />
-                <DataRow label="Net External Flows" value={breakdown.cash_flows.net_external} currency={currency} />
-                <DataRow label="Income (Divs/Interest)" value={breakdown.income_expenses.dividends + breakdown.income_expenses.interest} currency={currency} />
-                <DataRow label="Fees & Taxes" value={(breakdown.income_expenses.fees + breakdown.income_expenses.taxes) * -1} currency={currency} />
-                <DataRow label="Capital Gains" value={breakdown.pnl.total_pnl_ex_flows} currency={currency} isBold />
-                <div className="pt-2 mt-2 border-t border-gray-100">
-                    <DataRow label="Ending Value" value={breakdown.ending_value} currency={currency} isBold />
-                </div>
-             </div>
+             {breakdown.invested ? (
+                 <div className="space-y-1">
+                    <DataRow label="Beginning Invested" value={breakdown.invested.beginning_value} currency={currency} className="opacity-75" />
+                    <DataRow label="Net Purchases" value={breakdown.invested.net_trades} currency={currency} />
+                    <DataRow 
+                        label="Capital Gains" 
+                        value={breakdown.invested.capital_gains} 
+                        currency={currency} 
+                        isBold 
+                        valueClassName={breakdown.invested.capital_gains >= 0 ? "text-emerald-600" : "text-red-600"}
+                    />
+                    <div className="pt-2 mt-2 border-t border-gray-100">
+                        <DataRow label="Ending Invested" value={breakdown.invested.ending_value} currency={currency} isBold valueClassName="text-lg" />
+                    </div>
+                     <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                       <h5 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider flex items-center gap-1">
+                           <DollarSign className="w-3 h-3"/> Cash Impact
+                       </h5>
+                       <DataRow label="Dividends & Interest" value={breakdown.income_expenses.dividends + breakdown.income_expenses.interest} currency={currency} valueClassName="text-emerald-600" />
+                       <DataRow label="Fees & Taxes" value={(breakdown.income_expenses.fees + breakdown.income_expenses.taxes) * -1} currency={currency} valueClassName="text-red-500" />
+                     </div>
+                 </div>
+             ) : (
+                  <div className="space-y-1">
+                    <DataRow label="Beginning Value" value={breakdown.beginning_value} currency={currency} />
+                    <DataRow label="Net External Flows" value={breakdown.cash_flows.net_external} currency={currency} />
+                    <DataRow label="Income (Divs/Interest)" value={breakdown.income_expenses.dividends + breakdown.income_expenses.interest} currency={currency} />
+                    <DataRow label="Fees & Taxes" value={(breakdown.income_expenses.fees + breakdown.income_expenses.taxes) * -1} currency={currency} />
+                    <DataRow label="Capital Gains" value={breakdown.pnl.total_pnl_ex_flows} currency={currency} isBold />
+                    <div className="pt-2 mt-2 border-t border-gray-100">
+                        <DataRow label="Ending Value" value={breakdown.ending_value} currency={currency} isBold />
+                    </div>
+                 </div>
+             )}
           </Card>
 
            {/* ITD Analysis (Always shown as reference) */}
-           <Card>
-             <h4 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="w-1 h-5 bg-indigo-500 rounded-full"></span>
-                Inception Analysis (ITD)
+           <Card className="border-l-4 border-indigo-500 pl-5">
+             <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                Inception Analysis (Invested)
              </h4>
-             <div className="space-y-1">
-                <DataRow label="Total Invested Cash" value={itd.cash_flows.net_external} currency={currency} />
-                <DataRow label="Total Dividends Received" value={itd.income_expenses.dividends} currency={currency} />
-                <DataRow label="Total Fees Paid" value={itd.income_expenses.fees} currency={currency} />
-                <DataRow label="Realized Gains" value={itd.pnl.realized_gains_approx} currency={currency} />
-                <DataRow label="Unrealized Gains" value={itd.pnl.unrealized_gains_residual} currency={currency} isBold />
-                 <div className="pt-2 mt-2 border-t border-gray-100">
-                    <DataRow label="Current Value" value={itd.ending_value} currency={currency} isBold />
-                </div>
-             </div>
+              {itd.invested ? (
+                 <div className="space-y-1">
+                    <DataRow label="Beginning Invested" value={0} currency={currency} className="opacity-75" />
+                    <DataRow label="Total Net Invested" value={itd.invested.net_trades} currency={currency} />
+                    <DataRow 
+                        label="Total Capital Gains" 
+                        value={itd.invested.capital_gains} 
+                        currency={currency} 
+                        isBold 
+                        valueClassName={itd.invested.capital_gains >= 0 ? "text-emerald-600" : "text-red-600"}
+                    />
+                    <div className="pt-2 mt-2 border-t border-gray-100">
+                        <DataRow label="Current Invested" value={itd.invested.ending_value} currency={currency} isBold valueClassName="text-lg" />
+                    </div>
+                     <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                       <h5 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider flex items-center gap-1">
+                           <DollarSign className="w-3 h-3"/> Total Income
+                       </h5>
+                       <DataRow label="Dividends & Interest" value={itd.income_expenses.dividends + itd.income_expenses.interest} currency={currency} valueClassName="text-emerald-600" />
+                       <DataRow label="Fees & Taxes" value={(itd.income_expenses.fees + itd.income_expenses.taxes) * -1} currency={currency} valueClassName="text-red-500" />
+                     </div>
+                 </div>
+              ) : (
+                 <div className="space-y-1">
+                    <DataRow label="Total Invested Cash" value={itd.cash_flows.net_external} currency={currency} />
+                    <DataRow label="Total Dividends Received" value={itd.income_expenses.dividends} currency={currency} />
+                    <DataRow label="Total Fees Paid" value={itd.income_expenses.fees} currency={currency} />
+                    <DataRow label="Realized Gains" value={itd.pnl.realized_gains_approx} currency={currency} />
+                    <DataRow label="Unrealized Gains" value={itd.pnl.unrealized_gains_residual} currency={currency} isBold />
+                     <div className="pt-2 mt-2 border-t border-gray-100">
+                        <DataRow label="Current Value" value={itd.ending_value} currency={currency} isBold />
+                    </div>
+                 </div>
+              )}
           </Card>
        </div>
     </div>
   );
-}
-
-
+};

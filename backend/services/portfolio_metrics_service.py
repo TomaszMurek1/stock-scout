@@ -1,4 +1,3 @@
-# services/portfolio_metrics_service.py
 from __future__ import annotations
 
 import calendar
@@ -7,12 +6,12 @@ import logging
 from decimal import Decimal, getcontext
 from datetime import date, datetime, timedelta
 from numbers import Real
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 from sqlalchemy import case, func, literal
 from sqlalchemy.orm import Session
 
-from utils.portfolio_utils import  serialize_breakdown
+from utils.portfolio_utils import serialize_breakdown
 from database.portfolio import Transaction, TransactionType
 from database.valuation import PortfolioValuationDaily
 
@@ -23,53 +22,44 @@ from services.metrics_rules import (
     TWR_SIGN_TRADES,
 )
 
-
-PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
-# High precision for Decimal math
-getcontext().prec = 28
-D = Decimal
-
 logger = logging.getLogger("stockscout.metrics")
 
+# High precision for calculation
+getcontext().prec = 28
+D = Decimal
+PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
 
-# ---------- tiny datetime helpers ----------
-def _dt_start_of_day(d: date) -> datetime:
-    return datetime.combine(d, datetime.min.time())
+
+def _to_d(x: Any) -> Decimal:
+    """Safe Decimal conversion helper."""
+    if x is None:
+        return D("0")
+    if isinstance(x, Decimal):
+        return x
+    return D(str(x))
 
 
 def _dt_end_of_day(d: date) -> datetime:
+    """End of day timestamp for inclusive filtering."""
     return datetime.combine(d, datetime.max.time())
 
 
 class PortfolioMetricsService:
     """
-    Clean, refactored, and aligned to your schema.
-
-    Transactions columns in use:
-      - transaction_type (enum TransactionType)
-      - quantity (Decimal)
-      - price (Decimal)
-      - currency_rate (Decimal)
-      - timestamp (datetime)
-      - portfolio_id (int)
-
-    Amount rule:
-      amount_base = (quantity * price if price != 0 else quantity) * COALESCE(currency_rate, 1)
-
-    Metrics:
-      - TTWR (portfolio): external flows = +DEPOSIT, -WITHDRAWAL
-      - TTWR (invested): trade flows = +BUY, -SELL; invested MV from buckets (or fallback)
-      - MWRR (XIRR): investor sign convention (see INVESTOR_SIGN)
+    Service for calculating portfolio performance metrics:
+    - Time-Weighted Return (TTWR)
+    - Money-Weighted Return (MWRR/XIRR)
+    - PnL Breakdowns (Cash vs Invested)
     """
 
     def __init__(self, db: Session):
         self.db = db
 
-    # =========================
-    # Period helpers
-    # =========================
-    @staticmethod
-    def _subtract_months(d: date, months: int) -> date:
+    # =========================================================================
+    # Date & Period Helpers
+    # =========================================================================
+
+    def _subtract_months(self, d: date, months: int) -> date:
         y = d.year
         m = d.month - months
         while m <= 0:
@@ -103,7 +93,6 @@ class PortfolioMetricsService:
         if p == "mtd":
             return date(end_date.year, end_date.month, 1)
         if p == "wtd":
-            # Monday of this ISO week
             return end_date - timedelta(days=end_date.weekday())
         if p == "itd":
             first_tx = (
@@ -114,15 +103,17 @@ class PortfolioMetricsService:
             )
             return first_tx[0].date() if first_tx else None
 
-        # default
+        # Default fallback
         return end_date - timedelta(days=30)
+    
+    # =========================================================================
+    # Data Fetching: Valuations & Flows
+    # =========================================================================
 
-    # =========================
-    # Valuation helpers
-    # =========================
-    def _last_valuation_on_or_before(self, portfolio_id: int, day: date) -> Optional[date]:
-        row = (
-            self.db.query(PortfolioValuationDaily.date)
+    def _get_valuation_at_date(self, portfolio_id: int, day: date) -> Optional[PortfolioValuationDaily]:
+        """Fetch the specific valuation record for a given date (or latest prior)."""
+        return (
+            self.db.query(PortfolioValuationDaily)
             .filter(
                 PortfolioValuationDaily.portfolio_id == portfolio_id,
                 PortfolioValuationDaily.date <= day,
@@ -130,27 +121,12 @@ class PortfolioMetricsService:
             .order_by(PortfolioValuationDaily.date.desc())
             .first()
         )
-        return row[0] if row else None
 
-    def _valuation_as_of(self, portfolio_id: int, valuation_date: date) -> Optional[Decimal]:
-        row = (
-            self.db.query(PortfolioValuationDaily.total_value)
-            .filter(
-                PortfolioValuationDaily.portfolio_id == portfolio_id,
-                PortfolioValuationDaily.date <= valuation_date,
-            )
-            .order_by(PortfolioValuationDaily.date.desc())
-            .first()
-        )
-        if not row:
-            return None
-        v = row[0]
-        return v if isinstance(v, Decimal) else D(str(v))
+    def _get_total_value(self, portfolio_id: int, day: date) -> Decimal:
+        val = self._get_valuation_at_date(portfolio_id, day)
+        return _to_d(val.total_value) if val else D("0")
 
-    # =========================
-    # Generic daily flow grouper
-    # =========================
-    def _group_daily_flows(
+    def _get_daily_flows(
         self,
         portfolio_id: int,
         type_to_sign: Dict[TransactionType, int],
@@ -158,8 +134,8 @@ class PortfolioMetricsService:
         end: date,
     ) -> Dict[date, Decimal]:
         """
-        Sum signed amounts per day for provided types/signs over (start_date, end_date].
-        We EXCLUDE flows on start_date to avoid double counting with beginning_value.
+        Groups signed transaction amounts by day for the period (start, end].
+        Note: Strict inequality (> start) excludes start_date itself.
         """
         t = Transaction
         amt = amount_sql(t)
@@ -178,372 +154,298 @@ class PortfolioMetricsService:
             )
             .filter(
                 t.portfolio_id == portfolio_id,
-                # STRICTLY after start_date, inclusive of end_date
                 t.timestamp > _dt_end_of_day(start),
                 t.timestamp <= _dt_end_of_day(end),
-                t.transaction_type.in_([k for k in type_to_sign.keys() if k is not None]),
+                t.transaction_type.in_([k for k in type_to_sign if k is not None]),
             )
             .group_by("d")
             .all()
         )
+        return {d: _to_d(v) for d, v in rows}
 
-        return {d: (v if isinstance(v, Decimal) else D(str(v or 0))) for d, v in rows}
-    # =========================
-    # TTWR (portfolio level)
-    # =========================
-    def _rows_from_pvd_portfolio(self, portfolio_id: int, start_date: date, end_date: date) -> List[Tuple[date, Decimal, Decimal]]:
-        # Pull values
-        rows = (
-            self.db.query(
-                PortfolioValuationDaily.date,
-                PortfolioValuationDaily.total_value,
-            )
-            .filter(
-                PortfolioValuationDaily.portfolio_id == portfolio_id,
-                PortfolioValuationDaily.date >= start_date,
-                PortfolioValuationDaily.date <= end_date,
-            )
-            .order_by(PortfolioValuationDaily.date.asc())
-            .all()
-        )
-
-        # External flows: +deposit, -withdrawal
-        flow_map = self._group_daily_flows(portfolio_id, TWR_SIGN_NET_EXTERNAL, start_date, end_date)
-
-        out: List[Tuple[date, Decimal, Decimal]] = []
-        for d, tot in rows:
-            tot_dec = tot if isinstance(tot, Decimal) else D(str(tot or 0))
-            out.append((d, tot_dec, flow_map.get(d, D("0"))))
-        return out
-
-    # =========================
-    # TTWR (invested only)
-    # =========================
-    def _invested_expression(self):
-        # Prefer instrument buckets if present
-        cols = []
-        for c in ("by_stock", "by_etf", "by_bond", "by_crypto", "by_commodity"):
-            if hasattr(PortfolioValuationDaily, c):
-                cols.append(func.coalesce(getattr(PortfolioValuationDaily, c), literal(0)))
-        if cols:
-            expr = cols[0]
-            for c in cols[1:]:
-                expr = expr + c
-            return expr.label("invested_mv")
-
-        # Fallback: total_value - cash_balance (if available)
-        if hasattr(PortfolioValuationDaily, "cash_balance"):
-            return (
-                func.coalesce(PortfolioValuationDaily.total_value, literal(0))
-                - func.coalesce(getattr(PortfolioValuationDaily, "cash_balance"), literal(0))
-            ).label("invested_mv")
-
-        # Last resort
-        return func.coalesce(PortfolioValuationDaily.total_value, literal(0)).label("invested_mv")
-
-    def _rows_from_pvd_invested(self, portfolio_id: int, start_date: date, end_date: date) -> List[Tuple[date, Decimal, Decimal]]:
-        invested_expr = self._invested_expression()
-
-        rows = (
-            self.db.query(
-                PortfolioValuationDaily.date,
-                invested_expr,
-            )
-            .filter(
-                PortfolioValuationDaily.portfolio_id == portfolio_id,
-                PortfolioValuationDaily.date >= start_date,
-                PortfolioValuationDaily.date <= end_date,
-            )
-            .order_by(PortfolioValuationDaily.date.asc())
-            .all()
-        )
-
-        # Trade flows: BUY(+), SELL(-)
-        trade_flow_map = self._group_daily_flows(portfolio_id, TWR_SIGN_TRADES, start_date, end_date)
-
-        out: List[Tuple[date, Decimal, Decimal]] = []
-        for d, inv_mv in rows:
-            inv_mv_dec = inv_mv if isinstance(inv_mv, Decimal) else D(str(inv_mv or 0))
-            out.append((d, inv_mv_dec, trade_flow_map.get(d, D("0"))))
-        return out
-
-    # =========================
-    # Chain function (TWR)
-    # =========================
-    @staticmethod
-    def _chain_twr(rows: List[Tuple[date, Decimal, Decimal]]) -> Optional[Decimal]:
-        if len(rows) < 2:
-            return None
-        product = D("1")
-        prev_mv = rows[0][1]
-        for i in range(1, len(rows)):
-            _, mv_t, flow_t = rows[i]
-            if prev_mv == 0:
-                prev_mv = mv_t
-                continue
-            r_t = (mv_t - (prev_mv + flow_t)) / prev_mv
-            product *= (D("1") + r_t)
-            prev_mv = mv_t
-        return product - D("1")
-
-    # =========================
-    # Public: TTWR
-    # =========================
-    def calculate_ttwr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
-        effective_end = self._last_valuation_on_or_before(portfolio_id, end_date) or end_date
-        rows = self._rows_from_pvd_portfolio(portfolio_id, start_date, effective_end)
-        twr = self._chain_twr(rows)
-        return twr if twr is not None else D("0")
-
-    def calculate_ttwr_invested_only(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
-        effective_end = self._last_valuation_on_or_before(portfolio_id, end_date) or end_date
-        rows = self._rows_from_pvd_invested(portfolio_id, start_date, effective_end)
-        twr = self._chain_twr(rows)
-        return twr if twr is not None else D("0")
-
-    # =========================
-    # MWRR / XIRR
-    # =========================
-    @staticmethod
-    def _xnpv(rate: float, flows: List[Tuple[date, Decimal]]) -> float:
-        t0 = flows[0][0]
-        acc = 0.0
-        base = 1.0 + rate
-        for d, cf in flows:
-            days = (d - t0).days
-            acc += float(cf) / (base ** (days / 365.0))
-        return acc
-
-    def _xirr(self, flows: List[Tuple[date, Decimal]]) -> Optional[float]:
-        f = lambda r: self._xnpv(r, flows)
-
-        # bracket
-        low, high = -0.999, 0.10
-        f_low, f_high = f(low), f(high)
-
-        tries = 0
-        while f_low * f_high > 0 and tries < 50:
-            high = high * 2.0 + 0.10
-            if high > 1e6:
-                break
-            f_high = f(high)
-            tries += 1
-
-        tries = 0
-        while f_low * f_high > 0 and tries < 50:
-            low = -0.999999 + (low + 1.0) / 2.0
-            f_low = f(low)
-            tries += 1
-
-        if f_low * f_high <= 0:
-            for _ in range(120):
-                mid = (low + high) / 2.0
-                f_mid = f(mid)
-                if abs(f_mid) < 1e-12:
-                    return mid
-                if f_low * f_mid <= 0:
-                    high, f_high = mid, f_mid
-                else:
-                    low, f_low = mid, f_mid
-            return (low + high) / 2.0
-
-        # Newton fallback
-        def newton(seed: float) -> Optional[float]:
-            r = seed
-            for _ in range(80):
-                # 1) Guard invalid rate region (1 + r <= 0 → complex powers)
-                if not isinstance(r, Real) or r <= -0.999999:
-                    return None
-
-                f_r = f(r)
-
-                # 2) If f(r) is not a normal real number, bail out
-                if not isinstance(f_r, Real):
-                    return None
-                if abs(f_r) < 1e-12:
-                    return r
-
-                h = 1e-6
-                f_r_plus = f(r + h)
-                if not isinstance(f_r_plus, Real):
-                    return None
-
-                slope = (f_r_plus - f_r) / h
-
-                # 3) Slope must be a finite real
-                if not isinstance(slope, Real):
-                    return None
-                try:
-                    if slope == 0 or math.isnan(slope) or math.isinf(slope):
-                        return None
-                except TypeError:
-                    return None
-
-                r2 = r - f_r / slope
-
-                # 4) New rate must also be finite & real
-                if not isinstance(r2, Real):
-                    return None
-                try:
-                    if math.isnan(r2) or math.isinf(r2):
-                        return None
-                except TypeError:
-                    return None
-
-                if abs(r2 - r) < 1e-12:
-                    return r2
-
-                r = r2
-
-            # Did not converge
-            return None
-
-        for seed in (0.1, 0.3, 0.5, -0.5, 1.0, 2.0):
-            out = newton(seed)
-            if out is not None and -0.9999 < out < 1e6:
-                return out
-        return None
-
-    def _external_cash_flows_for_xirr(
+    def _sum_flows(
         self,
         portfolio_id: int,
-        start_date: date,
-        end_date: date,
-    ) -> List[Tuple[date, Decimal]]:
-        """
-        Investor cash flows over (start_date, end_date].
-        Exclude flows on start_date to align with beginning_value that already reflects them.
-        """
-        t = Transaction
-        amt = amount_sql(t)
-
-        when_clauses = []
-        for typ, sign in INVESTOR_SIGN.items():
-            if typ is None:
-                continue
-            when_clauses.append((t.transaction_type == typ, (sign if sign != 0 else 0) * amt))
-
-        signed = case(*when_clauses, else_=literal(0)) if when_clauses else literal(0)
-
-        rows = (
-            self.db.query(
-                func.date(t.timestamp).label("d"),
-                func.sum(signed).label("signed_amt"),
-            )
-            .filter(
-                t.portfolio_id == portfolio_id,
-                # STRICTLY after start_date, inclusive of end_date
-                t.timestamp > _dt_end_of_day(start_date),
-                t.timestamp <= _dt_end_of_day(end_date),
-                t.transaction_type.in_([k for k in INVESTOR_SIGN.keys() if k is not None]),
-            )
-            .group_by("d")
-            .order_by("d")
-            .all()
-        )
-
-        flows: List[Tuple[date, Decimal]] = []
-        for d, signed_amt in rows:
-            v = signed_amt if isinstance(signed_amt, Decimal) else D(str(signed_amt or 0))
-            flows.append((d, v))
-        return flows
-
-    def calculate_mwrr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
-        try:
-            flows = self._external_cash_flows_for_xirr(portfolio_id, start_date, end_date)
-            start_mv = self._valuation_as_of(portfolio_id, start_date)
-            end_mv = self._valuation_as_of(portfolio_id, end_date)
-
-            logger.info(
-                "MWRR window=%s..%s pid=%s start_mv=%s end_mv=%s flows=%s",
-                start_date, end_date, portfolio_id,
-                start_mv, end_mv,
-                [(d.isoformat(), float(v)) for d, v in flows],
-            )
-
-            # Treat beginning value as an initial investment (negative flow)
-            if start_mv and start_mv > 0:
-                start_mv_dec = start_mv if isinstance(start_mv, Decimal) else D(str(start_mv))
-                # Insert at the beginning
-                flows.insert(0, (start_date, -start_mv_dec))
-
-            if end_mv is None or (not flows and start_mv is None):
-                # No data start or end
-                return D("0")
-
-            # Add ending value as positive flow (cash out)
-            end_val_dec = end_mv if isinstance(end_mv, Decimal) else D(str(end_mv or 0))
-            flows.append((end_date, end_val_dec))
-
-            neg = any(cf < 0 for _, cf in flows)
-            pos = any(cf > 0 for _, cf in flows)
-            if not (neg and pos):
-                return D("0")
-
-            irr = self._xirr(flows)
-            if irr is None or math.isnan(irr) or math.isinf(irr):
-                # Optional: downgrade to warning instead of silent zero
-                logger.warning("MWRR did not converge for flows=%s", flows)
-                return D("0")
-            return D(str(irr))
-        except Exception:
-            logger.exception("MWRR failed")
-            return D("0")
-
-    # =========================
-    # Breakdown / Reconciliation
-    # =========================
-    def _sum_signed(
-        self,
-        portfolio_id: int,
-        start_date: date,
-        end_date: date,
+        start: date,
+        end: date,
         types: List[TransactionType],
-        sign_factor: int,
+        sign_factor: int = 1,
     ) -> Decimal:
-        """
-        Sum of signed amounts over (start_date, end_date] for given types.
-        Excludes flows on start_date to prevent double counting with beginning_value.
-        """
+        """Sums signed amounts for specific transaction types over (start, end]."""
         t = Transaction
         amt = amount_sql(t)
+        
         val = (
             self.db.query(func.coalesce(func.sum(sign_factor * amt), literal(0)))
             .filter(
                 t.portfolio_id == portfolio_id,
-                # STRICTLY after start_date, inclusive of end_date
-                t.timestamp > _dt_end_of_day(start_date),
-                t.timestamp <= _dt_end_of_day(end_date),
+                t.timestamp > _dt_end_of_day(start),
+                t.timestamp <= _dt_end_of_day(end),
                 t.transaction_type.in_(types),
             )
             .scalar()
         )
-        return val if isinstance(val, Decimal) else D(str(val or 0))
+        return _to_d(val)
+
+    # =========================================================================
+    # Calculation Engine: TWR & MWRR
+    # =========================================================================
+
+    def _chain_twr(self, rows: List[Tuple[date, Decimal, Decimal]]) -> Decimal:
+        """
+        Calculates TWR by chaining daily returns.
+        rows element: (date, end_value, flow_during_day)
+        """
+        if len(rows) < 2:
+            return D("0")
+            
+        product = D("1")
+        prev_mv = rows[0][1] # Start Value
+        
+        for i in range(1, len(rows)):
+            _, curr_mv, flow = rows[i]
+            if prev_mv == 0:
+                prev_mv = curr_mv
+                continue
+            
+            # Dietz / TWR formula for single sub-period
+            # We use "Start of Day" flow assumption to handle large inflows responsibly.
+            # Denom = Start + Flow.
+            denom = prev_mv + flow
+            
+            if denom == 0:
+                 # If base is zero, return is undefined (or 0)
+                 r_t = D("0")
+            else:
+                 r_t = (curr_mv - denom) / denom
+                 
+            product *= (D("1") + r_t)
+            prev_mv = curr_mv
+            
+        return product - D("1")
+
+    def _xirr_solver(self, flows: List[Tuple[date, Decimal]]) -> Decimal:
+        """Solves XIRR using Secant/Newton method."""
+        if not flows:
+            return D("0")
+
+        # Convert to float for solver speed
+        fflows = [(d, float(v)) for d, v in flows]
+        t0 = fflows[0][0]
+
+        def xnpv(rate, date_flows):
+            acc = 0.0
+            base = 1.0 + rate
+            for d, cf in date_flows:
+                days = (d - t0).days
+                acc += cf / (base ** (days / 365.0))
+            return acc
+
+        def solve(guess):
+            r = guess
+            for _ in range(50):
+                v = xnpv(r, fflows)
+                if abs(v) < 1e-5:
+                    return r
+                
+                # Numeric derivative (secant)
+                d = 1e-5
+                v_d = xnpv(r + d, fflows)
+                derivative = (v_d - v) / d
+                
+                if abs(derivative) < 1e-10:
+                    return None
+                    
+                new_r = r - v / derivative
+                if abs(new_r - r) < 1e-5:
+                    return new_r
+                r = new_r
+            return None
+
+        # Try multiple guesses
+        for guess in [0.1, -0.1, 0.5, -0.5, 0.0]:
+            try:
+                res = solve(guess)
+                if res and -0.999 < res < 100: # Rational bounds
+                    return D(str(res))
+            except Exception:
+                continue
+
+        return D("0")
+
+    # =========================================================================
+    # Public Metrics Methods
+    # =========================================================================
+
+    def calculate_ttwr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
+        """Calculates Time-Weighted Return for total portfolio.
+        
+        Uses weighted average approach to avoid intraday valuation issues:
+        Portfolio TTWR = (Avg Cash %) × 0% + (Avg Invested %) × Invested TTWR
+        
+        This correctly reflects that cash earns 0% and stocks earn whatever
+        the Invested TTWR shows, weighted by actual allocation.
+        """
+        # 1. Get Invested TTWR (already correctly calculated)
+        invested_ttwr = self.calculate_ttwr_invested_only(portfolio_id, start_date, end_date)
+        
+        # 2. Calculate average cash allocation percentage
+        eff_start_date = self._get_valuation_at_date(portfolio_id, start_date)
+        eff_start = eff_start_date.date if eff_start_date else start_date
+        
+        pvd_rows = (
+            self.db.query(PortfolioValuationDaily)
+            .filter(
+                PortfolioValuationDaily.portfolio_id == portfolio_id,
+                PortfolioValuationDaily.date >= eff_start,
+                PortfolioValuationDaily.date <= end_date,
+            )
+            .all()
+        )
+        
+        if not pvd_rows:
+            return D("0")
+        
+        # Calculate average allocation
+        total_cash_pct = D("0")
+        count = 0
+        
+        for pvd in pvd_rows:
+            total_val = _to_d(pvd.total_value)
+            cash_val = _to_d(pvd.by_cash)
+            
+            if total_val > 0:
+                cash_pct = cash_val / total_val
+                total_cash_pct += cash_pct
+                count += 1
+        
+        if count == 0:
+            return D("0")
+        
+        avg_cash_pct = total_cash_pct / count
+        avg_invested_pct = D("1") - avg_cash_pct
+        
+        # 3. Weighted average
+        # Portfolio TTWR = Cash% × 0% + Invested% × Invested_TTWR
+        portfolio_ttwr = avg_invested_pct * invested_ttwr
+        
+        return portfolio_ttwr
+
+    def calculate_ttwr_invested_only(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
+        """Calculates TWR for Invested Capital (removing Cash Drag)."""
+        eff_start_date = self._get_valuation_at_date(portfolio_id, start_date)
+        eff_start = eff_start_date.date if eff_start_date else start_date
+        
+        # Logic: Invested Value = Total - Cash
+        invested_col = (
+            func.coalesce(PortfolioValuationDaily.total_value, 0) - 
+            func.coalesce(PortfolioValuationDaily.by_cash, 0)
+        )
+        
+        pvd_rows = (
+            self.db.query(PortfolioValuationDaily.date, invested_col)
+            .filter(
+                PortfolioValuationDaily.portfolio_id == portfolio_id,
+                PortfolioValuationDaily.date >= eff_start,
+                PortfolioValuationDaily.date <= end_date,
+            )
+            .order_by(PortfolioValuationDaily.date.asc())
+            .all()
+        )
+        
+        # Flows for Invested TWR are Trades (Buy/Sell)
+        flow_map = self._get_daily_flows(portfolio_id, TWR_SIGN_TRADES, eff_start, end_date)
+        
+        rows = []
+        for d, val in pvd_rows:
+            rows.append((d, _to_d(val), flow_map.get(d, D("0"))))
+            
+        return self._chain_twr(rows)
+
+    def calculate_mwrr(self, portfolio_id: int, start_date: date, end_date: date) -> Decimal:
+        """Calculates Money-Weighted Return (XIRR)."""
+        # 1. Initial Value (Negative Cash Flow)
+        start_val = self._get_total_value(portfolio_id, start_date)
+        
+        # 2. External Flows during period
+        raw_flows = self._get_daily_flows(portfolio_id, INVESTOR_SIGN, start_date, end_date)
+        
+        # 3. End Value (Positive Cash Flow)
+        end_val = self._get_total_value(portfolio_id, end_date)
+        
+        xirr_flows = []
+        if start_val > 0:
+            xirr_flows.append((start_date, -start_val))
+        
+        for d, amt in raw_flows.items():
+            xirr_flows.append((d, amt))
+            
+        if end_val > 0:
+            xirr_flows.append((end_date, end_val))
+            
+        return self._xirr_solver(xirr_flows)
 
     def calculate_returns_breakdown(self, portfolio_id: int, start_date: date, end_date: date) -> Dict:
-        start_val = self._valuation_as_of(portfolio_id, start_date)
-        end_val = self._valuation_as_of(portfolio_id, end_date)
-        if start_val is None or end_val is None:
+        """Generates detailed PnL decomposition (Cash, Invested, Flows)."""
+        start_pvd = self._get_valuation_at_date(portfolio_id, start_date)
+        end_pvd = self._get_valuation_at_date(portfolio_id, end_date)
+        
+        if not start_pvd or not end_pvd:
             return {}
 
-        deposits = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.DEPOSIT], +1)
-        withdrawals = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.WITHDRAWAL], +1)
-        net_external = deposits - withdrawals  # +deposit -withdrawal (TWR convention)
+        # Safe Decimals
+        start_val = _to_d(start_pvd.total_value)
+        end_val = _to_d(end_pvd.total_value)
+        start_cash = _to_d(start_pvd.by_cash)
+        end_cash = _to_d(end_pvd.by_cash)
+        
+        # Derive
+        start_invested = start_val - start_cash
+        end_invested = end_val - end_cash
 
-        dividends = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.DIVIDEND], +1)
-        interest = self._sum_signed(portfolio_id, start_date, end_date, [TransactionType.INTEREST], +1)
-        fees = self._sum_signed(
-            portfolio_id, start_date, end_date, [getattr(TransactionType, "FEE", TransactionType.DEPOSIT)], +1
-        )
-        taxes = self._sum_signed(
-            portfolio_id, start_date, end_date, [getattr(TransactionType, "TAX", TransactionType.DEPOSIT)], +1
-        )
+        # Sum components
+        deposits = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.DEPOSIT])
+        withdrawals = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.WITHDRAWAL])
+        net_external = deposits - withdrawals
 
+        dividends = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.DIVIDEND])
+        interest = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.INTEREST])
+        fees = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.FEE])
+        taxes = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.TAX])
+
+        # Core PnL math
         total_pnl = (end_val - start_val) - net_external
 
-        realized_approx = D("0")  # lot engine not included here
-        currency_effects = D("0")
-        unrealized_residual = total_pnl - (realized_approx + dividends + interest - fees - taxes + currency_effects)
+        # Invested Logic
+        buys = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.BUY])
+        sells = self._sum_flows(portfolio_id, start_date, end_date, [TransactionType.SELL])
+        net_trades = buys - sells
+        
+        # Invested PnL = Change in Invested Capital - Net Injection of Capital (Buys - Sells)
+        invested_pnl = (end_invested - start_invested) - net_trades
+        
+        # Simple Return % = Capital Gains / (Beginning Invested + Net Trades)
+        # This answers: "What % did my capital grow, accounting for new money added?"
+        simple_return_base = start_invested + net_trades
+        simple_return_pct = (invested_pnl / simple_return_base) if simple_return_base != 0 else D("0")
+        
+        # Detect timing quality scenarios (for UI warnings)
+        timing_quality = "neutral"
+        warning_type = None
+        
+        simple_ret_float = float(simple_return_pct)
+        
+        # Scenario 1: Good picks, bad timing (positive skill, negative result)
+        # User picked winners but added money at wrong time
+        if simple_ret_float < -0.01:  # Lost more than 1%
+            timing_quality = "bad"
+            warning_type = "timing_paradox"
+            
+        # Scenario 2: Bad picks, good timing (negative skill, positive result)  
+        # User picked losers but added money at right time
+        elif simple_ret_float > 0.02:  # Made more than 2%
+            timing_quality = "excellent"  
+            warning_type = "timing_win"
 
         return {
             "beginning_value": start_val,
@@ -561,72 +463,55 @@ class PortfolioMetricsService:
             },
             "pnl": {
                 "total_pnl_ex_flows": total_pnl,
-                "realized_gains_approx": realized_approx,
-                "unrealized_gains_residual": unrealized_residual,
-                "currency_effects": currency_effects,
-                "note_realized": "Realized gains require lot-level cost basis; set here to 0 (approx).",
+                "invested_pnl": invested_pnl, # Renamed for clarity vs "capital_gains"
+                "realized_gains_approx": D("0"), # Placeholder
+                "unrealized_gains_residual": total_pnl - invested_pnl, # Rough internal check
+                "currency_effects": D("0")
             },
+            "invested": {
+                "beginning_value": start_invested,
+                "ending_value": end_invested,
+                "net_trades": net_trades,
+                "capital_gains": invested_pnl,
+                "simple_return_pct": simple_return_pct,  # NEW: Simple % return
+            },
+            "metrics_context": {
+                "timing_quality": timing_quality,
+                "warning_type": warning_type,
+                "simple_return_pct": float(simple_return_pct),
+            }
         }
 
-    # =========================
-    # Aggregated for one period
-    # =========================
-    def calculate_period_returns(self, portfolio_id: int, end_date: date, period: str) -> Dict:
-        start_date = self.get_period_start_date(portfolio_id, end_date, period)
-        if not start_date:
-            return {}
-
-        ttwr = self.calculate_ttwr(portfolio_id, start_date, end_date)
-        ttwr_invested = self.calculate_ttwr_invested_only(portfolio_id, start_date, end_date)
-        mwrr = self.calculate_mwrr(portfolio_id, start_date, end_date)
-        breakdown = self.calculate_returns_breakdown(portfolio_id, start_date, end_date)
-
-        return {
-            "start_date": start_date,
-            "end_date": end_date,
-            "ttwr": ttwr,
-            "ttwr_invested": ttwr_invested,
-            "mwrr": mwrr,
-            "breakdown": breakdown,
-        }
-    
     def build_performance_summary(
         self,
         portfolio_id: int,
         end_date: date,
         include_all_breakdowns: bool = False
-    ):
-        """
-        Build performance summary for all periods.
-
-        If include_all_breakdowns = True → return breakdowns for all periods.
-        If False → return ONLY breakdowns for ["ytd", "itd"].
-        """
-
+    ) -> Dict:
+        """Returns the full dashboard performance card data."""
         ttwr_map = {}
         inv_map = {}
         mwrr_map = {}
         start_dates = {}
         end_dates = {}
         breakdowns = {}
-
-        ALWAYS_INCLUDED = {"ytd", "itd"}
+        
+        ALWAYS_BREAKDOWN = {"ytd", "itd"}
 
         for p in PERIODS:
             start = self.get_period_start_date(portfolio_id, end_date, p)
             if not start:
                 continue
-
+                
             ttwr = self.calculate_ttwr(portfolio_id, start, end_date)
             ttwr_invested = self.calculate_ttwr_invested_only(portfolio_id, start, end_date)
             mwrr = self.calculate_mwrr(portfolio_id, start, end_date)
-
-            ttwr_map[p] = float(ttwr or 0)
-            inv_map[p] = float(ttwr_invested or 0)
-            mwrr_map[p] = float(mwrr or 0)
-
-            # new logic here:
-            if include_all_breakdowns or p in ALWAYS_INCLUDED:
+            
+            ttwr_map[p] = float(ttwr)
+            inv_map[p] = float(ttwr_invested)
+            mwrr_map[p] = float(mwrr)
+            
+            if include_all_breakdowns or p in ALWAYS_BREAKDOWN:
                 bd = self.calculate_returns_breakdown(portfolio_id, start, end_date)
                 breakdowns[p] = serialize_breakdown(bd)
                 start_dates[p] = start.isoformat()
@@ -635,15 +520,13 @@ class PortfolioMetricsService:
         result = {
             "portfolio_id": portfolio_id,
             "as_of_date": end_date.isoformat(),
-            "unit": "fraction",
             "performance": {
                 "ttwr": ttwr_map,
                 "ttwr_invested": inv_map,
                 "mwrr": mwrr_map,
             }
         }
-
-        # Include meta & breakdowns only if something was actually added
+        
         if breakdowns:
             result["period_meta"] = {
                 "start_date": start_dates,
@@ -652,4 +535,3 @@ class PortfolioMetricsService:
             result["breakdowns"] = breakdowns
 
         return result
-
