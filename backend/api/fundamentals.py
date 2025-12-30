@@ -28,33 +28,38 @@ logger = logging.getLogger(__name__)
 @router.post("/ev-to-revenue")
 def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)):
     """
-    Search for companies in the specified markets whose Enterprise Value to
+    Search for companies in the specified baskets whose Enterprise Value to
     Revenue ratio falls within a certain range.
     """
-    if not request.markets:
-        raise HTTPException(status_code=400, detail="No markets specified.")
+    if not request.basket_ids:
+        raise HTTPException(status_code=400, detail="No baskets specified.")
 
-    # 1) Find relevant markets
-    markets = db.query(Market).filter(Market.name.in_(request.markets)).all()
-    market_ids = [m.market_id for m in markets]
-    if not market_ids:
-        raise HTTPException(status_code=404, detail="No matching markets found in DB.")
+    # 1) Resolve baskets to companies
+    try:
+        market_ids, companies = resolve_baskets_to_companies(db, request.basket_ids)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    # 2) Gather companies in these markets (ONE-TO-MANY)
-    companies = db.query(Company).filter(Company.market_id.in_(market_ids)).all()
     if not companies:
-        raise HTTPException(status_code=404, detail="No companies found.")
+        raise HTTPException(status_code=404, detail="No companies found in selected baskets.")
 
-    logger.info(f"Scanning {len(companies)} companies in markets: {request.markets}")
+    logger.info(f"Scanning {len(companies)} companies from baskets: {request.basket_ids}")
 
+    # 2) Group companies by market for batch operations
+    from collections import defaultdict
+    companies_by_market: dict[int, list] = defaultdict(list)
+    for comp in companies:
+        if comp.market_id:
+            companies_by_market[comp.market_id].append(comp)
+
+    # 3) Batch fetch price history for each market
+    markets = db.query(Market).filter(Market.market_id.in_(market_ids)).all()
     for market in markets:
-        companies = (
-            db.query(Company).filter(Company.market_id == market.market_id).all()
-        )
-        if not companies:
+        market_companies = companies_by_market.get(market.market_id, [])
+        if not market_companies:
             continue
 
-        tickers = [company.ticker for company in companies]
+        tickers = [company.ticker for company in market_companies]
 
         # Batch fetch, which now returns info about delisted tickers
         fetch_and_save_stock_price_history_data_batch(
@@ -67,8 +72,7 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
         )
         db.commit()
 
-    # 3) Fetch/update financial data if necessary...
-    # (One-to-many: use .market)
+    # 4) Fetch/update financial data if necessary
     for c in companies:
         if c.market and c.market.market_id in market_ids:
             update_financials_for_tickers(
@@ -77,7 +81,7 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
                 market_name=c.market.name,
             )
 
-    # 4) Query `CompanyFinancials` table
+    # 5) Query `CompanyFinancials` table
     q = (
         db.query(CompanyFinancials)
         .join(Company)

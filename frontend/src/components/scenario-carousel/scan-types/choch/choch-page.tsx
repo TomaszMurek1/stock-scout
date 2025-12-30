@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
@@ -13,16 +13,9 @@ import { ChochOutput, IChochData } from "./choch-output";
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 
-interface BasketOption {
-  id: number;
-  name: string;
-  type: string;
-}
-
 export default function ChochScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<IChochData[] | null>(null);
-  const [basketOptions, setBasketOptions] = useState<BasketOption[]>([]);
 
   const form = useForm<ChochFormValues>({
     resolver: zodResolver(chochFormSchema),
@@ -34,19 +27,6 @@ export default function ChochScanPage() {
     },
   });
 
-  useEffect(() => {
-    const fetchBaskets = async () => {
-      try {
-        const response = await apiClient.get("/baskets");
-        setBasketOptions(response.data || []);
-      } catch (error) {
-        console.error("Failed to load baskets", error);
-        toast.error("Unable to load baskets. Please try again later.");
-      }
-    };
-    fetchBaskets();
-  }, []);
-
   const formFields: IFormGeneratorField<ChochFormValues>[] = useMemo(() => {
     return [
       ...baseChochFields,
@@ -54,14 +34,10 @@ export default function ChochScanPage() {
         name: "basketIds",
         label: "Select baskets",
         description: "Choose one or more baskets to define the scan universe.",
-        type: "checkbox",
-        options: basketOptions.map((basket) => ({
-          label: `${basket.name} (${basket.type})`,
-          value: String(basket.id),
-        })),
+        type: "basket-chips",
       },
     ];
-  }, [basketOptions]);
+  }, []);
 
   const onSubmit: SubmitHandler<ChochFormValues> = async (data) => {
     setIsLoading(true);
@@ -109,7 +85,7 @@ export default function ChochScanPage() {
           <p>
             Find stocks showing a probable trend reversal known as <strong>Change of Character (CHoCH)</strong>.
           </p>
-          <ul className="list-disc list-inside text-sm text-gray-700 ml-2">
+          <ul className="list-disc list-inside text-sm text-gray-300 ml-2">
             <li><strong>The Setup:</strong> The stock must be in a confirmed downtrend (Making Lower Highs and Lower Lows).</li>
             <li><strong>The Trigger:</strong> The price breaks <em>above</em> the most recent significant Lower High (LH).</li>
             <li><strong>The Signal:</strong> This "Break of Structure" suggests buyers are taking control, marking a potential shift from Bearish to Bullish.</li>
@@ -123,11 +99,6 @@ export default function ChochScanPage() {
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      {basketOptions.length === 0 && (
-        <p className="text-sm text-slate-500 px-4">
-          No baskets available. Create a market/index/favorites basket to start scanning.
-        </p>
-      )}
       {results && results.length > 0 && (
         <ChochOutput results={results} />
       )}

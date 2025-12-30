@@ -38,8 +38,8 @@ export const baseGoldenCrossFields: IFormGeneratorField<GoldenCrossFormValues>[]
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (Billions)",
-    description: "Filter companies with market cap below this value (in Billions). Leave 0 or empty to ignore.",
+    label: "Min Market Cap (Millions USD)",
+    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
     type: "number",
   },
 ];

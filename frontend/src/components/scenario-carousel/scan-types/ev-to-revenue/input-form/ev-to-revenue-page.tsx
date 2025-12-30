@@ -4,10 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import { toast } from "react-toastify";
-import { EvToRevenueFormFields, EvToRevenueValues,EvToRevenueFormSchema } from "./ev-to-revenue-page.helpers";
+import { EvToRevenueFormFields, EvToRevenueValues, EvToRevenueFormSchema } from "./ev-to-revenue-page.helpers";
 import { EvToRevenueOutput } from "../ev-to-revenue-output/ev-to-revenue-output";
 import { EvToRevenueResultsProps } from "../ev-to-revenue-output/ev-to-revenue-output.types";
-
+import { apiClient } from "@/services/apiClient";
+import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 
 
 export default function EvToRevenueScanForm() {
@@ -16,44 +17,34 @@ export default function EvToRevenueScanForm() {
 
   const form = useForm<EvToRevenueValues>({
     resolver: zodResolver(EvToRevenueFormSchema),
-   
+    defaultValues: {
+      basketIds: [],
+      min_ev_to_revenue: 0,
+      max_ev_to_revenue: 3,
+    },
   });
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  
   const onSubmit: SubmitHandler<EvToRevenueValues> = async (data) => {
     setIsLoading(true);
     console.log(data);
     try {
-      const response = await fetch(
-        `${API_URL}/fundamentals/ev-to-revenue`,
+      const response = await apiClient.post(
+        "/fundamentals/ev-to-revenue",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            max_ev_to_revenue: data.max_ev_to_revenue,
-            min_ev_to_revenue: data.min_ev_to_revenue,
-            markets: data.markets,
-          }),
+          max_ev_to_revenue: data.max_ev_to_revenue,
+          min_ev_to_revenue: data.min_ev_to_revenue,
+          basket_ids: data.basketIds.map((id) => Number(id)),
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.detail || "An error occurred during the scan"
-        );
-      }
-
-      const result: EvToRevenueResultsProps = await response.json();
+      const result: EvToRevenueResultsProps = response.data;
       setResults(result);
       toast.success("EV to Revenue scan completed successfully");
-    } catch (error) {
-      console.error("Fetch error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Network error. Please try again."
-      );
+    } catch (error: any) {
+      console.error("API error:", error);
+      const errorMessage = error.response?.data?.detail
+        || error.message
+        || "Network error. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -63,17 +54,31 @@ export default function EvToRevenueScanForm() {
     <FormCardGenerator
       title="EV/Revenue Scan"
       subtitle={
-        <div className="space-y-2">
-          <p>
-            Find potentially <strong>undervalued growth stocks</strong> using the Enterprise Value to Revenue (EV/Revenue) ratio.
-          </p>
-          <ul className="list-disc list-inside text-sm text-gray-700 ml-2">
-            <li><strong>What it measures:</strong> How much the market values each dollar of revenue the company generates.</li>
-            <li><strong>Lower ratios (1-3):</strong> May indicate undervalued companies with strong revenue growth potential.</li>
-            <li><strong>Higher ratios (5+):</strong> Suggest the market expects significant future growth or the stock may be overvalued.</li>
-            <li><strong>Best for:</strong> Evaluating growth companies, especially in tech and biotech sectors where earnings may be negative.</li>
-          </ul>
-        </div>
+        <FormSubtitle
+          description={
+            <>
+              Find potentially <strong>undervalued growth stocks</strong> using the Enterprise Value to Revenue (EV/Revenue) ratio.
+            </>
+          }
+          bulletPoints={[
+            {
+              label: "What it measures",
+              description: "How much the market values each dollar of revenue the company generates.",
+            },
+            {
+              label: "Lower ratios (1-3)",
+              description: "May indicate undervalued companies with strong revenue growth potential.",
+            },
+            {
+              label: "Higher ratios (5+)",
+              description: "Suggest the market expects significant future growth or the stock may be overvalued.",
+            },
+            {
+              label: "Best for",
+              description: "Evaluating growth companies, especially in tech and biotech sectors where earnings may be negative.",
+            },
+          ]}
+        />
       }
     >
       <FormFieldsGenerator<EvToRevenueValues>

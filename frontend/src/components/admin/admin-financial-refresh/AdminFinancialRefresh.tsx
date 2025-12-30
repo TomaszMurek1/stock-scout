@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { Autocomplete, Button as MuiButton, CircularProgress, TextField } from "@mui/material";
+import { useState } from "react";
+import { Button as MuiButton, CircularProgress, TextField } from "@mui/material";
 import { toast } from "react-toastify";
 import { apiClient } from "@/services/apiClient";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
+import BasketChipSelector from "@/components/shared/forms/BasketChipSelector";
 
 interface MarketResult {
   market: string;
@@ -11,23 +12,11 @@ interface MarketResult {
 
 export default function AdminFinancialRefresh() {
   const [marketName, setMarketName] = useState("all");
-  const [basketOptions, setBasketOptions] = useState<{ id: number; name: string; type: string }[]>([]);
-  const [selectedBaskets, setSelectedBaskets] = useState<number[]>([]);
+  const [selectedBaskets, setSelectedBaskets] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MarketResult[] | null>(null);
 
-  useEffect(() => {
-    const loadBaskets = async () => {
-      try {
-        const { data } = await apiClient.get("/baskets");
-        setBasketOptions(data || []);
-      } catch (error) {
-        console.error("Failed to load baskets", error);
-        toast.error("Unable to load baskets.");
-      }
-    };
-    loadBaskets();
-  }, []);
+
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -38,7 +27,7 @@ export default function AdminFinancialRefresh() {
       if (selectedBaskets.length > 0) {
         const { data } = await apiClient.post<{ status: string; results: MarketResult[] }>(
           "/admin/run-financials-baskets",
-          { basket_ids: selectedBaskets },
+          { basket_ids: selectedBaskets.map((id) => Number(id)) },
         );
         setResults(data.results || []);
         toast.success("Financial refresh (baskets) triggered");
@@ -67,23 +56,23 @@ export default function AdminFinancialRefresh() {
         subtitle="Trigger yfinance financial and quarterly snapshots for all markets. Uses stored data to avoid duplicates."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-1 gap-4">
             <TextField
               label="Market name (optional)"
               placeholder="all"
               value={marketName}
               onChange={(e) => setMarketName(e.target.value)}
               size="small"
-              helperText="Sent as query param; backend currently refreshes all markets regardless."
+              helperText="Sent as query param; backend currently refreshes all markets regardless. Leave empty and select baskets below for targeted refresh."
             />
-            <Autocomplete
-              multiple
-              options={basketOptions}
-              getOptionLabel={(opt) => `${opt.name} (${opt.type})`}
-              value={basketOptions.filter((b) => selectedBaskets.includes(b.id))}
-              onChange={(_, vals) => setSelectedBaskets(vals.map((v) => v.id))}
-              renderInput={(params) => <TextField {...params} label="Baskets (optional)" size="small" placeholder="Select baskets" />}
-            />
+            <div className="mt-4">
+              <BasketChipSelector
+                value={selectedBaskets}
+                onChange={setSelectedBaskets}
+                label="Select Baskets (optional)"
+                description="Choose baskets to refresh financial data for specific companies."
+              />
+            </div>
           </div>
           <MuiButton
             type="submit"

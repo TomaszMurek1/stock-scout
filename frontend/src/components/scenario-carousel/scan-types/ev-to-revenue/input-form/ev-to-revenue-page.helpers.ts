@@ -2,7 +2,7 @@ import { IFormGeneratorField } from "@/components/shared/forms/form-field-genera
 import { z } from "zod";
 
 export const EvToRevenueFormSchema = z.object({
-  markets: z.array(z.string()).nonempty("Select at least one market"),
+  basketIds: z.array(z.string()).nonempty("Select at least one basket"),
   min_ev_to_revenue: z.coerce.number().int().positive().min(0),
   max_ev_to_revenue: z.coerce.number().int().positive(),
 });
@@ -10,18 +10,11 @@ export type EvToRevenueValues = z.infer<typeof EvToRevenueFormSchema>;
 
 export const EvToRevenueFormFields: IFormGeneratorField<EvToRevenueValues>[] =
   [
-
     {
-      name: "markets",
-      label: "Select Markets",
-      description: "Choose one or more stock exchanges to scan for undervalued companies.",
-      type: "checkbox",
-      options: [
-        { label: "Nasdaq", value: "XNAS" },
-        { label: "NYSE", value: "XNYS" },
-        { label: "GPW (Warsaw)", value: "XWAR" },
-        { label: "London Stock Exchange", value: "XLON" },
-      ],
+      name: "basketIds",
+      label: "Select Baskets",
+      description: "Choose one or more baskets to scan for undervalued companies.",
+      type: "basket-chips",
     },
     {
       name: "min_ev_to_revenue",

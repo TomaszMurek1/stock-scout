@@ -82,28 +82,66 @@ def _resolve_baskets_or_404(db: Session, basket_ids: list[int]):
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-def filter_by_market_cap(db: Session, companies: list[Company], min_cap_billions: float) -> list[Company]:
-    """Filter companies by market cap (in billions)."""
+def filter_by_market_cap(db: Session, companies: list[Company], min_cap_millions: float) -> list[Company]:
+    """Filter companies by market cap (in millions USD).
+    
+    Converts all market caps to USD using latest FX rates for cross-currency comparison.
+    """
     if not companies:
         return []
     
-    # min_cap is in billions, but DB stores likely in raw units (or millions? let's assume raw based on typical yahoo data)
-    # Yahoo usually returns raw float. So 1B = 1,000,000,000.
-    min_cap_raw = min_cap_billions * 1_000_000_000
+    from services.fx.fx_rate_helper import get_fx_rates_batch
     
+    min_cap_usd_raw = min_cap_millions * 1_000_000
     comp_ids = [c.company_id for c in companies]
     
-    # Query matching market data
-    valid_ids = (
-        db.query(CompanyMarketData.company_id)
+    # Get market data with market relationship
+    market_data_records = (
+        db.query(CompanyMarketData, Company, Market)
+        .join(Company, CompanyMarketData.company_id == Company.company_id)
+        .join(Market, Company.market_id == Market.market_id)
         .filter(CompanyMarketData.company_id.in_(comp_ids))
-        .filter(CompanyMarketData.market_cap >= min_cap_raw)
+        .filter(CompanyMarketData.market_cap.isnot(None))
         .all()
     )
-    valid_id_set = {r[0] for r in valid_ids}
+    
+    if not market_data_records:
+        logger.info(f"Market Cap Filter (USD): No market data found for {len(companies)} companies")
+        return []
+    
+    # Collect unique currencies and fetch FX rates in batch
+    currencies = {market.currency for _, _, market in market_data_records if market.currency}
+    fx_rates = get_fx_rates_batch(db, currencies, "USD")
+    
+    valid_id_set = set()
+    skipped_count = 0
+    
+    for market_data, company, market in market_data_records:
+        local_market_cap = market_data.market_cap
+        currency = market.currency or "USD"
+        
+        # Convert to USD
+        if currency == "USD":
+            market_cap_usd = local_market_cap
+        else:
+            fx_rate = fx_rates.get(currency)
+            if fx_rate is None:
+                logger.warning(
+                    f"No FX rate for {currency}/USD, skipping {company.ticker} (market cap filter)"
+                )
+                skipped_count += 1
+                continue
+            market_cap_usd = local_market_cap * fx_rate
+        
+        # Filter
+        if market_cap_usd >= min_cap_usd_raw:
+            valid_id_set.add(company.company_id)
     
     filtered = [c for c in companies if c.company_id in valid_id_set]
-    logger.info(f"Market Cap Filter: {len(companies)} -> {len(filtered)} (min {min_cap_billions}B)")
+    logger.info(
+        f"Market Cap Filter (USD): {len(companies)} -> {len(filtered)} "
+        f"(min ${min_cap_millions}M USD, skipped {skipped_count} due to missing FX rates)"
+    )
     return filtered
 
 def load_existing_golden_cross_analysis(

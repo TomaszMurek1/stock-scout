@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IFormGeneratorField } from "./form-field-generator.types";
+import BasketChipSelector from "./BasketChipSelector";
+import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 // Generic FormFieldsGeneratorProps
 interface FormFieldsGeneratorProps<T extends FieldValues> {
@@ -44,10 +47,18 @@ const FormField = <T extends FieldValues>({
       control={control}
       render={({ field }) => (
         <div className="grid gap-2 text-left">
-          <Label htmlFor={name as string} className="text-sm font-semibold text-zinc-800">
+          <Label htmlFor={name as string} className="text-sm font-semibold text-blue-900">
             {label}
           </Label>
-          {type === "checkbox" && options ? (
+          {type === "basket-chips" ? (
+            // Render BasketChipSelector for basket selection
+            <BasketChipSelector
+              value={field.value || []}
+              onChange={field.onChange}
+              label=""
+              description={description}
+            />
+          ) : type === "checkbox" && options ? (
             // Render checkboxes when the type is 'checkbox' and options are available
             <div className="space-y-2">
               {options.map((option) => (
@@ -77,13 +88,16 @@ const FormField = <T extends FieldValues>({
             // Render Input for other input types
             <Input
               id={name as string}
-              className="bg-white"
+              className={cn(
+                "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
+                type === "number" && "max-w-[180px]"
+              )}
               {...field}
               type={type}
             />
           )}
-          {description && (
-            <p className="text-xs text-zinc-700">{description}</p>
+          {description && type !== "basket-chips" && (
+            <p className="text-xs text-slate-600">{description}</p>
           )}
         </div>
       )}
@@ -97,6 +111,9 @@ const FormFieldsGenerator = <T extends FieldValues>({
   isLoading,
   onSubmit,
 }: FormFieldsGeneratorProps<T>) => {
+  const isFormValid = form.formState.isValid;
+  const isDisabled = isLoading || !isFormValid;
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
       {formFields.map(({ name, label, description, type, options }) => (
@@ -113,10 +130,22 @@ const FormFieldsGenerator = <T extends FieldValues>({
       <div className="mt-4">
         <Button
           type="submit"
-          className="w-full bg-zinc-800 hover:bg-zinc-900 text-white"
-          disabled={isLoading}
+          className={cn(
+            "w-full transition-all font-semibold",
+            isDisabled
+              ? "bg-gray-400 cursor-not-allowed opacity-60 hover:bg-gray-400"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          )}
+          disabled={isDisabled}
         >
-          {isLoading ? "Scanning..." : "Start Scan"}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Scanning...
+            </>
+          ) : (
+            "Start Scan"
+          )}
         </Button>
       </div>
     </form>
