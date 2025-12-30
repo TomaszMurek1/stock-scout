@@ -104,7 +104,10 @@ export interface PortfolioBreakdown {
 
 export interface PortfolioPerformance {
   portfolio_id: number;
+  as_of_date?: string;
+  unit?: string;
   performance: any;
+  period_meta?: any;
   breakdowns?: any;
 }
 

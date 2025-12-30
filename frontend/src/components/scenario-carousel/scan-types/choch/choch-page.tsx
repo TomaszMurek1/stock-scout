@@ -13,6 +13,7 @@ import { ChochOutput, IChochData } from "./choch-output";
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 import BackToCarousel from "@/components/shared/BackToCarousel";
+import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 
 export default function ChochScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -84,16 +85,27 @@ export default function ChochScanPage() {
       <FormCardGenerator
       title="CHoCH Scan (Bearish to Bullish)"
       subtitle={
-        <div className="space-y-2">
-          <p>
-            Find stocks showing a probable trend reversal known as <strong>Change of Character (CHoCH)</strong>.
-          </p>
-          <ul className="list-disc list-inside text-sm text-gray-300 ml-2">
-            <li><strong>The Setup:</strong> The stock must be in a confirmed downtrend (Making Lower Highs and Lower Lows).</li>
-            <li><strong>The Trigger:</strong> The price breaks <em>above</em> the most recent significant Lower High (LH).</li>
-            <li><strong>The Signal:</strong> This "Break of Structure" suggests buyers are taking control, marking a potential shift from Bearish to Bullish.</li>
-          </ul>
-        </div>
+        <FormSubtitle
+          description={
+            <>
+              Find stocks showing a probable trend reversal known as <strong>Change of Character (CHoCH)</strong>.
+            </>
+          }
+          bulletPoints={[
+            {
+              label: "The Setup",
+              description: "The stock must be in a confirmed downtrend (Making Lower Highs and Lower Lows).",
+            },
+            {
+              label: "The Trigger",
+              description: <>The price breaks <em>above</em> the most recent significant Lower High (LH).</>,
+            },
+            {
+              label: "The Signal",
+              description: 'This "Break of Structure" suggests buyers are taking control, marking a potential shift from Bearish to Bullish.',
+            },
+          ]}
+        />
       }
     >
       <FormFieldsGenerator<ChochFormValues>

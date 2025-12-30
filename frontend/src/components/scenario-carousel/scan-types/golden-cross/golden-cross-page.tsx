@@ -14,6 +14,7 @@ import {
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 import BackToCarousel from "@/components/shared/BackToCarousel";
+import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 
 export default function GoldenCrossScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -80,7 +81,9 @@ export default function GoldenCrossScanPage() {
       <BackToCarousel />
       <FormCardGenerator
       title="Golden Cross Scan"
-      subtitle=" Set parameters to scan for stocks showing a Golden Cross pattern."
+      subtitle={
+        <FormSubtitle description="Set parameters to scan for stocks showing a Golden Cross pattern." />
+      }
     >
       <FormFieldsGenerator<GoldenCrossFormValues>
         form={form}

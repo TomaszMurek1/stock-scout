@@ -2,7 +2,7 @@ import React from "react";
 
 interface BulletPoint {
   label: string;
-  description: string;
+  description: string | React.ReactNode;
 }
 
 interface FormSubtitleProps {
@@ -17,11 +17,11 @@ interface FormSubtitleProps {
  */
 const FormSubtitle: React.FC<FormSubtitleProps> = ({ description, bulletPoints }) => {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-left">
       {typeof description === "string" ? <p>{description}</p> : description}
       
       {bulletPoints && bulletPoints.length > 0 && (
-        <ul className="list-disc list-inside text-sm ml-2">
+        <ul className="list-disc list-inside text-sm ml-2 text-left">
           {bulletPoints.map((point, index) => (
             <li key={index}>
               <strong>{point.label}:</strong> {point.description}
