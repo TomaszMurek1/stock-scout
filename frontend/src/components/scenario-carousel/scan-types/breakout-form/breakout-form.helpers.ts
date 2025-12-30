@@ -19,14 +19,14 @@ export const BreakoutFormFields: IFormGeneratorField<BreakoutFormValues>[] = [
   },
   {
     name: "thresholdPercentage",
-    label: "Max Range %",
+    label: "Maximum Range (%)",
     description: "Maximum allowed price movement (High-Low) during the period to consider it a consolidation.",
     type: "number",
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (M)",
-    description: "Minimum market capitalization in millions (e.g., 1000 for 1B). Set to 0 to ignore.",
+    label: "Min Market Cap (Millions USD)",
+    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
     type: "number",
   },
 ];

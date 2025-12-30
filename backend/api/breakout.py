@@ -12,7 +12,8 @@ from database.stock_data import StockPriceHistory
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
-from api.golden_cross import resolve_universe, filter_by_market_cap
+from api.golden_cross import resolve_universe
+from services.company_filter_service import filter_by_market_cap
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

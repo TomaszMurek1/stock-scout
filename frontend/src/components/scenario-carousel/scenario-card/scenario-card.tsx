@@ -64,7 +64,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
             <Button
               onClick={handleStartScan}
               variant="outline"
-              className="w-full bg-white text-gray-700 hover:bg-gray-50"
+              className="w-full bg-white border-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 font-semibold transition-all"
             >
               Activate Scan <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

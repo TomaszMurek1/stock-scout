@@ -16,6 +16,7 @@ from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
 from services.basket_resolver import resolve_baskets_to_companies
+from services.company_filter_service import filter_by_market_cap
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -82,29 +83,6 @@ def _resolve_baskets_or_404(db: Session, basket_ids: list[int]):
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-def filter_by_market_cap(db: Session, companies: list[Company], min_cap_billions: float) -> list[Company]:
-    """Filter companies by market cap (in billions)."""
-    if not companies:
-        return []
-    
-    # min_cap is in billions, but DB stores likely in raw units (or millions? let's assume raw based on typical yahoo data)
-    # Yahoo usually returns raw float. So 1B = 1,000,000,000.
-    min_cap_raw = min_cap_billions * 1_000_000_000
-    
-    comp_ids = [c.company_id for c in companies]
-    
-    # Query matching market data
-    valid_ids = (
-        db.query(CompanyMarketData.company_id)
-        .filter(CompanyMarketData.company_id.in_(comp_ids))
-        .filter(CompanyMarketData.market_cap >= min_cap_raw)
-        .all()
-    )
-    valid_id_set = {r[0] for r in valid_ids}
-    
-    filtered = [c for c in companies if c.company_id in valid_id_set]
-    logger.info(f"Market Cap Filter: {len(companies)} -> {len(filtered)} (min {min_cap_billions}B)")
-    return filtered
 
 def load_existing_golden_cross_analysis(
     db, market_ids, companies, short_window, long_window

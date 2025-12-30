@@ -12,7 +12,7 @@ export type ChochFormValues = z.infer<typeof chochFormSchema>;
 export const baseChochFields: IFormGeneratorField<ChochFormValues>[] = [
   {
     name: "lookbackPeriod",
-    label: "Sensitivity (Lookback Period)",
+    label: "Lookback Period (days)",
     description: "Number of periods to determine local highs/lows (e.g. 10). Higher value means finding more significant peaks/troughs.",
     type: "number",
   },
@@ -24,8 +24,8 @@ export const baseChochFields: IFormGeneratorField<ChochFormValues>[] = [
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (Billions)",
-    description: "Filter companies with market cap below this value (in Billions). Leave 0 to ignore.",
+    label: "Min Market Cap (Millions USD)",
+    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
     type: "number",
   },
 ];

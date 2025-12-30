@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "../../../shared/forms/form-fields-generator";
@@ -13,17 +13,12 @@ import {
 } from "./golden-cross-page.helpers";
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
-
-interface BasketOption {
-  id: number;
-  name: string;
-  type: string;
-}
+import BackToCarousel from "@/components/shared/BackToCarousel";
+import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 
 export default function GoldenCrossScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
-  const [basketOptions, setBasketOptions] = useState<BasketOption[]>([]);
 
   const form = useForm<GoldenCrossFormValues>({
     resolver: zodResolver(goldenCrossFormSchema),
@@ -36,19 +31,6 @@ export default function GoldenCrossScanPage() {
     },
   });
 
-  useEffect(() => {
-    const fetchBaskets = async () => {
-      try {
-        const response = await apiClient.get("/baskets");
-        setBasketOptions(response.data || []);
-      } catch (error) {
-        console.error("Failed to load baskets", error);
-        toast.error("Unable to load baskets. Please try again later.");
-      }
-    };
-    fetchBaskets();
-  }, []);
-
   const formFields: IFormGeneratorField<GoldenCrossFormValues>[] = useMemo(() => {
     return [
       ...baseGoldenCrossFields,
@@ -56,14 +38,10 @@ export default function GoldenCrossScanPage() {
         name: "basketIds",
         label: "Select baskets",
         description: "Choose one or more baskets to define the scan universe.",
-        type: "checkbox",
-        options: basketOptions.map((basket) => ({
-          label: `${basket.name} (${basket.type})`,
-          value: String(basket.id),
-        })),
+        type: "basket-chips",
       },
     ];
-  }, [basketOptions]);
+  }, []);
 
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
     setIsLoading(true);
@@ -99,9 +77,13 @@ export default function GoldenCrossScanPage() {
   };
 
   return (
-    <FormCardGenerator
+    <div className="container">
+      <BackToCarousel />
+      <FormCardGenerator
       title="Golden Cross Scan"
-      subtitle=" Set parameters to scan for stocks showing a Golden Cross pattern."
+      subtitle={
+        <FormSubtitle description="Set parameters to scan for stocks showing a Golden Cross pattern." />
+      }
     >
       <FormFieldsGenerator<GoldenCrossFormValues>
         form={form}
@@ -109,14 +91,10 @@ export default function GoldenCrossScanPage() {
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      {basketOptions.length === 0 && (
-        <p className="text-sm text-slate-500 px-4">
-          No baskets available. Create a market/index/favorites basket to start scanning.
-        </p>
-      )}
       {results && results.data && results.data.length > 0 && (
         <GoldenCrossOutput results={results.data} />
       )}
     </FormCardGenerator>
+    </div>
   );
 }

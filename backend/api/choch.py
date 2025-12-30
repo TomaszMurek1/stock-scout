@@ -10,7 +10,8 @@ from services.auth.auth import get_current_user
 from database.base import get_db
 from database.user import User
 from schemas.choch_schemas import ChochRequest
-from api.golden_cross import resolve_universe, filter_by_market_cap, _chunked
+from api.golden_cross import resolve_universe, _chunked
+from services.company_filter_service import filter_by_market_cap
 from services.yfinance_data_update.data_update_service import fetch_and_save_stock_price_history_data_batch
 from database.stock_data import StockPriceHistory
 from database.company import Company
