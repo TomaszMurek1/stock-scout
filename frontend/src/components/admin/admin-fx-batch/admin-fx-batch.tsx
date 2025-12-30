@@ -1,31 +1,16 @@
-import React, { useState } from "react";
+
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { fxBatchSchema, FxBatchValues, defaultFxBatchValues } from "./admin-fx-batch.helpers";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
-import {
-  TextField,
-  IconButton,
-  Button as MuiButton,
-  CircularProgress,
-} from "@mui/material";
+import { TextField, IconButton, Button as MuiButton, CircularProgress } from "@mui/material";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
-
-type FxBatchResponse = Record<
-  string,
-  {
-    base: string;
-    quote: string;
-    historicalData: { date: string; close: number | string | null }[];
-    note?: string;
-  }
->;
+import { useFxRates } from "@/hooks/useFxRates";
+import { useEffect } from "react";
 
 export default function AdminFxBatchForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<FxBatchResponse | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const { getFxRatesBatch, loading, error, data: results } = useFxRates();
 
   const form = useForm<FxBatchValues>({
     resolver: zodResolver(fxBatchSchema),
@@ -43,45 +28,22 @@ export default function AdminFxBatchForm() {
     name: "pairs",
   });
 
-  const onSubmit = async (values: FxBatchValues) => {
-    setIsLoading(true);
-    setResults(null);
-    const payload = {
-      start: values.start || undefined,
-      end: values.end || undefined,
-      pairs: values.pairs.map((pair) => ({
-        base: pair.base.trim().toUpperCase(),
-        quote: pair.quote.trim().toUpperCase(),
-      })),
-    };
-
-    try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const token = localStorage.getItem("authToken");
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${API_URL}/fx-rate/batch`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to fetch FX rates");
-      }
-
-      const data: FxBatchResponse = await response.json();
-      setResults(data);
-      toast.success("FX rates fetched successfully");
-    } catch (error) {
-      console.error("FX batch error:", error);
-      toast.error(error instanceof Error ? error.message : "Network error. Please try again.");
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
     }
+    if (results) {
+      toast.success("FX rates fetched successfully");
+    }
+  }, [error, results]);
+
+  const onSubmit = async (values: FxBatchValues) => {
+    const payload = values.pairs.map((pair) => ({
+      base: pair.base.trim().toUpperCase(),
+      quote: pair.quote.trim().toUpperCase(),
+    }));
+
+    await getFxRatesBatch(payload, values.start, values.end);
   };
 
   const formatClose = (value: number | string | null | undefined) => {
@@ -199,10 +161,10 @@ export default function AdminFxBatchForm() {
               type="submit"
               variant="contained"
               className="bg-slate-700 hover:bg-slate-800"
-              disabled={isLoading}
-              startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
             >
-              {isLoading ? "Fetching..." : "Fetch FX rates"}
+              {loading ? "Fetching..." : "Fetch FX rates"}
             </MuiButton>
           </div>
         </form>
