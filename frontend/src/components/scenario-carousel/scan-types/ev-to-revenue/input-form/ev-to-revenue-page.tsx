@@ -9,6 +9,7 @@ import { EvToRevenueOutput } from "../ev-to-revenue-output/ev-to-revenue-output"
 import { EvToRevenueResultsProps } from "../ev-to-revenue-output/ev-to-revenue-output.types";
 import { apiClient } from "@/services/apiClient";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
+import BackToCarousel from "@/components/shared/BackToCarousel";
 
 
 export default function EvToRevenueScanForm() {
@@ -51,7 +52,9 @@ export default function EvToRevenueScanForm() {
   };
 
   return (
-    <FormCardGenerator
+    <div className="container">
+      <BackToCarousel />
+      <FormCardGenerator
       title="EV/Revenue Scan"
       subtitle={
         <FormSubtitle
@@ -91,5 +94,6 @@ export default function EvToRevenueScanForm() {
         <EvToRevenueOutput data={results.data} />
       )}
     </FormCardGenerator>
+    </div>
   );
 }

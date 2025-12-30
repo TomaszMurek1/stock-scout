@@ -5,31 +5,85 @@ import DotsIndicator from "../shared/dots-indicator";
 import ChevronButton from "../shared/chevron-button";
 
 const ScenarioCarousel = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  // Initialize from sessionStorage
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const saved = sessionStorage.getItem('carouselIndex');
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const carouselRef = useRef<HTMLDivElement>(null);
+  const lastScrollTime = useRef<number>(0);
 
-  const scrollToIndex = (index: number) => {
+  const scrollToIndex = (index: number, smooth: boolean = true) => {
     if (carouselRef.current) {
       const cardElement = carouselRef.current.children[index] as HTMLElement;
       cardElement.scrollIntoView({
-        behavior: "smooth",
+        behavior: smooth ? "smooth" : "instant",
         inline: "center",
       });
       setActiveIndex(index);
+      // Save to sessionStorage
+      sessionStorage.setItem('carouselIndex', index.toString());
     }
   };
 
   const scroll = (direction: "left" | "right") => {
-    const newIndex = direction === "left" ? activeIndex - 1 : activeIndex + 1;
-    if (newIndex >= 0 && newIndex < scenarios.length) {
-      scrollToIndex(newIndex);
+    let newIndex;
+    let isWrapping = false;
+    
+    if (direction === "left") {
+      // Wrap to last if on first
+      if (activeIndex === 0) {
+        newIndex = scenarios.length - 1;
+        isWrapping = true;
+      } else {
+        newIndex = activeIndex - 1;
+      }
+    } else {
+      // Wrap to first if on last
+      if (activeIndex === scenarios.length - 1) {
+        newIndex = 0;
+        isWrapping = true;
+      } else {
+        newIndex = activeIndex + 1;
+      }
     }
+    
+    // Use instant scroll for wrapping to create infinite wheel effect
+    scrollToIndex(newIndex, !isWrapping);
   };
 
   useEffect(() => {
-    scrollToIndex(activeIndex);
+    // Initial scroll without animation
+    scrollToIndex(activeIndex, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Mouse wheel support with throttling
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const now = Date.now();
+      // Throttle: only allow scroll every 200ms for fluid but controlled scrolling
+      if (now - lastScrollTime.current < 200) {
+        e.preventDefault();
+        return;
+      }
+      
+      lastScrollTime.current = now;
+      e.preventDefault();
+      
+      if (e.deltaY > 0) {
+        scroll("right");
+      } else if (e.deltaY < 0) {
+        scroll("left");
+      }
+    };
+
+    const carousel = carouselRef.current;
+    if (carousel) {
+      carousel.addEventListener('wheel', handleWheel, { passive: false });
+      return () => carousel.removeEventListener('wheel', handleWheel);
+    }
+  }, [activeIndex]);
 
   return (
     <section className="relative px-4 py-8 md:px-6 lg:px-8 overflow-visible">
@@ -45,7 +99,6 @@ const ScenarioCarousel = () => {
         <ChevronButton
           direction="left"
           onClick={() => scroll("left")}
-          disabled={activeIndex === 0}
         />
 
         <div
@@ -65,7 +118,6 @@ const ScenarioCarousel = () => {
         <ChevronButton
           direction="right"
           onClick={() => scroll("right")}
-          disabled={activeIndex === scenarios.length - 1}
         />
 
 

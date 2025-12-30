@@ -13,6 +13,7 @@ import {
 } from "./golden-cross-page.helpers";
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
+import BackToCarousel from "@/components/shared/BackToCarousel";
 
 export default function GoldenCrossScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -75,7 +76,9 @@ export default function GoldenCrossScanPage() {
   };
 
   return (
-    <FormCardGenerator
+    <div className="container">
+      <BackToCarousel />
+      <FormCardGenerator
       title="Golden Cross Scan"
       subtitle=" Set parameters to scan for stocks showing a Golden Cross pattern."
     >
@@ -89,5 +92,6 @@ export default function GoldenCrossScanPage() {
         <GoldenCrossOutput results={results.data} />
       )}
     </FormCardGenerator>
+    </div>
   );
 }

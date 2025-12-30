@@ -2,10 +2,13 @@ import React from "react";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import BreakoutForm from "../breakout-form/breakout-form";
+import BackToCarousel from "@/components/shared/BackToCarousel";
 
 export default function ConsolidationPage() {
   return (
-    <FormCardGenerator
+    <div className="container">
+      <BackToCarousel />
+      <FormCardGenerator
       title="Consolidation & Breakout Scan"
       subtitle={
         <FormSubtitle
@@ -37,5 +40,6 @@ export default function ConsolidationPage() {
     >
       <BreakoutForm />
     </FormCardGenerator>
+    </div>
   );
 }

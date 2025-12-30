@@ -9,6 +9,7 @@ import { BreakEvenPointOutput } from "../break-even-point-output/break-even-poin
 import { IBreakEvenPointData } from "../break-even-point-output/break-even-point-output.types";
 import { useAppStore } from "@/store/appStore";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
+import BackToCarousel from "@/components/shared/BackToCarousel";
 
 export default function BreakEvenPointScanForm() {
   const [results, setResults] = useState<IBreakEvenPointData[]>([]);
@@ -54,7 +55,9 @@ export default function BreakEvenPointScanForm() {
   };
 
   return (
-    <FormCardGenerator
+    <div className="container">
+      <BackToCarousel />
+      <FormCardGenerator
       title="BreakEvenPoint Scan"
       subtitle=" Set parameters to scan for stocks showing a Break Even Point."
     >
@@ -66,5 +69,6 @@ export default function BreakEvenPointScanForm() {
       />
       {results.length > 0 && <BreakEvenPointOutput data={results} />}
     </FormCardGenerator>
+    </div>
   );
 }

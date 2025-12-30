@@ -12,6 +12,7 @@ import {
 import { ChochOutput, IChochData } from "./choch-output";
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
+import BackToCarousel from "@/components/shared/BackToCarousel";
 
 export default function ChochScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -78,7 +79,9 @@ export default function ChochScanPage() {
   };
 
   return (
-    <FormCardGenerator
+    <div className="container">
+      <BackToCarousel />
+      <FormCardGenerator
       title="CHoCH Scan (Bearish to Bullish)"
       subtitle={
         <div className="space-y-2">
@@ -103,5 +106,6 @@ export default function ChochScanPage() {
         <ChochOutput results={results} />
       )}
     </FormCardGenerator>
+    </div>
   );
 }
