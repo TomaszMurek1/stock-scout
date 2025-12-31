@@ -91,9 +91,10 @@ export default function GoldenCrossScanPage() {
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      {results && results.data && results.data.length > 0 && (
+      {/* Results - Memoized to prevent re-render on form changes */}
+      {useMemo(() => results && results.data && results.data.length > 0 && (
         <GoldenCrossOutput results={results.data} />
-      )}
+      ), [results])}
     </FormCardGenerator>
     </div>
   );
