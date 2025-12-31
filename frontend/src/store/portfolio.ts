@@ -2,12 +2,12 @@ import {
   ApiHolding,
   Portfolio,
   PortfolioPerformance,
-} from "@/components/portfolio-management/types";
+} from "@/features/portfolio-management/types";
 import { apiClient } from "@/services/apiClient";
 import {
   Transaction,
   WatchlistStock,
-} from "@/components/portfolio-management/types";
+} from "@/features/portfolio-management/types";
 export type Holding = { shares: number; average_cost_currency: string };
 
 export type CurrencyPoint = { date: string; close: number };

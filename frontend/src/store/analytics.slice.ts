@@ -1,6 +1,6 @@
 import { StateCreator } from "zustand";
 import { apiClient } from "@/services/apiClient";
-import { IBreakEvenPointData } from "@/components/scenario-carousel/scan-types/break-even-point/break-even-point-output/break-even-point-output.types";
+import { IBreakEvenPointData } from "@/features/scenario-carousel/scan-types/break-even-point/break-even-point-output/break-even-point-output.types";
 
 type BreakEvenCacheEntry = {
   data: IBreakEvenPointData[];

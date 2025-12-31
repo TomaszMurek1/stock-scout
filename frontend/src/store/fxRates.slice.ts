@@ -1,7 +1,4 @@
 
-import { apiClient } from "@/services/apiClient";
-
-
 export interface CurrencyRate {
     base: string;
     quote: string;
@@ -13,24 +10,16 @@ export interface CurrencyRate {
 }
 
 export interface FxRatesSlice {
-    fxRates: Record<string, CurrencyRate[]>; // "PLN-USD" -> array of rates
-    fxRatesLastUpdated: Record<string, string>; // "PLN-USD" -> last ISO date
-    getFxRatesBatch: (pairs: [string, string][]) => Promise<Record<string, CurrencyRate[]>>;
-
+    fxRates: Record<string, CurrencyRate[]>;
+    fxRatesLastUpdated: Record<string, string>;
+    setFxRates: (data: Record<string, CurrencyRate[]>) => void;
 }
+
 export const createFxRatesSlice = (set: any): FxRatesSlice => ({
     fxRates: {},
     fxRatesLastUpdated: {},
-    getFxRatesBatch: async (pairs: [string, string][]) => {
+    setFxRates: (data: Record<string, CurrencyRate[]>) => {
         const today = new Date().toISOString().slice(0, 10);
-        const { data } = await apiClient.post<Record<string, CurrencyRate[]>>(
-            '/fx-rate/batch',
-            {
-                pairs,
-                start: today,
-                end: today,
-            }
-        );
         set((state: any) => {
             const updatedFxRates = { ...state.fxRates };
             const updatedFxRatesLastUpdated = { ...state.fxRatesLastUpdated };
@@ -43,7 +32,5 @@ export const createFxRatesSlice = (set: any): FxRatesSlice => ({
                 fxRatesLastUpdated: updatedFxRatesLastUpdated,
             };
         });
-        return data;
     },
-
 });
