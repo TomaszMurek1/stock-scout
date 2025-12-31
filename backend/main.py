@@ -28,6 +28,8 @@ from api import (
     watchlist,
     company_notes,
     breakout,
+    admin_price_data,
+    wyckoff,
 )
 
 from database.base import Base, engine
@@ -64,6 +66,7 @@ app.include_router(accounts.router,                   prefix="/api/accounts",   
 app.include_router(golden_cross.router,               prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(choch.router,                      prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(breakout.router,                   prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(wyckoff.router,                    prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(fundamentals.router,               prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(compare.router,                    prefix="/api/compare",      tags=["Comparison"])
 app.include_router(company_search.router,             prefix="/api/companies",    tags=["Company Search"])
@@ -76,18 +79,18 @@ app.include_router(portfolio_transactions.router,     prefix="/api/portfolio", t
 app.include_router(portfolio_dashboard.router,     prefix="/api/portfolio", tags=["Portfolio"],)
 app.include_router(positions_read.router,             prefix="/api/positions",     tags=["Positions"])
 app.include_router(stock_details.router,              prefix="/api/stock-details", tags=["Stock Data"])
-app.include_router(stocks_price_data.router,          prefix="/api/stock", tags=["Stock Data"])
+app.include_router(stocks_price_data.router,           prefix="/api/stocks-ohlc",   tags=["Stock Data"])
 app.include_router(valuation_preview.router,          prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_materialize.router,      prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(valuation_series.router,           prefix="/api/valuation",     tags=["Valuation"])
 app.include_router(baskets_api.router,                prefix="/api",               tags=["Baskets"])
 app.include_router(transactions.router,               prefix="/api/transactions",  tags=["Transactions"])
-app.include_router(transactions_transfer.router,      prefix="/api/transactions",  tags=["Transactions"])
-app.include_router(transactions_transfer_cash.router, prefix="/api/transactions",  tags=["Transactions"])
+app.include_router(transactions_transfer.router,       prefix="/api/transfer",      tags=["Transfers"])
+app.include_router(transactions_transfer_cash.router,  prefix="/api/transfer-cash", tags=["Transfers"])
 app.include_router(watchlist.router,                  prefix="/api/watchlist",     tags=["Watchlist"])
 app.include_router(account_snapshot.router,           prefix="/api/snapshot",      tags=["Snapshots"])
-app.include_router(valuation_debug.router,            prefix="/api/snapshot",      tags=["Snapshots"])
 app.include_router(admin.router,                      prefix="/api/admin",         tags=["Admin", "Invitations"])
+app.include_router(admin_price_data.router,           prefix="/api/admin",         tags=["Admin"])
 app.include_router(auth.router,                       prefix="/api/auth",          tags=["Authentication"])
 
 @app.get("/")

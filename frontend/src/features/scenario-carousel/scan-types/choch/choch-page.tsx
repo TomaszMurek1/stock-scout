@@ -114,9 +114,10 @@ export default function ChochScanPage() {
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      {results && results.length > 0 && (
+      {/* Results - Memoized to prevent re-render on form changes */}
+      {useMemo(() => results && results.length > 0 && (
         <ChochOutput results={results} />
-      )}
+      ), [results])}
     </FormCardGenerator>
     </div>
   );

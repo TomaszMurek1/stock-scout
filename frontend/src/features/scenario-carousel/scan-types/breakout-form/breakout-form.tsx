@@ -82,7 +82,8 @@ const BreakoutForm: React.FC = () => {
         isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      {results.length > 0 && <BreakoutOutput results={results} />}
+      {/* Results - Memoized to prevent re-render on form changes */}
+      {useMemo(() => results.length > 0 && <BreakoutOutput results={results} />, [results])}
     </div>
   );
 };

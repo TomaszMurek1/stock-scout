@@ -15,11 +15,13 @@ import GoldenCrossPage from "./features/scenario-carousel/scan-types/golden-cros
 import EvToRevenuePage from "./features/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-page";
 import BreakEvenPointPage from "./features/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import ChochScanPage from "./features/scenario-carousel/scan-types/choch/choch-page";
+import WyckoffScanPage from "./features/scenario-carousel/scan-types/wyckoff/wyckoff-page";
 import AdminDashboard from "./features/admin/AdminDashboard";
 import AdminSyncMarkets from "./features/admin/admin-sync-markets/AdminSyncMarkets";
 import AdminValuationTools from "./features/admin/admin-valuation/admin-valuation";
 import AdminYFinanceProbe from "./features/admin/admin-yfinance-probe/AdminYFinanceProbe";
 import AdminFinancialRefresh from "./features/admin/admin-financial-refresh/AdminFinancialRefresh";
+import AdminPriceHistory from "./features/admin/admin-price-history/AdminPriceHistory";
 import { StockOnePager } from "./features/stock-one-pager/stock-one-pager";
 import { FiboWaveScenario } from "./features/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import { StockCompare } from "./features/comapre-stocks-page/StockCompare";
@@ -92,6 +94,10 @@ function App() {
                 path="/scenarios/consolidation"
                 element={<PrivateRoute element={<ConsolidationPage />} />}
               />
+              <Route
+                path="/scenarios/wyckoff"
+                element={<PrivateRoute element={<WyckoffScanPage />} />}
+              />
               <Route path="/admin" element={<PrivateRoute element={<AdminDashboard />} />} />
               <Route
                 path="/admin/create-tickers"
@@ -116,6 +122,10 @@ function App() {
               <Route
                 path="/admin/financial-refresh"
                 element={<PrivateRoute element={<AdminFinancialRefresh />} />}
+              />
+              <Route
+                path="/admin/price-history"
+                element={<PrivateRoute element={<AdminPriceHistory />} />}
               />
               <Route
                 path="/stock-details/:ticker"

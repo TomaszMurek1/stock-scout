@@ -40,6 +40,12 @@ const adminLinks = [
     href: "/admin/financial-refresh",
     icon: RefreshCw,
   },
+  {
+    title: "Populate Price History",
+    description: "Fetch and store historical OHLCV data for companies in selected baskets.",
+    href: "/admin/price-history",
+    icon: Database,
+  },
 ];
 
 export default function AdminDashboard() {

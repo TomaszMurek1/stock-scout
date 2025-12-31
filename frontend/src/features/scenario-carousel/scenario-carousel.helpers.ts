@@ -76,6 +76,14 @@ export const scenarios: Scenario[] = [
     type: "consolidation",
   },
   {
+    title: "Wyckoff Accumulation",
+    description: "Detect accumulation phase using price/volume evidence",
+    icon: TrendingUp,
+    href: "/scenarios/wyckoff",
+    color: "bg-emerald-200 bg-opacity-50",
+    type: "wyckoff",
+  },
+  {
     title: "Break Even Point",
     description: "Discover stocks approaching their break-even levels",
     icon: TrendingUp,
