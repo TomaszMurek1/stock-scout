@@ -1,4 +1,4 @@
-import { WatchlistStock } from "@/components/portfolio-management/tabs/watchlist/types";
+import { WatchlistStock } from "@/features/portfolio-management/tabs/watchlist/types";
 import { fetchWatchlist } from "@/services/api/watchlist";
 
 export interface WatchlistState {

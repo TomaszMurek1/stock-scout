@@ -1,33 +1,35 @@
 import React from "react";
-import "./App.css";
-import SignIn from "./components/sign-in-form/sign-in";
+import "./styles/App.css";
+
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { theme } from "./theme";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import PrivateRoute from "./components/private-route"; // Add this import
-import GoldenCrossPage from "./components/scenario-carousel/scan-types/golden-cross/golden-cross-page";
-import EvToRevenuePage from "./components/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-page";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Home from "./components/Home";
-import AdminDashboard from "./components/admin/AdminDashboard";
-import AdminCreateTickersPage from "./components/admin/admin-create-tickers/admin-create-tickers";
-import AdminFxBatchPage from "./components/admin/admin-fx-batch/admin-fx-batch";
-import AdminSyncMarkets from "./components/admin/admin-sync-markets/AdminSyncMarkets";
-import AdminValuationTools from "./components/admin/admin-valuation/admin-valuation";
-import AdminYFinanceProbe from "./components/admin/admin-yfinance-probe/AdminYFinanceProbe";
-import AdminFinancialRefresh from "./components/admin/admin-financial-refresh/AdminFinancialRefresh";
-import BreakEvenPointPage from "./components/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
-import { StockOnePager } from "./components/stock-one-pager/stock-one-pager";
 import { useAuth } from "./services/Auth.hooks";
-import PortfolioManagement from "./components/portfolio-management/PortfolioManagement";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { FiboWaveScenario } from "./components/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
-import { StockCompare } from "./components/comapre-stocks-page/StockCompare";
-import ChochScanPage from "./components/scenario-carousel/scan-types/choch/choch-page";
-import ConsolidationPage from "./components/scenario-carousel/scan-types/consolidation/consolidation-page";
+import ConsolidationPage from "./features/scenario-carousel/scan-types/consolidation/consolidation-page";
+import PortfolioManagement from "./features/portfolio-management/PortfolioManagement";
+import SignIn from "./features/sign-in-form/sign-in";
+import GoldenCrossPage from "./features/scenario-carousel/scan-types/golden-cross/golden-cross-page";
+import EvToRevenuePage from "./features/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-page";
+import BreakEvenPointPage from "./features/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
+import ChochScanPage from "./features/scenario-carousel/scan-types/choch/choch-page";
+import AdminDashboard from "./features/admin/AdminDashboard";
+import AdminSyncMarkets from "./features/admin/admin-sync-markets/AdminSyncMarkets";
+import AdminValuationTools from "./features/admin/admin-valuation/admin-valuation";
+import AdminYFinanceProbe from "./features/admin/admin-yfinance-probe/AdminYFinanceProbe";
+import AdminFinancialRefresh from "./features/admin/admin-financial-refresh/AdminFinancialRefresh";
+import { StockOnePager } from "./features/stock-one-pager/stock-one-pager";
+import { FiboWaveScenario } from "./features/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
+import { StockCompare } from "./features/comapre-stocks-page/StockCompare";
+import AdminFxBatchForm from "./features/admin/admin-fx-batch/admin-fx-batch";
+import AdminCreateTickersForm from "./features/admin/admin-create-tickers/admin-create-tickers";
+import Header from "./components/Header";
+import PrivateRoute from "./components/private-route";
+import Home from "./components/Home";
+import Footer from "./components/Footer";
+
 
 function App() {
   const { login } = useAuth();
@@ -93,11 +95,11 @@ function App() {
               <Route path="/admin" element={<PrivateRoute element={<AdminDashboard />} />} />
               <Route
                 path="/admin/create-tickers"
-                element={<PrivateRoute element={<AdminCreateTickersPage />} />}
+                element={<PrivateRoute element={<AdminCreateTickersForm />} />}
               />
               <Route
                 path="/admin/fx-batch"
-                element={<PrivateRoute element={<AdminFxBatchPage />} />}
+                element={<PrivateRoute element={<AdminFxBatchForm />} />}
               />
               <Route
                 path="/admin/sync-markets"

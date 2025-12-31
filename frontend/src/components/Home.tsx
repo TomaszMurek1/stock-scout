@@ -1,9 +1,9 @@
-import ScenarioCarousel from "./scenario-carousel/scenario-carousel";
 // import FeaturesSection from "./to-be-used/feature-section";
 // import CallToActions from "@/components/to-be-used/call-to-actions";
-import HeroSection from "./hero-section/hero-section";
-import { LinkToPortfolio } from "./portfolio-management/LinkToPortfolio";
-import { CompanySearch } from "./company-search/CompanySearch";
+import { CompanySearch } from "@/features/company-search/CompanySearch";
+import HeroSection from "@/features/hero-section/hero-section";
+import { LinkToPortfolio } from "@/features/portfolio-management/LinkToPortfolio";
+import ScenarioCarousel from "@/features/scenario-carousel/scenario-carousel";
 import { useLocation } from "react-router-dom";
 
 export default function Home() {
