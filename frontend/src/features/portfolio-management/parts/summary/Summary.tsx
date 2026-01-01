@@ -129,11 +129,17 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
   }
 
   const { currency } = portfolio;
-  const breakdown = performance.breakdowns[selectedPeriod] || performance.breakdowns.ytd; // Fallback to YTD if selected is missing
+  const breakdown = performance.breakdowns[selectedPeriod] || performance.breakdowns.ytd || performance.breakdowns.itd;
   const itd = performance.breakdowns.itd;
   const perf = performance.performance;
 
-  if (!breakdown) return null; // Should not happen with backend fix
+  if (!breakdown || !itd || !perf) {
+      return (
+          <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+              Initializing performance data...
+          </div>
+      );
+  }
 
   return (
     <div className="space-y-8">
@@ -166,9 +172,9 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
              <Label tooltip="Total Profit or Loss on your investments (Current Value - Net Cost). Includes both realized and unrealized gains.">Total PnL (ITD)</Label>
           </div>
           <Value 
-            value={itd.invested ? itd.invested.capital_gains : itd.pnl.unrealized_gains_residual} 
+            value={itd.invested ? itd.invested.capital_gains : (itd.pnl?.unrealized_gains_residual || 0)} 
             currency={currency} 
-            className={(itd.invested ? itd.invested.capital_gains : itd.pnl.unrealized_gains_residual) >= 0 ? "text-green-600" : "text-red-600"}
+            className={(itd.invested ? itd.invested.capital_gains : (itd.pnl?.unrealized_gains_residual || 0)) >= 0 ? "text-green-600" : "text-red-600"}
           />
         </Card>
       </div>
@@ -261,7 +267,7 @@ Why can be positive when you lost money:
 Treats every day equally. 10 months up (small capital) outweighs 1 month down (large capital).`}>
               🎯 Pick Quality
            </Label>
-           <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
+           <PercentValue value={perf.ttwr_invested?.[selectedPeriod] ?? 0} />
             <div className="text-xs text-gray-500 mt-1">TTWR (Invested Only)</div>
          </Card>
          
@@ -287,7 +293,7 @@ Why POSITIVE when you LOST money:
 Measures strategy quality over TIME, not dollars. Like a fund manager's skill rating vs your account balance. Good strategies can lose money with bad timing.`}>
               📊 Strategy Quality
            </Label>
-           <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
+           <PercentValue value={perf.ttwr?.[selectedPeriod] ?? 0} />
            <div className="text-xs text-gray-500 mt-1">TTWR (Portfolio)</div>
          </Card>
          
@@ -314,7 +320,7 @@ Why it's usually worst:
 Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL.`}>
               🏦 Personal Return
            </Label>
-           <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
+           <PercentValue value={perf.mwrr?.[selectedPeriod] ?? 0} />
             <div className="text-xs text-gray-500 mt-1">MWRR (IRR)</div>
          </Card>
        </div>
@@ -352,9 +358,9 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
                   <div className="space-y-1">
                     <DataRow label="Beginning Value" value={breakdown.beginning_value} currency={currency} />
                     <DataRow label="Net External Flows" value={breakdown.cash_flows.net_external} currency={currency} />
-                    <DataRow label="Income (Divs/Interest)" value={breakdown.income_expenses.dividends + breakdown.income_expenses.interest} currency={currency} />
-                    <DataRow label="Fees & Taxes" value={(breakdown.income_expenses.fees + breakdown.income_expenses.taxes) * -1} currency={currency} />
-                    <DataRow label="Capital Gains" value={breakdown.pnl.total_pnl_ex_flows} currency={currency} isBold />
+                    <DataRow label="Income (Divs/Interest)" value={(breakdown.income_expenses?.dividends || 0) + (breakdown.income_expenses?.interest || 0)} currency={currency} />
+                    <DataRow label="Fees & Taxes" value={((breakdown.income_expenses?.fees || 0) + (breakdown.income_expenses?.taxes || 0)) * -1} currency={currency} />
+                    <DataRow label="Capital Gains" value={breakdown.pnl?.total_pnl_ex_flows || 0} currency={currency} isBold />
                     <div className="pt-2 mt-2 border-t border-gray-100">
                         <DataRow label="Ending Value" value={breakdown.ending_value} currency={currency} isBold />
                     </div>
@@ -392,10 +398,10 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
               ) : (
                  <div className="space-y-1">
                     <DataRow label="Total Invested Cash" value={itd.cash_flows.net_external} currency={currency} />
-                    <DataRow label="Total Dividends Received" value={itd.income_expenses.dividends} currency={currency} />
-                    <DataRow label="Total Fees Paid" value={itd.income_expenses.fees} currency={currency} />
-                    <DataRow label="Realized Gains" value={itd.pnl.realized_gains_approx} currency={currency} />
-                    <DataRow label="Unrealized Gains" value={itd.pnl.unrealized_gains_residual} currency={currency} isBold />
+                    <DataRow label="Total Dividends Received" value={itd.income_expenses?.dividends || 0} currency={currency} />
+                    <DataRow label="Total Fees Paid" value={itd.income_expenses?.fees || 0} currency={currency} />
+                    <DataRow label="Realized Gains" value={itd.pnl?.realized_gains_approx || 0} currency={currency} />
+                    <DataRow label="Unrealized Gains" value={itd.pnl?.unrealized_gains_residual || 0} currency={currency} isBold />
                      <div className="pt-2 mt-2 border-t border-gray-100">
                         <DataRow label="Current Value" value={itd.ending_value} currency={currency} isBold />
                     </div>
