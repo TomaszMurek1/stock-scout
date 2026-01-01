@@ -10,14 +10,16 @@ interface FormCardGeneratorProps {
   title: string;
   subtitle: string | React.ReactNode;
   children: React.ReactNode;
+  maxWidth?: string; // Tailwind max-width class (e.g., "max-w-2xl", "max-w-4xl")
 }
 
 const FormCardGenerator = ({
   children,
   title,
   subtitle,
+  maxWidth = "max-w-2xl", // Default to current behavior
 }: FormCardGeneratorProps) => (
-  <Card className="w-full max-w-2xl mx-auto bg-zinc-50 mt-4 mb-4 shadow-lg overflow-hidden">
+  <Card className={`w-full ${maxWidth} mx-auto bg-zinc-50 mt-4 mb-4 shadow-lg overflow-hidden`}>
     <CardHeader className="from-blue-800 to-blue-900 bg-gradient-to-br border-b-4 border-blue-400 rounded-t-xl text-white">
       <div className="flex items-center gap-3">
         <BarChart className="w-6 h-6 text-blue-300" />

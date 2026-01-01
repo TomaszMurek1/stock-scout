@@ -124,18 +124,18 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
     },
     {
       label: "Revenue Growth",
-      value: `${investorMetrics.revenue_growth.toFixed(2)}%`,
+      value: investorMetrics.revenue_growth != null ? `${investorMetrics.revenue_growth.toFixed(2)}%` : "N/A",
       description: "Tempo wzrostu przychodu rok do roku; powinno być dodatnie.",
       definition: "YoY Revenue Growth",
       criterion: "Stabilnie dodatnie tempo; >10% to solidne tempo wzrostu.",
       valueClass:
-        investorMetrics.revenue_growth >= 10
+        (investorMetrics.revenue_growth ?? 0) >= 10
           ? "text-emerald-600"
-          : investorMetrics.revenue_growth >= 0
+          : (investorMetrics.revenue_growth ?? 0) >= 0
             ? "text-amber-600"
             : "text-rose-600",
       isProgressBar: true,
-      progressValue: investorMetrics.revenue_growth,
+      progressValue: investorMetrics.revenue_growth ?? 0,
       progressThreshold: 10,
       progressMax: 30,
     },
@@ -166,13 +166,13 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
     },
     {
       label: "Rule of 40",
-      value: `${investorMetrics.rule_of_40.toFixed(2)}%`,
+      value: investorMetrics.rule_of_40 != null ? `${investorMetrics.rule_of_40.toFixed(2)}%` : "N/A",
       description: "Heurystyka równowagi wzrostu i rentowności; >40% uchodzi za zdrowy miks.",
       definition: "Rule of 40 = Revenue Growth + Profit Margin (np. FCF/EBITDA).",
       criterion: "Powyżej 40% – zielone światło; 30–40% – w porządku, poniżej 30% – do poprawy.",
-      valueClass: investorMetrics.rule_of_40 >= 40 ? "text-emerald-600" : "text-amber-600",
+      valueClass: (investorMetrics.rule_of_40 ?? 0) >= 40 ? "text-emerald-600" : "text-amber-600",
       isProgressBar: true,
-      progressValue: investorMetrics.rule_of_40,
+      progressValue: investorMetrics.rule_of_40 ?? 0,
       progressThreshold: 40,
       progressMax: 60,
     },

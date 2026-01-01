@@ -137,49 +137,127 @@ def label_elliott_waves(p: List[Pivot]) -> List[WaveLabel]:
     lbls = []
     i = 0
     deg = "primary"
-    while i + 4 < len(p):
-        up = p[i + 4].price > p[i].price
-        w3 = abs(p[i + 2].price - p[i + 1].price)
-        w1 = abs(p[i + 1].price - p[i].price)
-        w5 = abs(p[i + 4].price - p[i + 3].price)
-        if w3 >= min(w1, w5) and (
-            (min(p[i + 3].price, p[i + 2].price) > p[i + 1].price)
-            if up
-            else (max(p[i + 3].price, p[i + 2].price) < p[i + 1].price)
-        ):
-            for j, l in enumerate(["1", "2", "3", "4", "5"]):
+    
+    # Needs at least 6 points: P0 (Start) + P1..P5
+    while i + 5 < len(p):
+        # P0 is the start of the sequence (e.g. start of Wave 1)
+        # P1 is end of Wave 1
+        # P2 is end of Wave 2
+        # P3 is end of Wave 3
+        # P4 is end of Wave 4
+        # P5 is end of Wave 5
+        
+        p0, p1, p2, p3, p4, p5 = p[i], p[i+1], p[i+2], p[i+3], p[i+4], p[i+5]
+        
+        # Determine direction based on Wave 1 (P0 -> P1)
+        up = p1.price > p0.price
+        
+        # Validate wave structure/direction
+        # P2 should be corrective to P1
+        # P3 should be impulsive in direction of P1
+        # P4 should be corrective to P3
+        # P5 should be impulsive in direction of P3
+        
+        valid_direction = (
+            (p2.price < p1.price and p3.price > p2.price and p4.price < p3.price and p5.price > p4.price) if up else
+            (p2.price > p1.price and p3.price < p2.price and p4.price > p3.price and p5.price < p4.price)
+        )
+        
+        if not valid_direction:
+            i += 1
+            continue
+
+        # Wave Lengths
+        w1_len = abs(p1.price - p0.price)
+        w2_len = abs(p2.price - p1.price)
+        w3_len = abs(p3.price - p2.price)
+        w4_len = abs(p4.price - p3.price)
+        w5_len = abs(p5.price - p4.price)
+        
+        # Rule 1: Wave 2 cannot retrace more than 100% of Wave 1
+        # (In uptrend, P2 > P0. In downtrend, P2 < P0)
+        rule_2_retrace = (p2.price > p0.price) if up else (p2.price < p0.price)
+        
+        # Rule 2: Wave 3 cannot be the shortest impulse wave
+        rule_3_not_shortest = w3_len >= min(w1_len, w5_len)
+        
+        # Rule 3: Wave 4 cannot enter the territory of Wave 1
+        # (In uptrend, P4 > P1. In downtrend, P4 < P1)
+        # Note: In commodity markets overlap is sometimes allowed, but strict rules say no.
+        rule_4_overlap = (p4.price > p1.price) if up else (p4.price < p1.price)
+        
+        if valid_direction and rule_2_retrace and rule_3_not_shortest and rule_4_overlap:
+            # Found a valid 5-wave impulse!
+            # Label P1..P5
+            indices = [i+1, i+2, i+3, i+4, i+5]
+            labels = ["1", "2", "3", "4", "5"]
+            
+            for idx_offset, label in zip(indices, labels):
                 lbls.append(
                     WaveLabel(
-                        pivot_index=p[i + j].index,
-                        pivot_price=p[i + j].price,
-                        wave_label=l,
+                        pivot_index=p[idx_offset].index,
+                        pivot_price=p[idx_offset].price,
+                        wave_label=label,
                         wave_degree=deg,
                     )
                 )
-            if i + 7 < len(p):
-                for k, l in zip(range(5, 8), ["A", "B", "C"]):
-                    lbls.append(
-                        WaveLabel(
-                            pivot_index=p[i + k].index,
-                            pivot_price=p[i + k].price,
-                            wave_label=l,
-                            wave_degree=deg,
+            
+            # Look for ABC correction (need 3 more points: P6, P7, P8)
+            # Sequence: 1-2-3-4-5-A-B-C
+            if i + 8 < len(p):
+                p6, p7, p8 = p[i+6], p[i+7], p[i+8]
+                
+                # Validation for ABC
+                # A goes against trend (corrective to W5)
+                # B goes with trend (corrective to A)
+                # C goes against trend (impulsive to A)
+                
+                valid_abc = (
+                    (p6.price < p5.price and p7.price > p6.price and p8.price < p7.price) if up else
+                    (p6.price > p5.price and p7.price < p6.price and p8.price > p7.price)
+                )
+                
+                # Simple rule: Correction shouldn't exceed start of W5 immediately? 
+                # Or just check simple directionality. 
+                # Let's stick to directionality for now.
+                
+                if valid_abc:
+                    abc_indices = [i+6, i+7, i+8]
+                    abc_labels = ["A", "B", "C"]
+                     
+                    for idx_offset, label in zip(abc_indices, abc_labels):
+                        lbls.append(
+                            WaveLabel(
+                                pivot_index=p[idx_offset].index,
+                                pivot_price=p[idx_offset].price,
+                                wave_label=label,
+                                wave_degree=deg,
+                            )
                         )
-                    )
-            i += 8
+                    # Advance index past the ABC
+                    i += 8
+                else:
+                    # Just advance past the 5 waves
+                    i += 5
+            else:
+                # Advance past the 5 waves
+                i += 5
         else:
             i += 1
+            
+    # Mark unused pivots? Or just return labeled ones.
+    # The original code filled gaps with "?". Let's keep that behavior if useful for debugging,
+    # or drop it for cleaner charts. 
+    # Original logic:
     tagged = {l.pivot_index for l in lbls}
     for pv in p:
         if pv.index not in tagged:
-            lbls.append(
-                WaveLabel(
-                    pivot_index=pv.index,
-                    pivot_price=pv.price,
-                    wave_label="?",
-                    wave_degree=deg,
-                )
-            )
+            # Optional: Label P0 as "Start"? Or just pivot.
+            # Only labeling unknowns if they are NOT "Start".
+            # Actually, let's just return identified waves.
+            pass
+            
+    # Sorting ensures order
     lbls.sort(key=lambda x: x.pivot_index)
     return lbls
 
@@ -253,7 +331,12 @@ def compute_risk(
         mae.append(abs(m1))
         mfe.append(m2)
     p = 0.55
-    R = np.mean(mfe) / np.mean(mae) if mae else 1
+    if not mae:
+        return mets, 0.0
+        
+    mean_mae = np.mean(mae)
+    mean_mfe = np.mean(mfe) if mfe else 0
+    R = mean_mfe / mean_mae if mean_mae != 0 else 1
     kel = max(0, p - (1 - p) / R)
     return mets, round(kel, 3)
 
@@ -298,3 +381,90 @@ def analyze(
         risk=risk,
         kelly_fraction=kel,
     )
+
+
+class ScanRequest(BaseModel):
+    basket_ids: List[int]
+    min_market_cap: float = 0
+    pivot_threshold: float = 0.05
+    min_kelly_fraction: float = 0.1
+
+
+class ScanResultItem(BaseModel):
+    ticker: str
+    company_name: str
+    kelly_fraction: float
+    wave_count: int
+    pivot_count: int
+    last_wave: Optional[str] = None
+
+
+class ScanResponse(BaseModel):
+    data: List[ScanResultItem]
+
+
+@router.post("/scan", response_model=ScanResponse)
+def scan_fibonacci_elliott(
+    req: ScanRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Scan multiple stocks from baskets for Elliott Wave patterns.
+    Returns stocks that meet the minimum Kelly Fraction threshold.
+    """
+    from database.baskets import BasketCompany
+    from services.company_filter_service import filter_by_market_cap
+    
+    # Get companies from the specified baskets
+    companies = (
+        db.query(Company)
+        .join(BasketCompany, BasketCompany.company_id == Company.company_id)
+        .filter(BasketCompany.basket_id.in_(req.basket_ids))
+        .distinct()
+        .all()
+    )
+    
+    # Apply market cap filter using the service
+    if req.min_market_cap and req.min_market_cap > 0:
+        companies = filter_by_market_cap(db, companies, req.min_market_cap)
+    
+    if not companies:
+        return ScanResponse(data=[])
+    
+    results = []
+    logger.info(f"Scanning {len(companies)} companies for Elliott Wave patterns")
+    
+    for company in companies:
+        try:
+            # Load data for the company
+            df = load_data(db, company.ticker)
+            
+            # Detect pivots and waves
+            pivots = detect_pivots(df.close, req.pivot_threshold)
+            waves = label_elliott_waves(pivots)
+            
+            # Calculate risk metrics and Kelly Fraction
+            _, kelly = compute_risk(df.close, waves)
+            
+            # Filter by minimum Kelly Fraction
+            if kelly >= req.min_kelly_fraction:
+                # Get the last wave label
+                last_wave = waves[-1].wave_label if waves else None
+                
+                results.append(ScanResultItem(
+                    ticker=company.ticker,
+                    company_name=company.name,
+                    kelly_fraction=kelly,
+                    wave_count=len(waves),
+                    pivot_count=len(pivots),
+                    last_wave=last_wave,
+                ))
+                
+        except Exception as e:
+            # Log but continue scanning other stocks
+            logger.warning(f"Failed to analyze {company.ticker}: {str(e)}")
+            continue
+    
+    logger.info(f"Found {len(results)} stocks matching criteria")
+    return ScanResponse(data=results)
+

@@ -382,6 +382,8 @@ def get_company_logo(ticker: str):
         else:
             logger.warning(f"Failed to download logo for {ticker}, status: {resp.status_code}")
             raise HTTPException(status_code=404, detail="Logo not found")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching logo for {ticker}: {e}")
         raise HTTPException(status_code=500, detail="Error fetching logo")

@@ -47,7 +47,7 @@ export const StockBanner: React.FC<StockBannerProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await apiClient.get<Candle[]>("/stock/NVDA/candles");
+        const response = await apiClient.get<Candle[]>("/stocks-ohlc/NVDA/candles");
         if (response.data && response.data.length > 0) {
           setCandles(response.data);
         }
