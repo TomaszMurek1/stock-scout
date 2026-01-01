@@ -1,10 +1,15 @@
 import {
-  BarChart,
+  Sun,
+  Skull,
   Activity,
-  TrendingUp,
   DollarSign,
   Percent,
-  LineChart,
+  Waves,
+  Zap,
+  BarChart3,
+  Settings,
+  Minus,
+  Target,
 } from "lucide-react";
 import { SVGAttributes } from "react";
 export type GenericIconType = React.FC<SVGAttributes<SVGElement>>;
@@ -16,13 +21,14 @@ interface Scenario {
   href: string;
   color: string;
   type: string;
+  visible?: boolean; // Optional: defaults to true if not specified
 }
 
 export const scenarios: Scenario[] = [
   {
     title: "Golden Cross",
     description: "Identify potential uptrends with moving average crossovers",
-    icon: BarChart,
+    icon: Sun,
     href: "/scenarios/golden-cross",
     color: "bg-slate-200 bg-opacity-50",
     type: "golden-cross",
@@ -30,7 +36,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Fibonacci & Elliott",
     description: "Analyze stocks using Fibonacci retracements and Elliott Wave theory",
-    icon: LineChart,
+    icon: Waves,
     href: "/scenarios/fibonacci-elliott",
     color: "bg-purple-200 bg-opacity-50",
     type: "fibonacci-elliott",
@@ -38,7 +44,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Change of Character",
     description: "Detect Bearish to Bullish trend reversal patterns (CHoCH)",
-    icon: LineChart,
+    icon: Zap,
     href: "/scenarios/choch",
     color: "bg-blue-200 bg-opacity-50",
     type: "choch",
@@ -46,7 +52,7 @@ export const scenarios: Scenario[] = [
   {
     title: "EV to revenue",
     description: "Create desc later ",
-    icon: BarChart,
+    icon: BarChart3,
     href: "/scenarios/ev-to-revenue",
     color: "bg-neutral-200 bg-opacity-50",
     type: "ev-to-revenue",
@@ -54,7 +60,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Admin tools",
     description: "Access utilities like ticker import and FX batch loader",
-    icon: BarChart,
+    icon: Settings,
     href: "/admin",
     color: "bg-slate-200 bg-opacity-50",
     type: "admin",
@@ -62,7 +68,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Death Cross",
     description: "Identify potential downtrends with moving average crossovers",
-    icon: BarChart,
+    icon: Skull,
     href: "/scenarios/death-cross",
     color: "bg-slate-200 bg-opacity-50",
     type: "death-cross",
@@ -70,7 +76,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Consolidation",
     description: "Find stocks trading in a specific range for a set duration",
-    icon: Activity,
+    icon: Minus,
     href: "/scenarios/consolidation",
     color: "bg-gray-200 bg-opacity-50",
     type: "consolidation",
@@ -78,7 +84,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Wyckoff Accumulation",
     description: "Detect accumulation phase using price/volume evidence",
-    icon: TrendingUp,
+    icon: Activity,
     href: "/scenarios/wyckoff",
     color: "bg-emerald-200 bg-opacity-50",
     type: "wyckoff",
@@ -86,7 +92,7 @@ export const scenarios: Scenario[] = [
   {
     title: "Break Even Point",
     description: "Discover stocks approaching their break-even levels",
-    icon: TrendingUp,
+    icon: Target,
     href: "/scenarios/break-even-point",
     color: "bg-zinc-200 bg-opacity-50",
     type: "golden-cross",
@@ -98,6 +104,7 @@ export const scenarios: Scenario[] = [
     href: "/scenarios/dividend-yield",
     color: "bg-stone-200 bg-opacity-50",
     type: "golden-cross",
+    visible: false,
   },
   {
     title: "Volatility",
@@ -106,5 +113,6 @@ export const scenarios: Scenario[] = [
     href: "/scenarios/volatility",
     color: "bg-neutral-200 bg-opacity-50",
     type: "golden-cross",
+    visible: false,
   },
 ];

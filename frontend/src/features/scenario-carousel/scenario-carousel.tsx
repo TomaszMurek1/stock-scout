@@ -13,6 +13,9 @@ const ScenarioCarousel = () => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef<number>(0);
 
+  // Filter visible scenarios
+  const visibleScenarios = scenarios.filter(scenario => scenario.visible !== false);
+
   const scrollToIndex = (index: number, smooth: boolean = true) => {
     if (carouselRef.current) {
       const cardElement = carouselRef.current.children[index] as HTMLElement;
@@ -33,14 +36,14 @@ const ScenarioCarousel = () => {
     if (direction === "left") {
       // Wrap to last if on first
       if (activeIndex === 0) {
-        newIndex = scenarios.length - 1;
+        newIndex = visibleScenarios.length - 1;
         isWrapping = true;
       } else {
         newIndex = activeIndex - 1;
       }
     } else {
       // Wrap to first if on last
-      if (activeIndex === scenarios.length - 1) {
+      if (activeIndex === visibleScenarios.length - 1) {
         newIndex = 0;
         isWrapping = true;
       } else {
@@ -92,7 +95,7 @@ const ScenarioCarousel = () => {
       </h2>
       <div className="relative overflow-visible">
         <DotsIndicator
-          total={scenarios.length}
+          total={visibleScenarios.length}
           activeIndex={activeIndex}
           onClick={scrollToIndex}
         />
@@ -105,7 +108,7 @@ const ScenarioCarousel = () => {
           ref={carouselRef}
           className="flex overflow-x-auto overflow-y-visible pb-4 snap-x snap-mandatory hide-scrollbar space-x-4 px-4"
         >
-          {scenarios.map((scenario, index) => (
+          {visibleScenarios.map((scenario, index) => (
             <ScenarioCard
               key={scenario.href}
               {...scenario}

@@ -12,6 +12,7 @@ import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator
 import { FiboWaveOutput } from "./fibonacci-elliott-output";
 import { HowItWorksSection } from "./HowItWorks";
 import { useAppStore, AppState } from "@/store/appStore";
+import { Waves } from "lucide-react";
 
 // Form Schema
 export const fiboWaveFormSchema = z.object({
@@ -165,6 +166,7 @@ export default function FibonacciElliottScanPage() {
       <BackToCarousel />
       <FormCardGenerator
         title="Fibonacci & Elliott Wave Scan"
+        icon={Waves}
         subtitle={
           <FormSubtitle description="Scan for stocks showing Elliott Wave patterns with Fibonacci retracements." />
         }

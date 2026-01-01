@@ -14,6 +14,7 @@ import BackToCarousel from "@/components/shared/BackToCarousel";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
+import { Zap } from "lucide-react";
 
 export default function ChochScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -84,6 +85,7 @@ export default function ChochScanPage() {
       <BackToCarousel />
       <FormCardGenerator
       title="CHoCH Scan (Bearish to Bullish)"
+      icon={Zap}
       subtitle={
         <FormSubtitle
           description={
