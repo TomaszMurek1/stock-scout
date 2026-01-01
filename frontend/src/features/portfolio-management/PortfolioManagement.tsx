@@ -159,6 +159,7 @@ export default function PortfolioManagement() {
             <Summary
               portfolio={portfolio}
               performance={performance}
+              holdings={holdings}
               selectedPeriod={selectedPeriod}
               onPeriodChange={setSelectedPeriod}
             />

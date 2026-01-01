@@ -13,6 +13,7 @@ import {
 interface SummaryProps {
   portfolio: Portfolio;
   performance: PortfolioPerformance;
+  holdings?: any[]; // Optional list of holdings
   selectedPeriod: Period;
   onPeriodChange: (p: Period) => void;
 }
@@ -117,7 +118,7 @@ const DataRow = ({
   </div>
 );
 
-export default function Summary({ portfolio, performance, selectedPeriod, onPeriodChange }: SummaryProps) {
+export default function Summary({ portfolio, performance, holdings, selectedPeriod, onPeriodChange }: SummaryProps) {
   // const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd"); // Lifted up
 
   const { currency } = portfolio;
@@ -126,7 +127,7 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
   const perf = performance?.performance;
 
   const hasPerformance = !!(breakdown && itd && perf);
-  const hasHoldings = portfolio.invested_value_current > 0;
+  const hasHoldings = (portfolio.invested_value_current > 0) || (holdings && holdings.length > 0);
 
   return (
     <div className="space-y-8">
