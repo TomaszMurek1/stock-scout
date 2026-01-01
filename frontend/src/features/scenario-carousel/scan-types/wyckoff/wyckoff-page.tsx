@@ -16,7 +16,7 @@ import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
 import { HowItWorksSection } from "./HowItWorks";
-import { ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { ChevronDown, ChevronUp, Settings, Activity } from "lucide-react";
 
 export default function WyckoffScanPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -103,6 +103,7 @@ export default function WyckoffScanPage() {
       <BackToCarousel />
       <FormCardGenerator
         title="Wyckoff Accumulation Scanner"
+        icon={Activity}
         subtitle={
           <FormSubtitle
             description={

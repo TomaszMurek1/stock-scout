@@ -12,6 +12,7 @@ import ConsolidationPage from "./features/scenario-carousel/scan-types/consolida
 import PortfolioManagement from "./features/portfolio-management/PortfolioManagement";
 import SignIn from "./features/sign-in-form/sign-in";
 import GoldenCrossPage from "./features/scenario-carousel/scan-types/golden-cross/golden-cross-page";
+import DeathCrossPage from "./features/scenario-carousel/scan-types/death-cross/death-cross-page";
 import EvToRevenuePage from "./features/scenario-carousel/scan-types/ev-to-revenue/input-form/ev-to-revenue-page";
 import BreakEvenPointPage from "./features/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import ChochScanPage from "./features/scenario-carousel/scan-types/choch/choch-page";
@@ -78,6 +79,10 @@ function App() {
               <Route
                 path="/scenarios/golden-cross"
                 element={<PrivateRoute element={<GoldenCrossPage />} />}
+              />
+              <Route
+                path="/scenarios/death-cross"
+                element={<PrivateRoute element={<DeathCrossPage />} />}
               />
               <Route
                 path="/scenarios/ev-to-revenue"

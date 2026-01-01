@@ -11,12 +11,6 @@ export type EvToRevenueValues = z.infer<typeof EvToRevenueFormSchema>;
 export const EvToRevenueFormFields: IFormGeneratorField<EvToRevenueValues>[] =
   [
     {
-      name: "basketIds",
-      label: "Select Baskets",
-      description: "Choose one or more baskets to scan for undervalued companies.",
-      type: "basket-chips",
-    },
-    {
       name: "min_ev_to_revenue",
       label: "Minimum EV/Revenue Ratio",
       description: "Lower bound for the Enterprise Value to Revenue ratio (e.g., 0 for no minimum).",
@@ -27,5 +21,11 @@ export const EvToRevenueFormFields: IFormGeneratorField<EvToRevenueValues>[] =
       label: "Maximum EV/Revenue Ratio",
       description: "Upper bound for the ratio. Lower values (e.g., 1-3) indicate potentially undervalued growth stocks.",
       type: "number",
+    },
+    {
+      name: "basketIds",
+      label: "Select Baskets",
+      description: "Choose one or more baskets to scan for undervalued companies.",
+      type: "basket-chips",
     },
   ];

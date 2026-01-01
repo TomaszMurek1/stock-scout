@@ -12,6 +12,7 @@ import { IFormGeneratorField } from "@/components/shared/forms/form-field-genera
 import BackToCarousel from "@/components/shared/BackToCarousel";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import { HowItWorksSection } from "./HowItWorks";
+import { Target } from "lucide-react";
 
 export default function BreakEvenPointScanForm() {
   const [results, setResults] = useState<IBreakEvenPointData[]>([]);
@@ -61,6 +62,7 @@ export default function BreakEvenPointScanForm() {
       <BackToCarousel />
       <FormCardGenerator
       title="BreakEvenPoint Scan"
+      icon={Target}
       subtitle={
         <FormSubtitle description="Set parameters to scan for stocks showing a Break Even Point." />
       }

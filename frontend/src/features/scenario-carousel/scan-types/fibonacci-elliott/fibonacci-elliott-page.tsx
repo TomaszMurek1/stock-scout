@@ -12,6 +12,7 @@ import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator
 import { FiboWaveOutput } from "./fibonacci-elliott-output";
 import { HowItWorksSection } from "./HowItWorks";
 import { useAppStore, AppState } from "@/store/appStore";
+import { Waves } from "lucide-react";
 
 // Form Schema
 export const fiboWaveFormSchema = z.object({
@@ -59,12 +60,6 @@ export default function FibonacciElliottScanPage() {
   const formFields: IFormGeneratorField<FiboWaveFormValues>[] = useMemo(() => {
     return [
       {
-        name: "basketIds",
-        label: "Select baskets",
-        description: "Choose one or more baskets to define the scan universe.",
-        type: "basket-chips",
-      },
-      {
         name: "minMarketCap",
         label: "Minimum Market Cap (USD)",
         description: "Filter stocks by minimum market capitalization",
@@ -97,6 +92,12 @@ export default function FibonacciElliottScanPage() {
           step: 0.05,
           placeholder: "0.2",
         },
+      },
+      {
+        name: "basketIds",
+        label: "Select baskets",
+        description: "Choose one or more baskets to define the scan universe.",
+        type: "basket-chips",
       },
     ];
   }, []);
@@ -165,6 +166,7 @@ export default function FibonacciElliottScanPage() {
       <BackToCarousel />
       <FormCardGenerator
         title="Fibonacci & Elliott Wave Scan"
+        icon={Waves}
         subtitle={
           <FormSubtitle description="Scan for stocks showing Elliott Wave patterns with Fibonacci retracements." />
         }

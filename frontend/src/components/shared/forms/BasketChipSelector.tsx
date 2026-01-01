@@ -30,6 +30,8 @@ const BasketChipSelector: React.FC<BasketChipSelectorProps> = ({
   const loading = useAppStore((state) => state.baskets.isLoading);
   const fetchBaskets = useAppStore((state) => state.fetchBaskets);
 
+  const isSelectionEmpty = value.length === 0;
+
   useEffect(() => {
     // This will only fetch if baskets aren't already loaded
     fetchBaskets();
@@ -62,6 +64,15 @@ const BasketChipSelector: React.FC<BasketChipSelectorProps> = ({
     const groupIds = new Set(groupBaskets.map((b) => String(b.id)));
     const newValue = value.filter((id) => !groupIds.has(id));
     onChange(newValue);
+  };
+
+  const selectAllBaskets = () => {
+    const allIds = baskets.map((b) => String(b.id));
+    onChange(allIds);
+  };
+
+  const clearAllBaskets = () => {
+    onChange([]);
   };
 
   const getGroupLabel = (type: string): string => {
@@ -100,54 +111,80 @@ const BasketChipSelector: React.FC<BasketChipSelectorProps> = ({
         <div className="flex items-center gap-2">
           <div className="h-1 w-1 rounded-full bg-blue-500"></div>
           <p className="text-sm font-semibold text-slate-800">{label}</p>
+          <span className="text-red-500 text-sm font-bold">*</span>
         </div>
       )}
       
-      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-4">
-        {Object.entries(groupedBaskets).map(([type, groupBaskets]) => (
+      <style>{`
+        @keyframes gentle-border-pulse {
+          0%, 100% {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+          }
+          50% {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+          }
+        }
+        .gentle-pulse-border {
+          animation: gentle-border-pulse 3s ease-in-out infinite;
+        }
+      `}</style>
+      
+      <div 
+        className={`bg-slate-50 border rounded-lg p-4 space-y-4 transition-all duration-300 ${
+          isSelectionEmpty 
+            ? 'gentle-pulse-border' 
+            : 'border-slate-200'
+        }`}
+      >
+        {Object.entries(groupedBaskets).map(([type, groupBaskets], index) => (
           <div key={type} className="space-y-3">
-            {/* Group Header - simplified without separator */}
+            {/* Group Header */}
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-blue-500"></span>
                 {getGroupLabel(type)}
               </h4>
-              <div className="flex gap-2">
-                <Button
-                  size="small"
-                  variant="text"
-                  onClick={() => selectAllInGroup(groupBaskets)}
-                  className="text-xs"
-                  sx={{ 
-                    fontSize: "0.75rem", 
-                    padding: "2px 8px", 
-                    minWidth: "auto",
-                    color: "#2563eb", // blue-600
-                    "&:hover": {
-                      backgroundColor: "rgba(37, 99, 235, 0.1)"
-                    }
-                  }}
-                >
-                  Select All
-                </Button>
-                <Button
-                  size="small"
-                  variant="text"
-                  onClick={() => deselectAllInGroup(groupBaskets)}
-                  className="text-xs"
-                  sx={{ 
-                    fontSize: "0.75rem", 
-                    padding: "2px 8px", 
-                    minWidth: "auto",
-                    color: "#64748b", // slate-500
-                    "&:hover": {
-                      backgroundColor: "rgba(100, 116, 139, 0.1)"
-                    }
-                  }}
-                >
-                  Clear
-                </Button>
-              </div>
+              {/* Show global buttons only on first group */}
+              {index === 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={selectAllBaskets}
+                    sx={{ 
+                      fontSize: "0.75rem", 
+                      padding: "4px 12px", 
+                      minWidth: "auto",
+                      color: "#2563eb",
+                      fontWeight: 600,
+                      "&:hover": {
+                        backgroundColor: "rgba(37, 99, 235, 0.1)"
+                      }
+                    }}
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={clearAllBaskets}
+                    sx={{ 
+                      fontSize: "0.75rem", 
+                      padding: "4px 12px", 
+                      minWidth: "auto",
+                      color: "#64748b",
+                      fontWeight: 600,
+                      "&:hover": {
+                        backgroundColor: "rgba(100, 116, 139, 0.1)"
+                      }
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Chips */}

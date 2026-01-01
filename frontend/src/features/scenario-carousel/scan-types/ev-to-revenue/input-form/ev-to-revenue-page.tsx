@@ -10,6 +10,7 @@ import { EvToRevenueResultsProps } from "../ev-to-revenue-output/ev-to-revenue-o
 import { apiClient } from "@/services/apiClient";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import BackToCarousel from "@/components/shared/BackToCarousel";
+import { BarChart3 } from "lucide-react";
 
 
 export default function EvToRevenueScanForm() {
@@ -56,6 +57,7 @@ export default function EvToRevenueScanForm() {
       <BackToCarousel />
       <FormCardGenerator
       title="EV/Revenue Scan"
+      icon={BarChart3}
       subtitle={
         <FormSubtitle
           description={

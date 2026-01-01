@@ -1,28 +1,28 @@
 import React, { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GoldenCrossOutput } from "./golden-cross-output";
+import { DeathCrossOutput } from "./death-cross-output";
 import { toast } from "react-toastify";
-import { ScanResultsProps } from "./golden-cross-page.types";
+import { ScanResultsProps } from "./death-cross-page.types";
 import {
-  baseGoldenCrossFields,
-  goldenCrossFormSchema,
-  GoldenCrossFormValues,
-} from "./golden-cross-page.helpers";
+  baseDeathCrossFields,
+  deathCrossFormSchema,
+  DeathCrossFormValues,
+} from "./death-cross-page.helpers";
 import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 import BackToCarousel from "@/components/shared/BackToCarousel";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
-import { Sun } from "lucide-react";
+import { Skull } from "lucide-react";
 
-export default function GoldenCrossScanPage() {
+export default function DeathCrossPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResultsProps | null>(null);
 
-  const form = useForm<GoldenCrossFormValues>({
-    resolver: zodResolver(goldenCrossFormSchema),
+  const form = useForm<DeathCrossFormValues>({
+    resolver: zodResolver(deathCrossFormSchema),
     defaultValues: {
       shortPeriod: 50,
       longPeriod: 200,
@@ -32,9 +32,9 @@ export default function GoldenCrossScanPage() {
     },
   });
 
-  const formFields: IFormGeneratorField<GoldenCrossFormValues>[] = useMemo(() => {
+  const formFields: IFormGeneratorField<DeathCrossFormValues>[] = useMemo(() => {
     return [
-      ...baseGoldenCrossFields,
+      ...baseDeathCrossFields,
       {
         name: "basketIds",
         label: "Select baskets",
@@ -44,17 +44,17 @@ export default function GoldenCrossScanPage() {
     ];
   }, []);
 
-  const onSubmit: SubmitHandler<GoldenCrossFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<DeathCrossFormValues> = async (data) => {
     setIsLoading(true);
     try {
       const response = await apiClient.post(
-        "/technical-analysis/golden-cross",
+        "/technical-analysis/death-cross",
         {
           short_window: data.shortPeriod,
           long_window: data.longPeriod,
           days_to_look_back: data.daysToLookBack,
           min_volume: 1000000,
-          adjusted: false, //use true iof you want adjusted_close be used for caalculations instead of close
+          adjusted: false, //use true if you want adjusted_close be used for calculations instead of close
           basket_ids: data.basketIds.map((id) => Number(id)),
           min_market_cap: data.minMarketCap,
         }
@@ -62,8 +62,8 @@ export default function GoldenCrossScanPage() {
 
       const result: ScanResultsProps = response.data;
       setResults(result);
-      console.log("Golden Cross Data:", result.data);
-      toast.success("Golden Cross scan completed successfully");
+      console.log("Death Cross Data:", result.data);
+      toast.success("Death Cross scan completed successfully");
     } catch (error: any) {
       console.error("API error:", error);
 
@@ -81,13 +81,13 @@ export default function GoldenCrossScanPage() {
     <div className="container">
       <BackToCarousel />
       <FormCardGenerator
-      title="Golden Cross Scan"
-      icon={Sun}
+      title="Death Cross Scan"
+      icon={Skull}
       subtitle={
-        <FormSubtitle description="Set parameters to scan for stocks showing a Golden Cross pattern." />
+        <FormSubtitle description="Set parameters to scan for stocks showing a Death Cross pattern (bearish signal)." />
       }
     >
-      <FormFieldsGenerator<GoldenCrossFormValues>
+      <FormFieldsGenerator<DeathCrossFormValues>
         form={form}
         formFields={formFields}
         isLoading={isLoading}
@@ -95,7 +95,7 @@ export default function GoldenCrossScanPage() {
       />
       {/* Results - Memoized to prevent re-render on form changes */}
       {useMemo(() => results && results.data && results.data.length > 0 && (
-        <GoldenCrossOutput results={results.data} />
+        <DeathCrossOutput results={results.data} />
       ), [results])}
     </FormCardGenerator>
     </div>

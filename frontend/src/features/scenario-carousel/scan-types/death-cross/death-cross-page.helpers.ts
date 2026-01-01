@@ -1,0 +1,45 @@
+import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
+import { z } from "zod";
+
+export const deathCrossFormSchema = z.object({
+  shortPeriod: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(200, "Short period should be less than long period"),
+  longPeriod: z.coerce.number().int().positive().min(1),
+  daysToLookBack: z.coerce.number().int().positive(),
+  basketIds: z.array(z.string()).nonempty("Select at least one basket"),
+  minMarketCap: z.coerce.number().min(0).optional(),
+});
+export type DeathCrossFormValues = z.infer<typeof deathCrossFormSchema>;
+
+export const baseDeathCrossFields: IFormGeneratorField<DeathCrossFormValues>[] = [
+  {
+    name: "shortPeriod",
+    label: "Short Period (days)",
+    description:
+      "The number of days for the short-term moving average (e.g., 50 days).",
+    type: "number",
+  },
+  {
+    name: "longPeriod",
+    label: "Long Period (days)",
+    description:
+      "The number of days for the long-term moving average (e.g., 200 days).",
+    type: "number",
+  },
+  {
+    name: "daysToLookBack",
+    label: "Days to Look Back",
+    description:
+      "The number of days in the past to analyze for the Death Cross pattern.",
+    type: "number",
+  },
+  {
+    name: "minMarketCap",
+    label: "Min Market Cap (Millions USD)",
+    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
+    type: "number",
+  },
+];

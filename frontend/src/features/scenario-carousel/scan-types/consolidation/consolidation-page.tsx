@@ -3,6 +3,7 @@ import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import BreakoutForm from "../breakout-form/breakout-form";
 import BackToCarousel from "@/components/shared/BackToCarousel";
+import { Minus } from "lucide-react";
 
 export default function ConsolidationPage() {
   return (
@@ -10,6 +11,7 @@ export default function ConsolidationPage() {
       <BackToCarousel />
       <FormCardGenerator
       title="Consolidation & Breakout Scan"
+      icon={Minus}
       subtitle={
         <FormSubtitle
           description={
