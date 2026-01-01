@@ -120,26 +120,13 @@ const DataRow = ({
 export default function Summary({ portfolio, performance, selectedPeriod, onPeriodChange }: SummaryProps) {
   // const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd"); // Lifted up
 
-  if (!performance || !performance.breakdowns) {
-      return (
-          <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
-              No performance data available yet.
-          </div>
-      );
-  }
-
   const { currency } = portfolio;
-  const breakdown = performance.breakdowns[selectedPeriod] || performance.breakdowns.ytd || performance.breakdowns.itd;
-  const itd = performance.breakdowns.itd;
-  const perf = performance.performance;
+  const breakdown = performance?.breakdowns?.[selectedPeriod] || performance?.breakdowns?.ytd || performance?.breakdowns?.itd;
+  const itd = performance?.breakdowns?.itd;
+  const perf = performance?.performance;
 
-  if (!breakdown || !itd || !perf) {
-      return (
-          <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
-              Initializing performance data...
-          </div>
-      );
-  }
+  const hasPerformance = !!(breakdown && itd && perf);
+  const hasHoldings = portfolio.invested_value_current > 0;
 
   return (
     <div className="space-y-8">
@@ -159,7 +146,7 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
           <Value value={portfolio.cash_available} currency={currency} />
         </Card>
         <Card>
-          <div className="flex items-center gap-3 mb-2">
+           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Wallet size={20} /></div>
             <Label>Total Value</Label>
           </div>
@@ -172,21 +159,39 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
              <Label tooltip="Total Profit or Loss on your investments (Current Value - Net Cost). Includes both realized and unrealized gains.">Total PnL (ITD)</Label>
           </div>
           <Value 
-            value={itd.invested ? itd.invested.capital_gains : (itd.pnl?.unrealized_gains_residual || 0)} 
+            value={itd?.invested ? itd.invested.capital_gains : (itd?.pnl?.unrealized_gains_residual || 0)} 
             currency={currency} 
-            className={(itd.invested ? itd.invested.capital_gains : (itd.pnl?.unrealized_gains_residual || 0)) >= 0 ? "text-green-600" : "text-red-600"}
+            className={(itd?.invested ? itd.invested.capital_gains : (itd?.pnl?.unrealized_gains_residual || 0)) >= 0 ? "text-green-600" : "text-red-600"}
           />
         </Card>
       </div>
 
-      {/* Dynamic Performance Grid */}
-      <div className="flex items-center justify-between pt-2">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-gray-500" />
-            Returns Analysis ({selectedPeriod.toUpperCase()})
-        </h3>
-        <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
-      </div>
+      {!hasHoldings ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+          <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-800">No active holdings</h3>
+          <p className="text-gray-500 max-w-sm mx-auto mt-2">
+            Add your first stock to start tracking performance analysis and returns.
+          </p>
+        </div>
+      ) : !hasPerformance ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-800">Calculating Performance...</h3>
+          <p className="text-gray-500 max-w-sm mx-auto mt-2">
+            We're crunching the numbers for your portfolio. This usually takes a few seconds.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between pt-2">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-gray-500" />
+                Returns Analysis ({selectedPeriod.toUpperCase()})
+            </h3>
+            <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
+          </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
          {/* 1. Simple Return - PRIMARY METRIC (most intuitive) */}
          <Card className={`${
@@ -408,7 +413,9 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
                  </div>
               )}
           </Card>
-       </div>
-    </div>
-  );
-};
+        </div>
+      </>
+    )}
+  </div>
+);
+}

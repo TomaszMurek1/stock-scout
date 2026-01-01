@@ -11,9 +11,12 @@ export function usePortfolioTotals({
   holdings: ApiHolding[];
 }) {
   const totals = useMemo(() => {
-    if (!performance) return null;
+    if (!performance || !portfolio) return null;
     const { total_value, invested_value_current, net_invested_cash } = portfolio;
-    const totalGainLoss = performance.breakdowns?.itd?.pnl?.unrealized_gains_residual || 0;
+    
+    // Performance breakdowns might be missing for new users
+    const breakdowns = performance.breakdowns || {};
+    const totalGainLoss = breakdowns.itd?.pnl?.unrealized_gains_residual || 0;
     const percentageChange = net_invested_cash > 0 ? (totalGainLoss / net_invested_cash) * 100 : 0;
     const byHolding = holdings;
     return {
