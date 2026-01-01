@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Chip, Button } from "@mui/material";
-import { apiClient } from "@/services/apiClient";
-import { toast } from "react-toastify";
+import { useAppStore } from "@/store/appStore";
 
 interface Basket {
   id: number;
@@ -26,23 +25,15 @@ const BasketChipSelector: React.FC<BasketChipSelectorProps> = ({
   label,
   description,
 }) => {
-  const [baskets, setBaskets] = useState<Basket[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Get baskets from Zustand store
+  const baskets = useAppStore((state) => state.baskets.data);
+  const loading = useAppStore((state) => state.baskets.isLoading);
+  const fetchBaskets = useAppStore((state) => state.fetchBaskets);
 
   useEffect(() => {
-    const fetchBaskets = async () => {
-      try {
-        const response = await apiClient.get("/baskets");
-        setBaskets(response.data || []);
-      } catch (error) {
-        console.error("Failed to load baskets", error);
-        toast.error("Unable to load baskets. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    // This will only fetch if baskets aren't already loaded
     fetchBaskets();
-  }, []);
+  }, [fetchBaskets]);
 
   // Group baskets by type
   const groupedBaskets: GroupedBaskets = baskets.reduce((acc, basket) => {
