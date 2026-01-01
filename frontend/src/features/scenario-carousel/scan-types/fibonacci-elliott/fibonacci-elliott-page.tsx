@@ -60,12 +60,6 @@ export default function FibonacciElliottScanPage() {
   const formFields: IFormGeneratorField<FiboWaveFormValues>[] = useMemo(() => {
     return [
       {
-        name: "basketIds",
-        label: "Select baskets",
-        description: "Choose one or more baskets to define the scan universe.",
-        type: "basket-chips",
-      },
-      {
         name: "minMarketCap",
         label: "Minimum Market Cap (USD)",
         description: "Filter stocks by minimum market capitalization",
@@ -98,6 +92,12 @@ export default function FibonacciElliottScanPage() {
           step: 0.05,
           placeholder: "0.2",
         },
+      },
+      {
+        name: "basketIds",
+        label: "Select baskets",
+        description: "Choose one or more baskets to define the scan universe.",
+        type: "basket-chips",
       },
     ];
   }, []);
