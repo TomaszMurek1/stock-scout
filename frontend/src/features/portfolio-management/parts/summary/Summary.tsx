@@ -120,20 +120,13 @@ const DataRow = ({
 export default function Summary({ portfolio, performance, selectedPeriod, onPeriodChange }: SummaryProps) {
   // const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd"); // Lifted up
 
-  if (!performance || !performance.breakdowns) {
-      return (
-          <div className="p-8 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
-              No performance data available yet.
-          </div>
-      );
-  }
-
   const { currency } = portfolio;
-  const breakdown = performance.breakdowns[selectedPeriod] || performance.breakdowns.ytd; // Fallback to YTD if selected is missing
-  const itd = performance.breakdowns.itd;
-  const perf = performance.performance;
+  const breakdown = performance?.breakdowns?.[selectedPeriod] || performance?.breakdowns?.ytd || performance?.breakdowns?.itd;
+  const itd = performance?.breakdowns?.itd;
+  const perf = performance?.performance;
 
-  if (!breakdown) return null; // Should not happen with backend fix
+  const hasPerformance = !!(breakdown && itd && perf);
+  const hasHoldings = portfolio.invested_value_current > 0;
 
   return (
     <div className="space-y-8">
@@ -153,7 +146,7 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
           <Value value={portfolio.cash_available} currency={currency} />
         </Card>
         <Card>
-          <div className="flex items-center gap-3 mb-2">
+           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Wallet size={20} /></div>
             <Label>Total Value</Label>
           </div>
@@ -166,21 +159,39 @@ export default function Summary({ portfolio, performance, selectedPeriod, onPeri
              <Label tooltip="Total Profit or Loss on your investments (Current Value - Net Cost). Includes both realized and unrealized gains.">Total PnL (ITD)</Label>
           </div>
           <Value 
-            value={itd.invested ? itd.invested.capital_gains : itd.pnl.unrealized_gains_residual} 
+            value={itd?.invested ? itd.invested.capital_gains : (itd?.pnl?.unrealized_gains_residual || 0)} 
             currency={currency} 
-            className={(itd.invested ? itd.invested.capital_gains : itd.pnl.unrealized_gains_residual) >= 0 ? "text-green-600" : "text-red-600"}
+            className={(itd?.invested ? itd.invested.capital_gains : (itd?.pnl?.unrealized_gains_residual || 0)) >= 0 ? "text-green-600" : "text-red-600"}
           />
         </Card>
       </div>
 
-      {/* Dynamic Performance Grid */}
-      <div className="flex items-center justify-between pt-2">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-gray-500" />
-            Returns Analysis ({selectedPeriod.toUpperCase()})
-        </h3>
-        <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
-      </div>
+      {!hasHoldings ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+          <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-800">No active holdings</h3>
+          <p className="text-gray-500 max-w-sm mx-auto mt-2">
+            Add your first stock to start tracking performance analysis and returns.
+          </p>
+        </div>
+      ) : !hasPerformance ? (
+        <div className="p-12 text-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-800">Calculating Performance...</h3>
+          <p className="text-gray-500 max-w-sm mx-auto mt-2">
+            We're crunching the numbers for your portfolio. This usually takes a few seconds.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between pt-2">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-gray-500" />
+                Returns Analysis ({selectedPeriod.toUpperCase()})
+            </h3>
+            <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
+          </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
          {/* 1. Simple Return - PRIMARY METRIC (most intuitive) */}
          <Card className={`${
@@ -261,7 +272,7 @@ Why can be positive when you lost money:
 Treats every day equally. 10 months up (small capital) outweighs 1 month down (large capital).`}>
               🎯 Pick Quality
            </Label>
-           <PercentValue value={perf.ttwr_invested[selectedPeriod] ?? 0} />
+           <PercentValue value={perf.ttwr_invested?.[selectedPeriod] ?? 0} />
             <div className="text-xs text-gray-500 mt-1">TTWR (Invested Only)</div>
          </Card>
          
@@ -287,7 +298,7 @@ Why POSITIVE when you LOST money:
 Measures strategy quality over TIME, not dollars. Like a fund manager's skill rating vs your account balance. Good strategies can lose money with bad timing.`}>
               📊 Strategy Quality
            </Label>
-           <PercentValue value={perf.ttwr[selectedPeriod] ?? 0} />
+           <PercentValue value={perf.ttwr?.[selectedPeriod] ?? 0} />
            <div className="text-xs text-gray-500 mt-1">TTWR (Portfolio)</div>
          </Card>
          
@@ -314,7 +325,7 @@ Why it's usually worst:
 Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL.`}>
               🏦 Personal Return
            </Label>
-           <PercentValue value={perf.mwrr[selectedPeriod] ?? 0} />
+           <PercentValue value={perf.mwrr?.[selectedPeriod] ?? 0} />
             <div className="text-xs text-gray-500 mt-1">MWRR (IRR)</div>
          </Card>
        </div>
@@ -352,9 +363,9 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
                   <div className="space-y-1">
                     <DataRow label="Beginning Value" value={breakdown.beginning_value} currency={currency} />
                     <DataRow label="Net External Flows" value={breakdown.cash_flows.net_external} currency={currency} />
-                    <DataRow label="Income (Divs/Interest)" value={breakdown.income_expenses.dividends + breakdown.income_expenses.interest} currency={currency} />
-                    <DataRow label="Fees & Taxes" value={(breakdown.income_expenses.fees + breakdown.income_expenses.taxes) * -1} currency={currency} />
-                    <DataRow label="Capital Gains" value={breakdown.pnl.total_pnl_ex_flows} currency={currency} isBold />
+                    <DataRow label="Income (Divs/Interest)" value={(breakdown.income_expenses?.dividends || 0) + (breakdown.income_expenses?.interest || 0)} currency={currency} />
+                    <DataRow label="Fees & Taxes" value={((breakdown.income_expenses?.fees || 0) + (breakdown.income_expenses?.taxes || 0)) * -1} currency={currency} />
+                    <DataRow label="Capital Gains" value={breakdown.pnl?.total_pnl_ex_flows || 0} currency={currency} isBold />
                     <div className="pt-2 mt-2 border-t border-gray-100">
                         <DataRow label="Ending Value" value={breakdown.ending_value} currency={currency} isBold />
                     </div>
@@ -392,17 +403,19 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
               ) : (
                  <div className="space-y-1">
                     <DataRow label="Total Invested Cash" value={itd.cash_flows.net_external} currency={currency} />
-                    <DataRow label="Total Dividends Received" value={itd.income_expenses.dividends} currency={currency} />
-                    <DataRow label="Total Fees Paid" value={itd.income_expenses.fees} currency={currency} />
-                    <DataRow label="Realized Gains" value={itd.pnl.realized_gains_approx} currency={currency} />
-                    <DataRow label="Unrealized Gains" value={itd.pnl.unrealized_gains_residual} currency={currency} isBold />
+                    <DataRow label="Total Dividends Received" value={itd.income_expenses?.dividends || 0} currency={currency} />
+                    <DataRow label="Total Fees Paid" value={itd.income_expenses?.fees || 0} currency={currency} />
+                    <DataRow label="Realized Gains" value={itd.pnl?.realized_gains_approx || 0} currency={currency} />
+                    <DataRow label="Unrealized Gains" value={itd.pnl?.unrealized_gains_residual || 0} currency={currency} isBold />
                      <div className="pt-2 mt-2 border-t border-gray-100">
                         <DataRow label="Current Value" value={itd.ending_value} currency={currency} isBold />
                     </div>
                  </div>
               )}
           </Card>
-       </div>
-    </div>
-  );
-};
+        </div>
+      </>
+    )}
+  </div>
+);
+}

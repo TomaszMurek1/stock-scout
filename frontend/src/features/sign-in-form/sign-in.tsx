@@ -14,14 +14,15 @@ interface SignInProps {
 }
 
 const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
+  const [searchParams] = useSearchParams();
+  const invitationCodeFromUrl = searchParams.get("invitation_code") || "";
+  
   const [email, setEmail] = useState<string>("");
   const [emailError, setEmailError] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
-  const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [isRegistering, setIsRegistering] = useState<boolean>(!!invitationCodeFromUrl); // Auto-switch to register if invitation code present
   const [error, setError] = useState<string>("");
-  const [searchParams] = useSearchParams();
-  const invitationCodeFromUrl = searchParams.get("invitation_code") || "";
 
   console.log("Invitation Code from URL:", invitationCodeFromUrl);
 

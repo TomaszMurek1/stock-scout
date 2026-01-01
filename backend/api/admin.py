@@ -5,8 +5,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database.base import get_db
 from schemas.user_schemas import InvitationCreate, InvitationOut
-from database.user import Invitation
+from database.user import Invitation, User, UserScope
 from services.auth.auth import get_current_user
+from services.auth.authorization import require_admin, require_admin_or_demo
 from services.company_market_sync import (
     sync_company_markets,
     add_companies_via_yfinance,
@@ -51,7 +52,7 @@ async def health_check():
 
 @router.get("/available-markets")
 def list_available_markets(
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin_or_demo),  # Demo can view
 ):
     """List available markets for synchronization."""
     return get_available_markets()
@@ -61,14 +62,14 @@ def list_available_markets(
 def create_invitation(
     payload: InvitationCreate,
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin),  # Only admin can create
 ):
     code = secrets.token_urlsafe(16)  # unique/secure token
     invitation = Invitation(
         code=code,
         duration_days=payload.duration_days,
         max_uses=payload.max_uses,
-        expires_at=payload.expires_at,
+        scope=payload.scope,
         is_active=True,
         used_count=0,
     )
@@ -78,11 +79,31 @@ def create_invitation(
     return invitation
 
 
+@router.get("/invitations", response_model=list[InvitationOut])
+def list_invitations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_demo),  # Demo can view
+):
+    """List all invitations. Anonymizes codes for non-admin users."""
+    invitations = db.query(Invitation).order_by(Invitation.created_at.desc()).all()
+    
+    # Anonymize invitation codes for non-admin users
+    if current_user.scope != UserScope.ADMIN:
+        for inv in invitations:
+            if len(inv.code) > 2:
+                # Show only first 1 and last 1 characters
+                inv.code = f"{inv.code[0]}••••{inv.code[-1]}"
+            else:
+                inv.code = "••••"
+    
+    return invitations
+
+
 @router.post("/run-financials-market-update")
 def run_financials_batch_update(
     market_name: str | None = None,
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin),  # Only admin can modify
 ):
     try:
         from database.market import Market
@@ -113,7 +134,7 @@ def run_financials_batch_update(
 def run_financials_for_baskets(
     payload: BasketRefreshRequest,
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin),
 ):
     if not payload.basket_ids:
         raise HTTPException(status_code=400, detail="basket_ids are required")
@@ -142,7 +163,7 @@ def run_financials_for_baskets(
 def sync_companies_to_markets(
     payload: SyncCompanyMarketsRequest,
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin),
 ):
     result = sync_company_markets(
         db, force=payload.force, limit=payload.limit, start_from_id=payload.start_from_id
@@ -157,7 +178,7 @@ class FetchMarketTickersRequest(BaseModel):
 @router.post("/fetch-market-tickers")
 def fetch_tickers_from_market_code(
     payload: FetchMarketTickersRequest,
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin_or_demo),
 ):
     """Fetch all tickers for a given market code (e.g. 'NMS', 'NYQ')."""
     from services.ticker_discovery_service import fetch_tickers_by_market
@@ -174,7 +195,7 @@ def fetch_tickers_from_market_code(
 def add_companies(
     payload: AddCompaniesRequest,
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin),
 ):
     """Add new companies by ticker list OR by market code (fetches tickers)."""
     if payload.market_code:
@@ -189,7 +210,7 @@ def add_companies(
 @router.post("/yfinance-probe")
 def yfinance_probe(
     payload: YFinanceProbeRequest,
-    _: str = Depends(get_current_user),
+    _: str = Depends(require_admin_or_demo),
 ):
     try:
         return gather_yfinance_snapshot(
