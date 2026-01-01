@@ -24,6 +24,7 @@ import AdminFinancialRefresh from "./features/admin/admin-financial-refresh/Admi
 import AdminPriceHistory from "./features/admin/admin-price-history/AdminPriceHistory";
 import { StockOnePager } from "./features/stock-one-pager/stock-one-pager";
 import { FiboWaveScenario } from "./features/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
+import FibonacciElliottScanPage from "./features/scenario-carousel/scan-types/fibonacci-elliott/fibonacci-elliott-page";
 import { StockCompare } from "./features/comapre-stocks-page/StockCompare";
 import AdminFxBatchForm from "./features/admin/admin-fx-batch/admin-fx-batch";
 import AdminCreateTickersForm from "./features/admin/admin-create-tickers/admin-create-tickers";
@@ -132,7 +133,11 @@ function App() {
                 element={<PrivateRoute element={<StockOnePager />} />}
               />
               <Route
-                path="/scenarios/fibonacci-elliott/:ticker?"
+                path="/scenarios/fibonacci-elliott"
+                element={<PrivateRoute element={<FibonacciElliottScanPage />} />}
+              />
+              <Route
+                path="/scenarios/fibonacci-elliott/:ticker"
                 element={<PrivateRoute element={<FiboWaveScenario />} />}
               />
               <Route path="/compare/:tickerA/:tickerB" element={<StockCompare />} />

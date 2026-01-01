@@ -11,9 +11,17 @@ import { useFiboWaveScenario } from "./useFiboWaveScenario";
  * Container component handling loading / error / no-data states,
  * plus header with refresh button and info popover.
  */
+import { useAppStore, AppState } from "@/store/appStore";
+
+/**
+ * Container component handling loading / error / no-data states,
+ * plus header with refresh button and info popover.
+ */
 export const FiboWaveScenario: React.FC = () => {
     const { ticker } = useParams<{ ticker: string }>();
-    const { data, isLoading, isError, refresh, error } = useFiboWaveScenario(ticker);
+    const pivotThreshold = useAppStore((state: AppState) => state.fibonacciElliott.scanParams?.pivotThreshold || 0.05);
+
+    const { data, isLoading, isError, refresh, error } = useFiboWaveScenario(ticker, pivotThreshold);
 
     if (isLoading) return <LoadingState ticker={ticker} />;
     if (isError) return <ErrorState ticker={ticker} message={error?.message} />;

@@ -118,7 +118,35 @@ export const FiboWaveChartArea: React.FC<ChartProps> = ({ data }) => {
         });
     }, [data.fibo, rows, data.candles]);
 
-    // 4) Axis & tooltip formatters
+    // 4) Compute global min/max for YAxis domain to prevent clipping
+    const yDomain = useMemo(() => {
+        if (!data.candles.length) return ['auto', 'auto'];
+        
+        let min = Infinity;
+        let max = -Infinity;
+        
+        // Check all close prices
+        data.candles.forEach(c => {
+            if (c.close < min) min = c.close;
+            if (c.close > max) max = c.close;
+        });
+
+        // Optional: check pivots as well to ensure they are visible
+        data.pivots.forEach(p => {
+             if (p.price < min) min = p.price;
+             if (p.price > max) max = p.price;
+        });
+        
+        if (min === Infinity || max === -Infinity) return ['auto', 'auto'];
+        
+        const padding = (max - min) * 0.05;
+        // If flat line, add arbitrary padding
+        if (padding === 0) return [min * 0.95, max * 1.05];
+
+        return [min - padding, max + padding];
+    }, [data.candles, data.pivots]);
+
+    // 5) Axis & tooltip formatters
     const formatXAxis = (i: number) =>
         monthAbbr[new Date(rows[i]?.timestamp).getUTCMonth()] || "";
     const formatTooltipLabel = (i: number) =>
@@ -155,9 +183,10 @@ export const FiboWaveChartArea: React.FC<ChartProps> = ({ data }) => {
                 />
                 <YAxis
                     yAxisId="price" orientation="left"
-                    domain={['auto', 'auto']}
+                    domain={yDomain}
                     tickFormatter={p => typeof p === 'number' ? p.toFixed(2) : ''}
                     width={60} tick={{ fontSize: 11 }}
+                    allowDataOverflow={false}
                 />
                 <YAxis yAxisId="vol" orientation="right" domain={[0, 'auto']} hide />
                 <Tooltip
