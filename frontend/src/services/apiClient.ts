@@ -18,7 +18,7 @@ let refreshPromise: Promise<void> | null = null;
 
 
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("access_token") || localStorage.getItem("authToken");
   // Skip token check for refresh requests
   if (config.url?.includes("/auth/refresh")) return config;
 
@@ -38,7 +38,8 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
       }
 
       if (config.headers) {
-        config.headers.set("Authorization", `Bearer ${localStorage.getItem("authToken")}`);
+        const currentToken = localStorage.getItem("access_token") || localStorage.getItem("authToken");
+        config.headers.set("Authorization", `Bearer ${currentToken}`);
       }
     } catch (error) {
       clearAuth();
@@ -108,7 +109,9 @@ async function handleTokenRefresh(): Promise<void> {
 
     refreshAttempts = 0;
     localStorage.setItem("authToken", data.access_token);
+    localStorage.setItem("access_token", data.access_token);
     localStorage.setItem("refreshToken", data.refresh_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
     apiClient.defaults.headers.common["Authorization"] = `Bearer ${data.access_token}`;
 
     // Retry queued requests
@@ -131,6 +134,8 @@ async function handleTokenRefresh(): Promise<void> {
 
 function clearAuth(): void {
   localStorage.removeItem("authToken");
+  localStorage.removeItem("access_token");
   localStorage.removeItem("refreshToken");
+  localStorage.removeItem("refresh_token");
   delete apiClient.defaults.headers.common["Authorization"];
 }

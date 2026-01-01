@@ -5,13 +5,11 @@ import HeroSection from "@/features/hero-section/hero-section";
 import { LinkToPortfolio } from "@/features/portfolio-management/LinkToPortfolio";
 import ScenarioCarousel from "@/features/scenario-carousel/scenario-carousel";
 import { useLocation } from "react-router-dom";
-import { ScopeDebug } from "./ScopeDebug";
 
 export default function Home() {
   const location = useLocation();
   return (
     <div className="container p-8">
-      <ScopeDebug />
       <HeroSection />
       <ScenarioCarousel />
       <div className="mx-auto px-4 py-6 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4 shadow-sm flex flex-col gap-10">
