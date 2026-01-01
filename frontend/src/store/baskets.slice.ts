@@ -18,7 +18,11 @@ export interface BasketsSlice {
   fetchBaskets: () => Promise<void>;
 }
 
-export const createBasketsSlice: StateCreator<BasketsSlice> = (set, get, api) => ({
+export const createBasketsSlice: StateCreator<BasketsSlice, [["zustand/devtools", never]]> = (
+  set,
+  get,
+  _api, // Not used, but required by StateCreator type with devtools middleware
+) => ({
   baskets: {
     data: [],
     isLoading: false,

@@ -21,7 +21,7 @@ export const useAppStore = create<AppState>()(
             ...createFxRatesSlice(set),
             ...createAnalyticsSlice(set, get, api),
             ...createFibonacciElliottSlice(set),
-            ...createBasketsSlice(set, get),
+            ...createBasketsSlice(set, get, api),
         }),
         { name: "AppStore" }
     )
