@@ -12,13 +12,7 @@ logger = logging.getLogger(__name__)
 # )
 
 
-def get_first_valid_row(df, keys, col):
-    for key in keys:
-        value = safe_get(df, key, col)
-        if value is not None:
-            return value
-    return None
-
+from utils.sanitize import convert_value
 
 def safe_get(df, row, col):
     def _norm(s: str) -> str:
@@ -36,7 +30,16 @@ def safe_get(df, row, col):
     idx = lookup.get(key) or lookup_norm.get(key_norm)
     if idx is None or col not in df.columns:
         return None
-    return df.loc[idx, col]
+    val = df.loc[idx, col]
+    return convert_value(val)
+
+
+def get_first_valid_row(df, keys, col):
+    for key in keys:
+        value = safe_get(df, key, col)
+        if value is not None:
+            return value
+    return None
 
 
 def get_most_recent_column(columns):
@@ -79,7 +82,7 @@ def update_market_data(record, fast_info):
     record.average_volume = fast_info.get("threeMonthAverageVolume")
     record.bid_price = None
     record.ask_price = None
-    record.shares_outstanding = fast_info.get("shares")
+    record.shares_outstanding = convert_value(fast_info.get("shares"))
     record.last_updated = datetime.now(timezone.utc)
 
 
@@ -157,13 +160,13 @@ def update_financial_snapshot(
         col,
     )
     fin_record.working_capital = (
-        fin_record.current_assets - fin_record.current_liabilities
+        (fin_record.current_assets - fin_record.current_liabilities)
         if fin_record.current_assets is not None
         and fin_record.current_liabilities is not None
         else None
     )
-    fin_record.shares_outstanding = fast_info.get("shares")
-    fin_record.current_price = fast_info.get("lastPrice")
+    fin_record.shares_outstanding = convert_value(fast_info.get("shares"))
+    fin_record.current_price = convert_value(fast_info.get("lastPrice"))
 
     gross_profit = safe_get(income_stmt, "Gross Profit", col)
     if gross_profit is None:
@@ -172,9 +175,9 @@ def update_financial_snapshot(
         if revenue is not None and cost_of_revenue is not None:
             gross_profit = revenue - cost_of_revenue
     
-    # Fallback to fast_info for gross_profit (common for some tickers where it's not in DataFrame)
+    # Fallback to fast_info for gross_profit
     if gross_profit is None:
-        gross_profit = fast_info.get("grossProfits")
+        gross_profit = convert_value(fast_info.get("grossProfits"))
 
     fin_record.gross_profit = gross_profit
 
@@ -192,7 +195,7 @@ def update_financial_snapshot(
         col
     )
 
-    fin_record.enterprise_value = info_dict.get("enterpriseValue")
+    fin_record.enterprise_value = convert_value(info_dict.get("enterpriseValue"))
     fin_record.last_updated = datetime.now(timezone.utc)
 
     fiscal_year_end = info_dict.get("lastFiscalYearEnd")

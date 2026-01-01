@@ -31,6 +31,7 @@ def find_companies_near_break_even(
         .join(Company, CompanyFinancialHistory.company_id == Company.company_id)
         .outerjoin(Market, Market.market_id == Company.market_id)
         .filter(CompanyFinancialHistory.company_id.in_(company_ids))
+        .filter(CompanyFinancialHistory.period_type.in_(['quarterly', 'annual']))  # Need both for Hybrid comparison
         .filter(CompanyFinancialHistory.net_income.isnot(None))
         .filter(CompanyFinancialHistory.total_revenue.isnot(None))
     )
@@ -39,7 +40,7 @@ def find_companies_near_break_even(
         # Import here to avoid circular dependencies if placed at top level (sometimes happens)
         from database.stock_data import CompanyMarketData
         val_to_check = min_market_cap * 1_000_000
-        print(f"DEBUG: Filtering with market_cap >= {val_to_check}")
+        # print(f"DEBUG: Filtering with market_cap >= {val_to_check}")
         query = (
             query
             .join(CompanyMarketData, CompanyMarketData.company_id == Company.company_id)
@@ -62,71 +63,83 @@ def find_companies_near_break_even(
     processed: Dict[int, bool] = {cid: False for cid in company_ids}
 
     for cid, entries in company_history.items():
-        # if cid != 1:  # Only debug SOFI
-        #     continue
+        # Separate Quarterly vs Annual
+        # entries are sorted by date ASC (Oldest -> Newest)
+        
+        quarterly_recs = []
+        annual_recs = []
+        
+        company = entries[0][1] # Get company obj from first entry
+        currency = entries[0][2]
 
-        # Get the latest report within the recent window
-        latest = None
-        for rec, comp, curr in reversed(entries):
-            rec_date = rec.report_end_date.replace(tzinfo=timezone.utc) if rec.report_end_date.tzinfo is None else rec.report_end_date
+        for r, _, _ in entries:
+            if r.period_type == 'quarterly':
+                quarterly_recs.append(r)
+            elif r.period_type == 'annual':
+                annual_recs.append(r)
+        
+        # Sort desc (Newest -> Oldest)
+        quarterly_recs.sort(key=lambda x: x.report_end_date, reverse=True)
+        annual_recs.sort(key=lambda x: x.report_end_date, reverse=True)
+
+        # Requirement 1: Need at least 4 quarters to form a "Current TTM"
+        if len(quarterly_recs) < 4:
+            processed[cid] = False
+            continue
             
-            if rec_date >= recent_cutoff:
-                latest = (rec, comp, curr)
-                break
-
-        if not latest:
+        # Requirement 2: Need at least 1 Annual report to compare against
+        if len(annual_recs) < 1:
             processed[cid] = False
             continue
 
-        latest_rec, company, currency = latest
-        latest_date = latest_rec.report_end_date
-        latest_net = latest_rec.net_income
-        latest_rev = latest_rec.total_revenue
+        # Current TTM (Most recent 4 quarters)
+        # Note: We assume these are the LAST 4 quarters. Even if there are gaps, we take the last 4 available.
+        current_q_slice = quarterly_recs[0:4]
+        
+        current_ttm_net = sum(q.net_income for q in current_q_slice if q.net_income is not None)
+        current_ttm_rev = sum(q.total_revenue for q in current_q_slice if q.total_revenue is not None)
 
-        def make_aware(dt):
-            return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+        # Previous Benchmark: The Last Full Annual Report
+        last_annual = annual_recs[0]
+        prev_annual_net = last_annual.net_income
 
-        target_date = make_aware(latest_date - timedelta(days=365))
-      
-        for e in entries:
-            qd = make_aware(e[0].report_end_date)
-            delta_days = abs((qd - target_date).days)
+        # --- HYBRID COMPARISON LOGIC ---
+        # 1. Was Structurally Unprofitable: The Last Full Year was a Net Loss
+        was_unprofitable = prev_annual_net < 0
 
-        closest = min(
-            (
-                e for e in entries
-                if abs((make_aware(e[0].report_end_date) - target_date).days) <= lookback_window.days
-            ),
-            key=lambda x: abs((make_aware(x[0].report_end_date) - target_date).days),
-            default=None
-        )
+        # 2. Improving Trend: Current TTM Net Income is BETTER than Last Full Year
+        is_improving = current_ttm_net > prev_annual_net
 
-        if not closest:
+        # 3. Near Break-Even Zone: TTM Net Margin check
+        if current_ttm_rev == 0:
+            processed[cid] = False
             continue
+            
+        current_ttm_margin_pct = (current_ttm_net / abs(current_ttm_rev)) * 100.0
+        
+        # Check if margin is within [-threshold, +threshold]
+        is_near_break_even = -threshold_pct <= current_ttm_margin_pct <= threshold_pct
 
-        prev_rec = closest[0]
-        prev_net = prev_rec.net_income
+        qualifies = was_unprofitable and is_improving and is_near_break_even
+        # --- END NEW LOGIC ---
 
-        improving = latest_net >= prev_net * 1.1  # take from param in future
-        threshold_val = abs(latest_rev) * (threshold_pct / 100.0)
-        within_threshold = latest_net >= -threshold_val
-
-        previous_was_low = prev_net <= threshold_val  # allows small profit or loss
-        qualifies = improving and within_threshold and previous_was_low
         processed[cid] = qualifies
         if qualifies:
+            latest_rec_date = current_q_slice[0].report_end_date
+            prev_rec_date = last_annual.report_end_date
+
             results.append(
                 {
                     "company_id": company.company_id,
                     "ticker": company.ticker,
                     "company_name": company.name,
-                    "current_quarter": latest_rec.report_end_date.isoformat(),
-                    "previous_quarter": prev_rec.report_end_date.isoformat(),
-                    "previous_net_income": prev_net,
-                    "current_net_income": latest_net,
-                    "total_revenue": latest_rev,
+                    "current_quarter": latest_rec_date.isoformat(), # Keeping key name for frontend
+                    "previous_quarter": prev_rec_date.isoformat(),  # This is now the annual report date
+                    "previous_net_income": prev_annual_net, 
+                    "current_net_income": current_ttm_net,
+                    "total_revenue": current_ttm_rev,
                     "currency": currency,
-                    "threshold_margin": round(threshold_val, 2),
+                    "threshold_margin": round(current_ttm_margin_pct, 2),
                 }
             )
     return results, processed

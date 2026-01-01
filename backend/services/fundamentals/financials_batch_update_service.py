@@ -328,7 +328,12 @@ def is_missing_or_delisted_fast_info(
     missing = []
     found = []
     for key in must_have:
-        val = (fast_info or {}).get(key)
+        try:
+            val = (fast_info or {}).get(key)
+        except Exception:
+            # yfinance FastInfo can raise KeyError: 'currentTradingPeriod' or others internally
+            val = None
+
         if val is not None:
             found.append(key)
         else:
@@ -446,6 +451,12 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                 if hasattr(md, "is_delisted"):
                     md.is_delisted = True
                 db.add(md)
+                
+                # Also update CompanyFinancials so we don't retry immediately
+                fn = financials.get(comp.company_id) or CompanyFinancials(company_id=comp.company_id)
+                fn.last_updated = datetime.now(timezone.utc)
+                db.add(fn)
+                
                 db.commit()
             except Exception as db_exc:
                 logger.error(f"Failed to mark ticker {ticker} as failed in DB: {db_exc}")
@@ -629,6 +640,19 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                 db.rollback()
             continue
         
+        if not history_mappings and not reco_mappings and not estimate_mappings and not eps_revision_mappings:
+            logger.info(f"[{comp.ticker}] No new financial data found/mapped.")
+            # Important: Update last_updated so we don't retry immediately
+            try:
+                 fn = financials.get(comp.company_id) or CompanyFinancials(company_id=comp.company_id)
+                 fn.last_updated = datetime.now(timezone.utc)
+                 db.add(fn)
+                 db.commit()
+            except Exception as e:
+                logger.error(f"Failed to update last_updated for {comp.ticker}: {e}")
+                db.rollback()
+            continue
+
         # Sanitize numpy types on ORM objects (snapshot + market data)
         for obj in db.new.union(db.dirty):
             if hasattr(obj, "__dict__"):
