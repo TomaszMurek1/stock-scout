@@ -35,9 +35,6 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=400, detail="Invalid or inactive invitation code."
         )
 
-    if invitation.expires_at and datetime.utcnow() > invitation.expires_at:
-        raise HTTPException(status_code=400, detail="Invitation code is expired.")
-
     if invitation.used_count >= invitation.max_uses:
         raise HTTPException(status_code=400, detail="Invitation usage limit reached.")
 
@@ -52,6 +49,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         email=user.email,
         password_hash=hashed_password,
         invitation_id=invitation.id,
+        scope=invitation.scope,  # Inherit scope from invitation
     )
 
     # Apply and update invitation
@@ -78,8 +76,9 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             status_code=403, detail="Your invitation-based access has expired."
         )
 
-    access_token = create_access_token(data={"sub": db_user.email})
-    refresh_token = create_refresh_token(data={"sub": db_user.email})
+    # Include scope in JWT token payload
+    access_token = create_access_token(data={"sub": db_user.email, "scope": db_user.scope.value})
+    refresh_token = create_refresh_token(data={"sub": db_user.email, "scope": db_user.scope.value})
 
     return {
         "access_token": access_token,
@@ -112,8 +111,9 @@ def refresh_token(token_request: RefreshTokenRequest, db: Session = Depends(get_
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        new_access_token = create_access_token(data={"sub": user.email})
-        new_refresh_token = create_refresh_token(data={"sub": user.email})
+        # Include scope in refreshed tokens
+        new_access_token = create_access_token(data={"sub": user.email, "scope": user.scope.value})
+        new_refresh_token = create_refresh_token(data={"sub": user.email, "scope": user.scope.value})
 
         return {
             "access_token": new_access_token,

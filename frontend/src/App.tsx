@@ -23,6 +23,7 @@ import AdminValuationTools from "./features/admin/admin-valuation/admin-valuatio
 import AdminYFinanceProbe from "./features/admin/admin-yfinance-probe/AdminYFinanceProbe";
 import AdminFinancialRefresh from "./features/admin/admin-financial-refresh/AdminFinancialRefresh";
 import AdminPriceHistory from "./features/admin/admin-price-history/AdminPriceHistory";
+import InvitationManager from "./features/admin/InvitationManager";
 import { StockOnePager } from "./features/stock-one-pager/stock-one-pager";
 import { FiboWaveScenario } from "./features/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import FibonacciElliottScanPage from "./features/scenario-carousel/scan-types/fibonacci-elliott/fibonacci-elliott-page";
@@ -132,6 +133,10 @@ function App() {
               <Route
                 path="/admin/price-history"
                 element={<PrivateRoute element={<AdminPriceHistory />} />}
+              />
+              <Route
+                path="/admin/invitations"
+                element={<PrivateRoute element={<InvitationManager />} />}
               />
               <Route
                 path="/stock-details/:ticker"

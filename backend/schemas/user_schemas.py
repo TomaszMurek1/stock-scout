@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr
+from database.user import UserScope
 
 
 class UserCreate(BaseModel):
@@ -28,16 +29,18 @@ class RefreshTokenRequest(BaseModel):
 class InvitationCreate(BaseModel):
     duration_days: int = 7
     max_uses: int = 1
-    expires_at: Optional[datetime] = None
+    scope: UserScope = UserScope.BASIC_ACCESS
 
 
 class InvitationOut(BaseModel):
+    id: int
     code: str
     duration_days: int
     max_uses: int
     used_count: int
     is_active: bool
-    expires_at: Optional[datetime]
+    scope: UserScope
+    created_at: datetime
 
     class Config:
         orm_mode = True

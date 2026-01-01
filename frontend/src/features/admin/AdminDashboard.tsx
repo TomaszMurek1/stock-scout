@@ -46,6 +46,12 @@ const adminLinks = [
     href: "/admin/price-history",
     icon: Database,
   },
+  {
+    title: "Manage Invitations",
+    description: "Create and manage user invitation codes with role-based access control.",
+    href: "/admin/invitations",
+    icon: Shield,
+  },
 ];
 
 export default function AdminDashboard() {

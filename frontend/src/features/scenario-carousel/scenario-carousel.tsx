@@ -3,8 +3,11 @@ import ScenarioCard from "./scenario-card/scenario-card";
 import { scenarios } from "./scenario-carousel.helpers";
 import DotsIndicator from "@/components/shared/dots-indicator";
 import ChevronButton from "@/components/shared/chevron-button";
+import { useUserScope } from "@/hooks/useUserScope";
 
 const ScenarioCarousel = () => {
+  const { isAdminOrDemo } = useUserScope();
+  
   // Initialize from sessionStorage
   const [activeIndex, setActiveIndex] = useState(() => {
     const saved = sessionStorage.getItem('carouselIndex');
@@ -13,8 +16,14 @@ const ScenarioCarousel = () => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef<number>(0);
 
-  // Filter visible scenarios
-  const visibleScenarios = scenarios.filter(scenario => scenario.visible !== false);
+  // Filter visible scenarios based on user scope
+  const visibleScenarios = scenarios.filter(scenario => {
+    // Hide if explicitly marked as not visible
+    if (scenario.visible === false) return false;
+    // Hide admin tools if user is not admin or demo
+    if (scenario.type === "admin" && !isAdminOrDemo()) return false;
+    return true;
+  });
 
   const scrollToIndex = (index: number, smooth: boolean = true) => {
     if (carouselRef.current) {
