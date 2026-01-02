@@ -4,4 +4,5 @@ export type Company = {
     ticker: string
     market?: { market_id?: number | null; name: string } | null
     source?: "db" | "external"
+    currency?: string | null
 }

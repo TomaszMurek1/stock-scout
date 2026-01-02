@@ -16,6 +16,7 @@ from services.company_market_sync import (
     _lookup_market,
 )
 
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -226,8 +227,14 @@ def search_companies(
             (Company.name.ilike(pattern)) | (Company.ticker.ilike(pattern))
         )
     companies = query.limit(limit).all()
-    results = [
-        {
+    results = []
+    for c in companies:
+        # Get currency from market if available
+        currency = None
+        if c.market and c.market.currency:
+            currency = c.market.currency
+        
+        results.append({
             "company_id": c.company_id,
             "name": c.name,
             "ticker": c.ticker,
@@ -237,9 +244,9 @@ def search_companies(
                 else None
             ),
             "source": "db",
-        }
-        for c in companies
-    ]
+            "currency": currency,
+        })
+
     if include_external and raw_search:
         tickers = {c["ticker"] for c in results}
         external = [
