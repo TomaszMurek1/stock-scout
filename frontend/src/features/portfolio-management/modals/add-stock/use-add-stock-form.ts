@@ -20,9 +20,10 @@ export interface FormValues {
 interface UseAddStockFormProps {
   onClose: () => void;
   onSuccess?: () => void;
+  isOpen: boolean;
 }
 
-export const useAddStockForm = ({ onClose, onSuccess }: UseAddStockFormProps) => {
+export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormProps) => {
   const {
     register,
     handleSubmit,
@@ -69,11 +70,23 @@ export const useAddStockForm = ({ onClose, onSuccess }: UseAddStockFormProps) =>
     }
   }, [safeAccounts, setValue]); 
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      reset();
+      setSelectedTicker("");
+    }
+  }, [isOpen, reset]); 
+
   // Calculate total in Trade Currency (Stock Currency)
   const sumStock = shares * price;
   
   // Calculate actual cost in account currency (what user pays)
   const sumAccount = (sumStock * accountCurrencyRate) + fee;
+
+  // Balance validation
+  const availableBalance = selectedAccount?.cash || 0;
+  const hasInsufficientBalance = sumAccount > availableBalance && sumAccount > 0;
 
   // Get FX rate from store or fetch if missing
   useEffect(() => {
@@ -202,6 +215,7 @@ export const useAddStockForm = ({ onClose, onSuccess }: UseAddStockFormProps) =>
   return {
     register,
     handleSubmit,
+    watch,
     errors,
     loading: loading || isSubmitting,
     selectedTicker,
@@ -213,5 +227,8 @@ export const useAddStockForm = ({ onClose, onSuccess }: UseAddStockFormProps) =>
     currency,
     handleTickerSelect,
     onSubmit,
+    selectedAccount,
+    hasInsufficientBalance,
+    availableBalance,
   };
 };

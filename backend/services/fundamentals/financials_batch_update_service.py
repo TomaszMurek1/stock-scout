@@ -450,12 +450,12 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                 md.last_updated = datetime.now(timezone.utc)
                 if hasattr(md, "is_delisted"):
                     md.is_delisted = True
-                db.add(md)
+                db.merge(md)
                 
                 # Also update CompanyFinancials so we don't retry immediately
                 fn = financials.get(comp.company_id) or CompanyFinancials(company_id=comp.company_id)
                 fn.last_updated = datetime.now(timezone.utc)
-                db.add(fn)
+                db.merge(fn)
                 
                 db.commit()
             except Exception as db_exc:
@@ -477,11 +477,11 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                 md.last_updated = datetime.now(timezone.utc)
                 if hasattr(md, "is_delisted"):
                     md.is_delisted = True
-                db.add(md)
+                db.merge(md)
                 continue
 
             update_market_data(md, fast_info)
-            db.add(md)
+            db.merge(md)
 
             # Financials snapshot upsert
             fn = financials.get(comp.company_id) or CompanyFinancials(
@@ -498,7 +498,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                 update_financial_snapshot(
                     ticker, fn, income_stmt, cf_df, bs_df, info_dict, fast_info, col
                 )
-            db.add(fn)
+            db.merge(fn)
 
             # Build new financial history (no duplicates)
             mappings = build_financial_history_mappings(
@@ -633,7 +633,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
                 md.last_updated = datetime.now(timezone.utc)
                 if hasattr(md, "is_delisted"):
                     md.is_delisted = True
-                db.add(md)
+                db.merge(md)
                 db.commit()
             except Exception as db_exc:
                 logger.error(f"Failed to mark ticker {ticker} as failed in DB after exception: {db_exc}")
@@ -646,7 +646,7 @@ def fetch_and_save_financial_data_for_list_of_tickers(
             try:
                  fn = financials.get(comp.company_id) or CompanyFinancials(company_id=comp.company_id)
                  fn.last_updated = datetime.now(timezone.utc)
-                 db.add(fn)
+                 db.merge(fn)
                  db.commit()
             except Exception as e:
                 logger.error(f"Failed to update last_updated for {comp.ticker}: {e}")

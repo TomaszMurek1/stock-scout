@@ -1,7 +1,7 @@
 "use client";
 
 import { FC } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +23,14 @@ interface AddStockModalProps {
   onSuccess?: () => void;
 }
 
+const LABEL_CLASS = "text-blue-900 font-bold text-[10px] uppercase tracking-wider";
+const INPUT_CLASS = "bg-white text-xs h-9 focus:border-blue-500 focus:ring-blue-500";
+
 const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const {
     register,
     handleSubmit,
+    watch,
     errors,
     loading,
     selectedTicker,
@@ -38,11 +42,17 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
     currency,
     handleTickerSelect,
     onSubmit,
-  } = useAddStockForm({ onClose, onSuccess });
+    selectedAccount,
+    hasInsufficientBalance,
+    availableBalance,
+  } = useAddStockForm({ onClose, onSuccess, isOpen });
+
+  const getInputClassName = (hasError: boolean) => 
+    `${hasError ? "border-red-500" : "border-slate-300"} ${INPUT_CLASS}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[650px] bg-slate-50 p-0 overflow-hidden border-none shadow-2xl rounded-xl">
+      <DialogContent className="sm:max-w-[650px] bg-slate-50 p-0 overflow-hidden border-none shadow-2xl rounded-xl [&>button]:text-white [&>button]:hover:text-white/80">
         <DialogHeader className="from-blue-800 to-blue-900 bg-gradient-to-br border-b-4 border-blue-400 px-6 py-4 relative">
           <DialogTitle className="text-white text-xl font-bold flex items-center gap-2">
             Add Position
@@ -50,19 +60,12 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
           <DialogDescription className="text-blue-100/70 text-xs text-left font-medium">
             Enter the details of your stock purchase manually.
           </DialogDescription>
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-          >
-            <X className="h-4 w-4 text-white" />
-            <span className="sr-only">Close</span>
-          </button>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 grid grid-cols-4 gap-x-4 gap-y-7">
           {/* Row 1: Instrument (3) / Date (1) */}
           <div className="col-span-3 grid gap-2">
-            <Label htmlFor="symbol" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">Instrument</Label>
+            <Label htmlFor="symbol" className={LABEL_CLASS}>Instrument</Label>
             <TickerSelector
               onSelect={handleTickerSelect}
               placeholder="Search ticker..."
@@ -74,19 +77,19 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
             {errors.symbol && <span className="text-xs text-red-500 font-medium">Required</span>}
           </div>
           <div className="col-span-1 grid gap-2">
-            <Label htmlFor="trade_date" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">Date</Label>
+            <Label htmlFor="trade_date" className={LABEL_CLASS}>Date</Label>
             <Input
               id="trade_date"
               type="date"
               {...register("trade_date", { required: true })}
-              className={`${errors.trade_date ? "border-red-500" : "border-slate-300"} bg-white text-xs h-9 focus:border-blue-500 focus:ring-blue-500`}
+              className={getInputClassName(!!errors.trade_date)}
             />
              {errors.trade_date && <span className="text-xs text-red-500 font-medium">Required</span>}
           </div>
 
           {/* Row 2: Shares (1) / Price (1) / Currency (1) / FX (1) */}
           <div className="col-span-1 grid gap-2">
-            <Label htmlFor="shares" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">Shares</Label>
+            <Label htmlFor="shares" className={LABEL_CLASS}>Shares</Label>
             <Input
               id="shares"
               type="number"
@@ -94,11 +97,11 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
               min="0"
               placeholder="0.00"
               {...register("shares", { required: true, valueAsNumber: true, min: 0 })}
-              className={`${errors.shares ? "border-red-500" : "border-slate-300"} bg-white text-xs h-9 focus:border-blue-500 focus:ring-blue-500`}
+              className={getInputClassName(!!errors.shares)}
             />
           </div>
           <div className="col-span-1 grid gap-2">
-            <Label htmlFor="price" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">Price</Label>
+            <Label htmlFor="price" className={LABEL_CLASS}>Price</Label>
             <Input
               id="price"
               type="number"
@@ -106,11 +109,11 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
               min="0"
               placeholder="0.00"
               {...register("price", { required: true, valueAsNumber: true, min: 0 })}
-              className={`${errors.price ? "border-red-500" : "border-slate-300"} bg-white text-xs h-9 focus:border-blue-500 focus:ring-blue-500`}
+              className={getInputClassName(!!errors.price)}
             />
           </div>
           <div className="col-span-1 grid gap-2">
-            <Label htmlFor="currency" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider text-center">CCY</Label>
+            <Label htmlFor="currency" className={`${LABEL_CLASS} text-center`}>CCY</Label>
              <Input
               id="currency"
               placeholder="USD"
@@ -123,7 +126,7 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
              {/* Show Port. FX if CCY differs from Port. CCY */}
              {(!selectedTicker || currency !== portfolio?.currency) && (
                <>
-                 <Label htmlFor="currency_rate" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">
+                 <Label htmlFor="currency_rate" className={LABEL_CLASS}>
                    {portfolio?.currency === accountCurrency ? "FX Rate" : "Port. FX"}
                  </Label>
                  <Input
@@ -159,7 +162,7 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
 
           {/* Row 3: Account (3) / Fee (1) */}
           <div className="col-span-3 grid gap-2">
-            <Label htmlFor="account_id" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">Account</Label>
+            <Label htmlFor="account_id" className={LABEL_CLASS}>Account</Label>
             <select
               id="account_id"
               {...register("account_id", { required: true, valueAsNumber: true })}
@@ -173,7 +176,7 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
             </select>
           </div>
           <div className="col-span-1 grid gap-2">
-            <Label htmlFor="fee" className="text-blue-900 font-bold text-[10px] uppercase tracking-wider">Fee ({accountCurrency})</Label>
+            <Label htmlFor="fee" className={LABEL_CLASS}>Fee ({accountCurrency})</Label>
             <Input
               id="fee"
               type="number"
@@ -190,6 +193,9 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
             sumAccount={sumAccount}
             currency={currency}
             accountCurrency={accountCurrency}
+            fee={watch("fee") || 0}
+            hasInsufficientBalance={hasInsufficientBalance}
+            availableBalance={availableBalance}
           />
 
           <DialogFooter className="col-span-4 mt-2 flex justify-end gap-3">
@@ -204,8 +210,8 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
             </Button>
             <Button 
               type="submit" 
-              disabled={loading || !selectedTicker}
-              className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 shadow-lg shadow-blue-600/20"
+              disabled={loading || !selectedTicker || hasInsufficientBalance}
+              className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Adding..." : "Add Position"}

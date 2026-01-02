@@ -19,9 +19,9 @@ export function SearchResultsDropdown({
 }) {
     const hasResults = results.length > 0
     return (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-72 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-72 overflow-hidden flex flex-col">
             {hasResults ? (
-                <div className="overflow-y-auto max-h-64 divide-y divide-gray-100">
+                <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
                     {results.map((company) => (
                         <SearchResultItem
                             key={company.company_id ?? company.ticker}
@@ -31,14 +31,14 @@ export function SearchResultsDropdown({
                     ))}
                 </div>
             ) : (
-                <div className="px-4 py-3 text-sm text-gray-500 border-b border-gray-200">
+                <div className="px-4 py-3 text-sm text-gray-500">
                     {emptyMessage || "No companies found"}
                 </div>
             )}
             {showSearchMore && (
                 <button
                     type="button"
-                    className="w-full px-4 py-3 text-sm font-medium text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border-t border-gray-200 flex items-center justify-center transition-colors"
+                    className="w-full px-4 py-2 text-sm font-medium text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border-t border-gray-200 flex items-center justify-center transition-colors flex-shrink-0"
                     onClick={onSearchMore}
                     disabled={loadingMore}
                 >
