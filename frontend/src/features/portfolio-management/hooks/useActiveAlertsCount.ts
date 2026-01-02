@@ -16,16 +16,29 @@ export const useActiveAlertsCount = () => {
     const watchlistData = watchlist || [];
 
     const activeCount = useMemo(() => {
-        // Build price map
+        // Build data maps
         const prices: Record<string, number> = {};
+        const smas: Record<string, { sma50?: number, sma200?: number }> = {};
         
         holdings.forEach(h => {
-             if (h.price) prices[h.ticker] = h.price; 
+             if (h.price) prices[h.ticker] = h.price;
+             // Some holdings might have SMAs directly on them or in market_data
+             // types are loose here, so we check safely
+             if ((h as any).sma_50 || (h as any).sma_200) {
+                 smas[h.ticker] = { sma50: (h as any).sma_50, sma200: (h as any).sma_200 };
+             }
         });
 
         watchlistData.forEach(w => {
             if (w.market_data?.last_price) {
                 prices[w.ticker] = w.market_data.last_price;
+            }
+            if ((w.market_data as any)?.sma_50 || (w.market_data as any)?.sma_200) {
+                 smas[w.ticker] = { 
+                     ...smas[w.ticker],
+                     sma50: (w.market_data as any).sma_50 || smas[w.ticker]?.sma50,
+                     sma200: (w.market_data as any).sma_200 || smas[w.ticker]?.sma200
+                 };
             }
         });
 
@@ -35,15 +48,35 @@ export const useActiveAlertsCount = () => {
             if (alert.is_read) return false;
             if (alert.snoozed_until && new Date(alert.snoozed_until) > new Date()) return false;
 
-            // Must be triggered
             const price = prices[alert.ticker];
-            if (price === undefined) return false; // Can't trigger if no price data
+            const smaData = smas[alert.ticker];
 
             switch (alert.alert_type) {
                 case AlertType.PRICE_ABOVE:
-                    return price > alert.threshold_value;
+                    return price !== undefined && price > alert.threshold_value;
                 case AlertType.PRICE_BELOW:
-                    return price < alert.threshold_value;
+                    return price !== undefined && price < alert.threshold_value;
+                case AlertType.PERCENT_CHANGE_UP:
+                    // Need reference price (e.g. open/close prev day) to compute % change, 
+                    // for now skipping or simple price check if that was intent
+                    return false; 
+                case AlertType.SMA_50_ABOVE_SMA_200:
+                    if (smaData?.sma50 && smaData?.sma200) {
+                        return smaData.sma50 > smaData.sma200;
+                    }
+                    return false;
+                case AlertType.SMA_50_BELOW_SMA_200:
+                    if (smaData?.sma50 && smaData?.sma200) {
+                        return smaData.sma50 < smaData.sma200;
+                    }
+                    return false;
+                case AlertType.SMA_50_APPROACHING_SMA_200:
+                    if (smaData?.sma50 && smaData?.sma200) {
+                        const diff = Math.abs(smaData.sma50 - smaData.sma200);
+                        const percentDiff = (diff / smaData.sma200) * 100;
+                        return percentDiff <= Number(alert.threshold_value);
+                    }
+                    return false;
                 default:
                     return false;
             }

@@ -1,11 +1,11 @@
 export enum AlertType {
-    PRICE_ABOVE = "price_above",
-    PRICE_BELOW = "price_below",
-    PERCENT_CHANGE_UP = "percent_change_up",
-    PERCENT_CHANGE_DOWN = "percent_change_down",
-    SMA_50_ABOVE_SMA_200 = "sma_50_above_sma_200",
-    SMA_50_BELOW_SMA_200 = "sma_50_below_sma_200",
-    SMA_50_APPROACHING_SMA_200 = "sma_50_approaching_sma_200",
+    PRICE_ABOVE = "PRICE_ABOVE",
+    PRICE_BELOW = "PRICE_BELOW",
+    PERCENT_CHANGE_UP = "PERCENT_CHANGE_UP",
+    PERCENT_CHANGE_DOWN = "PERCENT_CHANGE_DOWN",
+    SMA_50_ABOVE_SMA_200 = "SMA_50_ABOVE_SMA_200",
+    SMA_50_BELOW_SMA_200 = "SMA_50_BELOW_SMA_200",
+    SMA_50_APPROACHING_SMA_200 = "SMA_50_APPROACHING_SMA_200",
 }
 
 export interface Alert {

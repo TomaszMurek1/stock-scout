@@ -20,6 +20,7 @@ from services.fundamentals.financials_batch_update_service import (
 from services.market.market_service import get_or_create_market
 from services.stock_data.stock_data_service import (
     fetch_and_save_stock_price_history_data,
+    update_smas_for_company,
 )
 from utils.db_retry import retry_on_db_lock
 
@@ -337,3 +338,13 @@ def ensure_fresh_data(
         market_name=market_name,
         include_quarterly=True,
     )
+    
+    # 3b) Check if SMAs are populated (in case price was up-to-date but SMAs missing)
+    # We re-fetch MD because fetch_and_save... might have created/updated it
+    try:
+        from database.stock_data import CompanyMarketData
+        md = db.query(CompanyMarketData).filter(CompanyMarketData.company_id == company.company_id).first()
+        if md and (md.sma_50 is None or md.sma_200 is None):
+            update_smas_for_company(db, company.company_id, market.market_id)
+    except Exception as e:
+        logger.error(f"Failed to backfill SMAs for {ticker}: {e}")
