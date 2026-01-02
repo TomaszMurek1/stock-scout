@@ -2,6 +2,7 @@ import {
   ApiHolding,
   Portfolio,
   PortfolioPerformance,
+  Account,
 } from "@/features/portfolio-management/types";
 import { apiClient } from "@/services/apiClient";
 import {
@@ -15,6 +16,7 @@ type CurrencyPair = Record<string, CurrencyPoint[]>;
 
 export interface PortfolioSlice {
   portfolio: Portfolio;
+  accounts: Account[];
   performance: PortfolioPerformance;
   transactions: Transaction[];
   currencyRates: Record<string, CurrencyPair>;
@@ -33,6 +35,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       watchlist: WatchlistStock[];
       transactions: Transaction[];
       holdings: ApiHolding[];
+      accounts: Account[];
     },
     actionPrefix = "portfolio/dashboard"
   ) => {
@@ -41,6 +44,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         portfolio: data.portfolio,
         performance: data.performance,
         transactions: data.transactions,
+        accounts: data.accounts || [],
       },
       false,
       `${actionPrefix}/core`
@@ -60,6 +64,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         watchlist: WatchlistStock[];
         transactions: Transaction[];
         holdings: ApiHolding[];
+        accounts: Account[];
       }>("/portfolio/dashboard");
       
       applyDashboardData(data);
@@ -155,6 +160,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
     transactions: [],
     currencyRates: {},
     holdings: [],
+    accounts: [],
     isLoading: false,
 
     refreshPortfolio: fetchDashboard,

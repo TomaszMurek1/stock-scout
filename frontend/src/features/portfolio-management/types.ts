@@ -37,8 +37,17 @@ export interface CurrencyRate {
   rate: number;
 }
 
+export interface Account {
+  id: number;
+  name: string;
+  type: string;
+  currency: string;
+  cash: number;
+}
+
 export interface UserPortfolioResponse {
   portfolio: PortfolioInfo;
+  accounts: Account[];
   holdings: HoldingItem[];
   watchlist: WatchlistItem[];
   currency_rates: CurrencyRate[];

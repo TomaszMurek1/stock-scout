@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Header } from "./parts/Header";
 import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
-import AddStockModal from "./modals/AddStockModal";
+import AddStockModal from "./modals/add-stock/AddStockModal";
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData";
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";

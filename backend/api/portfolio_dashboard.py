@@ -94,10 +94,30 @@ def get_portfolio_dashboard(
             "cash_available": snapshot["cash_available"] if snapshot else 0.0,
             "invested_value_current": snapshot["invested_value_current"] if snapshot else 0.0,
             "net_invested_cash": snapshot["net_invested_cash"] if snapshot else 0.0,
+            "accounts": [
+                {
+                    "id": acc.id,
+                    "name": acc.name,
+                    "type": acc.account_type,
+                    "currency": acc.currency or portfolio.currency,
+                    "cash": float(acc.cash)
+                }
+                for acc in portfolio.accounts
+            ]
         },
         "as_of_date": end_date.isoformat(),
         "performance": performance,
         "holdings": holdings,
         "watchlist": watchlist,
         "transactions": transactions,
+        "accounts": [
+            {
+                "id": acc.id,
+                "name": acc.name,
+                "type": acc.account_type,
+                "currency": acc.currency or portfolio.currency,
+                "cash": float(acc.cash)
+            }
+            for acc in portfolio.accounts
+        ]
     }

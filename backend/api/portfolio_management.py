@@ -17,6 +17,8 @@ from database.account import Account
 from database.company import Company
 from schemas.portfolio_schemas import TradeBase, TradeResponse, TransactionType
 from api.valuation_materialize import rematerialize_from_tx
+from services.fx.fx_rate_service import fetch_and_save_fx_rate
+from database.fx import FxRate
 from decimal import Decimal, getcontext
 import logging
 
@@ -81,11 +83,14 @@ def _require_account_currency(
     supplied_currency: Optional[str],
     action: str,
 ):
-    if supplied_currency and supplied_currency.upper() != account_currency:
-        raise HTTPException(
-            status_code=400,
-            detail=f"{action} currency must match account currency ({account_currency})",
-        )
+    # RELAXED: We now allow trade currency to differ from account currency
+    # if supplied_currency and supplied_currency.upper() != account_currency:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"{action} currency must match account currency ({account_currency})",
+    #     )
+    pass
+
 
 
 def _fx_rate_for_account(
@@ -94,14 +99,57 @@ def _fx_rate_for_account(
     provided_rate: Optional[Decimal],
 ) -> Decimal:
     base_ccy = (portfolio_currency or account_currency).upper()
+    trade_to_base_same = (provided_rate is None or provided_rate == Decimal("1"))
+    
+    # If explicit rate provided, use it
+    if provided_rate is not None:
+        return _dec(provided_rate)
+        
+    # Otherwise if currency matches base, return 1
     if account_currency == base_ccy:
         return Decimal("1")
-    if provided_rate is None:
-        raise HTTPException(
-            status_code=400,
-            detail="currency_rate is required when account currency differs from portfolio base currency",
-        )
-    return _dec(provided_rate)
+        
+    return Decimal("1")
+
+def _get_cross_fx_rate(db: Session, base: str, quote: str, date_obj) -> Decimal:
+    """Get FX rate for Base -> Quote on specific date. Fetches if missing."""
+    if base == quote:
+        return Decimal("1")
+        
+    # Check DB
+    rate = (
+        db.query(FxRate)
+        .filter_by(base_currency=base, quote_currency=quote, date=date_obj)
+        .first()
+    )
+    if rate:
+        return Decimal(str(rate.close))
+        
+    # Fetch if missing
+    fetch_and_save_fx_rate(base, quote, db, date_obj, date_obj)
+    
+    # Check DB again
+    rate = (
+        db.query(FxRate)
+        .filter_by(base_currency=base, quote_currency=quote, date=date_obj)
+        .first()
+    )
+    if rate:
+        return Decimal(str(rate.close))
+        
+    # If still missing, try inverse
+    rate_inv = (
+        db.query(FxRate)
+        .filter_by(base_currency=quote, quote_currency=base, date=date_obj)
+        .first()
+    )
+    if rate_inv and rate_inv.close:
+         return Decimal("1") / Decimal(str(rate_inv.close))
+
+    # Fallback (should be handled better in production)
+    log.warning(f"Could not find FX rate {base}->{quote} for {date_obj}. Assuming 1.0")
+    return Decimal("1")
+
 
 
 def _adjust_account_cash(db: Session, account: Account, delta: Decimal):
@@ -358,9 +406,19 @@ def buy_stock(
     qty = _dec(trade.shares)
     price = _dec(trade.price)
     fee = _dec(trade.fee or 0)
-    total_cost = qty * price + fee
-    if _dec(account.cash) < total_cost:
-        raise HTTPException(status_code=400, detail="Insufficient cash in account for BUY")
+    total_cost_trade_ccy = qty * price + fee
+    
+    # Calculate impact on Account Cash (convert Trade CCY -> Account CCY)
+    # Use explicit rate if provided, otherwise fetch
+    if trade.account_currency_rate:
+        fx_trade_to_account = _dec(trade.account_currency_rate)
+    else:
+        fx_trade_to_account = _get_cross_fx_rate(db, trade_ccy, account_ccy, tx_ts.date())
+        
+    total_cost_account_ccy = total_cost_trade_ccy * fx_trade_to_account
+    
+    if _dec(account.cash) < total_cost_account_ccy:
+        raise HTTPException(status_code=400, detail=f"Insufficient cash in account ({account.currency}) for BUY. Need {total_cost_account_ccy:.2f}, have {account.cash}")
 
     tx = Transaction(
         user_id=user.id,
@@ -371,8 +429,8 @@ def buy_stock(
         quantity=qty,
         price=price,
         fee=fee,
-        total_value=total_cost,
-        currency=account_ccy,
+        total_value=total_cost_trade_ccy,
+        currency=trade_ccy,
         currency_rate=fx,
         timestamp=tx_ts,
     )
@@ -380,7 +438,7 @@ def buy_stock(
     db.flush()
 
     apply_transaction_to_position(db, tx)
-    _adjust_account_cash(db, account, -total_cost)
+    _adjust_account_cash(db, account, -total_cost_account_ccy)
     db.commit()
 
     try:
@@ -432,9 +490,16 @@ def sell_stock(
     qty = _dec(trade.shares)
     price = _dec(trade.price)
     fee = _dec(trade.fee or 0)
-    total_value = (
-        qty * price
-    ) - fee
+    total_value_trade_ccy = (qty * price) - fee
+    
+    # Calculate impact on Account Cash (convert Trade CCY -> Account CCY)
+    # Use explicit rate if provided, otherwise fetch
+    if trade.account_currency_rate:
+        fx_trade_to_account = _dec(trade.account_currency_rate)
+    else:
+        fx_trade_to_account = _get_cross_fx_rate(db, trade_ccy, account_ccy, tx_ts.date())
+        
+    total_value_account_ccy = total_value_trade_ccy * fx_trade_to_account
 
     tx = Transaction(
         user_id=user.id,
@@ -445,8 +510,8 @@ def sell_stock(
         quantity=qty,
         price=price,
         fee=fee,
-        total_value=total_value,
-        currency=account_ccy,
+        total_value=total_value_trade_ccy,
+        currency=trade_ccy,
         currency_rate=fx,
         timestamp=tx_ts,
     )
@@ -454,7 +519,7 @@ def sell_stock(
     db.flush()
 
     apply_transaction_to_position(db, tx)
-    _adjust_account_cash(db, account, total_value)
+    _adjust_account_cash(db, account, total_value_account_ccy)
     db.commit()
 
     try:
