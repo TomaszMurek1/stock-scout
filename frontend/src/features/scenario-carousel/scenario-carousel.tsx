@@ -98,7 +98,7 @@ const ScenarioCarousel = () => {
   }, [activeIndex]);
 
   return (
-    <section className="relative px-4 py-8 md:px-6 lg:px-8 overflow-visible">
+    <section className="relative px-4 py-8 md:px-2 lg:px-4 overflow-visible">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">
         Choose a Scanning Scenario
       </h2>

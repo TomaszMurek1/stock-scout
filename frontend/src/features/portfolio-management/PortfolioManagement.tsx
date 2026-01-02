@@ -35,7 +35,7 @@ export default function PortfolioManagement() {
   if (isInitialLoad) {
     return (
       <div className="min-h-screen bg-gray-50 text-slate-900">
-        <div className="max-w-[1600px] mx-auto px-4 py-8 space-y-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-8 space-y-8">
            
            {/* 1. Header Card Skeleton (Matches <Header /> container) */}
            <div className="p-6 rounded-xl bg-white shadow-sm border border-gray-200 flex justify-between items-center animate-pulse">
@@ -128,54 +128,54 @@ export default function PortfolioManagement() {
 
   return (
     <div className="min-h-screen bg-gray-100 text-slate-900">
-      <div className="max-w-[1600px] mx-auto px-4 py-8 space-y-8">
-        {/* Header Card */}
-        <div className="p-6 rounded-xl bg-white shadow-sm border border-gray-200">
+      <div className="max-w-[1400px] mx-auto px-4 py-8">
+        {/* Main Card Container - wraps header and all content */}
+        <div className="p-6 rounded-xl bg-gray-100  space-y-6">
           <Header onAdd={() => setIsAddModalOpen(true)} />
+
+          <Tabs
+            defaultValue="portfolio"
+            value={activeTab}
+            onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
+            className="space-y-6"
+          >
+            <TabsList className="bg-slate-100/50 p-1 h-auto inline-flex">
+              <TabsTrigger
+                value="portfolio"
+                className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+              >
+                Portfolio
+              </TabsTrigger>
+              <TabsTrigger
+                value="performance"
+                className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+              >
+                Performance
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
+              <Summary
+                portfolio={portfolio}
+                performance={performance}
+                holdings={holdings}
+                selectedPeriod={selectedPeriod}
+                onPeriodChange={setSelectedPeriod}
+              />
+              <PortfolioTabs
+                onRemove={sell}
+                byHolding={totals.byHolding}
+                transactions={transactions}
+                isLoading={isLoading}
+                selectedPeriod={selectedPeriod}
+              />
+            </TabsContent>
+
+            <TabsContent value="performance" className="space-y-6 animate-in fade-in-0 mt-0">
+              <Performance />
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <Tabs
-          defaultValue="portfolio"
-          value={activeTab}
-          onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
-          className="space-y-6"
-        >
-          <TabsList className="bg-slate-100/50 p-1 h-auto inline-flex">
-            <TabsTrigger
-              value="portfolio"
-              className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
-            >
-              Portfolio
-            </TabsTrigger>
-            <TabsTrigger
-              value="performance"
-              className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
-            >
-              Performance
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
-            <Summary
-              portfolio={portfolio}
-              performance={performance}
-              holdings={holdings}
-              selectedPeriod={selectedPeriod}
-              onPeriodChange={setSelectedPeriod}
-            />
-            <PortfolioTabs
-              onRemove={sell}
-              byHolding={totals.byHolding}
-              transactions={transactions}
-              isLoading={isLoading}
-              selectedPeriod={selectedPeriod}
-            />
-          </TabsContent>
-
-          <TabsContent value="performance" className="space-y-6 animate-in fade-in-0 mt-0">
-            <Performance />
-          </TabsContent>
-        </Tabs>
 
         <AddStockModal
           isOpen={isAddModalOpen}

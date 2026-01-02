@@ -9,14 +9,18 @@ interface HeaderProps {
 
 export const Header: FC<HeaderProps> = ({ onAdd }) => {
   return (
-    <div className="mb-4 flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-bold">Portfolio management</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="flex items-start justify-between">
+      <div className="space-y-1 text-left">
+        <h1 className="text-2xl font-bold leading-tight block text-left" style={{ margin: 0, padding: 0, textAlign: 'left' }}>
+          Portfolio management
+        </h1>
+        <p className="text-sm text-muted-foreground text-left" style={{ margin: 0, padding: 0, textAlign: 'left' }}>
           Track positions, performance and cash flows.
         </p>
       </div>
-      <Button onClick={onAdd}>Buy stock 2</Button>
+      <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 text-white">
+        Buy instrument
+      </Button>
     </div>
   );
 };

@@ -9,7 +9,7 @@ import { useLocation } from "react-router-dom";
 export default function Home() {
   const location = useLocation();
   return (
-    <div className="container p-8">
+    <div className="max-w-[1400px] mx-auto p-8">
       <HeroSection />
       <ScenarioCarousel />
       <div className="mx-auto px-4 py-6 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4 shadow-sm flex flex-col gap-10">
