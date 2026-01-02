@@ -67,7 +67,8 @@ def fetch_and_save_stock_price_history_data_batch(
     if end_date is None:
         end_date = date.today()
     if start_date is None:
-        start_date = end_date - timedelta(days=100)
+        # Fetch 400 days to ensure we have at least 200 trading days for SMA200
+        start_date = end_date - timedelta(days=400)
     t0 = time.time()
     logger.info(
         (
@@ -238,12 +239,28 @@ def fetch_and_save_stock_price_history_data_batch(
             
         latest_price = float(df.loc[last_valid_idx, "Close"])
         
+        # Calculate SMAs (Rolling Averages)
+        closes = df['Close']
+        # We use the valid index to ensure we get the SMA corresponding to the latest price date
+        sma50_series = closes.rolling(window=50).mean()
+        sma200_series = closes.rolling(window=200).mean()
+        
+        latest_sma50 = sma50_series.loc[last_valid_idx]
+        latest_sma200 = sma200_series.loc[last_valid_idx]
+
         md = md_map.get(comp.company_id)
         if not md:
             md = CompanyMarketData(company_id=comp.company_id)
             db.add(md)
             
         md.current_price = latest_price
+        
+        if not pd.isna(latest_sma50):
+            md.sma_50 = float(latest_sma50)
+            
+        if not pd.isna(latest_sma200):
+            md.sma_200 = float(latest_sma200)
+
         md.last_updated = datetime.now(timezone.utc)
     
     try:

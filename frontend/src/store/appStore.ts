@@ -9,8 +9,9 @@ import { createFxRatesSlice, FxRatesSlice } from "./fxRates.slice";
 import { createAnalyticsSlice, AnalyticsSlice } from "./analytics.slice";
 import { createFibonacciElliottSlice, FibonacciElliottSlice } from "./fibonacciElliott.slice";
 import { createBasketsSlice, BasketsSlice } from "./baskets.slice";
+import { createAlertsSlice, AlertsSlice } from "./alerts.slice";
 
-export type AppState = PerformanceSlice & PortfolioSlice & WatchlistSlice & FxRatesSlice & AnalyticsSlice & FibonacciElliottSlice & BasketsSlice;
+export type AppState = PerformanceSlice & PortfolioSlice & WatchlistSlice & FxRatesSlice & AnalyticsSlice & FibonacciElliottSlice & BasketsSlice & AlertsSlice;
 
 export const useAppStore = create<AppState>()(
     devtools(
@@ -22,6 +23,7 @@ export const useAppStore = create<AppState>()(
             ...createAnalyticsSlice(set, get, api),
             ...createFibonacciElliottSlice(set),
             ...createBasketsSlice(set, get, api),
+            ...createAlertsSlice(set, get, api),
         }),
         { name: "AppStore" }
     )

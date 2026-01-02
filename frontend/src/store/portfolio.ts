@@ -9,6 +9,7 @@ import {
   Transaction,
   WatchlistStock,
 } from "@/features/portfolio-management/types";
+import { Alert } from "@/features/portfolio-management/types/alert.types";
 export type Holding = { shares: number; average_cost_currency: string };
 
 export type CurrencyPoint = { date: string; close: number };
@@ -36,6 +37,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       transactions: Transaction[];
       holdings: ApiHolding[];
       accounts: Account[];
+      alerts: Alert[];
     },
     actionPrefix = "portfolio/dashboard"
   ) => {
@@ -50,6 +52,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       `${actionPrefix}/core`
     );
     set({ holdings: data.holdings }, false, `${actionPrefix}/holdings`);
+    get().setAlerts(data.alerts || []);
     get().completeWatchlistLoad(data.watchlist, "watchlist/dashboardFulfilled");
   };
 
@@ -65,6 +68,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         transactions: Transaction[];
         holdings: ApiHolding[];
         accounts: Account[];
+        alerts: Alert[];
       }>("/portfolio/dashboard");
       
       applyDashboardData(data);

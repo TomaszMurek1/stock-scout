@@ -18,6 +18,7 @@ interface PortfolioTabsProps {
   onRemove: (ticker: string) => void;
   isLoading?: boolean;
   selectedPeriod?: Period;
+  externalTab?: string | null;
 }
 
 export default function PortfolioTabs({
@@ -26,8 +27,15 @@ export default function PortfolioTabs({
   onRemove,
   isLoading,
   selectedPeriod,
+  externalTab,
 }: PortfolioTabsProps) {
   const [activeTab, setActiveTab] = useState("holdings");
+
+  React.useEffect(() => {
+    if (externalTab) {
+      setActiveTab(externalTab);
+    }
+  }, [externalTab]);
 
   const bgColor =
     "data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900";

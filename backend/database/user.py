@@ -31,6 +31,7 @@ class User(Base):
     favorite_stocks = relationship(
         "FavoriteStock", back_populates="user", cascade="all, delete-orphan"
     )
+    alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
 
 
 class Invitation(Base):

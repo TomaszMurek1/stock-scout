@@ -11,6 +11,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return !!(localStorage.getItem("access_token") || localStorage.getItem("authToken"));
   });
 
+  // Helper to check refresh token validity without full decode logic duplication
+  const isRefreshTokenExpired = (token: string) => {
+      try {
+          const decoded = jwtDecode<TokenPayload>(token);
+          // Refresh tokens expire after days, checking strict expiry is fine
+          return decoded.exp * 1000 < Date.now(); 
+      } catch {
+          return true;
+      }
+  };
+
   const logout = useCallback(() => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("access_token");
@@ -34,9 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const isExpired = decoded.exp * 1000 < Date.now();
         
         if (isExpired) {
-          // If expired and we can't refresh (managed by apiClient), log out
-          // For AuthProvider, we just care if we should show logged in state
-          if (isAuthenticated) logout();
+          // Check if we have a refresh token before giving up
+          const refreshToken = localStorage.getItem("refreshToken") || localStorage.getItem("refresh_token");
+          
+          if (!refreshToken || isRefreshTokenExpired(refreshToken)) {
+             if (isAuthenticated) logout();
+          }
+          // If refresh token exists, we stay "authenticated" and let apiClient handle the refresh
+          // when a request is made.
         } else if (!isAuthenticated) {
           setIsAuthenticated(true);
         }

@@ -99,6 +99,15 @@ def get_holdings_for_user(db: Session, user: User) -> List[dict]:
 
         if latest_md and latest_md.current_price is not None:
             last_price = round(float(latest_md.current_price), 2)
+        
+        sma_50: Optional[float] = None
+        sma_200: Optional[float] = None
+        if latest_md:
+             if latest_md.sma_50 is not None:
+                 sma_50 = float(latest_md.sma_50)
+             if latest_md.sma_200 is not None:
+                 sma_200 = float(latest_md.sma_200)
+
         if pos.instrument_currency_code:
             currency = pos.instrument_currency_code
         elif pos.company and pos.company.market and pos.company.market.currency:
@@ -118,6 +127,8 @@ def get_holdings_for_user(db: Session, user: User) -> List[dict]:
                 "average_price": avg_price,
                 "last_price": last_price,
                 "currency": currency,
+                "sma_50": sma_50,
+                "sma_200": sma_200,
             }
         )
     return holdings
@@ -164,6 +175,8 @@ def _get_latest_market_data_for_company(
     last_price: Optional[float] = None
     currency: Optional[str] = None
     last_updated: Optional[str] = None
+    sma_50: Optional[float] = None
+    sma_200: Optional[float] = None
 
     if latest_md:
         if latest_md.current_price is not None:
@@ -176,11 +189,17 @@ def _get_latest_market_data_for_company(
             currency = latest_md.company.market.currency
         if latest_md.last_updated is not None:
             last_updated = latest_md.last_updated.isoformat()
+        if latest_md.sma_50 is not None:
+            sma_50 = float(latest_md.sma_50)
+        if latest_md.sma_200 is not None:
+            sma_200 = float(latest_md.sma_200)
 
     return {
         "last_price": last_price,
         "currency": currency,
         "last_updated": last_updated,
+        "sma_50": sma_50,
+        "sma_200": sma_200,
     }
 
 

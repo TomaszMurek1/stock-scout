@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Header } from "./parts/Header";
 import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
@@ -11,10 +12,30 @@ import PortfolioTabs from "./tabs/PortfolioTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Period } from "./types";
 
+
 export default function PortfolioManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "performance">("portfolio");
+  const [activeSubTab, setActiveSubTab] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd");
+  const location = useLocation();
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (location.state && (location.state as any).activeTab) {
+        // If navigating to alerts, we want top level 'portfolio' and sub-tab 'alerts'
+        if ((location.state as any).activeTab === 'alerts') {
+             setActiveTab('portfolio');
+             setActiveSubTab('alerts');
+        } else {
+             setActiveTab((location.state as any).activeTab);
+        }
+        
+        if ((location.state as any).scrollToTabs && tabsRef.current) {
+            tabsRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+  }, [location.state]);
 
   const { portfolio, holdings, transactions, performance, refreshPortfolio, sell, isLoading } =
     usePortfolioBaseData();
@@ -138,6 +159,7 @@ export default function PortfolioManagement() {
             value={activeTab}
             onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
             className="space-y-6"
+            ref={tabsRef}
           >
             <TabsList className="bg-slate-100/50 p-1 h-auto inline-flex">
               <TabsTrigger
@@ -168,6 +190,7 @@ export default function PortfolioManagement() {
                 transactions={transactions}
                 isLoading={isLoading}
                 selectedPeriod={selectedPeriod}
+                externalTab={activeSubTab}
               />
             </TabsContent>
 
