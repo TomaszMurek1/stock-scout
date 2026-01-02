@@ -101,7 +101,7 @@ export const StockBanner: React.FC<StockBannerProps> = ({
 
   return (
     <div
-      className={`w-full min-w-[900px] max-w-[1400px] rounded-2xl overflow-hidden relative shadow-2xl ${theme.backgroundGradientClasses} border ${theme.mainBorder}`}
+      className={`w-full min-w-[900px] max-w-[1600px] rounded-2xl overflow-hidden relative shadow-2xl ${theme.backgroundGradientClasses} border ${theme.mainBorder}`}
     >
       {/* Subtle background overlay */}
       <div className={`absolute inset-0 ${theme.accentOverlay} pointer-events-none`} />

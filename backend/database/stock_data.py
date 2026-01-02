@@ -39,8 +39,10 @@ class CompanyMarketData(Base):
     bid_price = Column(Float, nullable=True)
     ask_price = Column(Float, nullable=True)
     year_change = Column(Float, nullable=True)
-    fifty_day_average = Column(Float, nullable=True)
-    two_hundred_day_average = Column(Float, nullable=True)
+    year_change = Column(Float, nullable=True)
+    sma_50 = Column(Float, nullable=True)
+    sma_200 = Column(Float, nullable=True)
+    shares_outstanding = Column(Float, nullable=True)
     shares_outstanding = Column(Float, nullable=True)
 
     last_updated = Column(

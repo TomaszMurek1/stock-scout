@@ -3,8 +3,10 @@
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MaterialReactTable, type MRT_Row } from "material-react-table";
-import { Trash2 } from "lucide-react";
+import { Trash2, Bell } from "lucide-react";
 import { IconButton, Tooltip } from "@mui/material";
+import AddAlertModal from "@/features/portfolio-management/modals/add-alert/AddAlertModal";
+import { useState } from "react";
 import type { ApiHolding, Transaction, Period } from "../../types";
 import { useHoldingsColumns } from "./useHoldingsColumns";
 import { HoldingsEmptyState } from "./HoldingsEmptyState";
@@ -19,6 +21,7 @@ interface HoldingsTabProps {
 
 export default function HoldingsTab({ holdings, transactions, onRemove, isLoading, selectedPeriod = "ytd" }: HoldingsTabProps) {
   const navigate = useNavigate();
+  const [alertModalTicker, setAlertModalTicker] = useState<string | null>(null);
   const columns = useHoldingsColumns({ selectedPeriod });
 
   const transactionsByTicker = useMemo(() => {
@@ -114,17 +117,27 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
         positionActionsColumn="last"
         state={{ isLoading }}
         renderRowActions={({ row }) => (
-          <Tooltip title="Remove holding">
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                event.stopPropagation();
-                onRemove(row.original.ticker);
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </IconButton>
-          </Tooltip>
+          <div className="flex items-center gap-2">
+            <Tooltip title="Remove holding">
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemove(row.original.ticker);
+                }}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Set Alert">
+                <IconButton size="small" onClick={(e) => {
+                    e.stopPropagation();
+                    setAlertModalTicker(row.original.ticker);
+                }}>
+                    <Bell className="h-4 w-4 text-gray-500 hover:text-blue-600" />
+                </IconButton>
+            </Tooltip>
+          </div>
         )}
         renderDetailPanel={renderDetailPanel}
         muiTableBodyRowProps={{
@@ -152,6 +165,14 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
           },
         }}
       />
+      {alertModalTicker && (
+            <AddAlertModal
+                isOpen={!!alertModalTicker}
+                onClose={() => setAlertModalTicker(null)}
+                defaultTicker={alertModalTicker}
+                onSuccess={() => setAlertModalTicker(null)}
+            />
+      )}
     </div>
   );
 }

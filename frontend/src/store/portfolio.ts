@@ -2,12 +2,14 @@ import {
   ApiHolding,
   Portfolio,
   PortfolioPerformance,
+  Account,
 } from "@/features/portfolio-management/types";
 import { apiClient } from "@/services/apiClient";
 import {
   Transaction,
   WatchlistStock,
 } from "@/features/portfolio-management/types";
+import { Alert } from "@/features/portfolio-management/types/alert.types";
 export type Holding = { shares: number; average_cost_currency: string };
 
 export type CurrencyPoint = { date: string; close: number };
@@ -15,6 +17,7 @@ type CurrencyPair = Record<string, CurrencyPoint[]>;
 
 export interface PortfolioSlice {
   portfolio: Portfolio;
+  accounts: Account[];
   performance: PortfolioPerformance;
   transactions: Transaction[];
   currencyRates: Record<string, CurrencyPair>;
@@ -33,6 +36,8 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       watchlist: WatchlistStock[];
       transactions: Transaction[];
       holdings: ApiHolding[];
+      accounts: Account[];
+      alerts: Alert[];
     },
     actionPrefix = "portfolio/dashboard"
   ) => {
@@ -41,11 +46,13 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         portfolio: data.portfolio,
         performance: data.performance,
         transactions: data.transactions,
+        accounts: data.accounts || [],
       },
       false,
       `${actionPrefix}/core`
     );
     set({ holdings: data.holdings }, false, `${actionPrefix}/holdings`);
+    get().setAlerts(data.alerts || []);
     get().completeWatchlistLoad(data.watchlist, "watchlist/dashboardFulfilled");
   };
 
@@ -60,9 +67,68 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
         watchlist: WatchlistStock[];
         transactions: Transaction[];
         holdings: ApiHolding[];
+        accounts: Account[];
+        alerts: Alert[];
       }>("/portfolio/dashboard");
       
       applyDashboardData(data);
+
+      // Pre-load FX rates for all currency pairs
+      const portfolioCurrency = data.portfolio.currency;
+      const currencies = new Set<string>();
+
+      // Collect currencies from holdings
+      data.holdings.forEach((holding) => {
+        if (holding.instrument_ccy && holding.instrument_ccy !== portfolioCurrency) {
+          currencies.add(holding.instrument_ccy);
+        }
+      });
+
+      // Collect currencies from watchlist
+      data.watchlist.forEach((stock) => {
+        if (stock.market_data?.currency && stock.market_data.currency !== portfolioCurrency) {
+          currencies.add(stock.market_data.currency);
+        }
+      });
+
+      // Fetch FX rates for all unique currency pairs
+      if (currencies.size > 0) {
+        const pairs = Array.from(currencies).map((currency) => ({
+          base: currency,
+          quote: portfolioCurrency,
+        }));
+
+        try {
+          const { data: fxData } = await apiClient.post<Record<string, { 
+            base: string; 
+            quote: string; 
+            historicalData: { date: string; open: number; high: number; low: number; close: number }[] 
+          }>>("/fx-rate/batch", { pairs });
+
+          // Transform and store FX rates
+          const fxRatesForStore: Record<string, any[]> = {};
+          Object.entries(fxData).forEach(([pairKey, pairData]) => {
+            if (pairData.historicalData) {
+              fxRatesForStore[pairKey] = pairData.historicalData.map((item) => ({
+                base: pairData.base,
+                quote: pairData.quote,
+                date: item.date,
+                open: item.open,
+                high: item.high,
+                low: item.low,
+                close: item.close,
+              }));
+            }
+          });
+
+          // Update store with FX rates
+          get().setFxRates(fxRatesForStore);
+          console.log("Pre-loaded FX rates for pairs:", Object.keys(fxRatesForStore));
+        } catch (fxError) {
+          console.error("Failed to fetch FX rates:", fxError);
+          // Dashboard still works even if FX rates fail
+        }
+      }
     } catch (error) {
       setWatchlistLoadingState(false, "watchlist/dashboardRejected");
       throw error;
@@ -98,6 +164,7 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
     transactions: [],
     currencyRates: {},
     holdings: [],
+    accounts: [],
     isLoading: false,
 
     refreshPortfolio: fetchDashboard,

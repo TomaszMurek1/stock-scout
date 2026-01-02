@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MaterialReactTable, type MRT_Row } from "material-react-table";
 import { IconButton, Tooltip } from "@mui/material";
-import { Star } from "lucide-react";
-import { AlertsDialog } from "./AlertsDialog";
+import { Star, Bell } from "lucide-react";
 import { AppState, useAppStore } from "@/store/appStore";
 import type { WatchlistStock } from "./types";
 import { apiClient } from "@/services/apiClient";
 import { useWatchlistColumns } from "./useWatchlistColumns";
+import AddAlertModal from "@/features/portfolio-management/modals/add-alert/AddAlertModal";
 
 export function WatchlistTable() {
   const watchlist = useAppStore((state: AppState) => state.watchlist.data);
@@ -17,6 +17,7 @@ export function WatchlistTable() {
   const toggleWatchlist = useAppStore((state: AppState) => state.toggleWatchlist);
   const refreshWatchlist = useAppStore((state: AppState) => state.refreshWatchlist);
   const navigate = useNavigate();
+  const [alertModalTicker, setAlertModalTicker] = useState<string | null>(null);
 
   const columns = useWatchlistColumns();
   const data = useMemo(() => watchlist, [watchlist]);
@@ -183,7 +184,14 @@ export function WatchlistTable() {
                 <Star className="h-4 w-4 text-amber-600 fill-amber-500" />
               </IconButton>
             </Tooltip>
-            <AlertsDialog stockName={row.original.name} />
+            <Tooltip title="Set Alert">
+                <IconButton size="small" onClick={(e) => {
+                    e.stopPropagation();
+                    setAlertModalTicker(row.original.ticker);
+                }}>
+                    <Bell className="h-4 w-4 text-gray-500 hover:text-blue-600" />
+                </IconButton>
+            </Tooltip>
           </div>
         )}
         renderDetailPanel={renderDetailPanel}
@@ -212,6 +220,15 @@ export function WatchlistTable() {
           },
         }}
       />
+      
+      {alertModalTicker && (
+            <AddAlertModal
+                isOpen={!!alertModalTicker}
+                onClose={() => setAlertModalTicker(null)}
+                defaultTicker={alertModalTicker}
+                onSuccess={() => setAlertModalTicker(null)}
+            />
+      )}
     </div>
   );
 }

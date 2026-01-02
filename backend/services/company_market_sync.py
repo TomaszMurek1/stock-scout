@@ -37,6 +37,7 @@ YAHOO_TO_EXCHANGE: Dict[str, str] = {
     "WAR": "XWAR",
     "ICE": "XICE",
     "STO": "XSTO",
+    "AMS": "XAMS",  # Amsterdam
 }
 
 

@@ -1,4 +1,5 @@
 import { FC, useEffect, useMemo, useState } from "react";
+import { TrendingUp } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -13,7 +14,7 @@ import { format, subDays, subMonths, subYears, startOfYear, parseISO } from "dat
 import { Card } from "@/components/ui/Layout";
 import { useAppStore } from "@/store/appStore";
 import { apiClient } from "@/services/apiClient";
-import { PeriodSelector } from "@/components/stock-one-pager/period-selector";
+import { PeriodSelector } from "@/features/stock-one-pager/period-selector";
 
 // Reuse the Period type from existing selector
 type Period = "1M" | "1Q" | "YTD" | "1Y" | "All";
@@ -114,17 +115,32 @@ const PerformanceChart: FC = () => {
 
   return (
     <Card className="p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">Portfolio Value Over Time</h3>
-          <p className="text-sm text-slate-500">Asset allocation history</p>
+      {(loading || chartData.length > 0) && (
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Portfolio Value Over Time</h3>
+            <p className="text-sm text-slate-500">Asset allocation history</p>
+          </div>
+          <PeriodSelector selectedPeriod={period} onSelect={setPeriod} />
         </div>
-        <PeriodSelector selectedPeriod={period} onSelect={setPeriod} />
-      </div>
+      )}
 
-      <div className="h-[400px] w-full">
+      <div className={chartData.length === 0 && !loading ? "h-auto w-full" : "h-[400px] w-full"}>
         {loading ? (
-          <div className="h-full flex items-center justify-center text-slate-400">Loading chart data...</div>
+          <div className="h-[400px] flex items-center justify-center text-slate-400">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mr-3" />
+            Loading chart data...
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center p-12 border border-dashed border-slate-200 rounded-xl bg-slate-50/30">
+            <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+              <TrendingUp className="w-10 h-10 text-slate-300" />
+            </div>
+            <h4 className="text-lg font-bold text-slate-800">No performance data yet</h4>
+            <p className="text-sm text-slate-500 max-w-[320px] mt-2 leading-relaxed">
+              Your portfolio growth chart will appear here once you've added stocks and we've processed at least two days of historical value.
+            </p>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>

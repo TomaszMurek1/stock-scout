@@ -1,174 +1,243 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Bell, CheckCircle, Clock, X } from "lucide-react"
+import { useMemo, useEffect, useState } from "react"
+import { MaterialReactTable, type MRT_ColumnDef } from "material-react-table"
+import { useNavigate } from "react-router-dom"
+import { Bell } from "lucide-react"
+import { useAppStore } from "@/store/appStore"
+import { AlertType, Alert } from "@/features/portfolio-management/types/alert.types"
+import { useShallow } from "zustand/react/shallow"
 
-interface Alert {
-    id: string
-    symbol: string
-    message: string
-    type: "price" | "technical" | "volume"
-    date: string
-    read: boolean
-    snoozed: boolean
-}
+// Sub-components and Utils
+import { AlertRow } from "./parts/AlertUtils"
+import { AlertStatusBadge } from "./parts/AlertStatusBadge"
+import { AlertAssetCell } from "./parts/AlertAssetCell"
+import { AlertValueCell } from "./parts/AlertValueCell"
+import { AlertConditionCell } from "./parts/AlertConditionCell"
+import { AlertInfoCell } from "./parts/AlertInfoCell"
+import { AlertRowActions } from "./parts/AlertRowActions"
 
 export default function AlertsTab() {
-    const [alerts, setAlerts] = useState<Alert[]>([
-        {
-            id: "1",
-            symbol: "AAPL",
-            message: "AAPL dropped 32% from recent high",
-            type: "price",
-            date: "2023-04-15T10:30:00",
-            read: false,
-            snoozed: false,
-        },
-        {
-            id: "2",
-            symbol: "GOOGL",
-            message: "GOOGL triggered a golden cross",
-            type: "technical",
-            date: "2023-04-14T14:45:00",
-            read: true,
-            snoozed: false,
-        },
-        {
-            id: "3",
-            symbol: "TSLA",
-            message: "TSLA trading volume 3x above average",
-            type: "volume",
-            date: "2023-04-13T09:15:00",
-            read: false,
-            snoozed: true,
-        },
-        {
-            id: "4",
-            symbol: "MSFT",
-            message: "MSFT crossed below 200-day moving average",
-            type: "technical",
-            date: "2023-04-12T11:20:00",
-            read: false,
-            snoozed: false,
-        },
-        {
-            id: "5",
-            symbol: "AMZN",
-            message: "AMZN up 15% from recent low",
-            type: "price",
-            date: "2023-04-11T15:30:00",
-            read: true,
-            snoozed: false,
-        },
-    ])
+    const { alerts, isLoadingAlerts, updateAlert, deleteAlert, clearAllAlerts } = useAppStore(
+        useShallow((state) => ({
+            alerts: state.alerts,
+            isLoadingAlerts: state.isLoadingAlerts,
+            updateAlert: state.updateAlert,
+            deleteAlert: state.deleteAlert,
+            clearAllAlerts: state.clearAllAlerts,
+        }))
+    );
+    
+    const navigate = useNavigate();
+    const portfolioHoldings = useAppStore(useShallow((state) => state.portfolio.data?.holdings || []));
+    const watchlist = useAppStore(useShallow((state) => state.watchlist.data || []));
 
-    const markAsRead = (id: string) => {
-        setAlerts(alerts.map((alert) => (alert.id === id ? { ...alert, read: true } : alert)))
+    // State to lookup names and prices
+    const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
+    const [companyNames, setCompanyNames] = useState<Record<string, string>>({});
+    const [smas, setSmas] = useState<Record<string, { sma50?: number, sma200?: number }>>({});
+    const [triggeredAlerts, setTriggeredAlerts] = useState<Record<number, boolean>>({});
+
+    useEffect(() => {
+        const prices: Record<string, number> = {};
+        const names: Record<string, string> = {};
+        const newSmas: Record<string, { sma50?: number, sma200?: number }> = {};
+        
+        portfolioHoldings.forEach((h: any) => {
+             if (h.last_price) prices[h.ticker] = h.last_price; 
+             if (h.name) names[h.ticker] = h.name;
+             if (h.sma_50 || h.sma_200) {
+                 newSmas[h.ticker] = { sma50: h.sma_50, sma200: h.sma_200 };
+             }
+        });
+
+        watchlist.forEach((w: any) => {
+            if (w.market_data?.last_price) {
+                prices[w.ticker] = w.market_data.last_price;
+            }
+            if (w.name) names[w.ticker] = w.name;
+            if (w.market_data?.sma_50 || w.market_data?.sma_200) {
+                 newSmas[w.ticker] = { 
+                     ...newSmas[w.ticker],
+                     sma50: w.market_data.sma_50 || newSmas[w.ticker]?.sma50,
+                     sma200: w.market_data.sma_200 || newSmas[w.ticker]?.sma200
+                 };
+            }
+        });
+
+        setCurrentPrices(prices);
+        setCompanyNames(names);
+        setSmas(newSmas);
+
+        // Calculate triggered state
+        const newTriggered: Record<number, boolean> = {};
+        alerts.forEach(alert => {
+             const price = prices[alert.ticker];
+             const smaData = newSmas[alert.ticker];
+             
+             if (price !== undefined) {
+                 let isTriggered = false;
+                 switch (alert.alert_type) {
+                     case AlertType.PRICE_ABOVE:
+                         isTriggered = price > alert.threshold_value;
+                         break;
+                     case AlertType.PRICE_BELOW:
+                         isTriggered = price < alert.threshold_value;
+                         break;
+                     case AlertType.SMA_50_ABOVE_SMA_200:
+                         if (smaData?.sma50 && smaData?.sma200) {
+                             isTriggered = smaData.sma50 > smaData.sma200;
+                         }
+                         break;
+                     case AlertType.SMA_50_BELOW_SMA_200:
+                         if (smaData?.sma50 && smaData?.sma200) {
+                             isTriggered = smaData.sma50 < smaData.sma200;
+                         }
+                         break;
+                     case AlertType.SMA_50_APPROACHING_SMA_200:
+                         if (smaData?.sma50 && smaData?.sma200) {
+                             const diff = Math.abs(smaData.sma50 - smaData.sma200);
+                             const percentDiff = (diff / smaData.sma200) * 100;
+                             isTriggered = percentDiff <= Number(alert.threshold_value);
+                         }
+                         break;
+                 }
+                 newTriggered[alert.id] = isTriggered;
+             }
+        });
+        setTriggeredAlerts(newTriggered);
+
+    }, [alerts, portfolioHoldings, watchlist]);
+
+    const getAlertState = (alert: Alert): AlertRow['state'] => {
+        const isSnoozed = alert.snoozed_until && new Date(alert.snoozed_until) > new Date();
+        if (isSnoozed) return "snoozed";
+        if (alert.is_read) return "read";
+        const isLiveTriggered = triggeredAlerts[alert.id];
+        if (isLiveTriggered) return "triggered";
+        return "pending";
     }
 
-    const toggleSnooze = (id: string) => {
-        setAlerts(alerts.map((alert) => (alert.id === id ? { ...alert, snoozed: !alert.snoozed } : alert)))
-    }
+    const tableData = useMemo<AlertRow[]>(() => {
+        return alerts.map(alert => ({
+            ...alert,
+            currentPrice: currentPrices[alert.ticker],
+            currentSma: smas[alert.ticker],
+            companyName: companyNames[alert.ticker] || alert.ticker,
+            state: getAlertState(alert)
+        }));
+    }, [alerts, currentPrices, companyNames, triggeredAlerts, smas]);
 
-    const clearAlert = (id: string) => {
-        setAlerts(alerts.filter((alert) => alert.id !== id))
-    }
-
-    const clearAllAlerts = () => {
-        setAlerts([])
-    }
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString)
-        return (
-            date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
-            " at " +
-            date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-        )
-    }
-
-    const getTypeColor = (type: string) => {
-        switch (type) {
-            case "price":
-                return "bg-red-100 text-red-800"
-            case "technical":
-                return "bg-blue-100 text-blue-800"
-            case "volume":
-                return "bg-purple-100 text-purple-800"
-            default:
-                return "bg-gray-100 text-gray-800"
-        }
-    }
+    const columns = useMemo<MRT_ColumnDef<AlertRow>[]>(
+        () => [
+            {
+                accessorKey: 'state',
+                header: 'Status',
+                size: 100,
+                Cell: ({ cell }) => <AlertStatusBadge state={cell.getValue<AlertRow['state']>()} />,
+                muiTableHeadCellProps: { align: 'center' },
+                muiTableBodyCellProps: { align: 'center' },
+            },
+            {
+                accessorKey: 'companyName',
+                header: 'Asset',
+                size: 200,
+                Cell: ({ row }) => <AlertAssetCell row={row.original} onNavigate={(ticker) => navigate(`/stock-details/${ticker}`)} />,
+            },
+            {
+                accessorKey: 'currentPrice',
+                header: 'Current Value', 
+                size: 160,
+                Cell: ({ row }) => <AlertValueCell row={row.original} />,
+                muiTableHeadCellProps: { align: 'right' },
+                muiTableBodyCellProps: { align: 'right' },
+            },
+            {
+                accessorKey: 'threshold_value',
+                header: 'Condition',
+                size: 180,
+                Cell: ({ row }) => <AlertConditionCell row={row.original} />,
+                muiTableHeadCellProps: { align: 'center' },
+                muiTableBodyCellProps: { align: 'center' },
+            },
+            {
+                id: 'info',
+                header: 'Info',
+                size: 250,
+                Cell: ({ row }) => <AlertInfoCell row={row.original} isTriggered={triggeredAlerts[row.original.id]} />,
+            }
+        ],
+        [navigate, triggeredAlerts]
+    );
 
     return (
-        <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                <div className="flex items-center">
-                    <Bell className="mr-2 h-5 w-5 text-primary" />
-                    <h2 className="text-xl font-semibold text-gray-800">Alerts & Notifications</h2>
-                    <span className="ml-2 px-2 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-800">
-                        {alerts.filter((a) => !a.read).length} new
-                    </span>
-                </div>
-                <Button variant="outline" size="sm" className="text-gray-600" onClick={clearAllAlerts}>
-                    Clear All
-                </Button>
-            </div>
-
-            {alerts.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">No alerts at this time.</div>
-            ) : (
-                <div className="divide-y divide-gray-200">
-                    {alerts.map((alert) => (
-                        <div
-                            key={alert.id}
-                            className={`p-4 ${alert.read ? "bg-white" : "bg-gray-50"} ${alert.snoozed ? "opacity-60" : "opacity-100"
-                                }`}
-                        >
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-start space-x-3">
-                                    <div className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(alert.type)}`}>
-                                        {alert.symbol}
-                                    </div>
-                                    <div>
-                                        <p className={`text-sm ${alert.read ? "text-gray-600" : "text-gray-900 font-medium"}`}>
-                                            {alert.message}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mt-1">{formatDate(alert.date)}</p>
-                                    </div>
-                                </div>
-                                <div className="flex space-x-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-gray-500 hover:text-gray-700"
-                                        onClick={() => markAsRead(alert.id)}
-                                    >
-                                        <CheckCircle className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`${alert.snoozed ? "text-amber-500" : "text-gray-500 hover:text-gray-700"}`}
-                                        onClick={() => toggleSnooze(alert.id)}
-                                    >
-                                        <Clock className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-gray-500 hover:text-gray-700"
-                                        onClick={() => clearAlert(alert.id)}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
+        <div className="shadow-sm rounded-lg overflow-hidden border border-gray-200 bg-white">
+            <MaterialReactTable
+                columns={columns}
+                data={tableData}
+                state={{ isLoading: isLoadingAlerts }}
+                enableTopToolbar={true}
+                enableColumnActions={false}
+                enableColumnFilters={false}
+                enablePagination={true}
+                enableSorting={true}
+                enableRowActions={true}
+                positionActionsColumn="last"
+                
+                renderTopToolbarCustomActions={() => (
+                     <div className="flex items-center p-2">
+                        <div className="flex items-center mr-4">
+                            <Bell className="mr-2 h-5 w-5 text-primary" />
+                            <h2 className="text-xl font-semibold text-gray-800">Alerts & Notifications</h2>
                         </div>
-                    ))}
-                </div>
-            )}
+                        {alerts.length > 0 && (
+                            <button 
+                                onClick={clearAllAlerts}
+                                className="text-sm text-gray-500 hover:text-red-600 underline"
+                            >
+                                Clear All
+                            </button>
+                        )}
+                     </div>
+                )}
+
+                renderRowActions={({ row }) => (
+                    <AlertRowActions 
+                        row={row.original} 
+                        onMarkAsRead={(id) => updateAlert(id, { is_read: true })}
+                        onToggleSnooze={(id, current) => {
+                            const snooze = current ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+                            updateAlert(id, { snoozed_until: snooze });
+                        }}
+                        onDelete={(id) => deleteAlert(id)}
+                    />
+                )}
+
+                muiTopToolbarProps={{ sx: { backgroundColor: "#e5e7eb", paddingY: 1, paddingX: 2 } }}
+                muiTableHeadCellProps={{ sx: { backgroundColor: "#e5e7eb" } }}
+                muiBottomToolbarProps={{ sx: { backgroundColor: "#e5e7eb" } }}
+
+                muiTableBodyRowProps={({ row }) => {
+                    let bg = '#fff';
+                    let borderLeft = '4px solid transparent';
+                    const state = row.original.state;
+                    
+                    if (state === 'triggered') { bg = '#fef2f2'; borderLeft = '4px solid #ef4444'; }
+                    else if (state === 'snoozed') { bg = '#f9fafb'; }
+                    else if (state === 'pending') { bg = '#eff6ff'; borderLeft = '4px solid #60a5fa'; }
+
+                    return {
+                        sx: {
+                            backgroundColor: bg,
+                            borderLeft: borderLeft,
+                            opacity: state === 'snoozed' ? 0.7 : 1,
+                            '&:hover': {
+                                backgroundColor: state === 'triggered' ? '#fee2e2' : '#f3f4f6'
+                            }
+                        }
+                    }
+                }}
+            />
         </div>
     )
 }

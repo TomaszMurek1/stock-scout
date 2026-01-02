@@ -47,7 +47,7 @@ export const StockCompare: FC = () => {
 
     return (
         <div className="min-h-screen bg-[#f8f4ef] text-gray-800">
-            <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+            <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-6">
                 <CompareStocksHeader tickerA={a.ticker} tickerB={b.ticker} latestYear={latestYear} />
 
                 <PerformanceRow

@@ -12,6 +12,7 @@ from services.portfolio_valuation_service import get_latest_portfolio_valuation
 from utils.portfolio_utils import parse_as_of_date
 from database.base import get_db
 from services.portfolio_metrics_service import PortfolioMetricsService
+from database.alert import Alert
 
 router = APIRouter()
 
@@ -81,6 +82,7 @@ def get_portfolio_dashboard(
     holdings = get_holdings_for_user(db, portfolio)
     watchlist = build_watchlist_full_for_user(db, user)
     transactions = get_transactions_for_portfolio(db, portfolio_id)
+    alerts = db.query(Alert).filter(Alert.user_id == user.id).all()
 
     snapshot = get_portfolio_snapshot(db, portfolio)
 
@@ -94,10 +96,31 @@ def get_portfolio_dashboard(
             "cash_available": snapshot["cash_available"] if snapshot else 0.0,
             "invested_value_current": snapshot["invested_value_current"] if snapshot else 0.0,
             "net_invested_cash": snapshot["net_invested_cash"] if snapshot else 0.0,
+            "accounts": [
+                {
+                    "id": acc.id,
+                    "name": acc.name,
+                    "type": acc.account_type,
+                    "currency": acc.currency or portfolio.currency,
+                    "cash": float(acc.cash)
+                }
+                for acc in portfolio.accounts
+            ]
         },
         "as_of_date": end_date.isoformat(),
         "performance": performance,
         "holdings": holdings,
         "watchlist": watchlist,
         "transactions": transactions,
+        "alerts": alerts,
+        "accounts": [
+            {
+                "id": acc.id,
+                "name": acc.name,
+                "type": acc.account_type,
+                "currency": acc.currency or portfolio.currency,
+                "cash": float(acc.cash)
+            }
+            for acc in portfolio.accounts
+        ]
     }

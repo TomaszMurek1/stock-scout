@@ -159,6 +159,10 @@ def fetch_and_save_stock_price_history_data(
             md.last_updated = datetime.now(timezone.utc)
             db.commit()
 
+            # Trigger SMA update using DB history to ensure we have enough data points
+            # (since stock_data here might only contain a few recent days)
+            update_smas_for_company(db, company.company_id, market_obj.market_id)
+
         return {
             "status": "success",
             "message": f"Updated {len(dates_to_update)} records",
@@ -169,6 +173,57 @@ def fetch_and_save_stock_price_history_data(
         db.rollback()
         logger.error(f"Update failed: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
+
+
+def update_smas_for_company(db: Session, company_id: int, market_id: int):
+    """
+    Calculate simple moving averages (50, 200) based on DB history 
+    and update CompanyMarketData.
+    """
+    try:
+        from database.stock_data import CompanyMarketData
+        import pandas as pd
+
+        # Fetch last 300 days of closing prices
+        history_rows = (
+            db.query(StockPriceHistory.date, StockPriceHistory.close)
+            .filter_by(company_id=company_id, market_id=market_id)
+            .order_by(StockPriceHistory.date.desc())
+            .limit(300)
+            .all()
+        )
+
+        if not history_rows:
+            return
+
+        # Create DataFrame (reversed because we fetched DESC)
+        df = pd.DataFrame(history_rows, columns=["date", "close"])
+        df = df.sort_values("date", ascending=True).set_index("date")
+
+        # Check sufficiency
+        if len(df) < 50:
+            return
+
+        # Calculate SMAs
+        closes = df['close']
+        sma50 = closes.rolling(window=50).mean().iloc[-1]
+        
+        sma200 = None
+        if len(df) >= 200:
+            sma200 = closes.rolling(window=200).mean().iloc[-1]
+
+        # Update Market Data
+        md = db.query(CompanyMarketData).filter_by(company_id=company_id).first()
+        if md:
+            if not pd.isna(sma50):
+                md.sma_50 = float(sma50)
+            if sma200 and not pd.isna(sma200):
+                md.sma_200 = float(sma200)
+            db.commit()
+            logger.info(f"Updated SMAs for company {company_id}: SMA50={md.sma_50}, SMA200={md.sma_200}")
+
+    except Exception as e:
+        logger.error(f"Error calculating SMAs for company {company_id}: {e}")
 
 
 def process_updates(

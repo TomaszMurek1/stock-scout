@@ -15,7 +15,7 @@ export function SearchResultItem({
 
   return (
     <div
-      className="px-4 py-3 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm group"
+      className="px-4 py-2 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 cursor-pointer transition-all duration-200 hover:shadow-sm group"
       onClick={() => onSelect(company)}
     >
       <div className="flex items-center justify-between">

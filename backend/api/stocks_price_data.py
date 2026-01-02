@@ -19,10 +19,12 @@ router = APIRouter(prefix="", tags=["Stock Data"])
 @router.get("/{ticker}/candles")
 def get_stock_candles(
     ticker: str,
+    limit: int = Query(52, description="Number of latest candles to return (default: 52)"),
     db: Session = Depends(get_db),
 ):
     """
-    Returns weekly candles for the last 52 weeks + volume info.
+    Returns weekly candles for the last N weeks + volume info.
+    Use limit=1 to get only the latest candle for price checking.
     """
     ticker = ticker.upper().strip()
     company = db.query(Company).filter(Company.ticker == ticker).first()
@@ -73,8 +75,8 @@ def get_stock_candles(
     # Resample
     df_weekly = df.resample("W-FRI").agg(agg_dict).dropna()
     
-    # Slice to last 52 weeks if we fetched more
-    df_weekly = df_weekly.iloc[-52:]
+    # Slice to last N weeks based on limit parameter
+    df_weekly = df_weekly.iloc[-limit:]
 
     # Format for response
     result = []

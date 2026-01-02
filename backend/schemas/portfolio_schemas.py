@@ -39,6 +39,7 @@ class TradeBase(BaseModel):
 
     # 👇 new (for multi-account support)
     account_id: Optional[int] = Field(None, description="Account ID for the trade")
+    account_currency_rate: Optional[Decimal] = Field(None, description="FX rate from Trade Currency to Account Currency")
 
     note: Optional[str] = None
 
@@ -227,8 +228,18 @@ class PortfolioHeader(BaseModel):
     name: str
     base_currency: str
 
+class AccountSchema(BaseModel):
+    id: int
+    name: str
+    type: str  # e.g. "BROKERAGE", "BANK"
+    currency: str
+    cash: float
+    
+    model_config = ConfigDict(from_attributes=True)
+
 class PortfolioMgmtResponse(BaseModel):
     portfolio: PortfolioHeader
+    accounts: List[AccountSchema]
     as_of: date
     totals: PortfolioMgmtTotals
     period_returns: PeriodReturns
