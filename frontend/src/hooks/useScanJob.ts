@@ -23,7 +23,7 @@ interface UseScanJobOptions<TResult> {
 export function useScanJob<TResult = any>({
   onCompleted,
   onError,
-  pollInterval = 2000,
+  pollInterval = 3000,
 }: UseScanJobOptions<TResult> = {}) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [status, setStatus] = useState<JobStatus | null>(null);

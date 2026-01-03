@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import time
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 import pandas as pd
 import numpy as np
@@ -16,7 +16,7 @@ from services.yfinance_data_update.data_update_service import fetch_and_save_sto
 from database.stock_data import StockPriceHistory
 from database.company import Company
 from database.analysis import AnalysisResult
-from services.analysis_results.analysis_results import get_or_update_analysis_result # Import helper if needed, or implement direct logic
+from services.scan_job_service import create_job, run_scan_task
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -39,15 +39,6 @@ def identify_choch_pattern(df, lookback_period=10):
     Identify Bearish to Bullish Change of Character (CHoCH).
     Pattern: Downtrend (Lower Highs, Lower Lows) -> Break above most recent significant Lower High.
     """
-    # Simply finding peaks/troughs
-    # We can use a simpler approach for "significant" points: 
-    # use the rolling window defined by lookback_period as sensitivity.
-    
-    # CRITICAL FIX: User's 'lookback_period' is often large (30, 60, 200) for scanning context.
-    # It should NOT be used as the window for defining what a "Swing High" or "Swing Low" is.
-    # A Swing High/Low is a local fractal, usually defined by 3-5 bars on either side.
-    # If we use window=30, we miss many obvious structure points.
-    
     SWING_WINDOW = 5 # Fixed small window for local extrema
     
     df = find_local_highs_lows(df, window=SWING_WINDOW)
@@ -59,13 +50,6 @@ def identify_choch_pattern(df, lookback_period=10):
     if len(lows) < 2:
         return False, None
 
-    # Strict Definition:
-    # 1. Identify the most recent Low (Last Low)
-    # 2. Identify the Previous Low
-    # 3. CONFIRMATION: Last Low < Previous Low (Downtrend continuation)
-    # 4. Find the High that occurred strictly BETWEEN these two lows (Intervening High)
-    # 5. SIGNAL: Current Price > Intervening High
-    
     last_low_idx = lows.index[-1]
     last_low_price = lows.iloc[-1]['Close']
     
@@ -77,21 +61,11 @@ def identify_choch_pattern(df, lookback_period=10):
         return False, None
         
     # Condition 2: Find Intervening High
-    # Slice highs between prev_low_idx and last_low_idx
-    # We use timestamps. 
-    
     intervening_highs = highs.loc[prev_low_idx : last_low_idx]
-    # Note: loc includes boundaries. The high strictly between should probably be used.
-    # But usually a Swing High forms between Swing Lows.
-    # If multiple, take the highest? Or the most recent?
-    # Standard Market Structure: The LH responsible for the LL. usually the highest point between.
     
     if intervening_highs.empty:
         return False, None
         
-    # Exclude the start/end if they happen to be exactly on the low dates (unlikely but possible if high=low on a doji?)
-    # Safest is to take the max high in that period.
-    
     # We need the price and the date
     target_high_price = intervening_highs['Close'].max()
     # Find the date of that max
@@ -113,19 +87,10 @@ def identify_choch_pattern(df, lookback_period=10):
         
     return False, None
 
-@router.post("/choch")
-def scan_choch(
-    request: ChochRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-        
-    if not request.markets and not request.basket_ids:
-
-        raise HTTPException(status_code=400, detail="Select at least one market or basket.")
-        
+def run_choch_scan(db: Session, request: ChochRequest):
+    """
+    Sync function to be run in background.
+    """
     start_time = time.time()
     results = []
     
@@ -140,14 +105,11 @@ def scan_choch(
         return {"status": "success", "data": []}
 
     # --- Caching Optimization Start ---
-    # Load existing results for "choch", with same windows
-    # Window mapping: short=lookback, long=days_to_check
-    
     analysis_type = "choch"
     
     existing_results = (
         db.query(AnalysisResult)
-        .filter(AnalysisResult.market_id.in_(market_ids)) # Rough filter by markets
+        .filter(AnalysisResult.market_id.in_(market_ids))
         .filter(AnalysisResult.company_id.in_([c.company_id for c in companies]))
         .filter(AnalysisResult.analysis_type == analysis_type)
         .filter(AnalysisResult.short_window == request.lookback_period)
@@ -174,11 +136,8 @@ def scan_choch(
         
         if is_fresh:
             if not is_negative:
-                # Fresh Positive: Skip Fetch, But Analyze (to get details)
                 companies_to_analyze.append(comp)
-            # Fresh Negative: Skip Both
         else:
-            # Stale or No Cache: Fetch AND Analyze
             companies_to_fetch.append(comp)
             companies_to_analyze.append(comp)
         
@@ -187,12 +146,10 @@ def scan_choch(
     if not companies_to_analyze:
         return {"status": "success", "data": []}
     
-    # 3. Update Data (Batch Fetch) for needed companies only
-    # We need enough data to detect patterns. 365 days should be safely enough for local highs/lows.
+    # 3. Update Data (Batch Fetch)
     lookback_days = 365 
     start_date = today - timedelta(days=lookback_days)
     
-    # We group by market to batch fetch
     companies_by_market = {}
     for c in companies_to_fetch:
         m_name = c.market.name if c.market else "Unknown"
@@ -211,7 +168,6 @@ def scan_choch(
             )
             
     # 4. Analyze & Update Cache
-    
     for comp in companies_to_analyze:
         hist = db.query(StockPriceHistory).filter(
             StockPriceHistory.company_id == comp.company_id,
@@ -222,7 +178,6 @@ def scan_choch(
         details = None
         
         if hist and len(hist) >= 30:
-            # Convert to DataFrame
             data = [{
                 "Date": h.date,
                 "Close": h.close,
@@ -237,7 +192,6 @@ def scan_choch(
             
             is_choch, details = identify_choch_pattern(df, lookback_period=request.lookback_period)
         
-        # Save Result to DB
         cached = existing_map.get(comp.company_id)
         if not cached:
             cached = AnalysisResult(
@@ -251,48 +205,25 @@ def scan_choch(
             
         cached.last_updated = datetime.utcnow()
         if is_choch:
-            # cached.cross_date should be the date of the event (breakout)
-            cached.cross_date = datetime.strptime(details['date'], "%Y-%m-%d").date()
-            
-            cached.cross_price = float(details['break_price'])
-            # We can put days since pattern in days_since_cross
-            cached.days_since_cross = int((today - cached.cross_date).days)
-            
-            # Prepare chart data
-            # Ensure we cover the LL and LH dates.
-            # Find the earliest date relevant to the pattern.
-            p_dates = []
-            
-            # Helper to normalize dates
             def normalize_date(d):
                 if isinstance(d, str):
                     return datetime.strptime(d, "%Y-%m-%d").date()
                 elif hasattr(d, 'date'):
                     return d.date()
                 return d
-                
-            p_dates.append(normalize_date(details['date']))
+
+            cached.cross_date = normalize_date(details['date'])
+            cached.cross_price = float(details['break_price'])
+            cached.days_since_cross = int((today - cached.cross_date).days)
+            
+            p_dates = [cached.cross_date]
             if 'last_ll_date' in details:
                 p_dates.append(normalize_date(details['last_ll_date']))
             if 'last_lh_date' in details:
                 p_dates.append(normalize_date(details['last_lh_date']))
             
-            # Now all are date objects
             earliest_dt = sorted(p_dates)[0]
-            
-            # Calculate days to slice
-            # We want to show:
-            # 1. The pattern context (LL, LH, Break)
-            # 2. The "Scan Range" start (requested by user)
-            
             scan_limit_date = today - timedelta(days=request.days_to_check)
-            
-            # Ensure type safety for comparison (earliest_dt is already date object)
-            
-            # Cutoff is the earlier of:
-            # - Pattern Start - 45 days (context)
-            # - Scan Start Date (so we can visualize the vertical line)
-            
             cutoff_date = min(earliest_dt - timedelta(days=15), scan_limit_date)
             
             chart_hist = [h for h in hist if h.date >= cutoff_date]
@@ -321,8 +252,29 @@ def scan_choch(
             cached.days_since_cross = None
             
     db.commit()
-            
     elapsed = time.time() - start_time
     logger.info(f"CHoCH scan finished in {elapsed:.2f}s. Found {len(results)} matches.")
     
     return {"status": "success", "data": results}
+
+@router.post("/choch")
+def scan_choch(
+    request: ChochRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+        
+    if not request.markets and not request.basket_ids:
+        raise HTTPException(status_code=400, detail="Select at least one market or basket.")
+        
+    job = create_job(db, "choch")
+
+    def task_wrapper(db_session: Session):
+        return run_choch_scan(db_session, request)
+
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+
+    return {"job_id": job.id, "status": "PENDING"}

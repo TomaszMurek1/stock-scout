@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import time
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from services.auth.auth import get_current_user
 from schemas.stock_schemas import BreakoutRequest
@@ -14,6 +14,7 @@ from services.yfinance_data_update.data_update_service import (
 )
 from api.golden_cross import resolve_universe
 from services.company_filter_service import filter_by_market_cap
+from services.scan_job_service import create_job, run_scan_task
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -61,26 +62,10 @@ def detect_consolidation(prices: list[StockPriceHistory], consolidation_period: 
         "current_volume": window[-1].volume
     }
 
-
-@router.post("/breakout")
-def scan_consolidation(
-    request: BreakoutRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+def run_consolidation_scan(db: Session, request: BreakoutRequest):
     """
-    Scans for stocks trading in a tight consolidation range.
+    Core logic for consolidation scan, intended to run in the background.
     """
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
-        )
-    
-    if not request.basket_ids:
-         raise HTTPException(
-            status_code=400, detail="Select at least one basket."
-        )
-
     start_time = time.time()
     results = []
 
@@ -97,13 +82,11 @@ def scan_consolidation(
             return {"status": "success", "data": []}
 
     # 3. Fetch/Ensure Data
-    # Lookback: consolidation_period + buffer
     lookback_days = request.consolidation_period + 10 
     today = datetime.utcnow().date()
     start_date = today - timedelta(days=lookback_days * 2) 
     
     tickers_by_market = {}
-    
     for comp in companies:
         if comp.market:
             tickers_by_market.setdefault(comp.market.name, []).append(comp.ticker)
@@ -152,3 +135,33 @@ def scan_consolidation(
     logger.info(f"Consolidation scan processed {len(companies)} companies in {elapsed:.2f}s. Found {len(results)} matches.")
     
     return {"status": "success", "data": results}
+
+
+@router.post("/breakout")
+def scan_consolidation(
+    request: BreakoutRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Scans for stocks trading in a tight consolidation range.
+    """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+        )
+    
+    if not request.basket_ids:
+         raise HTTPException(
+            status_code=400, detail="Select at least one basket."
+        )
+
+    job = create_job(db, "consolidation")
+
+    def task_wrapper(db_session: Session):
+        return run_consolidation_scan(db_session, request)
+
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+
+    return {"job_id": job.id, "status": "PENDING"}
