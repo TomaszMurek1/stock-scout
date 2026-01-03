@@ -38,6 +38,9 @@ YAHOO_TO_EXCHANGE: Dict[str, str] = {
     "ICE": "XICE",
     "STO": "XSTO",
     "AMS": "XAMS",  # Amsterdam
+    "GER": "XETR",  # Xetra (Germany)
+    "DE": "XETR",
+    "XETR": "XETR",
 }
 
 
