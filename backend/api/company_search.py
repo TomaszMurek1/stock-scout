@@ -207,7 +207,7 @@ def _search_yfinance(search: str, limit: int, db: Session) -> list[dict]:
     return results
 
 
-@router.get("/")
+@router.get("")
 def search_companies(
     search: Optional[str] = Query(None, description="Search by name or ticker"),
     market_id: Optional[int] = Query(None, description="Market ID"),

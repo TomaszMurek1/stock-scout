@@ -10,7 +10,7 @@ from services.auth.auth import get_current_user
 
 router = APIRouter()
 
-@router.get("/", response_model=List[AlertResponse])
+@router.get("", response_model=List[AlertResponse])
 def get_alerts(
     db: Session = Depends(get_db),
     user=Depends(get_current_user)
@@ -18,7 +18,7 @@ def get_alerts(
     """Get all alerts for the current user."""
     return db.query(Alert).filter(Alert.user_id == user.id).all()
 
-@router.post("/", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
 def create_alert(
     alert: AlertCreate,
     db: Session = Depends(get_db),
@@ -81,7 +81,7 @@ def delete_alert(
     db.commit()
     return None
 
-@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 def delete_all_alerts(
     db: Session = Depends(get_db),
     user=Depends(get_current_user)
