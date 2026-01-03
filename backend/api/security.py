@@ -8,8 +8,9 @@ from requests import Session
 from database.base import get_db
 from database.user import User
 from passlib.context import CryptContext
+from core.config import settings
 
-SECRET_KEY = "f9bf78b9a18ce6d46a0cd2b0b86df9da"  # Use env var in production
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 240
 REFRESH_TOKEN_EXPIRE_DAYS = 1
