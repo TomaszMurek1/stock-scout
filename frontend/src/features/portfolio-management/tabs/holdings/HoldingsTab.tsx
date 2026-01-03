@@ -24,6 +24,48 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
   const [alertModalTicker, setAlertModalTicker] = useState<string | null>(null);
   const columns = useHoldingsColumns({ selectedPeriod });
 
+  const groupedHoldings = useMemo(() => {
+    if (!holdings) return [];
+    
+    const groups: Record<string, ApiHolding> = {};
+
+    for (const h of holdings) {
+      const key = h.ticker.toUpperCase();
+      if (!groups[key]) {
+        // Clone to avoid mutating original if needed, though here we're creating new object structure effectively
+        groups[key] = { ...h }; 
+        // Ensure PnL objects are cloned so we can sum into them safely
+        groups[key].period_pnl = { ...h.period_pnl };
+        groups[key].period_pnl_instrument_ccy = { ...h.period_pnl_instrument_ccy };
+      } else {
+        const existing = groups[key];
+        
+        // Weighted averages for costs
+        const totalShares = existing.shares + h.shares;
+        if (totalShares > 0) {
+          existing.average_cost_instrument_ccy = 
+            (existing.average_cost_instrument_ccy * existing.shares + h.average_cost_instrument_ccy * h.shares) / totalShares;
+          
+          existing.average_cost_portfolio_ccy = 
+            (existing.average_cost_portfolio_ccy * existing.shares + h.average_cost_portfolio_ccy * h.shares) / totalShares;
+        }
+
+        // Sum shares
+        existing.shares += h.shares;
+
+        // Sum PnLs
+        for (const pKey in h.period_pnl) {
+          existing.period_pnl[pKey] = (existing.period_pnl[pKey] || 0) + (h.period_pnl[pKey] || 0);
+        }
+        for (const pKey in h.period_pnl_instrument_ccy) {
+          existing.period_pnl_instrument_ccy[pKey] = (existing.period_pnl_instrument_ccy[pKey] || 0) + (h.period_pnl_instrument_ccy[pKey] || 0);
+        }
+      }
+    }
+
+    return Object.values(groups);
+  }, [holdings]);
+
   const transactionsByTicker = useMemo(() => {
     return transactions.reduce<Record<string, Transaction[]>>((acc, tx) => {
       if (!tx.ticker) return acc;
@@ -111,7 +153,7 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
     <div className="shadow-sm">
       <MaterialReactTable
         columns={columns}
-        data={holdings}
+        data={groupedHoldings}
         enableRowActions
         enableExpanding
         positionActionsColumn="last"

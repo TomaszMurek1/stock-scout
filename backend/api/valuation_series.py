@@ -8,7 +8,7 @@ from sqlalchemy import and_
 from database.base import get_db
 from database.portfolio import Portfolio, Transaction
 from database.valuation import PortfolioValuationDaily
-from api.valuation_materialize import materialize_day
+from api.valuation_materialize import run_materialize_day
 
 router = APIRouter()
 
@@ -92,7 +92,7 @@ def valuation_series(
         r = by_date.get(d)
         if not r:
             # compute + persist for this day
-            res = materialize_day(portfolio_id=portfolio_id, as_of=d, db=db)
+            res = run_materialize_day(portfolio_id=portfolio_id, as_of=d, db=db)
             total = Decimal(res["total_value"])
             if include_breakdown:
                 stock = Decimal(res["by_stock"])
