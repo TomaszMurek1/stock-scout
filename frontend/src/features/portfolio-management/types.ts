@@ -131,6 +131,8 @@ export interface WatchlistStock {
     last_price: number | null;
     currency: string | null;
     last_updated: string | null;
+    sma_50?: number;
+    sma_200?: number;
   };
   note?: {
     research_status?: string | null;
@@ -210,4 +212,6 @@ export type ApiHolding = {
   last_price: number;
   period_pnl: Record<string, number>;
   period_pnl_instrument_ccy: Record<string, number>;
+  sma_50?: number;
+  sma_200?: number;
 };
