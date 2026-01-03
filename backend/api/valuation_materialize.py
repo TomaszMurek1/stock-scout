@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Dict, Iterable
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
@@ -17,8 +18,10 @@ from database.portfolio import Portfolio, Transaction, TransactionType
 from database.valuation import PortfolioValuationDaily
 from database.company import Company
 from api.valuation_preview import preview_day_value, fx_to_base_for_currency
+from services.scan_job_service import create_job, run_scan_task
 
 router = APIRouter()
+log = logging.getLogger(__name__)
 
 
 # ---------- helpers ----------
@@ -102,6 +105,7 @@ def _calculate_cash_balance(db: Session, portfolio_id: int, as_of: date, base_cc
     for ccy, amt in balances_by_ccy.items():
         if amt == 0:
             continue
+        # Use existing logic for FX
         rate = fx_to_base_for_currency(db, as_of, ccy, base_ccy, portfolio_id, None)
         if rate is None:
             log.warning("Missing FX rate for %s on %s; skipping cash component", ccy, as_of)
@@ -115,6 +119,11 @@ def _calculate_cash_balance(db: Session, portfolio_id: int, as_of: date, base_cc
 
 # IMPORTANT!
 # Call rematerialize_from_tx(...) right after insert/update/delete a transaction.
+# Note: this is synchronous and called from other parts of the system.
+# We should keep it synchronous or ensure callers don't time out.
+# Since it's triggered by transaction updates usually, valid to keep sync for now?
+# Or does it trigger 504? If triggered by UI transaction edit, it might.
+# But "materialize-day" endpoint acts as manual trigger.
 def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date):
     today = date.today()
     last_pvd = get_last_pvd_date(db, portfolio_id)
@@ -129,7 +138,7 @@ def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date):
 
     # Overwrite existing rows in [start..today] to fix cash carry-forward
     delete_range(db, portfolio_id, start, today)
-    materialize_range(portfolio_id=portfolio_id, start=start, end=today, db=db)
+    run_materialize_range(portfolio_id=portfolio_id, start=start, end=today, db=db)
 
 
 def _dec(x) -> Decimal:
@@ -220,14 +229,12 @@ def _day_net_contributions(
     return total.quantize(Decimal("0.0001"))
 
 
-# ---------- endpoints ----------
+# ---------- Logic ----------
 
-
-@router.post("/materialize-day", operation_id="valuation_materializeDay")
-def materialize_day(
+def run_materialize_day(
     portfolio_id: int,
     as_of: date,
-    db: Session = Depends(get_db),
+    db: Session,
 ):
     # ensure portfolio exists
     pf = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
@@ -342,15 +349,14 @@ def materialize_day(
     }
 
 
-@router.post("/materialize-range", operation_id="valuation_materializeRange")
-def materialize_range(
+def run_materialize_range(
     portfolio_id: int,
-    start: date = Query(..., description="YYYY-MM-DD"),
-    end: date = Query(..., description="YYYY-MM-DD"),
-    db: Session = Depends(get_db),
+    start: date,
+    end: date,
+    db: Session,
 ):
     if end < start:
-        raise HTTPException(status_code=400, detail="end < start")
+        raise ValueError("end < start")
 
     first_dt = get_first_tx_date(db, portfolio_id)
     if not first_dt:
@@ -360,8 +366,13 @@ def materialize_range(
     # both are 'date', safe to compare
     cur = max(start, first_dt)
     out = []
+    
+    # Chunking might be needed if range is HUGE, but typically it runs day by day.
+    # To report progress, we could update job status? run_scan_task doesn't support progress updates yet easily.
+    # Just run it.
+    
     while cur <= end:
-        res = materialize_day(portfolio_id=portfolio_id, as_of=cur, db=db)
+        res = run_materialize_day(portfolio_id=portfolio_id, as_of=cur, db=db)
         out.append(
             {
                 "date": res["date"],
@@ -378,3 +389,37 @@ def materialize_range(
         cur += timedelta(days=1)
 
     return {"portfolio_id": portfolio_id, "points": out}
+
+
+# ---------- endpoints ----------
+
+
+@router.post("/materialize-day", operation_id="valuation_materializeDay")
+def materialize_day(
+    background_tasks: BackgroundTasks,
+    portfolio_id: int,
+    as_of: date,
+    db: Session = Depends(get_db),
+):
+    job = create_job(db, "materialize_day")
+    def task_wrapper(db_session: Session):
+        return run_materialize_day(portfolio_id, as_of, db_session)
+    
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    return {"job_id": job.id, "status": "PENDING"}
+
+
+@router.post("/materialize-range", operation_id="valuation_materializeRange")
+def materialize_range(
+    background_tasks: BackgroundTasks,
+    portfolio_id: int,
+    start: date = Query(..., description="YYYY-MM-DD"),
+    end: date = Query(..., description="YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+):
+    job = create_job(db, "materialize_range")
+    def task_wrapper(db_session: Session):
+        return run_materialize_range(portfolio_id, start, end, db_session)
+    
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    return {"job_id": job.id, "status": "PENDING"}

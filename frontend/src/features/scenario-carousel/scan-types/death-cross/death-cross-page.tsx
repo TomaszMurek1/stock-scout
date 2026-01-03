@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DeathCrossOutput } from "./death-cross-output";
-import { toast } from "react-toastify";
 import { ScanResultsProps } from "./death-cross-page.types";
 import {
   baseDeathCrossFields,
@@ -16,10 +15,12 @@ import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
 import { Skull } from "lucide-react";
+import { useScanJob } from "@/hooks/useScanJob";
 
 export default function DeathCrossPage() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<ScanResultsProps | null>(null);
+  const { startJob, isLoading, result, error, status } = useScanJob<ScanResultsProps['data']>({
+    onCompleted: (data) => console.log("Death Cross completed", data),
+  });
 
   const form = useForm<DeathCrossFormValues>({
     resolver: zodResolver(deathCrossFormSchema),
@@ -44,60 +45,55 @@ export default function DeathCrossPage() {
     ];
   }, []);
 
-  const onSubmit: SubmitHandler<DeathCrossFormValues> = async (data) => {
-    setIsLoading(true);
-    try {
-      const response = await apiClient.post(
-        "/technical-analysis/death-cross",
-        {
-          short_window: data.shortPeriod,
-          long_window: data.longPeriod,
-          days_to_look_back: data.daysToLookBack,
-          min_volume: 1000000,
-          adjusted: false, //use true if you want adjusted_close be used for calculations instead of close
-          basket_ids: data.basketIds.map((id) => Number(id)),
-          min_market_cap: data.minMarketCap,
-        }
-      );
-
-      const result: ScanResultsProps = response.data;
-      setResults(result);
-      console.log("Death Cross Data:", result.data);
-      toast.success("Death Cross scan completed successfully");
-    } catch (error: any) {
-      console.error("API error:", error);
-
-      const errorMessage = error.response?.data?.detail
-        || error.message
-        || "Network error. Please try again.";
-
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit: SubmitHandler<DeathCrossFormValues> = (data) => {
+    startJob(() =>
+      apiClient.post("/technical-analysis/death-cross", {
+        short_window: data.shortPeriod,
+        long_window: data.longPeriod,
+        days_to_look_back: data.daysToLookBack,
+        min_volume: 1000000,
+        adjusted: false,
+        basket_ids: data.basketIds.map((id) => Number(id)),
+        min_market_cap: data.minMarketCap,
+      })
+    );
   };
 
   return (
     <div className="container">
       <BackToCarousel />
       <FormCardGenerator
-      title="Death Cross Scan"
-      icon={Skull}
-      subtitle={
-        <FormSubtitle description="Set parameters to scan for stocks showing a Death Cross pattern (bearish signal)." />
-      }
-    >
-      <FormFieldsGenerator<DeathCrossFormValues>
-        form={form}
-        formFields={formFields}
-        isLoading={isLoading}
-        onSubmit={onSubmit}
-      />
-      {/* Results - Memoized to prevent re-render on form changes */}
-      {useMemo(() => results && results.data && results.data.length > 0 && (
-        <DeathCrossOutput results={results.data} />
-      ), [results])}
-    </FormCardGenerator>
+        title="Death Cross Scan"
+        icon={Skull}
+        subtitle={
+          <FormSubtitle description="Set parameters to scan for stocks showing a Death Cross pattern (bearish signal)." />
+        }
+      >
+        <FormFieldsGenerator<DeathCrossFormValues>
+          form={form}
+          formFields={formFields}
+          isLoading={isLoading}
+          loadingText={status === "RUNNING" ? "Scanning in background..." : "Starting..."}
+          onSubmit={onSubmit}
+        />
+        
+         {/* Error Message */}
+         {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
+                <p>Error: {error}</p>
+            </div>
+        )}
+
+        {/* Results */}
+        {useMemo(() => result && result.length > 0 && (
+          <DeathCrossOutput results={result} />
+        ), [result])}
+         {result && result.length === 0 && (
+             <div className="mt-6 text-center text-gray-500">
+                No results found matching your criteria.
+             </div>
+        )}
+      </FormCardGenerator>
     </div>
   );
 }

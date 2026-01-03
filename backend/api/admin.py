@@ -1,6 +1,6 @@
 import logging
 import secrets
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database.base import get_db
@@ -19,6 +19,7 @@ from services.fundamentals.financials_batch_update_service import (
 )
 from services.admin_yfinance_probe import gather_yfinance_snapshot
 from services.basket_resolver import resolve_baskets_to_companies
+from services.scan_job_service import create_job, run_scan_task
 
 
 class SyncCompanyMarketsRequest(BaseModel):
@@ -99,12 +100,7 @@ def list_invitations(
     return invitations
 
 
-@router.post("/run-financials-market-update")
-def run_financials_batch_update(
-    market_name: str | None = None,
-    db: Session = Depends(get_db),
-    _: str = Depends(require_admin),  # Only admin can modify
-):
+def run_financials_market_update_task(db: Session, market_name: str | None = None):
     try:
         from database.market import Market
         from database.company import Company
@@ -127,18 +123,27 @@ def run_financials_batch_update(
 
         return {"status": "success", "results": results}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Financials update failed: {e}")
+        raise e  # Propagate to job handler
 
-
-@router.post("/run-financials-baskets")
-def run_financials_for_baskets(
-    payload: BasketRefreshRequest,
+@router.post("/run-financials-market-update")
+def run_financials_batch_update(
+    background_tasks: BackgroundTasks,
+    market_name: str | None = None,
     db: Session = Depends(get_db),
-    _: str = Depends(require_admin),
+    _: str = Depends(require_admin),  # Only admin can modify
 ):
-    if not payload.basket_ids:
-        raise HTTPException(status_code=400, detail="basket_ids are required")
-    market_ids, companies = resolve_baskets_to_companies(db, payload.basket_ids)
+    job = create_job(db, "financials_market_update")
+
+    def task_wrapper(db_session: Session):
+        return run_financials_market_update_task(db_session, market_name)
+
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    return {"job_id": job.id, "status": "PENDING"}
+
+
+def run_financials_for_baskets_task(db: Session, basket_ids: list[int]):
+    market_ids, companies = resolve_baskets_to_companies(db, basket_ids)
     if not companies:
         return {"status": "success", "results": [], "message": "No companies resolved"}
 
@@ -157,6 +162,25 @@ def run_financials_for_baskets(
         res = update_financials_for_tickers(db, tickers, market_name)
         results.append({"market": market_name, "tickers": tickers, "result": res})
     return {"status": "success", "results": results}
+
+
+@router.post("/run-financials-baskets")
+def run_financials_for_baskets(
+    payload: BasketRefreshRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    if not payload.basket_ids:
+        raise HTTPException(status_code=400, detail="basket_ids are required")
+    
+    job = create_job(db, "financials_basket_refresh")
+
+    def task_wrapper(db_session: Session):
+        return run_financials_for_baskets_task(db_session, payload.basket_ids)
+
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    return {"job_id": job.id, "status": "PENDING"}
 
 
 @router.post("/sync-company-markets")
@@ -205,6 +229,33 @@ def add_companies(
         return add_companies_via_yfinance(db, payload.tickers)
 
     raise HTTPException(status_code=400, detail="Must provide tickers or market_code")
+
+def run_add_companies_task(db: Session, payload: AddCompaniesRequest):
+    if payload.market_code:
+        return add_companies_for_market(db, payload.market_code)
+
+    if payload.tickers:
+        return add_companies_via_yfinance(db, payload.tickers)
+
+@router.post("/add-companies-job")
+def add_companies_job(
+    payload: AddCompaniesRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
+    """Asynchronously add companies by market code or ticker list."""
+    if not payload.market_code and not payload.tickers:
+         raise HTTPException(status_code=400, detail="Must provide tickers or market_code")
+    
+    job = create_job(db, "add_companies")
+    
+    def task_wrapper(db_session: Session):
+        return run_add_companies_task(db_session, payload)
+        
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    
+    return {"job_id": job.id, "status": "PENDING"}
 
 
 @router.post("/yfinance-probe")

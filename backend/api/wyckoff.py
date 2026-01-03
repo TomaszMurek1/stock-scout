@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 import pandas as pd
 
@@ -16,30 +16,17 @@ from database.stock_data import StockPriceHistory
 from database.company import Company
 from database.analysis import AnalysisResult
 from services.technical_analysis.wyckoff_analysis import analyze_wyckoff_accumulation
+from services.scan_job_service import create_job, run_scan_task
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-@router.post("/wyckoff")
-def scan_wyckoff_accumulation(
-    request: WyckoffRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+def run_wyckoff_scan(db: Session, request: WyckoffRequest):
     """
-    Scan for Wyckoff accumulation patterns using scoring + narrative approach.
-    
-    Detects observable price/volume patterns without claiming to understand institutional intent.
-    Returns stocks with overall score >= min_score threshold.
+    Sync function to be run in background.
     """
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-        
-    if not request.markets and not request.basket_ids:
-        raise HTTPException(status_code=400, detail="Select at least one market or basket.")
-        
     start_time = time.time()
     results = []
     
@@ -249,3 +236,32 @@ def scan_wyckoff_accumulation(
     logger.info(f"Wyckoff scan finished in {elapsed:.2f}s. Found {len(results)} matches above {request.min_score}% threshold.")
     
     return {"status": "success", "data": results}
+
+
+@router.post("/wyckoff")
+def scan_wyckoff_accumulation(
+    request: WyckoffRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Scan for Wyckoff accumulation patterns using scoring + narrative approach.
+    
+    Detects observable price/volume patterns without claiming to understand institutional intent.
+    Returns stocks with overall score >= min_score threshold.
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+        
+    if not request.markets and not request.basket_ids:
+        raise HTTPException(status_code=400, detail="Select at least one market or basket.")
+        
+    job = create_job(db, "wyckoff")
+
+    def task_wrapper(db_session: Session):
+        return run_wyckoff_scan(db_session, request)
+
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+
+    return {"job_id": job.id, "status": "PENDING"}

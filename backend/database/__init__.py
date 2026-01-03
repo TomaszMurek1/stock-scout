@@ -26,3 +26,4 @@ from .token_mgmt import RevokedToken
 from .user import User
 from .fx import FxRate
 from .baskets import Basket, BasketCompany, BasketType
+from .job import Job
