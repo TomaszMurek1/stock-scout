@@ -41,11 +41,6 @@ def run_scan_task(job_id: UUID, task_func: Callable[[Session], Any]):
     try:
         update_job_status(db, job_id, "RUNNING")
         
-        # --- SIMULATED DELAY FOR TESTING ---
-        import time
-        time.sleep(10)
-        # ------------------------------------
-        
         # Execute the actual task logic
         result_data = task_func(db)
         
