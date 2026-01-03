@@ -135,18 +135,17 @@ def import_transactions():
 
             elif tx_type in [TransactionType.DIVIDEND, TransactionType.TAX]:
                 company_id = get_company_id(db, symbol)
-                qty = 0 
                 price = 0
                 total_value_pln = abs(amount_pln)
+                # Correctly set quantity to the cash amount for these types so metrics work
+                qty = total_value_pln
                 currency = 'PLN'
                 currency_rate = 1.0
 
             elif tx_type in [TransactionType.DEPOSIT, TransactionType.INTEREST]:
                 total_value_pln = abs(amount_pln)
-                if tx_type == TransactionType.DEPOSIT:
-                    qty = amount_pln
-                else:
-                    qty = 0
+                # Correctly set quantity to the cash amount for these types so metrics work
+                qty = total_value_pln
                 
                 currency = 'PLN'
                 currency_rate = 1.0
@@ -176,6 +175,13 @@ def import_transactions():
             count += 1
 
         db.commit()
+        print("Zeroes fixed.")
+
+        # 4. Sync Account Cash
+        from api.positions_service import recompute_account_cash
+        recompute_account_cash(db, ACCOUNT_ID)
+        db.commit()
+        print(f"Account {ACCOUNT_ID} cash recomputed.")
         print(f"Successfully imported {count} transactions.")
         
         # Rematerialize

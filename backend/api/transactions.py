@@ -8,6 +8,7 @@ from database.portfolio import Transaction
 from api.positions_service import (
     reverse_transaction_from_position,
     apply_transaction_to_position,
+    recompute_account_cash,
 )
 from services.valuation.rematerializ import rematerialize_from_tx
 
@@ -37,6 +38,7 @@ def edit_transaction(transaction_id: int, payload: dict, db: Session = Depends(g
 
     # Re-apply new transaction effect
     apply_transaction_to_position(db, tx)
+    recompute_account_cash(db, tx.account_id)
     
     db.commit()
     
@@ -59,10 +61,14 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     portfolio_id = tx.portfolio_id
+    account_id = tx.account_id
     transaction_date = tx.timestamp.date()
     
     reverse_transaction_from_position(db, tx)
     db.delete(tx)
+    # Recompute cash after deletion
+    recompute_account_cash(db, account_id)
+    
     db.commit()
 
     # ADD THIS: Trigger portfolio rematerialization for metrics
@@ -117,6 +123,7 @@ def create_transaction(payload: dict, db: Session = Depends(get_db)):
 
     # Apply to position if applicable (BUY, SELL, TRANSFER_IN/OUT, DIVIDEND, INTEREST)
     apply_transaction_to_position(db, tx)
+    recompute_account_cash(db, tx.account_id)
 
     db.commit()
     

@@ -68,6 +68,7 @@ export interface Portfolio {
   cash_available: number;
   invested_value_current: number;
   net_invested_cash: number;
+  accounts?: Account[];
 }
 
 export interface PerformanceMetrics {

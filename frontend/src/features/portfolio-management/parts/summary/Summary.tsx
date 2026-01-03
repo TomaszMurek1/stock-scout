@@ -12,6 +12,7 @@ import {
 
 interface SummaryProps {
   portfolio: Portfolio;
+  accounts: any[]; // Or import Account type
   performance: PortfolioPerformance;
   holdings?: any[]; // Optional list of holdings
   selectedPeriod: Period;
@@ -118,7 +119,7 @@ const DataRow = ({
   </div>
 );
 
-export default function Summary({ portfolio, performance, holdings, selectedPeriod, onPeriodChange }: SummaryProps) {
+export default function Summary({ portfolio, accounts, performance, holdings, selectedPeriod, onPeriodChange }: SummaryProps) {
   // const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd"); // Lifted up
 
   const { currency } = portfolio;
@@ -154,7 +155,7 @@ export default function Summary({ portfolio, performance, holdings, selectedPeri
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><DollarSign size={20} /></div>
             <Label>Cash Available</Label>
           </div>
-          <Value value={portfolio.cash_available} currency={currency} />
+          <Value value={accounts?.reduce((sum: number, acc: any) => sum + (acc.cash || 0), 0) || 0} currency={currency} />
         </Card>
         <Card>
            <div className="flex items-center gap-3 mb-2">
@@ -373,7 +374,7 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
              ) : (
                   <div className="space-y-1">
                     <DataRow label="Beginning Value" value={breakdown.beginning_value} currency={currency} />
-                    <DataRow label="Net External Flows" value={breakdown.cash_flows.net_external} currency={currency} />
+                    <DataRow label="Net Deposits" value={breakdown.cash_flows.net_external} currency={currency} valueClassName="text-blue-600" />
                     <DataRow label="Income (Divs/Interest)" value={(breakdown.income_expenses?.dividends || 0) + (breakdown.income_expenses?.interest || 0)} currency={currency} />
                     <DataRow label="Fees & Taxes" value={((breakdown.income_expenses?.fees || 0) + (breakdown.income_expenses?.taxes || 0)) * -1} currency={currency} />
                     <DataRow label="Capital Gains" value={breakdown.pnl?.total_pnl_ex_flows || 0} currency={currency} isBold />

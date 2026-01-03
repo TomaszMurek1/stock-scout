@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 
 from database.valuation import PortfolioValuationDaily
 from database.portfolio import Transaction
+from database.account import Account
 from api.valuation_materialize import run_materialize_range
+from api.positions_service import recompute_account_cash
 
 def _get_last_pvd_date(db: Session, portfolio_id: int) -> date | None:
     return (
@@ -56,4 +58,11 @@ def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date, *, end: 
     _delete_range(db, portfolio_id, start, end)
 
     # Compute daily rows for [start..today]
+    # Compute daily rows for [start..today]
     run_materialize_range(portfolio_id=portfolio_id, start=start, end=end, db=db)
+
+    # Automatically sync "Account.cash" for all accounts in this portfolio
+    # This ensures "Cash Available" on dashboard matches the re-materialized history
+    accounts = db.query(Account).filter(Account.portfolio_id == portfolio_id).all()
+    for acc in accounts:
+        recompute_account_cash(db, acc.id)
