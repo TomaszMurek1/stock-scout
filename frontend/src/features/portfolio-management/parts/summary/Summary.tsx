@@ -374,7 +374,7 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
              ) : (
                   <div className="space-y-1">
                     <DataRow label="Beginning Value" value={breakdown.beginning_value} currency={currency} />
-                    <DataRow label="Net Deposits" value={breakdown.cash_flows.net_external} currency={currency} valueClassName="text-blue-600" />
+                    <DataRow label="Net Deposits" value={breakdown.cash_flows?.net_external || 0} currency={currency} valueClassName="text-blue-600" />
                     <DataRow label="Income (Divs/Interest)" value={(breakdown.income_expenses?.dividends || 0) + (breakdown.income_expenses?.interest || 0)} currency={currency} />
                     <DataRow label="Fees & Taxes" value={((breakdown.income_expenses?.fees || 0) + (breakdown.income_expenses?.taxes || 0)) * -1} currency={currency} />
                     <DataRow label="Capital Gains" value={breakdown.pnl?.total_pnl_ex_flows || 0} currency={currency} isBold />
@@ -382,7 +382,7 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
                         <DataRow label="Ending Value" value={breakdown.ending_value} currency={currency} isBold />
                     </div>
                  </div>
-             )}
+              )}
           </Card>
 
            {/* ITD Analysis (Always shown as reference) */}
@@ -414,7 +414,7 @@ Hard to time perfectly! Most add money when they have it (often after gains = hi
                  </div>
               ) : (
                  <div className="space-y-1">
-                    <DataRow label="Total Invested Cash" value={itd.cash_flows.net_external} currency={currency} />
+                    <DataRow label="Total Invested Cash" value={itd.cash_flows?.net_external || 0} currency={currency} />
                     <DataRow label="Total Dividends Received" value={itd.income_expenses?.dividends || 0} currency={currency} />
                     <DataRow label="Total Fees Paid" value={itd.income_expenses?.fees || 0} currency={currency} />
                     <DataRow label="Realized Gains" value={itd.pnl?.realized_gains_approx || 0} currency={currency} />

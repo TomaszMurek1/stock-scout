@@ -32,6 +32,7 @@ def _get_raw_positions(db: Session, account_ids: List[int]) -> List[PortfolioPos
         db.query(PortfolioPositions)
         .options(joinedload(PortfolioPositions.company).joinedload(Company.market))
         .filter(PortfolioPositions.account_id.in_(account_ids))
+        .filter(PortfolioPositions.quantity > 0)
         .all()
     )
 

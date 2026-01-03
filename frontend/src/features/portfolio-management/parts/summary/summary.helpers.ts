@@ -8,11 +8,11 @@ export const currencyLocaleMap: Record<CurrencyCode, string> = {
 };
 
 export const formatCurrency = (
-  value: number,
+  value: number | undefined | null,
   currency: CurrencyCode,
   locale = currencyLocaleMap[currency]
 ): string =>
-  value.toLocaleString(locale, {
+  (value || 0).toLocaleString(locale, {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
