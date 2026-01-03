@@ -21,10 +21,12 @@ __pycache__/
 *.sqlite3
 *.db
 *.sql
+*xlsx
 
 *.dump
 backend/nyse_full_tickers.json
 backend/skipped_companies.log
+backend/sections_output.txt
 
 # Cached assets
 backend/static/logos/

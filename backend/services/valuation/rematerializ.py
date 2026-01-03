@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from database.valuation import PortfolioValuationDaily
 from database.portfolio import Transaction
-from api.valuation_materialize import materialize_range
+from api.valuation_materialize import run_materialize_range
 
 def _get_last_pvd_date(db: Session, portfolio_id: int) -> date | None:
     return (
@@ -55,5 +55,5 @@ def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date, *, end: 
     # Overwrite existing rows in [start..end] to preserve cash chain correctness
     _delete_range(db, portfolio_id, start, end)
 
-    # Compute daily rows for [start..end]
-    materialize_range(portfolio_id=portfolio_id, start=start, end=end, db=db)
+    # Compute daily rows for [start..today]
+    run_materialize_range(portfolio_id=portfolio_id, start=start, end=end, db=db)

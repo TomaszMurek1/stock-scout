@@ -131,7 +131,7 @@ export default function Summary({ portfolio, performance, holdings, selectedPeri
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
            <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><PieChart size={20} /></div>
@@ -139,6 +139,16 @@ export default function Summary({ portfolio, performance, holdings, selectedPeri
           </div>
           <Value value={portfolio.invested_value_current} currency={currency} />
         </Card>
+        
+        {/* NEW CARD: Net Deposit */}
+        <Card>
+           <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><ArrowDownRight size={20} /></div>
+            <Label tooltip="Total Net Deposits (Deposits - Withdrawals). This is the actual cash you have put into the portfolio.">Net Deposits</Label>
+          </div>
+          <Value value={portfolio.net_invested_cash} currency={currency} />
+        </Card>
+
         <Card>
            <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><DollarSign size={20} /></div>
