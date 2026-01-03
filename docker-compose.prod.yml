@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: prod_backend
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     environment:
@@ -18,7 +18,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: prod_frontend
     restart: always
 
