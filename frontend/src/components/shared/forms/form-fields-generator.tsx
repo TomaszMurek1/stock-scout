@@ -20,6 +20,7 @@ interface FormFieldsGeneratorProps<T extends FieldValues> {
   form: UseFormReturn<T>; // Use generic type for form data
   formFields: IFormGeneratorField<T>[]; // Assuming you have this interface already defined
   isLoading: boolean;
+  loadingText?: string;
   onSubmit: SubmitHandler<T>; // Generic submit handler for different form types
 }
 
@@ -109,6 +110,7 @@ const FormFieldsGenerator = <T extends FieldValues>({
   form,
   formFields,
   isLoading,
+  loadingText = "Scanning...",
   onSubmit,
 }: FormFieldsGeneratorProps<T>) => {
   const isFormValid = form.formState.isValid;
@@ -141,7 +143,7 @@ const FormFieldsGenerator = <T extends FieldValues>({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Scanning...
+              {loadingText}
             </>
           ) : (
             "Start Scan"

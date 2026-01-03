@@ -17,5 +17,6 @@ export interface FormFieldsGeneratorProps<T extends FieldValues> {
   form: UseFormReturn<T>; // Generic type for form values
   formFields: IFormGeneratorField<T>[]; // This remains the same
   isLoading: boolean;
+  loadingText?: string;
   onSubmit: SubmitHandler<T>; // Generic type for submit handler
 }
