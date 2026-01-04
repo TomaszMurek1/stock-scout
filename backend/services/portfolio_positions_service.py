@@ -244,7 +244,19 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
 
     positions = _get_raw_positions(db, account_ids)
     company_ids = [pos.company_id for pos in positions]
-    instrument_currencies = {pos.instrument_currency_code for pos in positions}
+    # Determine authoritative currency for each position (Market > Cached)
+    # We map position_id -> currency_code to avoid re-evaluating inside loop
+    pos_currency_map = {}
+    instrument_currencies = set()
+    
+    for pos in positions:
+        ccy = pos.instrument_currency_code
+        if pos.company and pos.company.market and pos.company.market.currency:
+            ccy = pos.company.market.currency
+        
+        pos_currency_map[pos.id] = ccy
+        instrument_currencies.add(ccy)
+
     portfolio_ccy = portfolio.currency
     
     metrics_svc = PortfolioMetricsService(db)
@@ -263,8 +275,12 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
     
     for pos in positions:
         current_price = _get_current_price(db, pos.company_id)
+        
+        # Use determined currency
+        inst_ccy = pos_currency_map.get(pos.id, pos.instrument_currency_code)
+        
         fx_rate_to_portfolio = _get_current_fx_rate(
-            db, pos.instrument_currency_code, portfolio_ccy
+            db, inst_ccy, portfolio_ccy
         )
         
         # Calculate PnL for each period
@@ -314,8 +330,8 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                     # Existing Position: Use start-of-period FX rate to capture currency impact on principal.
                     # PnL = (Current Price * Current FX) - (Start Price * Start FX)
                     d_hist_fx = Decimal("1.0")
-                    if pos.instrument_currency_code != portfolio_ccy:
-                         raw_fx = ref_fx_rates.get(pos.instrument_currency_code, {}).get(p)
+                    if inst_ccy != portfolio_ccy:
+                         raw_fx = ref_fx_rates.get(inst_ccy, {}).get(p)
                          d_hist_fx = _to_d(raw_fx) if raw_fx is not None else d_fx
                     
                     curr_val_base = d_curr * d_qty * d_fx
@@ -343,7 +359,7 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                 "ticker": pos.company.ticker,
                 "name": pos.company.name,
                 "shares": float(pos.quantity),
-                "instrument_ccy": pos.instrument_currency_code,
+                "instrument_ccy": inst_ccy,
                 "average_cost_instrument_ccy": float(pos.avg_cost_instrument_ccy),
                 "average_cost_portfolio_ccy": float(pos.avg_cost_portfolio_ccy),
                 "last_price": float(current_price),

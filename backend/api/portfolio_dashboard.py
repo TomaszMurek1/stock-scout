@@ -95,7 +95,12 @@ def get_portfolio_dashboard(
             "total_value": snapshot["total_value"] if snapshot else 0.0,
             "cash_available": snapshot["cash_available"] if snapshot else 0.0,
             "invested_value_current": snapshot["invested_value_current"] if snapshot else 0.0,
-            "net_invested_cash": snapshot["net_invested_cash"] if snapshot else 0.0,
+            # Correction: Use ITD Net External Flows (Deposits - Withdrawals) for "Net Deposits"
+            # instead of net_invested (Buys - Sells) from snapshot.
+            "net_invested_cash": (
+                performance.get("breakdowns", {}).get("itd", {}).get("cash_flows", {}).get("net_external")
+                or (snapshot["net_invested_cash"] if snapshot else 0.0)
+            ),
             "accounts": [
                 {
                     "id": acc.id,
