@@ -189,7 +189,7 @@
     },
     "fibonacci_elliott": {
       "title": "Fibonacci & Elliott",
-      "description": "Analizuj akcje używając zniesień Fibonacciego i teorii fal Elliotta"
+      "description": "Analizuj spółki używając zniesień Fibonacciego i teorii fal Elliotta"
     },
     "choch": {
       "title": "Zmiana Charakteru",
@@ -335,7 +335,7 @@
         }
       },
       "how_it_works_title": "Jak Działa Skaner Wyckoffa",
-      "how_it_works_intro": "Skaner analizuje akcje używając <strong>5 obserwowalnych kryteriów</strong>, każde oceniane w skali 0-100%. Możesz dostosować wagę (znaczenie) każdego kryterium poniżej.",
+      "how_it_works_intro": "Skaner analizuje spółki używając <strong>5 obserwowalnych kryteriów</strong>, każde oceniane w skali 0-100%. Możesz dostosować wagę (znaczenie) każdego kryterium poniżej.",
       "criterion1_title": "1. Zakres Handlu (Domyślnie: 25%)",
       "criterion1_desc": "Szuka horyzontalnej konsolidacji ceny w zakresie 5-20%. Liczy dotknięcia wsparcia/oporu. Dłuższy czas = wyższy wynik.",
       "criterion1_example": "Przykład: \"Zakres handlu 8.3% przez 47 dni z 6 dotknięciami wsparcia\"",
@@ -445,7 +445,7 @@
   "company_search": {
     "label": "Szukaj",
     "placeholder": "Szukaj firm po nazwie lub tickerze...",
-    "action_label": "Analizuj Akcje",
+    "action_label": "Analizuj Spółkę",
     "no_results": "Nie znaleziono firm dla \"{{search}}\""
   },
   "link_to_portfolio": {
