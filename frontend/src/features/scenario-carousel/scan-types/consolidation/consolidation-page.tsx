@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation, Trans } from "react-i18next";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormSubtitle from "@/components/shared/forms/FormSubtitle";
 import BreakoutForm from "../breakout-form/breakout-form";
@@ -6,35 +7,36 @@ import BackToCarousel from "@/components/shared/BackToCarousel";
 import { Minus } from "lucide-react";
 
 export default function ConsolidationPage() {
+  const { t } = useTranslation();
   return (
     <div className="container">
       <BackToCarousel />
       <FormCardGenerator
-      title="Consolidation & Breakout Scan"
+      title={t("scans.consolidation.title")}
       icon={Minus}
       subtitle={
         <FormSubtitle
           description={
-            <>
+            <Trans i18nKey="scans.consolidation.subtitle_desc">
               Find stocks that have been <strong>consolidating</strong> (trading in a tight range) and are ready for a potential <strong>breakout</strong>.
-            </>
+            </Trans>
           }
           bulletPoints={[
             {
-              label: "Consolidation Period",
-              description: "Number of days the stock has been trading within a narrow range.",
+              label: t("scans.consolidation.bullets.period.label"),
+              description: t("scans.consolidation.bullets.period.description"),
             },
             {
-              label: "Breakout Percentage",
-              description: "The minimum price movement above the consolidation range to confirm a breakout.",
+              label: t("scans.consolidation.bullets.breakout.label"),
+              description: t("scans.consolidation.bullets.breakout.description"),
             },
             {
-              label: "Volume Increase",
-              description: "The percentage increase in volume that confirms strong buying interest during the breakout.",
+              label: t("scans.consolidation.bullets.volume.label"),
+              description: t("scans.consolidation.bullets.volume.description"),
             },
             {
-              label: "Why it matters",
-              description: "Consolidation often precedes significant price movements. A breakout with high volume suggests strong momentum.",
+              label: t("scans.consolidation.bullets.matter.label"),
+              description: t("scans.consolidation.bullets.matter.description"),
             },
           ]}
         />

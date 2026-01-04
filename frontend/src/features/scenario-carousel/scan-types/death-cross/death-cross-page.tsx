@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DeathCrossOutput } from "./death-cross-output";
@@ -17,9 +18,10 @@ import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator
 import { Skull } from "lucide-react";
 import { useScanJob } from "@/hooks/useScanJob";
 
-export default function DeathCrossPage() {
+export default function DeathCrossScanPage() {
+  const { t } = useTranslation();
   const { startJob, isLoading, result, error, status } = useScanJob<ScanResultsProps['data']>({
-    onCompleted: (data) => console.log("Death Cross completed", data),
+    onCompleted: (data) => console.log("Scan completed", data),
   });
 
   const form = useForm<DeathCrossFormValues>({
@@ -35,15 +37,19 @@ export default function DeathCrossPage() {
 
   const formFields: IFormGeneratorField<DeathCrossFormValues>[] = useMemo(() => {
     return [
-      ...baseDeathCrossFields,
+      ...baseDeathCrossFields.map(field => ({
+        ...field,
+        label: t(field.label),
+        description: t(field.description || "")
+      })),
       {
         name: "basketIds",
-        label: "Select baskets",
-        description: "Choose one or more baskets to define the scan universe.",
+        label: t("scans.common.basket_ids.label"),
+        description: t("scans.common.basket_ids.description"),
         type: "basket-chips",
       },
     ];
-  }, []);
+  }, [t]);
 
   const onSubmit: SubmitHandler<DeathCrossFormValues> = (data) => {
     startJob(() =>
@@ -63,24 +69,24 @@ export default function DeathCrossPage() {
     <div className="container">
       <BackToCarousel />
       <FormCardGenerator
-        title="Death Cross Scan"
+        title={t("scans.death_cross.title")}
         icon={Skull}
         subtitle={
-          <FormSubtitle description="Set parameters to scan for stocks showing a Death Cross pattern (bearish signal)." />
+          <FormSubtitle description={t("scans.death_cross.subtitle")} />
         }
       >
         <FormFieldsGenerator<DeathCrossFormValues>
           form={form}
           formFields={formFields}
           isLoading={isLoading}
-          loadingText={status === "RUNNING" ? "Scanning in background..." : "Starting..."}
+          loadingText={status === "RUNNING" ? t("scans.common.scanning") : t("scans.common.starting")}
           onSubmit={onSubmit}
         />
         
          {/* Error Message */}
          {error && (
             <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
-                <p>Error: {error}</p>
+                <p>{t("scans.common.error")}: {error}</p>
             </div>
         )}
 
@@ -90,7 +96,7 @@ export default function DeathCrossPage() {
         ), [result])}
          {result && result.length === 0 && (
              <div className="mt-6 text-center text-gray-500">
-                No results found matching your criteria.
+                {t("scans.common.no_results")}
              </div>
         )}
       </FormCardGenerator>

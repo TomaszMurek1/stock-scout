@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useMrtLocalization } from "@/hooks/useMrtLocalization";
 import { MaterialReactTable, type MRT_ColumnDef } from "material-react-table";
 import { DollarSign, Wallet, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { Transaction } from "../../types";
@@ -19,6 +21,8 @@ interface CashTabProps {
 }
 
 export default function CashTab({ accounts = [], transactions = [] }: CashTabProps) {
+  const { t } = useTranslation();
+  const localization = useMrtLocalization();
   const totalCash = accounts.reduce((sum, acc) => sum + (acc.cash || 0), 0);
   const currency = accounts[0]?.currency || "USD";
 
@@ -33,7 +37,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
     () => [
       {
         accessorKey: "name",
-        header: "Account Name",
+        header: t("portfolio.cash.account_name"),
         Cell: ({ row }) => (
           <div className="flex items-center gap-2 font-medium text-gray-900">
             <Wallet className="h-4 w-4 text-gray-500" />
@@ -43,16 +47,16 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
       },
       {
         accessorKey: "type",
-        header: "Type",
+        header: t("common.type"),
         Cell: ({ cell }) => <span className="capitalize">{cell.getValue<string>()}</span>,
       },
       {
         accessorKey: "currency",
-        header: "Currency",
+        header: t("common.currency"),
       },
       {
         accessorKey: "cash",
-        header: "Balance",
+        header: t("portfolio.cash.balance"),
         Cell: ({ row }) => (
           <span className="font-semibold text-gray-900">
              {row.original.cash.toLocaleString(undefined, {
@@ -70,7 +74,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
       () => [
         {
           accessorKey: "timestamp",
-          header: "Date",
+          header: t("portfolio.transactions.date"),
           Cell: ({ cell }) => {
               const date = new Date(cell.getValue<string>());
               return (
@@ -84,7 +88,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
         },
         {
           accessorKey: "transaction_type",
-          header: "Type",
+          header: t("common.type"),
           Cell: ({ cell }) => {
               const type = cell.getValue<string>().toLowerCase();
               let icon = <ArrowDownCircle className="h-4 w-4" />;
@@ -99,10 +103,10 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
               }
   
               return (
-                  <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                       {icon}
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass} capitalize`}>
-                          {type}
+                          {t(`portfolio.transactions.types.${type}`, { defaultValue: type })}
                       </span>
                   </div>
               );
@@ -110,7 +114,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
         },
         {
           accessorKey: "amount", 
-          header: "Amount",
+          header: t("portfolio.transactions.amount"),
           Cell: ({ row }) => {
                const val = Number(row.original.amount || 0);
                const currency = row.original.currency;
@@ -133,7 +137,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
               
               return (
                 <div className="font-bold text-gray-900">
-                  Total: {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
+                  {t("portfolio.cash.total")}: {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                 </div>
               );
           },
@@ -150,7 +154,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
                 <DollarSign size={20} />
             </div>
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Cash Available</h3>
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">{t("portfolio.cash.total_cash_available")}</h3>
          </div>
          <div className="text-3xl font-bold text-gray-900">
             {totalCash.toLocaleString(undefined, { style: "currency", currency })}
@@ -160,11 +164,12 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
       {/* 2. Accounts Table */}
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-             <h3 className="text-sm font-semibold text-gray-700">Accounts & Balances</h3>
+             <h3 className="text-sm font-semibold text-gray-700">{t("portfolio.cash.accounts_balances")}</h3>
         </div>
         <MaterialReactTable
             columns={accountColumns}
             data={accounts}
+            localization={localization}
             enableTopToolbar={false}
             enableBottomToolbar={false}
             enableColumnActions={false}
@@ -191,12 +196,13 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
       {/* 3. Funding History Table */}
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-             <h3 className="text-sm font-semibold text-gray-700">Funding History</h3>
+             <h3 className="text-sm font-semibold text-gray-700">{t("portfolio.cash.funding_history")}</h3>
         </div>
         {fundingTransactions.length > 0 ? (
             <MaterialReactTable
                 columns={fundingColumns}
                 data={fundingTransactions}
+                localization={localization}
                 enableTopToolbar={false} // clean look
                 enableBottomToolbar={true}
                 enableColumnActions={false}
@@ -224,7 +230,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
             />
         ) : (
             <div className="p-8 text-center text-gray-500 text-sm">
-                No deposits or withdrawals recorded yet.
+                {t("portfolio.cash.no_funding")}
             </div>
         )}
       </div>

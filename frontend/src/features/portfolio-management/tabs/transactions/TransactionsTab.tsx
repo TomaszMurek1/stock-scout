@@ -5,7 +5,9 @@ import { Link } from "react-router-dom";
 import { MaterialReactTable, type MRT_ColumnDef } from "material-react-table";
 import { ArrowDownCircle, ArrowUpCircle, DollarSign, Percent, FileText } from "lucide-react";
 import { Transaction } from "../../types";
+import { useTranslation } from "react-i18next";
 import { API_URL } from "@/services/apiClient";
+import { useMrtLocalization } from "@/hooks/useMrtLocalization";
 
 interface TransactionsHistoryProps {
   transactions?: Transaction[];
@@ -13,6 +15,8 @@ interface TransactionsHistoryProps {
 }
 
 export default function TransactionsHistory({ transactions = [], portfolioCurrency = "PLN" }: TransactionsHistoryProps) {
+  const { t } = useTranslation();
+  const localization = useMrtLocalization();
   
   // Filter out Deposit/Withdrawal - these go to Cash Tab
   const portfolioActivity = useMemo(() => {
@@ -25,7 +29,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
     () => [
       {
         accessorKey: "timestamp",
-        header: "Date",
+        header: t("portfolio.transactions.date"),
         Cell: ({ cell }) => {
             const date = new Date(cell.getValue<string>());
             return (
@@ -39,11 +43,11 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
         size: 120, // fixed width for date
       },
       {
-        accessorFn: (row) => row.transaction_type.charAt(0).toUpperCase() + row.transaction_type.slice(1).toLowerCase(),
+        accessorFn: (row) => t(`portfolio.transactions.types.${row.transaction_type.toLowerCase()}`, { defaultValue: row.transaction_type }),
         id: "transaction_type",
-        header: "Type",
-        Cell: ({ cell }) => {
-            const type = cell.getValue<string>().toLowerCase();
+        header: t("portfolio.transactions.type"),
+        Cell: ({ cell, row }) => {
+            const type = row.original.transaction_type.toLowerCase();
             let icon = <ArrowDownCircle className="h-4 w-4" />;
             let colorClass = "bg-gray-100 text-gray-800 border-gray-200";
 
@@ -71,18 +75,25 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
                 <div className="flex items-center gap-2">
                     {icon}
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass} capitalize`}>
-                        {type}
+                        {t(`portfolio.transactions.types.${type}`, { defaultValue: type })}
                     </span>
                 </div>
             );
         },
         filterVariant: 'multi-select',
-        filterSelectOptions: ['Buy', 'Sell', 'Dividend', 'Tax', 'Fee', 'Interest'],
+        filterSelectOptions: [
+            t("portfolio.transactions.types.buy"), 
+            t("portfolio.transactions.types.sell"), 
+            t("portfolio.transactions.types.dividend"), 
+            t("portfolio.transactions.types.tax"), 
+            t("portfolio.transactions.types.fee"), 
+            t("portfolio.transactions.types.interest")
+        ],
         size: 140,
       },
       {
         accessorKey: "name", // Use name for sorting/filtering
-        header: "Company",
+        header: t("portfolio.transactions.company"),
         Cell: ({ row }) => {
              const ticker = row.original.ticker;
              
@@ -110,7 +121,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
       },
       {
         accessorKey: "shares",
-        header: "Shares",
+        header: t("portfolio.transactions.shares"),
          Cell: ({ row }) => {
             const type = row.original.transaction_type.toLowerCase();
             if (['dividend', 'tax', 'fee', 'interest'].includes(type)) return <span className="text-gray-300">-</span>;
@@ -123,7 +134,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
       },
       {
         accessorKey: "price",
-        header: "Price",
+        header: t("portfolio.transactions.price"),
         Cell: ({ row }) => {
              const type = row.original.transaction_type.toLowerCase();
              if (['dividend', 'tax', 'fee', 'interest'].includes(type)) return <span className="text-gray-300">-</span>;
@@ -145,7 +156,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
       },
       {
         id: "amount",
-        header: "Amount",
+        header: t("portfolio.transactions.amount"),
         accessorFn: (row) => row.amount || 0,
         Cell: ({ row }) => {
             const originalAmount = Number(row.original.amount || 0);
@@ -185,7 +196,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
         size: 140,
       },
     ],
-    [portfolioCurrency]
+    [portfolioCurrency, t]
   );
 
   return (
@@ -193,6 +204,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
         <MaterialReactTable
             columns={columns}
             data={portfolioActivity}
+            localization={localization}
             enableTopToolbar={true}
             enableBottomToolbar={true}
             enableColumnActions={false}
@@ -202,7 +214,11 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
             initialState={{
                 sorting: [{ id: 'timestamp', desc: true }],
                 pagination: { pageSize: 15, pageIndex: 0 },
-                columnFilters: [{ id: 'transaction_type', value: ['Buy', 'Sell', 'Dividend'] }],
+                columnFilters: [{ id: 'transaction_type', value: [
+                    t("portfolio.transactions.types.buy"), 
+                    t("portfolio.transactions.types.sell"), 
+                    t("portfolio.transactions.types.dividend")
+                ] }],
                 density: 'compact',
             }}
             muiTablePaperProps={{

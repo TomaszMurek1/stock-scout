@@ -13,6 +13,7 @@ import { SearchInput } from "./SearchInput"
 import { SearchResultsDropdown } from "./SearchResultsDropdown"
 import { Company } from "./types"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 interface CompanySearchProps {
     actionLabel?: string
@@ -24,7 +25,7 @@ interface CompanySearchProps {
 }
 
 export function CompanySearch({
-    actionLabel = "Analyze Stock",
+    actionLabel,
     actionLoading = false,
     onAction,
     onCompanySelected,
@@ -39,6 +40,8 @@ export function CompanySearch({
     const [externalSearched, setExternalSearched] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const navigate = useNavigate()
+    const { t } = useTranslation()
+    const defaultActionLabel = actionLabel || t("company_search.action_label")
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
     const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -135,7 +138,7 @@ export function CompanySearch({
                     <div className="flex items-center flex-1 mr-4">
                         <div className="flex items-center mr-3 flex-shrink-0">
                             <TrendingUp className="h-6 w-6 text-gray-700 mr-2" />
-                            <span className="text-gray-700 font-medium">Search</span>
+                            <span className="text-gray-700 font-medium">{t("company_search.label")}</span>
                         </div>
                         <div className="relative flex-1 max-w-2xl mx-auto">
                             <SearchInput
@@ -144,7 +147,7 @@ export function CompanySearch({
                                 selected={selected}
                                 onClear={handleClear}
                                 loading={loading}
-                                placeholder="Search companies by name or ticker..."
+                                placeholder={t("company_search.placeholder")}
                                 primaryMarket={primaryMarket}
                             />
 
@@ -163,7 +166,7 @@ export function CompanySearch({
                                     onSearchMore={() => fetchCompanies(search, true)}
                                     emptyMessage={
                                         !loading && results.length === 0
-                                            ? `No companies found for "${search}"`
+                                            ? t("company_search.no_results", { search })
                                             : undefined
                                     }
                                 />
@@ -181,11 +184,11 @@ export function CompanySearch({
                             {actionLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {actionLabel}
+                                    {defaultActionLabel}
                                 </>
                             ) : (
                                 <>
-                                    {actionLabel}
+                                    {defaultActionLabel}
                                     <ArrowRight className="ml-1 h-4 w-4" />
                                 </>
                             )}

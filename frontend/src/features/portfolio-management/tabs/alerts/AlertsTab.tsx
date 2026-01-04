@@ -7,6 +7,8 @@ import { Bell } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
 import { AlertType, Alert } from "@/features/portfolio-management/types/alert.types"
 import { useShallow } from "zustand/react/shallow"
+import { useTranslation } from "react-i18next"
+import { useMrtLocalization } from "@/hooks/useMrtLocalization"
 
 // Sub-components and Utils
 import { AlertRow } from "./parts/AlertUtils"
@@ -28,6 +30,8 @@ export default function AlertsTab() {
         }))
     );
     
+    const { t } = useTranslation();
+    const localization = useMrtLocalization();
     const navigate = useNavigate();
     const portfolioHoldings = useAppStore(useShallow((state) => state.holdings));
     const watchlist = useAppStore(useShallow((state) => state.watchlist.data || []));
@@ -132,7 +136,7 @@ export default function AlertsTab() {
         () => [
             {
                 accessorKey: 'state',
-                header: 'Status',
+                header: t("portfolio.alerts.status"),
                 size: 100,
                 Cell: ({ cell }) => <AlertStatusBadge state={cell.getValue<AlertRow['state']>()} />,
                 muiTableHeadCellProps: { align: 'center' },
@@ -140,13 +144,13 @@ export default function AlertsTab() {
             },
             {
                 accessorKey: 'companyName',
-                header: 'Asset',
+                header: t("portfolio.alerts.asset"),
                 size: 200,
                 Cell: ({ row }) => <AlertAssetCell row={row.original} onNavigate={(ticker) => navigate(`/stock-details/${ticker}`)} />,
             },
             {
                 accessorKey: 'currentPrice',
-                header: 'Current Value', 
+                header: t("portfolio.alerts.current_value"), 
                 size: 160,
                 Cell: ({ row }) => <AlertValueCell row={row.original} />,
                 muiTableHeadCellProps: { align: 'right' },
@@ -154,7 +158,7 @@ export default function AlertsTab() {
             },
             {
                 accessorKey: 'threshold_value',
-                header: 'Condition',
+                header: t("portfolio.alerts.condition"),
                 size: 180,
                 Cell: ({ row }) => <AlertConditionCell row={row.original} />,
                 muiTableHeadCellProps: { align: 'center' },
@@ -162,12 +166,12 @@ export default function AlertsTab() {
             },
             {
                 id: 'info',
-                header: 'Info',
+                header: t("portfolio.alerts.info"),
                 size: 250,
                 Cell: ({ row }) => <AlertInfoCell row={row.original} isTriggered={triggeredAlerts[row.original.id]} />,
             }
         ],
-        [navigate, triggeredAlerts]
+        [navigate, triggeredAlerts, t]
     );
 
     return (
@@ -175,6 +179,7 @@ export default function AlertsTab() {
             <MaterialReactTable
                 columns={columns}
                 data={tableData}
+                localization={localization}
                 state={{ isLoading: isLoadingAlerts }}
                 enableTopToolbar={true}
                 enableColumnActions={false}
@@ -188,14 +193,14 @@ export default function AlertsTab() {
                      <div className="flex items-center p-2">
                         <div className="flex items-center mr-4">
                             <Bell className="mr-2 h-5 w-5 text-primary" />
-                            <h2 className="text-xl font-semibold text-gray-800">Alerts & Notifications</h2>
+                            <h2 className="text-xl font-semibold text-gray-800">{t("portfolio.alerts.title")}</h2>
                         </div>
                         {alerts.length > 0 && (
                             <button 
                                 onClick={clearAllAlerts}
                                 className="text-sm text-gray-500 hover:text-red-600 underline"
                             >
-                                Clear All
+                                {t("portfolio.alerts.clear_all")}
                             </button>
                         )}
                      </div>

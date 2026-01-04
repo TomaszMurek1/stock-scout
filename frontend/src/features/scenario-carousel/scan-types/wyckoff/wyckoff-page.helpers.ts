@@ -43,20 +43,20 @@ export type WyckoffFormValues = z.infer<typeof wyckoffFormSchema>;
 export const basicWyckoffFields: IFormGeneratorField<WyckoffFormValues>[] = [
   {
     name: "lookbackDays",
-    label: "Lookback Period (days)",
-    description: "Number of days to analyze for accumulation patterns",
+    label: "scans.wyckoff.lookback_days.label",
+    description: "scans.wyckoff.lookback_days.description",
     type: "number",
   },
   {
     name: "minScore",
-    label: "Minimum Overall Score (%)",
-    description: "Only show stocks with accumulation score above this threshold",
+    label: "scans.wyckoff.min_score.label",
+    description: "scans.wyckoff.min_score.description",
     type: "number",
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (Millions USD)",
-    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
+    label: "scans.common.min_market_cap.label",
+    description: "scans.common.min_market_cap.description",
     type: "number",
   },
 ];
@@ -64,32 +64,32 @@ export const basicWyckoffFields: IFormGeneratorField<WyckoffFormValues>[] = [
 export const weightFields: IFormGeneratorField<WyckoffFormValues>[] = [
   {
     name: "weightTradingRange",
-    label: "Weight: Trading Range (%)",
-    description: "Importance of horizontal consolidation pattern (0-100%)",
+    label: "scans.wyckoff.weights.trading_range.label",
+    description: "scans.wyckoff.weights.trading_range.description",
     type: "number",
   },
   {
     name: "weightVolumePattern",
-    label: "Weight: Volume Pattern (%)",
-    description: "Importance of declining volume and absorption signs (0-100%)",
+    label: "scans.wyckoff.weights.volume_pattern.label",
+    description: "scans.wyckoff.weights.volume_pattern.description",
     type: "number",
   },
   {
     name: "weightSpring",
-    label: "Weight: Spring (%)",
-    description: "Importance of final shakeout below support (0-100%)",
+    label: "scans.wyckoff.weights.spring.label",
+    description: "scans.wyckoff.weights.spring.description",
     type: "number",
   },
   {
     name: "weightSupportTests",
-    label: "Weight: Support Tests (%)",
-    description: "Importance of successful support holds (0-100%)",
+    label: "scans.wyckoff.weights.support_tests.label",
+    description: "scans.wyckoff.weights.support_tests.description",
     type: "number",
   },
   {
     name: "weightSignsOfStrength",
-    label: "Weight: Signs of Strength (%)",
-    description: "Importance of wide-spread up days (0-100%)",
+    label: "scans.wyckoff.weights.signs_of_strength.label",
+    description: "scans.wyckoff.weights.signs_of_strength.description",
     type: "number",
   },
 ];

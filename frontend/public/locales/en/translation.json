@@ -1,0 +1,469 @@
+{
+  "common": {
+    "buy_instrument": "Buy instrument",
+    "no_transactions": "No transactions recorded for this holding yet.",
+    "type": "Type",
+    "shares": "Shares",
+    "price": "Price",
+    "fee": "Fee",
+    "timestamp": "Timestamp",
+    "currency": "Currency",
+    "remove_holding": "Remove holding",
+    "set_alert": "Set Alert",
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "yes": "Yes",
+    "no": "No",
+    "add_stock": "Add Stock",
+    "save": "Save",
+    "actions": "Actions",
+    "at": "at",
+    "created": "Created"
+  },
+  "portfolio_header": {
+    "portfolio_management": "Portfolio management",
+    "track_positions": "Track positions, performance and cash flows."
+  },
+  "portfolio": {
+    "tabs": {
+      "portfolio": "Portfolio",
+      "performance": "Performance",
+      "your_stocks": "Your Stocks",
+      "watchlist": "Watchlist",
+      "alerts": "Alerts",
+      "transactions": "Transactions",
+      "cash": "Cash",
+      "risk": "Risk"
+    },
+    "cash": {
+        "account_name": "Account Name",
+        "balance": "Balance",
+        "total_cash_available": "Total Cash Available",
+        "accounts_balances": "Accounts & Balances",
+        "funding_history": "Funding History",
+        "no_funding": "No deposits or withdrawals recorded yet.",
+        "total": "Total"
+    },
+    "holdings": {
+        "company": "Company",
+        "invested": "Invested",
+        "current_value": "Current Value",
+        "gain_loss": "Gain / Loss",
+        "empty_state": "No stocks in your portfolio. Add some stocks to get started."
+    },
+    "watchlist": {
+        "title": "Watchlist",
+        "loading": "Loading watchlist...",
+        "empty_state": "No stocks in your watchlist. Please add some.",
+        "remove_tooltip": "Remove from watchlist",
+        "market_data": "Market Data",
+        "last_price": "Last price",
+        "last_updated": "Last updated",
+        "research_status": "Research Status",
+        "status": "Status",
+        "sentiment": "Sentiment",
+        "tags": "Tags",
+        "no_note": "No research note available.",
+        "thesis": "Thesis",
+        "next_catalyst": "Next Catalyst",
+        "target_price": "Target Price",
+        "risk_factors": "Risk Factors",
+        "add_dialog_title": "Add stock to watchlist",
+        "add_dialog_desc": "Search for a company and add it to your favorites list.",
+        "add_action": "Add to Watchlist",
+        "held": "Held",
+        "shares_held": "Shares Held",
+        "added": "Added"
+    },
+    "alerts": {
+        "title": "Alerts & Notifications",
+        "clear_all": "Clear All",
+        "status": "Status",
+        "asset": "Asset",
+        "current_value": "Current Value",
+        "condition": "Condition",
+        "info": "Info",
+        "mark_read": "Mark as read",
+        "unsnooze": "Unsnooze",
+        "snooze_24h": "Snooze for 24h",
+        "delete": "Delete alert",
+        "triggered": "Triggered",
+        "snoozed": "Snoozed",
+        "read": "Read",
+        "pending": "Pending",
+        "condition_met": "Condition Met",
+        "no_note": "No note",
+        "snoozed_until": "Snoozed until",
+        "within": "within",
+        "type": {
+            "price_above": "Price Above",
+            "price_below": "Price Below",
+            "percent_up": "% Move Up",
+            "percent_down": "% Move Down",
+            "golden_cross": "Golden Cross",
+            "death_cross": "Death Cross",
+            "approaching_cross": "Approaching Cross"
+        }
+    },
+    "transactions": {
+        "date": "Date",
+        "type": "Type",
+        "company": "Company",
+        "shares": "Shares",
+        "price": "Price",
+        "amount": "Amount",
+        "types": {
+            "buy": "Buy",
+            "sell": "Sell",
+            "dividend": "Dividend",
+            "tax": "Tax",
+            "fee": "Fee",
+            "interest": "Interest",
+            "deposit": "Deposit",
+            "withdrawal": "Withdrawal"
+        }
+    },
+    "summary": {
+        "net_liquidity": "Net Liquidity",
+        "todays_pnl": "Today's P&L",
+        "total_pnl": "Total P&L",
+        "buying_power": "Buying Power",
+        "returns_analysis": "Returns Analysis",
+        "ytd_return": "YTD Return",
+        "1y_return": "1Y Return",
+        "3y_return": "3Y Return",
+        "detailed_breakdown": "Detailed Breakdown",
+        "total_market_value": "Total Market Value",
+        "cash_balance": "Cash Balance",
+        "daily_change": "Daily Change",
+        "unrealized_pl": "Unrealized P&L",
+        "realized_pl": "Realized P&L",
+        "invested_value": "Invested Value",
+        "net_deposits": "Net Deposits",
+        "cash_available": "Cash Available",
+        "total_value": "Total Value",
+        "total_pnl_itd": "Total PnL (ITD)",
+        "analysis_invested": "Analysis (Invested)",
+        "beginning_invested": "Beginning Invested",
+        "net_purchases": "Net Purchases",
+        "capital_gains": "Capital Gains",
+        "ending_invested": "Ending Invested",
+        "cash_impact": "Cash Impact",
+        "dividends_interest": "Dividends & Interest",
+        "fees_taxes": "Fees & Taxes",
+        "beginning_value": "Beginning Value",
+        "income_divs_interest": "Income (Divs/Interest)",
+        "total_invested_cash": "Total Invested Cash",
+        "total_dividends_received": "Total Dividends Received",
+        "total_fees_paid": "Total Fees Paid",
+        "realized_gains": "Realized Gains",
+        "unrealized_gains": "Unrealized Gains",
+        "current_value": "Current Value",
+        "inception_analysis": "Inception Analysis",
+        "total_net_deposits": "Total Net Deposits",
+        "total_net_invested": "Total Net Invested",
+        "current_invested": "Current Invested",
+        "total_income": "Total Income",
+        "simple_return": "Simple Return",
+        "pick_quality": "🎯 Pick Quality",
+        "ttwr_invested": "TTWR (Invested Only)",
+        "strategy_quality": "📊 Strategy Quality",
+        "ttwr_portfolio": "TTWR (Portfolio)",
+        "personal_return": "🏦 Personal Return",
+        "mwrr_irr": "MWRR (IRR)",
+        "tooltips": {
+            "money_made_lost": "💰 ACTUAL MONEY GAINED/LOST\n\n Did I make money?\n\n How it works:\n (Ending - Beginning - Money Added) ÷ Total Invested\n\n Example:\n Started 11k zł, added 142k zł, ended 152k zł\n = Lost 1.9k zł on 153k total = -1.2%\n\n Includes FX? YES - USD stocks lose value if PLN strengthens\n\n Why it differs: Cares about HOW MUCH money you had at different times. Adding 140k before a drop = bigger loss.",
+            "pick_quality": "🎯 STOCK PICKING SKILL (HYPOTHETICAL)\n\n Were my stock picks good (ignoring when I bought)?\n\n How it works:\n Imagine 100 zł invested at START of period\n Each day: grows/shrinks by your portfolio's daily %\n ASSUMES you bought all stocks on day 1 (not actual dates)\n\n Example (YTD):\n 100 zł on Jan 1\n Day 1: +4% → 104 zł\n Day 2: -2% → 101.92 zł\n ...\n Dec 14: 123.87 zł = +23.87%\n\n HYPOTHETICAL? YES - not your actual money, just a measurement tool\n\n Includes FX? YES - PLN strengthening = USD stocks lose PLN value\n\n Why can be positive when you lost money:\n Treats every day equally. 10 months up (small capital) outweighs 1 month down (large capital).",
+            "strategy_quality": "📊 OVERALL STRATEGY (HYPOTHETICAL)\n\n Was my strategy good (including keeping cash)?\n\n How it works:\n (Avg % Cash × 0%) + (Avg % Stocks × Pick Quality)\n ASSUMES all purchases happened at period start\n\n Example:\n 70% cash + 30% stocks at +24%\n = 30% × 24% = +7.2%\n\n HYPOTHETICAL? YES - same 100 zł concept\n\n Includes FX? YES - stocks and foreign cash both include FX\n\n Why POSITIVE when you LOST money:\n Measures strategy quality over TIME, not dollars. Like a fund manager's skill rating vs your account balance. Good strategies can lose money with bad timing.",
+            "personal_return": "🏦 YOUR PERSONAL IRR (ACTUAL)\n\n What was my return considering WHEN I invested?\n\n How it works:\n Interest rate that produces your exact results\n PUNISHES bad timing, REWARDS good timing\n\n Example:\n Added 140k on Nov 16\n Value dropped 5%by Dec 14\n That entire 140k sat through the drop\n\n ACTUAL? YES - uses your real amounts and dates\n\n Includes FX? YES - all holdings in PLN\n\n Why it's usually worst:\n Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL."
+        }
+    }
+  },
+  "home": {
+    "choose_scenario": "Choose a Scanning Scenario"
+  },
+  "scenarios": {
+    "golden_cross": {
+      "title": "Golden Cross",
+      "description": "Identify potential uptrends with moving average crossovers"
+    },
+    "fibonacci_elliott": {
+      "title": "Fibonacci & Elliott",
+      "description": "Analyze stocks using Fibonacci retracements and Elliott Wave theory"
+    },
+    "choch": {
+      "title": "Change of Character",
+      "description": "Detect Bearish to Bullish trend reversal patterns (CHoCH)"
+    },
+    "ev_to_revenue": {
+      "title": "EV to revenue",
+      "description": "Scan using Enterprise Value to Revenue ratio"
+    },
+    "admin": {
+      "title": "Admin tools",
+      "description": "Access utilities like ticker import and FX batch loader"
+    },
+    "death_cross": {
+      "title": "Death Cross",
+      "description": "Identify potential downtrends with moving average crossovers"
+    },
+    "consolidation": {
+      "title": "Consolidation",
+      "description": "Find stocks trading in a specific range for a set duration"
+    },
+    "wyckoff": {
+      "title": "Wyckoff Accumulation",
+      "description": "Detect accumulation phase using price/volume evidence"
+    },
+    "break_even_point": {
+      "title": "Break Even Point",
+      "description": "Discover stocks approaching their break-even levels"
+    },
+    "dividend_yield": {
+      "title": "Dividend Yield",
+      "description": "Scan for stocks with attractive dividend yields"
+    },
+    "volatility": {
+      "title": "Volatility",
+      "description": "Identify stocks with high or low volatility"
+    }
+  },
+  "scans": {
+    "common": {
+      "short_period": {
+        "label": "Short Period (days)",
+        "description": "The number of days for the short-term moving average (e.g., 50 days)."
+      },
+      "long_period": {
+        "label": "Long Period (days)",
+        "description": "The number of days for the long-term moving average (e.g., 200 days)."
+      },
+      "days_to_look_back": {
+        "label": "Days to Look Back",
+        "description": "The number of days in the past to analyze for the pattern."
+      },
+      "min_market_cap": {
+        "label": "Min Market Cap (Millions USD)",
+        "description": "Minimum market capitalization in millions USD. Values are converted using latest FX rates."
+      },
+      "basket_ids": {
+        "label": "Select baskets",
+        "description": "Choose one or more baskets to define the scan universe."
+      },
+      "start_scan": "Run Scan",
+      "scanning": "Scanning in background...",
+      "starting": "Starting...",
+      "error": "Error",
+      "no_results": "No results found matching your criteria.",
+      "activate_scan": "Activate Scan",
+      "no_matches_found": "No matches found given the criteria.",
+      "accumulation_candidates_found": "Found {{count}} accumulation candidates",
+      "error_network": "Network error. Please try again."
+    },
+    "golden_cross": {
+      "title": "Golden Cross Scan",
+      "subtitle": "Set parameters to scan for stocks showing a Golden Cross pattern.",
+      "activate": "Activate Scan"
+    },
+    "choch": {
+      "title": "Change of Character Scan",
+      "subtitle": "Detect potential trend reversals from bearish to bullish trends.",
+      "lookback_period": {
+        "label": "Lookback Period (days)",
+        "description": "Number of periods to determine local highs/lows (e.g. 10). Higher value means finding more significant peaks/troughs."
+      },
+      "days_to_check": {
+        "label": "Pattern Lookback Days",
+        "description": "How many days back to look for the confirmed pattern setup."
+      }
+    },
+    "death_cross": {
+      "title": "Death Cross Scan",
+      "subtitle": "Set parameters to scan for stocks showing a Death Cross pattern."
+    },
+    "wyckoff": {
+      "title": "Wyckoff Accumulation Scan",
+      "subtitle": "Detect stocks in accumulation phase based on Wyckoff logic.",
+      "subtitle_description_part1": "Identify stocks in",
+      "subtitle_description_strong": "accumulation phase",
+      "subtitle_description_part2": "using Wyckoff methodology.",
+      "bullet1_label": "Trading Range",
+      "bullet1_description": "Horizontal price consolidation within a defined range",
+      "bullet2_label": "Volume Pattern",
+      "bullet2_description": "Declining volume indicating absorption",
+      "bullet3_label": "Spring",
+      "bullet3_description": "Final shakeout below support before markup",
+      "bullet4_label": "Support Tests",
+      "bullet4_description": "Multiple successful tests showing strength",
+      "advanced_weights_title": "Advanced: Customize Weights",
+      "advanced_weights_default": "(Optional)",
+      "weights_sum_description_part1": "Total weights must sum to",
+      "weights_sum_description_strong": "100%",
+      "weights_sum_description_part2": ". Adjust based on your strategy.",
+      "total_weight_label": "Total Weight",
+      "weights_error_message": "Current total: {{totalWeight}}% ({{status}} by {{difference}}%)",
+      "weights_error_over": "over",
+      "weights_error_under": "under",
+      "lookback_days": {
+        "label": "Lookback Period (days)",
+        "description": "Number of days to analyze for accumulation patterns"
+      },
+      "min_score": {
+        "label": "Minimum Overall Score (%)",
+        "description": "Only show stocks with accumulation score above this threshold"
+      },
+      "weights": {
+        "trading_range": {
+          "label": "Weight: Trading Range (%)",
+          "description": "Importance of horizontal consolidation pattern (0-100%)"
+        },
+        "volume_pattern": {
+          "label": "Weight: Volume Pattern (%)",
+          "description": "Importance of declining volume and absorption signs (0-100%)"
+        },
+        "spring": {
+          "label": "Weight: Spring (%)",
+          "description": "Importance of final shakeout below support (0-100%)"
+        },
+        "support_tests": {
+          "label": "Weight: Support Tests (%)",
+          "description": "Importance of successful support holds (0-100%)"
+        },
+        "signs_of_strength": {
+          "label": "Weight: Signs of Strength (%)",
+          "description": "Importance of wide-spread up days (0-100%)"
+        }
+      },
+      "how_it_works_title": "How the Wyckoff Scanner Works",
+      "how_it_works_intro": "The scanner analyzes stocks using <strong>5 observable criteria</strong>, each scored 0-100%. You can customize the importance (weight) of each criterion below.",
+      "criterion1_title": "1. Trading Range (Default: 25%)",
+      "criterion1_desc": "Looks for horizontal price consolidation within 5-20% range width. Counts support/resistance touches. Longer duration = higher score.",
+      "criterion1_example": "Example: \"Trading range of 8.3% over 47 days with 6 support touches\"",
+      "criterion2_title": "2. Volume Pattern (Default: 25%)",
+      "criterion2_desc": "<strong>Declining volume</strong> = bullish (supply drying up). <strong>Higher volume on down days</strong> = accumulation (smart money absorbing). Detects volume spikes at support.",
+      "criterion2_example": "Example: \"Volume declined 23%, 1.4x higher on down days (absorption evident)\"",
+      "criterion3_title": "3. Spring (Default: 20%)",
+      "criterion3_desc": "Detects brief drops <strong>below support</strong> followed by quick recovery. Classic \"shakeout\" before markup (Phase C). High score if detected, 0 if not.",
+      "criterion3_example": "Example: \"Spring detected: dropped to $42.10, recovered to $44.50\"",
+      "criterion4_title": "4. Support Tests (Default: 15%)",
+      "criterion4_desc": "Multiple successful tests of support. <strong>Higher lows</strong> on each test = strength building. Declining volume on tests = less selling pressure.",
+      "criterion4_example": "Example: \"4 tests showing higher lows (+2.3%), declining volume\"",
+      "criterion5_title": "5. Signs of Strength (Default: 15%)",
+      "criterion5_desc": "Wide-spread up days on high volume. Breaking above resistance temporarily shows demand entering.",
+      "criterion5_example": "Example: \"2 wide-spread up days approaching resistance\"",
+      "overall_score_title": "Overall Score",
+      "overall_score_desc": "The weighted average of all 5 criteria determines the overall score (0-100%). <strong>Weights must sum to 100%</strong>. Adjust them below based on what matters most to your strategy.",
+      "tip_title": "📊 For Longer Consolidations:",
+      "tip1": "Increase <strong>Lookback Period</strong> to 180-365 days",
+      "tip2": "The scanner looks at the last 60 days within your window for the \"recent range\"",
+      "tip3": "Check the narrative in results - it tells you the actual consolidation duration"
+    },
+    "consolidation": {
+      "title": "Consolidation & Breakout Scan",
+      "subtitle_desc": "Find stocks that have been <strong>consolidating</strong> (trading in a tight range) and are ready for a potential <strong>breakout</strong>.",
+      "bullets": {
+        "period": {
+          "label": "Consolidation Period",
+          "description": "Number of days the stock has been trading within a narrow range."
+        },
+        "breakout": {
+          "label": "Breakout Percentage",
+          "description": "The minimum price movement above the consolidation range to confirm a breakout."
+        },
+        "volume": {
+          "label": "Volume Increase",
+          "description": "The percentage increase in volume that confirms strong buying interest during the breakout."
+        },
+        "matter": {
+          "label": "Why it matters",
+          "description": "Consolidation often precedes significant price movements. A breakout with high volume suggests strong momentum."
+        }
+      },
+      "consolidation_period": {
+        "label": "Consolidation Period",
+        "description": "Number of days the stock must trade within a tight range (e.g., 20 days)."
+      },
+      "threshold_percentage": {
+        "label": "Maximum Range (%)",
+        "description": "Maximum allowed price movement (High-Low) during the period to consider it a consolidation."
+      }
+    },
+    "ev_to_revenue": {
+      "title": "EV to Revenue Scan",
+      "subtitle": "Scan for companies based on Enterprise Value to Revenue ratio.",
+      "min_ev": {
+        "label": "Minimum EV/Revenue Ratio",
+        "description": "Lower bound for the Enterprise Value to Revenue ratio (e.g., 0 for no minimum)."
+      },
+      "max_ev": {
+        "label": "Maximum EV/Revenue Ratio",
+        "description": "Upper bound for the ratio. Lower values (e.g., 1-3) indicate potentially undervalued growth stocks."
+      }
+    },
+    "break_even_point": {
+      "title": "Break Even Point Scan",
+      "subtitle": "Scan for companies approaching profitability.",
+      "threshold_pct": {
+        "label": "Loss Threshold (%)",
+        "description": "Maximum % of revenue the company can be losing. Profitable firms always pass."
+      },
+      "how_it_works_title": "How the Break Even Point Scanner Works",
+      "how_it_works_intro": "This scanner identifies companies that are transitioning from loss-making to profitability. It focuses on turnaround candidates by comparing recent performance against the previous fiscal year.",
+      "criterion1_title": "1. Was Unprofitable (Last Year)",
+      "criterion1_desc": "The company must have reported a <strong>Net Loss</strong> in its last full official Annual Report. This ensures we are targeting true turnaround stories, not companies that are already consistently profitable.",
+      "criterion2_title": "2. Is Improving (TTM Trend)",
+      "criterion2_desc": "The company's performance over the <strong>Trailing 12 Months (TTM)</strong> must be better than the last full year. We calculate TTM by summing the Net Income of the last 4 quarters.",
+      "criterion2_formula": "Current TTM Net Income > Last Annual Net Income",
+      "criterion3_title": "3. Approaching Profitability",
+      "criterion3_desc": "The company is now operating close to the break-even point. We calculate the TTM Net Margin and check if it falls within your specified threshold (e.g., +/- 5%).",
+      "criterion3_formula": "TTM Margin = (TTM Net Income / TTM Revenue) * 100",
+      "strategy_tip_title": "Strategy Tip",
+      "strategy_tip_desc": "Candidates found by this scan are often at a pivotal moment. Look for improved efficiency or revenue growth driving the narrowing loss."
+    },
+    "fibonacci_elliott": {
+      "title": "Fibonacci & Elliott Wave Scan",
+      "subtitle": "Scan for stocks showing Elliott Wave patterns with Fibonacci retracements.",
+      "pivot_threshold": {
+        "label": "Pivot Threshold (%)",
+        "description": "Percentage threshold for detecting price pivots (1-20%)"
+      },
+      "min_kelly_fraction": {
+        "label": "Minimum Kelly Fraction",
+        "description": "Filter results by minimum Kelly Fraction (0-1)"
+      }
+    }
+  },
+  "hero_banner": {
+    "title": "Market Analysis",
+    "description": "Institutional-grade analytics, AI-powered thesis generation, and deep-dive metrics for the modern investor."
+  },
+  "header": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "company_search": {
+    "label": "Search",
+    "placeholder": "Search companies by name or ticker...",
+    "action_label": "Analyze Stock",
+    "no_results": "No companies found for \"{{search}}\""
+  },
+  "link_to_portfolio": {
+    "title": "Your Investment Portfolio",
+    "action": "Manage Portfolio"
+  },
+  "auth": {
+    "sign_in": "Sign In",
+    "register": "Register",
+    "register2": "Register2",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "valid_email": "Please enter a valid email address",
+    "registration_successful": "Registration successful. Please sign in.",
+    "auth_failed": "Authentication failed.",
+    "unexpected_error": "An unexpected error occurred.",
+    "need_account": "Need an account? Register",
+    "have_account": "Already have an account? Sign In"
+  }
+}

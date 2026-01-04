@@ -1,0 +1,469 @@
+{
+  "common": {
+    "buy_instrument": "Kup instrument",
+    "no_transactions": "Brak transakcji dla tej pozycji.",
+    "type": "Typ",
+    "shares": "Akcje",
+    "price": "Cena",
+    "fee": "Prowizja",
+    "timestamp": "Data",
+    "currency": "Waluta",
+    "remove_holding": "Usuń pozycję",
+    "set_alert": "Ustaw alert",
+    "refresh": "Odśwież",
+    "loading": "Ładowanie...",
+    "yes": "Tak",
+    "no": "Nie",
+    "add_stock": "Dodaj Akcję",
+    "save": "Zapisz",
+    "actions": "Akcje",
+    "at": "o",
+    "created": "Utworzono"
+  },
+  "portfolio_header": {
+    "portfolio_management": "Zarządzanie portfelem",
+    "track_positions": "Śledź pozycje, wyniki i przepływy pieniężne."
+  },
+  "portfolio": {
+    "tabs": {
+      "portfolio": "Portfel",
+      "performance": "Wyniki",
+      "your_stocks": "Twoje Akcje",
+      "watchlist": "Obserwowane",
+      "alerts": "Alerty",
+      "transactions": "Transakcje",
+      "cash": "Gotówka",
+      "risk": "Ryzyko"
+    },
+    "cash": {
+        "account_name": "Nazwa Konta",
+        "balance": "Saldo",
+        "total_cash_available": "Całkowita Dostępna Gotówka",
+        "accounts_balances": "Konta i Salda",
+        "funding_history": "Historia Finansowania",
+        "no_funding": "Brak zarejestrowanych wpłat lub wypłat.",
+        "total": "Suma"
+    },
+    "holdings": {
+        "company": "Firma",
+        "invested": "Zainwestowano",
+        "current_value": "Obecna Wartość",
+        "gain_loss": "Zysk / Strata",
+        "empty_state": "Brak akcji w portfelu. Dodaj akcje, aby rozpocząć."
+    },
+    "watchlist": {
+        "title": "Obserwowane",
+        "loading": "Ładowanie listy...",
+        "empty_state": "Brak obserwowanych akcji. Dodaj jakieś.",
+        "remove_tooltip": "Usuń z obserwowanych",
+        "market_data": "Dane Rynkowe",
+        "last_price": "Ostatnia cena",
+        "last_updated": "Ostatnia aktualizacja",
+        "research_status": "Status Analizy",
+        "status": "Status",
+        "sentiment": "Sentyment",
+        "tags": "Tagi",
+        "no_note": "Brak notatki analitycznej.",
+        "thesis": "Teza",
+        "next_catalyst": "Następny Katalizator",
+        "target_price": "Cena Docelowa",
+        "risk_factors": "Czynniki Ryzyka",
+        "add_dialog_title": "Dodaj do obserwowanych",
+        "add_dialog_desc": "Wyszukaj firmę i dodaj ją do ulubionych.",
+        "add_action": "Dodaj do Obserwowanych",
+        "held": "Posiadane",
+        "shares_held": "Posiadane Akcje",
+        "added": "Dodano"
+    },
+    "alerts": {
+        "title": "Alerty i Powiadomienia",
+        "clear_all": "Wyczyść wszystkie",
+        "status": "Status",
+        "asset": "Aktywo",
+        "current_value": "Bieżąca Wartość",
+        "condition": "Warunek",
+        "info": "Info",
+        "mark_read": "Oznacz jako przeczytane",
+        "unsnooze": "Wyłącz drzemkę",
+        "snooze_24h": "Drzemka 24h",
+        "delete": "Usuń alert",
+        "triggered": "Uruchomiony",
+        "snoozed": "Uśpiony",
+        "read": "Przeczytany",
+        "pending": "Oczekujący",
+        "condition_met": "Warunek spełniony",
+        "no_note": "Brak notatki",
+        "snoozed_until": "Uśpiony do",
+        "within": "w granicach",
+        "type": {
+            "price_above": "Cena Powyżej",
+            "price_below": "Cena Poniżej",
+            "percent_up": "% Wzrost",
+            "percent_down": "% Spadek",
+            "golden_cross": "Złoty Krzyż",
+            "death_cross": "Krzyż Śmierci",
+            "approaching_cross": "Zbliżający się Krzyż"
+        }
+    },
+    "transactions": {
+        "date": "Data",
+        "type": "Typ",
+        "company": "Firma",
+        "shares": "Akcje",
+        "price": "Cena",
+        "amount": "Kwota",
+        "types": {
+            "buy": "Kupno",
+            "sell": "Sprzedaż",
+            "dividend": "Dywidenda",
+            "tax": "Podatek",
+            "fee": "Prowizja",
+            "interest": "Odsetki",
+            "deposit": "Wpłata",
+            "withdrawal": "Wypłata"
+        }
+    },
+    "summary": {
+        "net_liquidity": "Wartość Netto",
+        "todays_pnl": "Dzisiejszy zysk/strata",
+        "total_pnl": "Całkowity zysk/strata",
+        "buying_power": "Siła Nabywcza",
+        "returns_analysis": "Analiza Zwrotów",
+        "ytd_return": "Zwrot YTD",
+        "1y_return": "Zwrot 1R",
+        "3y_return": "Zwrot 3R",
+        "detailed_breakdown": "Szczegółowe Zestawienie",
+        "total_market_value": "Całkowita Wartość Rynkowa",
+        "cash_balance": "Stan Gotówki",
+        "daily_change": "Dzienna Zmiana",
+        "unrealized_pl": "Niezrealizowany Zysk/Strata",
+        "realized_pl": "Zrealizowany Zysk/Strata",
+        "invested_value": "Wartość Inwestycji",
+        "net_deposits": "Depozyty Netto",
+        "cash_available": "Dostępna Gotówka",
+        "total_value": "Całkowita Wartość",
+        "total_pnl_itd": "Całkowity Zysk/Strata (ITD)",
+        "analysis_invested": "Analiza (Zainwestowane)",
+        "beginning_invested": "Początkowa Inwestycja",
+        "net_purchases": "Zakupy Netto",
+        "capital_gains": "Zyski Kapitałowe",
+        "ending_invested": "Końcowa Inwestycja",
+        "cash_impact": "Wpływ Gotówki",
+        "dividends_interest": "Dywidendy i Odsetki",
+        "fees_taxes": "Opłaty i Podatki",
+        "beginning_value": "Wartość Początkowa",
+        "income_divs_interest": "Dochód (Dyw/Ods)",
+        "total_invested_cash": "Całkowita Zainwestowana Gotówka",
+        "total_dividends_received": "Całkowite Otrzymane Dywidendy",
+        "total_fees_paid": "Całkowite Zapłacone Opłaty",
+        "realized_gains": "Zrealizowane Zyski",
+        "unrealized_gains": "Niezrealizowane Zyski",
+        "current_value": "Obecna Wartość",
+        "inception_analysis": "Analiza od Początku",
+        "total_net_deposits": "Całkowite Depozyty Netto",
+        "total_net_invested": "Całkowite Inwestycje Netto",
+        "current_invested": "Obecnie Zainwestowane",
+        "total_income": "Całkowity Dochód",
+        "simple_return": "Zwrot Prosty",
+        "pick_quality": "🎯 Jakość Typów",
+        "ttwr_invested": "TTWR (Tylko Inwestycje)",
+        "strategy_quality": "📊 Jakość Strategii",
+        "ttwr_portfolio": "TTWR (Portfel)",
+        "personal_return": "🏦 Osobisty Zwrot",
+        "mwrr_irr": "MWRR (IRR)",
+        "tooltips": {
+            "money_made_lost": "💰 RZECZYWISTE ZYSKI/STRATY\n\n Czy zarobiłem pieniądze?\n\n Jak to działa:\n (Koniec - Początek - Wpłaty) ÷ Całkowite Inwestycje\n\n Przykład:\n Start 11k zł, dodano 142k zł, koniec 152k zł\n = Strata 1.9k zł na 153k razem = -1.2%\n\n Uwzględnia FX? TAK\n\n Dlaczego się różni: Liczy się ILE pieniędzy miałeś w różnym czasie.",
+            "pick_quality": "🎯 UMIEJĘTNOŚĆ DOBORU AKCJI (HIPOTETYCZNA)\n\n Czy moje typy były dobre?\n\n Jak to działa:\n Wyobraź sobie 100 zł zainwestowane na POCZĄTKU okresu\n Każdego dnia rośnie/maleje o % portfela\n ZAKŁADA, że kupiłeś wszystkie akcje 1. dnia\n\n HIPOTETYCZNE? TAK - to tylko narzędzie miary",
+            "strategy_quality": "📊 OGÓLNA STRATEGIA (HIPOTETYCZNA)\n\n Czy strategia była dobra (w tym trzymanie gotówki)?\n\n Jak to działa:\n (Śr. % Gotówki × 0%) + (Śr. % Akcji × Jakość Typów)\n ZAKŁADA, że wszystkie zakupy nastąpiły na początku\n\n HIPOTETYCZNE? TAK",
+            "personal_return": "🏦 Twój Osobisty IRR (RZECZYWISTY)\n\n Jaki był mój zwrot biorąc pod uwagę KIEDY zainwestowałem?\n\n Jak to działa:\n Stopa procentowa dająca Twoje dokładne wyniki\n KARA za złe wyczucie czasu, NAGRADZA za dobre\n\n RZECZYWISTE? TAK - używa prawdziwych kwot i dat"
+        }
+    }
+  },
+  "home": {
+    "choose_scenario": "Wybierz Scenariusz Skanowania"
+  },
+  "scenarios": {
+    "golden_cross": {
+      "title": "Złoty Krzyż",
+      "description": "Zidentyfikuj potencjalne trendy wzrostowe dzięki przecięciom średnich kroczących"
+    },
+    "fibonacci_elliott": {
+      "title": "Fibonacci & Elliott",
+      "description": "Analizuj spółki używając zniesień Fibonacciego i teorii fal Elliotta"
+    },
+    "choch": {
+      "title": "Zmiana Charakteru",
+      "description": "Wykryj wzorce odwrócenia trendu ze spadkowego na wzrostowy (CHoCH)"
+    },
+    "ev_to_revenue": {
+      "title": "EV do Przychodu",
+      "description": "Skanuj używając wskaźnika Wartości Przedsiębiorstwa do Przychodu"
+    },
+    "admin": {
+      "title": "Narzędzia Administratora",
+      "description": "Dostęp do narzędzi takich jak import tickerów i ładowanie kursów walut"
+    },
+    "death_cross": {
+      "title": "Krzyż Śmierci",
+      "description": "Zidentyfikuj potencjalne trendy spadkowe dzięki przecięciom średnich kroczących"
+    },
+    "consolidation": {
+      "title": "Konsolidacja",
+      "description": "Znajdź akcje handlowane w określonym zakresie przez ustalony czas"
+    },
+    "wyckoff": {
+      "title": "Akumulacja Wyckoffa",
+      "description": "Wykryj fazę akumulacji używając dowodów cenowych i wolumenowych"
+    },
+    "break_even_point": {
+      "title": "Próg Rentowności",
+      "description": "Odkryj akcje zbliżające się do swoich poziomów rentowności"
+    },
+    "dividend_yield": {
+      "title": "Stopa Dywidendy",
+      "description": "Skanuj w poszukiwaniu akcji z atrakcyjną stopą dywidendy"
+    },
+    "volatility": {
+      "title": "Zmienność",
+      "description": "Zidentyfikuj akcje o wysokiej lub niskiej zmienności"
+    }
+  },
+  "scans": {
+    "common": {
+      "short_period": {
+        "label": "Krótki Okres (dni)",
+        "description": "Liczba dni dla krótkoterminowej średniej kroczącej (np. 50 dni)."
+      },
+      "long_period": {
+        "label": "Długi Okres (dni)",
+        "description": "Liczba dni dla długoterminowej średniej kroczącej (np. 200 dni)."
+      },
+      "days_to_look_back": {
+        "label": "Dni wstecz",
+        "description": "Liczba dni w przeszłości do analizy wzorca."
+      },
+      "min_market_cap": {
+        "label": "Min. Kapitalizacja (mln USD)",
+        "description": "Minimalna kapitalizacja rynkowa w milionach USD. Wartości są przeliczane według aktualnych kursów walut."
+      },
+      "basket_ids": {
+        "label": "Wybierz koszyki",
+        "description": "Wybierz jeden lub więcej koszyków, aby zdefiniować uniwersum skanowania."
+      },
+      "start_scan": "Uruchom Skan",
+      "scanning": "Skanowanie w tle...",
+      "starting": "Uruchamianie...",
+      "error": "Błąd",
+      "no_results": "Nie znaleziono wyników spełniających kryteria.",
+      "activate_scan": "Aktywuj Skan",
+      "no_matches_found": "Nie znaleziono dopasowań spełniających kryteria.",
+      "accumulation_candidates_found": "Znaleziono {{count}} kandydatów do akumulacji",
+      "error_network": "Błąd sieci. Spróbuj ponownie."
+    },
+    "golden_cross": {
+      "title": "Skan Złotego Krzyża",
+      "subtitle": "Ustaw parametry, aby szukać akcji wykazujących wzorzec Złotego Krzyża.",
+      "activate": "Aktywuj Skan"
+    },
+    "choch": {
+      "title": "Skan Zmiany Charakteru",
+      "subtitle": "Wykryj potencjalne odwrócenia trendu ze spadkowego na wzrostowy.",
+      "lookback_period": {
+        "label": "Okres Analizy (dni)",
+        "description": "Liczba okresów do wyznaczenia lokalnych szczytów/dołków (np. 10). Wyższa wartość oznacza szukanie bardziej znaczących punktów."
+      },
+      "days_to_check": {
+        "label": "Dni Wstecz Formacji",
+        "description": "Ile dni wstecz szukać potwierdzonego układu formacji."
+      }
+    },
+    "death_cross": {
+      "title": "Skan Krzyża Śmierci",
+      "subtitle": "Ustaw parametry, aby szukać akcji wykazujących wzorzec Krzyża Śmierci."
+    },
+    "wyckoff": {
+      "title": "Skan Akumulacji Wyckoffa",
+      "subtitle": "Wykryj akcje w fazie akumulacji na podstawie logiki Wyckoffa.",
+      "subtitle_description_part1": "Zidentyfikuj akcje w",
+      "subtitle_description_strong": "fazie akumulacji",
+      "subtitle_description_part2": "używając metodologii Wyckoffa.",
+      "bullet1_label": "Zakres Handlu",
+      "bullet1_description": "Horyzontalna konsolidacja ceny w określonym zakresie",
+      "bullet2_label": "Wzorzec Wolumenu",
+      "bullet2_description": "Spadający wolumen wskazujący na absorpcję",
+      "bullet3_label": "Sprężyna",
+      "bullet3_description": "Końcowy wstrząs ponizej wsparcia przed wzrostem",
+      "bullet4_label": "Testy Wsparcia",
+      "bullet4_description": "Wielokrotne udane testy pokazujące siłę",
+      "advanced_weights_title": "Zaawansowane: Dostosuj Wagi",
+      "advanced_weights_default": "(Opcjonalne)",
+      "weights_sum_description_part1": "Suma wag musi wynosić",
+      "weights_sum_description_strong": "100%",
+      "weights_sum_description_part2": ". Dostosuj według swojej strategii.",
+      "total_weight_label": "Całkowita Waga",
+      "weights_error_message": "Obecna suma: {{totalWeight}}% ({{status}} o {{difference}}%)",
+      "weights_error_over": "ponad",
+      "weights_error_under": "poniżej",
+      "lookback_days": {
+        "label": "Okres Analizy (dni)",
+        "description": "Liczba dni do analizy wzorców akumulacji"
+      },
+      "min_score": {
+        "label": "Minimalna Ocena Ogólna (%)",
+        "description": "Pokaż tylko akcje z oceną akumulacji powyżej tego progu"
+      },
+      "weights": {
+        "trading_range": {
+          "label": "Waga: Zakres Handlu (%)",
+          "description": "Znaczenie horyzontalnego wzorca konsolidacji (0-100%)"
+        },
+        "volume_pattern": {
+          "label": "Waga: Wzorzec Wolumenu (%)",
+          "description": "Znaczenie spadającego wolumenu i oznak absorpcji (0-100%)"
+        },
+        "spring": {
+          "label": "Waga: Sprężyna (%)",
+          "description": "Znaczenie końcowego wstrząsu poniżej wsparcia (0-100%)"
+        },
+        "support_tests": {
+          "label": "Waga: Testy Wsparcia (%)",
+          "description": "Znaczenie udanych testów wsparcia (0-100%)"
+        },
+        "signs_of_strength": {
+          "label": "Waga: Oznaki Siły (%)",
+          "description": "Znaczenie dni wzrostowych o szerokim zasięgu (0-100%)"
+        }
+      },
+      "how_it_works_title": "Jak Działa Skaner Wyckoffa",
+      "how_it_works_intro": "Skaner analizuje spółki używając <strong>5 obserwowalnych kryteriów</strong>, każde oceniane w skali 0-100%. Możesz dostosować wagę (znaczenie) każdego kryterium poniżej.",
+      "criterion1_title": "1. Zakres Handlu (Domyślnie: 25%)",
+      "criterion1_desc": "Szuka horyzontalnej konsolidacji ceny w zakresie 5-20%. Liczy dotknięcia wsparcia/oporu. Dłuższy czas = wyższy wynik.",
+      "criterion1_example": "Przykład: \"Zakres handlu 8.3% przez 47 dni z 6 dotknięciami wsparcia\"",
+      "criterion2_title": "2. Wzorzec Wolumenu (Domyślnie: 25%)",
+      "criterion2_desc": "<strong>Spadający wolumen</strong> = zwyżkowy (podaż maleje). <strong>Wyższy wolumen w dniach spadkowych</strong> = akumulacja (inteligentny kapitał absorbuje). Wykrywa skoki wolumenu przy wsparciu.",
+      "criterion2_example": "Przykład: \"Wolumen spadł o 23%, 1.4x wyższy w dni spadkowe (widoczna absorpcja)\"",
+      "criterion3_title": "3. Sprężyna (Domyślnie: 20%)",
+      "criterion3_desc": "Wykrywa krótkie spadki <strong>poniżej wsparcia</strong> z szybkim powrotem. Klasyczny \"wstrząs\" przed wzrostem (Faza C). Wysoki wynik jeśli wykryty, 0 jeśli nie.",
+      "criterion3_example": "Przykład: \"Sprężyna wykryta: spadek do $42.10, powrót do $44.50\"",
+      "criterion4_title": "4. Testy Wsparcia (Domyślnie: 15%)",
+      "criterion4_desc": "Wielokrotne udane testy wsparcia. <strong>Wyższe dołki</strong> przy każdym teście = budowanie siły. Spadający wolumen przy testach = mniejsza presja sprzedaży.",
+      "criterion4_example": "Przykład: \"4 testy pokazujące wyższe dołki (+2.3%), spadający wolumen\"",
+      "criterion5_title": "5. Oznaki Siły (Domyślnie: 15%)",
+      "criterion5_desc": "Szerokie dni wzrostowe przy wysokim wolumenie. Przebicie oporu tymczasowo pokazuje wchodzący popyt.",
+      "criterion5_example": "Przykład: \"2 szerokie dni wzrostowe zbliżające się do oporu\"",
+      "overall_score_title": "Ogólny Wynik",
+      "overall_score_desc": "Średnia ważona wszystkich 5 kryteriów określa ogólny wynik (0-100%). <strong>Wagi muszą sumować się do 100%</strong>. Dostosuj je poniżej według tego, co jest najważniejsze w Twojej strategii.",
+      "tip_title": "📊 Dla Dłuższych Konsolidacji:",
+      "tip1": "Zwiększ <strong>Okres Analizy</strong> do 180-365 dni",
+      "tip2": "Skaner analizuje ostatnie 60 dni w Twoim oknie dla \"ostatniego zakresu\"",
+      "tip3": "Sprawdź narrację w wynikach - podaje rzeczywisty czas konsolidacji"
+    },
+    "consolidation": {
+      "title": "Skan Konsolidacji i Wybicia",
+      "subtitle_desc": "Znajdź akcje, które <strong>konsolidują</strong> (handlują w wąskim zakresie) i są gotowe na potencjalne <strong>wybicie</strong>.",
+      "bullets": {
+        "period": {
+          "label": "Okres Konsolidacji",
+          "description": "Liczba dni, przez które akcja handlowała w wąskim zakresie."
+        },
+        "breakout": {
+          "label": "Procent Wybicia",
+          "description": "Minimalny ruch ceny powyżej zakresu konsolidacji potwierdzający wybicie."
+        },
+        "volume": {
+          "label": "Wzrost Wolumenu",
+          "description": "Procentowy wzrost wolumenu potwierdzający silne zainteresowanie kupujących podczas wybicia."
+        },
+        "matter": {
+          "label": "Dlaczego to ważne",
+          "description": "Konsolidacja często poprzedza znaczące ruchy cenowe. Wybicie z wysokim wolumenem sugeruje silne momentum."
+        }
+      },
+      "consolidation_period": {
+        "label": "Okres Konsolidacji",
+        "description": "Liczba dni, przez które akcja musi handlować w wąskim zakresie (np. 20 dni)."
+      },
+      "threshold_percentage": {
+        "label": "Maksymalny Zakres (%)",
+        "description": "Maksymalny dozwolony ruch ceny (Szczyt-Dołek) w okresie, aby uznać go za konsolidację."
+      }
+    },
+    "ev_to_revenue": {
+      "title": "Skan EV do Przychodu",
+      "subtitle": "Skanuj firmy na podstawie wskaźnika Wartości Przedsiębiorstwa do Przychodu.",
+      "min_ev": {
+        "label": "Minimalny Wskaźnik EV/Przychodu",
+        "description": "Dolna granica wskaźnika (np. 0 dla braku minimum)."
+      },
+      "max_ev": {
+        "label": "Maksymalny Wskaźnik EV/Przychodu",
+        "description": "Górna granica wskaźnika. Niższe wartości (np. 1-3) wskazują potencjalnie niedowartościowane spółki wzrostowe."
+      }
+    },
+    "break_even_point": {
+      "title": "Skan Progu Rentowności",
+      "subtitle": "Skanuj firmy zbliżające się do rentowności.",
+      "threshold_pct": {
+        "label": "Próg Straty (%)",
+        "description": "Maksymalny % przychodu jaki firma może tracić. Zyskowne firmy zawsze przechodzą."
+      },
+      "how_it_works_title": "Jak Działa Skaner Progu Rentowności",
+      "how_it_works_intro": "Ten skaner identyfikuje firmy, które przechodzą ze stanu generowania strat do rentowności. Skupia się na kandydatach do odwrócenia trendu, porównując najnowsze wyniki z poprzednim rokiem fiskalnym.",
+      "criterion1_title": "1. Był Nierentowny (Ostatni Rok)",
+      "criterion1_desc": "Firma musi mieć zgłoszoną <strong>Stratę Netto</strong> w ostatnim pełnym oficjalnym Raporcie Rocznym. To zapewnia, że celujemy w prawdziwe historie odwrócenia trendu, a nie firmy już konsekwentnie rentowne.",
+      "criterion2_title": "2. Poprawia Się (Trend TTM)",
+      "criterion2_desc": "Wyniki firmy za <strong>Ostatnie 12 Miesięcy (TTM)</strong> muszą być lepsze niż za ostatni pełny rok. TTM obliczamy sumując Dochód Netto z ostatnich 4 kwartałów.",
+      "criterion2_formula": "Obecny TTM Dochód Netto > Ostatni Roczny Dochód Netto",
+      "criterion3_title": "3. Zbliża się do Rentowności",
+      "criterion3_desc": "Firma obecnie działa blisko progu rentowności. Obliczamy Marżę TTM Netto i sprawdzamy, czy mieści się w określonym progu (np. +/- 5%).",
+      "criterion3_formula": "Marża TTM = (TTM Dochód Netto / TTM Przychody) * 100",
+      "strategy_tip_title": "Wskazówka Strategiczna",
+      "strategy_tip_desc": "Kandydaci znalezieni przez ten skan często są w kluczowym momencie. Szukaj poprawionej efektywności lub wzrostu przychodów napędzającego zmniejszanie straty."
+    },
+    "fibonacci_elliott": {
+      "title": "Skan Fal Elliotta i Fibonacciego",
+      "subtitle": "Skanuj w poszukiwaniu akcji wykazujących wzorce Fal Elliotta i zniesienia Fibonacciego.",
+      "pivot_threshold": {
+        "label": "Próg Pivotu (%)",
+        "description": "Próg procentowy do wykrywania punktów zwrotnych ceny (1-20%)"
+      },
+      "min_kelly_fraction": {
+        "label": "Minimalna Frakcja Kelly'ego",
+        "description": "Filtruj wyniki według minimalnej frakcji Kelly'ego (0-1)"
+      }
+    }
+  },
+  "hero_banner": {
+    "title": "Analiza Rynku",
+    "description": "Analityka na poziomie instytucjonalnym, generowanie tez wspierane przez AI oraz szczegółowe metryki dla nowoczesnego inwestora."
+  },
+  "header": {
+    "home": "Strona Główna",
+    "about": "O nas",
+    "contact": "Kontakt"
+  },
+  "company_search": {
+    "label": "Szukaj",
+    "placeholder": "Szukaj firm po nazwie lub tickerze...",
+    "action_label": "Analizuj Spółkę",
+    "no_results": "Nie znaleziono firm dla \"{{search}}\""
+  },
+  "link_to_portfolio": {
+    "title": "Twój Portfel Inwestycyjny",
+    "action": "Zarządzaj Portfelem"
+  },
+  "auth": {
+    "sign_in": "Zaloguj się",
+    "register": "Zarejestruj się",
+    "register2": "Zarejestruj się2",
+    "username": "Nazwa użytkownika",
+    "email": "Email",
+    "password": "Hasło",
+    "valid_email": "Proszę podać poprawny adres email",
+    "registration_successful": "Rejestracja pomyślna. Proszę się zalogować.",
+    "auth_failed": "Uwierzytelnienie nie powiodło się.",
+    "unexpected_error": "Wystąpił nieoczekiwany błąd.",
+    "need_account": "Potrzebujesz konta? Zarejestruj się",
+    "have_account": "Masz już konto? Zaloguj się"
+  }
+}

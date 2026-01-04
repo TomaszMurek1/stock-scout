@@ -10,6 +10,8 @@ import { useState } from "react";
 import type { ApiHolding, Transaction, Period } from "../../types";
 import { useHoldingsColumns } from "./useHoldingsColumns";
 import { HoldingsEmptyState } from "./HoldingsEmptyState";
+import { useTranslation } from "react-i18next";
+import { useMrtLocalization } from "@/hooks/useMrtLocalization";
 
 interface HoldingsTabProps {
   holdings: ApiHolding[];
@@ -23,6 +25,8 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
   const navigate = useNavigate();
   const [alertModalTicker, setAlertModalTicker] = useState<string | null>(null);
   const columns = useHoldingsColumns({ selectedPeriod });
+  const { t } = useTranslation();
+  const localization = useMrtLocalization();
 
   const groupedHoldings = useMemo(() => {
     if (!holdings) return [];
@@ -86,7 +90,7 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
       if (relatedTransactions.length === 0) {
         return (
           <div className="w-full p-4 bg-gray-50 border border-dashed border-gray-200 rounded-md text-sm text-gray-600">
-            No transactions recorded for this holding yet.
+            {t("common.no_transactions")}
           </div>
         );
       }
@@ -96,12 +100,12 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
           <table className="w-full text-sm text-gray-700">
             <thead>
               <tr className="text-left text-gray-500">
-                <th className="py-2 pr-4 font-semibold">Type</th>
-                <th className="py-2 pr-4 font-semibold">Shares</th>
-                <th className="py-2 pr-4 font-semibold">Price</th>
-                <th className="py-2 pr-4 font-semibold">Fee</th>
-                <th className="py-2 pr-4 font-semibold">Timestamp</th>
-                <th className="py-2 pr-4 font-semibold">Currency</th>
+                <th className="py-2 pr-4 font-semibold">{t("common.type")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("common.shares")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("common.price")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("common.fee")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("common.timestamp")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("common.currency")}</th>
               </tr>
             </thead>
             <tbody>
@@ -154,13 +158,14 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
       <MaterialReactTable
         columns={columns}
         data={groupedHoldings}
+        localization={localization}
         enableRowActions
         enableExpanding
         positionActionsColumn="last"
         state={{ isLoading }}
         renderRowActions={({ row }) => (
           <div className="flex items-center gap-2">
-            <Tooltip title="Remove holding">
+            <Tooltip title={t("common.remove_holding")}>
               <IconButton
                 size="small"
                 onClick={(event) => {
@@ -171,7 +176,7 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
                 <Trash2 className="h-4 w-4 text-red-500" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Set Alert">
+            <Tooltip title={t("common.set_alert")}>
                 <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
                     setAlertModalTicker(row.original.ticker);

@@ -11,6 +11,7 @@ import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Period } from "./types";
+import { useTranslation } from "react-i18next";
 
 
 export default function PortfolioManagement() {
@@ -20,6 +21,7 @@ export default function PortfolioManagement() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd");
   const location = useLocation();
   const tabsRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (location.state && (location.state as any).activeTab) {
@@ -166,13 +168,13 @@ export default function PortfolioManagement() {
                 value="portfolio"
                 className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
               >
-                Portfolio
+                {t("portfolio.tabs.portfolio")}
               </TabsTrigger>
               <TabsTrigger
                 value="performance"
                 className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
               >
-                Performance
+                {t("portfolio.tabs.performance")}
               </TabsTrigger>
             </TabsList>
 

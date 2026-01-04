@@ -13,20 +13,20 @@ export type BreakoutFormValues = z.infer<typeof BreakoutFormSchema>;
 export const BreakoutFormFields: IFormGeneratorField<BreakoutFormValues>[] = [
   {
     name: "consolidationPeriod",
-    label: "Consolidation Period",
-    description: "Number of days the stock must trade within a tight range (e.g., 20 days).",
+    label: "scans.consolidation.consolidation_period.label",
+    description: "scans.consolidation.consolidation_period.description",
     type: "number",
   },
   {
     name: "thresholdPercentage",
-    label: "Maximum Range (%)",
-    description: "Maximum allowed price movement (High-Low) during the period to consider it a consolidation.",
+    label: "scans.consolidation.threshold_percentage.label",
+    description: "scans.consolidation.threshold_percentage.description",
     type: "number",
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (Millions USD)",
-    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
+    label: "scans.common.min_market_cap.label",
+    description: "scans.common.min_market_cap.description",
     type: "number",
   },
 ];

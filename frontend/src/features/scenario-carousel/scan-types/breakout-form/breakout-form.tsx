@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
@@ -14,6 +15,7 @@ import { BreakoutOutput } from "./breakout-output";
 import { useScanJob } from "@/hooks/useScanJob";
 
 const BreakoutForm: React.FC = () => {
+  const { t } = useTranslation();
   const { startJob, isLoading, result, error, status } = useScanJob<BreakoutScanResponse>({
     onCompleted: (data) => console.log("Consolidation scan completed", data),
   });
@@ -30,15 +32,19 @@ const BreakoutForm: React.FC = () => {
 
   const formFields: IFormGeneratorField<BreakoutFormValues>[] = useMemo(() => {
     return [
-      ...BreakoutFormFields,
+      ...BreakoutFormFields.map(field => ({
+        ...field,
+        label: t(field.label),
+        description: t(field.description || "")
+      })),
       {
         name: "basketIds",
-        label: "Select baskets",
-        description: "Choose one or more baskets to define the scan universe.",
+        label: t("scans.common.basket_ids.label"),
+        description: t("scans.common.basket_ids.description"),
         type: "basket-chips",
       },
     ];
-  }, []);
+  }, [t]);
 
   const onSubmit: SubmitHandler<BreakoutFormValues> = (data) => {
     startJob(() =>
@@ -59,14 +65,14 @@ const BreakoutForm: React.FC = () => {
         form={form}
         formFields={formFields} 
         isLoading={isLoading}
-        loadingText={status === "RUNNING" ? "Analyzing companies..." : "Scanning..."}
+        loadingText={status === "RUNNING" ? t("scans.common.scanning") : t("scans.common.starting")}
         onSubmit={onSubmit}
       />
       
       {/* Error Message */}
       {error && (
         <div className="p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
-          <p>Error: {error}</p>
+          <p>{t("scans.common.error")}: {error}</p>
         </div>
       )}
 
@@ -75,7 +81,7 @@ const BreakoutForm: React.FC = () => {
       
       {result && results.length === 0 && (
         <div className="text-center text-gray-500 py-4">
-          No candidates found matching your consolidation criteria.
+          {t("scans.common.no_results")}
         </div>
       )}
     </div>

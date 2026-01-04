@@ -4,8 +4,10 @@ import { scenarios } from "./scenario-carousel.helpers";
 import DotsIndicator from "@/components/shared/dots-indicator";
 import ChevronButton from "@/components/shared/chevron-button";
 import { useUserScope } from "@/hooks/useUserScope";
+import { useTranslation } from "react-i18next";
 
 const ScenarioCarousel = () => {
+  const { t } = useTranslation();
   const { isAdminOrDemo } = useUserScope();
   
   // Initialize from sessionStorage
@@ -100,7 +102,7 @@ const ScenarioCarousel = () => {
   return (
     <section className="relative px-4 py-8 md:px-2 lg:px-4 overflow-visible">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">
-        Choose a Scanning Scenario
+        {t("home.choose_scenario")}
       </h2>
       <div className="relative overflow-visible">
         <DotsIndicator
@@ -121,6 +123,8 @@ const ScenarioCarousel = () => {
             <ScenarioCard
               key={scenario.href}
               {...scenario}
+              title={t(scenario.title)}
+              description={t(scenario.description)}
               isActive={activeIndex === index}
               onClick={() => scrollToIndex(index)}
             />

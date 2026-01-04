@@ -2,6 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../services/Auth.hooks";
 import { useUserScope } from "@/hooks/useUserScope";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 import { User, ChevronDown, Settings, LogOut, Bell } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { useState, useRef, useEffect } from "react";
@@ -36,6 +38,7 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const fetchAlerts = useAppStore((state) => state.fetchAlerts);
   
@@ -83,18 +86,21 @@ const Header: React.FC = () => {
           <ul className="flex space-x-4 items-center">
             <li>
               <Link to="/" className="text-gray-600 hover:text-gray-800">
-                Home
+                {t("header.home")}
               </Link>
             </li>
             <li>
               <Link to="/about" className="text-gray-600 hover:text-gray-800">
-                About
+                {t("header.about")}
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link to="/contact" className="text-gray-600 hover:text-gray-800">
-                Contact
+                {t("header.contact")}
               </Link>
+            </li> */}
+            <li>
+              <LanguageSwitcher />
             </li>
             <li>
               {isAuthenticated && email ? (

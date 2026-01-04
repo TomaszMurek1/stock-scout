@@ -10,6 +10,8 @@ import type { WatchlistStock } from "./types";
 import { apiClient } from "@/services/apiClient";
 import { useWatchlistColumns } from "./useWatchlistColumns";
 import AddAlertModal from "@/features/portfolio-management/modals/add-alert/AddAlertModal";
+import { useTranslation } from "react-i18next";
+import { useMrtLocalization } from "@/hooks/useMrtLocalization";
 
 export function WatchlistTable() {
   const watchlist = useAppStore((state: AppState) => state.watchlist.data);
@@ -18,6 +20,8 @@ export function WatchlistTable() {
   const refreshWatchlist = useAppStore((state: AppState) => state.refreshWatchlist);
   const navigate = useNavigate();
   const [alertModalTicker, setAlertModalTicker] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const localization = useMrtLocalization();
 
   const columns = useWatchlistColumns();
   const data = useMemo(() => watchlist, [watchlist]);
@@ -44,7 +48,7 @@ export function WatchlistTable() {
           <div className="space-y-4">
             <div className="space-y-1">
               <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
-                Market Data
+                {t("watchlist.market_data")}
               </p>
               <p>
                 <span className="font-medium">Last price:</span>{" "}
@@ -53,7 +57,7 @@ export function WatchlistTable() {
                   : "—"}
               </p>
               <p>
-                <span className="font-medium">Last updated:</span>{" "}
+                <span className="font-medium">{t("watchlist.last_updated")}:</span>{" "}
                 {market_data?.last_updated
                   ? new Date(market_data.last_updated).toLocaleString()
                   : "—"}
@@ -62,16 +66,16 @@ export function WatchlistTable() {
 
             <div className="space-y-1">
               <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
-                Research Status
+                {t("watchlist.research_status")}
               </p>
               {note ? (
                 <>
                   <p>
-                    <span className="font-medium">Status:</span>{" "}
+                    <span className="font-medium">{t("watchlist.status")}:</span>{" "}
                     <span className="capitalize">{note.research_status?.replace("_", " ") ?? "—"}</span>
                   </p>
                   <p>
-                    <span className="font-medium">Sentiment:</span>{" "}
+                    <span className="font-medium">{t("watchlist.sentiment")}:</span>{" "}
                     {note.sentiment_trend ? (
                       <span
                         className={`font-medium capitalize ${
@@ -89,16 +93,16 @@ export function WatchlistTable() {
                     )}
                   </p>
                   <p>
-                    <span className="font-medium">Tags:</span>{" "}
+                    <span className="font-medium">{t("watchlist.tags")}:</span>{" "}
                     {note.tags && note.tags.length > 0 ? note.tags.join(", ") : "—"}
                   </p>
                   <p>
-                    <span className="font-medium">Last Updated:</span>{" "}
+                    <span className="font-medium">{t("watchlist.last_updated")}:</span>{" "}
                     {note.updated_at ? new Date(note.updated_at).toLocaleDateString() : "—"}
                   </p>
                 </>
               ) : (
-                <p className="text-gray-500 italic">No research note available.</p>
+                <p className="text-gray-500 italic">{t("watchlist.no_note")}</p>
               )}
             </div>
           </div>
@@ -113,7 +117,7 @@ export function WatchlistTable() {
                  
                  {note.thesis && (
                    <div>
-                     <span className="font-medium text-xs uppercase text-gray-500">Thesis</span>
+                     <span className="font-medium text-xs uppercase text-gray-500">{t("watchlist.thesis")}</span>
                      <p className="text-gray-800 mt-0.5 whitespace-pre-wrap text-sm leading-relaxed line-clamp-4 hover:line-clamp-none transition-all">
                        {note.thesis}
                      </p>
@@ -122,7 +126,7 @@ export function WatchlistTable() {
 
                  {note.next_catalyst && (
                    <div>
-                      <span className="font-medium text-xs uppercase text-gray-500">Next Catalyst</span>
+                      <span className="font-medium text-xs uppercase text-gray-500">{t("watchlist.next_catalyst")}</span>
                       <p className="text-gray-800 mt-0.5">{note.next_catalyst}</p>
                    </div>
                  )}
@@ -130,7 +134,7 @@ export function WatchlistTable() {
                  <div className="grid grid-cols-2 gap-4 pt-2">
                     {(note.target_price_low || note.target_price_high) && (
                         <div>
-                            <span className="font-medium text-xs uppercase text-gray-500 block">Target Price</span>
+                            <span className="font-medium text-xs uppercase text-gray-500 block">{t("watchlist.target_price")}</span>
                             <span className="text-gray-800">
                                 {note.target_price_low ?? "?"} - {note.target_price_high ?? "?"}
                             </span>
@@ -139,7 +143,7 @@ export function WatchlistTable() {
                      
                     {note.risk_factors && (
                         <div>
-                             <span className="font-medium text-xs uppercase text-gray-500 block">Risk Factors</span>
+                             <span className="font-medium text-xs uppercase text-gray-500 block">{t("watchlist.risk_factors")}</span>
                              <p className="text-gray-800 line-clamp-2 hover:line-clamp-none text-xs">{note.risk_factors}</p>
                         </div>
                     )}
@@ -155,7 +159,7 @@ export function WatchlistTable() {
   if (isLoading && data.length === 0) {
     return (
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
-        <p className="text-gray-600">Loading watchlist...</p>
+        <p className="text-gray-600">{t("watchlist.loading")}</p>
       </div>
     );
   }
@@ -163,7 +167,7 @@ export function WatchlistTable() {
   if (!isLoading && data.length === 0) {
     return (
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
-        <p className="text-gray-600">No stocks in your watchlist. Please add some.</p>
+        <p className="text-gray-600">{t("portfolio.watchlist.empty_state")}</p>
       </div>
     );
   }
@@ -173,18 +177,19 @@ export function WatchlistTable() {
       <MaterialReactTable
         columns={columns}
         data={data}
+        localization={localization}
         state={{ isLoading }}
         enableRowActions
         enableExpanding
         positionActionsColumn="last"
         renderRowActions={({ row }) => (
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <Tooltip title="Remove from watchlist">
+            <Tooltip title={t("watchlist.remove_tooltip")}>
               <IconButton size="small" onClick={() => handleRemove(row.original)}>
                 <Star className="h-4 w-4 text-amber-600 fill-amber-500" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Set Alert">
+            <Tooltip title={t("common.set_alert")}>
                 <IconButton size="small" onClick={(e) => {
                     e.stopPropagation();
                     setAlertModalTicker(row.original.ticker);
