@@ -22,7 +22,7 @@ export const createAlertsSlice: StateCreator<AlertsSlice> = (set, get) => ({
 
     fetchAlerts: async () => {
         try {
-            const { data } = await apiClient.get<Alert[]>("/alerts/");
+            const { data } = await apiClient.get<Alert[]>("/alerts");
             set({ alerts: data });
         } catch (error) {
             console.error("Failed to fetch alerts", error);
@@ -32,7 +32,7 @@ export const createAlertsSlice: StateCreator<AlertsSlice> = (set, get) => ({
     createAlert: async (payload) => {
         set({ isLoadingAlerts: true });
         try {
-            const { data } = await apiClient.post<Alert>("/alerts/", payload);
+            const { data } = await apiClient.post<Alert>("/alerts", payload);
             set((state) => ({ alerts: [...state.alerts, data], isLoadingAlerts: false }));
         } catch (error) {
             console.error("Failed to create alert", error);
@@ -72,7 +72,7 @@ export const createAlertsSlice: StateCreator<AlertsSlice> = (set, get) => ({
     clearAllAlerts: async () => {
         set({ alerts: [] });
         try {
-            await apiClient.delete("/alerts/");
+            await apiClient.delete("/alerts");
         } catch (error) {
             console.error("Failed to clear all alerts", error);
         }
