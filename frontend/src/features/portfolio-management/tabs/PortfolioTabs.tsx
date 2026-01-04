@@ -19,6 +19,8 @@ interface PortfolioTabsProps {
   isLoading?: boolean;
   selectedPeriod?: Period;
   externalTab?: string | null;
+  accounts?: any[];
+  portfolioCurrency?: string;
 }
 
 export default function PortfolioTabs({
@@ -28,6 +30,8 @@ export default function PortfolioTabs({
   isLoading,
   selectedPeriod,
   externalTab,
+  accounts,
+  portfolioCurrency,
 }: PortfolioTabsProps) {
   const [activeTab, setActiveTab] = useState("holdings");
 
@@ -86,10 +90,10 @@ export default function PortfolioTabs({
           <AlertsTab />
         </TabsContent>
         <TabsContent value="transactions" className="min-h-[500px]">
-          <TransactionsTab />
+          <TransactionsTab transactions={transactions} portfolioCurrency={portfolioCurrency} />
         </TabsContent>
         <TabsContent value="cash" className="min-h-[500px]">
-          <CashTab />
+          <CashTab accounts={accounts} transactions={transactions} />
         </TabsContent>
         <TabsContent value="risk" className="min-h-[500px]">
           <RiskTab />

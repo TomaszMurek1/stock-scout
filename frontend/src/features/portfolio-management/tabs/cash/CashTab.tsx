@@ -1,202 +1,233 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Plus } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useMemo } from "react";
+import { MaterialReactTable, type MRT_ColumnDef } from "material-react-table";
+import { DollarSign, Wallet, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Transaction } from "../../types";
 
-interface CashTransaction {
-    id: string
-    date: string
-    type: "deposit" | "withdrawal"
-    amount: number
-    description: string
+interface Account {
+  id: number;
+  name: string;
+  type: string;
+  currency: string;
+  cash: number;
 }
 
-export default function CashBalanceTracker() {
-    const [cashBalance, setCashBalance] = useState(12500.75)
-    const [transactions, setTransactions] = useState<CashTransaction[]>([
+interface CashTabProps {
+  accounts?: Account[];
+  transactions?: Transaction[];
+}
+
+export default function CashTab({ accounts = [], transactions = [] }: CashTabProps) {
+  const totalCash = accounts.reduce((sum, acc) => sum + (acc.cash || 0), 0);
+  const currency = accounts[0]?.currency || "USD";
+
+  // Filter for Funding Transactions (Deposits/Withdrawals) which affect cash but aren't trade activity
+  const fundingTransactions = useMemo(() => {
+    return transactions.filter(t => 
+        ['deposit', 'withdrawal'].includes(t.transaction_type?.toLowerCase())
+    );
+  }, [transactions]);
+
+  const accountColumns = useMemo<MRT_ColumnDef<Account>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Account Name",
+        Cell: ({ row }) => (
+          <div className="flex items-center gap-2 font-medium text-gray-900">
+            <Wallet className="h-4 w-4 text-gray-500" />
+            {row.original.name}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "type",
+        header: "Type",
+        Cell: ({ cell }) => <span className="capitalize">{cell.getValue<string>()}</span>,
+      },
+      {
+        accessorKey: "currency",
+        header: "Currency",
+      },
+      {
+        accessorKey: "cash",
+        header: "Balance",
+        Cell: ({ row }) => (
+          <span className="font-semibold text-gray-900">
+             {row.original.cash.toLocaleString(undefined, {
+                style: "currency",
+                currency: row.original.currency,
+             })}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const fundingColumns = useMemo<MRT_ColumnDef<Transaction>[]>(
+      () => [
         {
-            id: "1",
-            date: "2023-04-15",
-            type: "deposit",
-            amount: 5000,
-            description: "Deposit from Bank Account ****1234",
+          accessorKey: "timestamp",
+          header: "Date",
+          Cell: ({ cell }) => {
+              const date = new Date(cell.getValue<string>());
+              return (
+                  <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{date.toLocaleDateString()}</span>
+                      <span className="text-xs text-gray-500">{date.toLocaleTimeString()}</span>
+                  </div>
+              )
+          },
+          sortingFn: "datetime",
         },
         {
-            id: "2",
-            date: "2023-04-01",
-            type: "withdrawal",
-            amount: 1000,
-            description: "Withdrawal to Bank Account ****1234",
+          accessorKey: "transaction_type",
+          header: "Type",
+          Cell: ({ cell }) => {
+              const type = cell.getValue<string>().toLowerCase();
+              let icon = <ArrowDownCircle className="h-4 w-4" />;
+              let colorClass = "bg-gray-100 text-gray-800";
+  
+              if (type === 'deposit') {
+                  icon = <ArrowDownCircle className="h-4 w-4 text-green-600" />;
+                   colorClass = "bg-green-50 text-green-700 border-green-100";
+              } else if (type === 'withdrawal') {
+                  icon = <ArrowUpCircle className="h-4 w-4 text-red-600" />;
+                   colorClass = "bg-red-50 text-red-700 border-red-100";
+              }
+  
+              return (
+                  <div className="flex items-center gap-2">
+                      {icon}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass} capitalize`}>
+                          {type}
+                      </span>
+                  </div>
+              );
+          },
         },
         {
-            id: "3",
-            date: "2023-03-15",
-            type: "deposit",
-            amount: 10000,
-            description: "Initial deposit",
-        },
-    ])
-
-    const [isAddFundsOpen, setIsAddFundsOpen] = useState(false)
-    const [transactionType, setTransactionType] = useState<"deposit" | "withdrawal">("deposit")
-    const [amount, setAmount] = useState("")
-    const [description, setDescription] = useState("")
-
-    const handleAddTransaction = () => {
-        if (!amount || Number.parseFloat(amount) <= 0) return
-
-        const newTransaction: CashTransaction = {
-            id: Date.now().toString(),
-            date: new Date().toISOString().split("T")[0],
-            type: transactionType,
-            amount: Number.parseFloat(amount),
-            description,
-        }
-
-        setTransactions([newTransaction, ...transactions])
-
-        if (transactionType === "deposit") {
-            setCashBalance(cashBalance + Number.parseFloat(amount))
-        } else {
-            setCashBalance(cashBalance - Number.parseFloat(amount))
-        }
-
-        setAmount("")
-        setDescription("")
-        setIsAddFundsOpen(false)
-    }
-
-    return (
-        <div className="space-y-6">
-            <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-                <div className="p-6 flex items-center justify-between">
-                    <div>
-                        <h3 className="text-lg font-medium text-gray-900">Available Cash Balance</h3>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">${cashBalance.toFixed(2)}</p>
-                    </div>
-                    <Dialog open={isAddFundsOpen} onOpenChange={setIsAddFundsOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="bg-primary text-white hover:bg-primary/90">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add/Withdraw Funds
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add or Withdraw Funds</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="flex space-x-4">
-                                    <Button
-                                        variant={transactionType === "deposit" ? "default" : "outline"}
-                                        className={transactionType === "deposit" ? "bg-primary text-white" : ""}
-                                        onClick={() => setTransactionType("deposit")}
-                                    >
-                                        <ArrowDownCircle className="mr-2 h-4 w-4" />
-                                        Deposit
-                                    </Button>
-                                    <Button
-                                        variant={transactionType === "withdrawal" ? "default" : "outline"}
-                                        className={transactionType === "withdrawal" ? "bg-primary text-white" : ""}
-                                        onClick={() => setTransactionType("withdrawal")}
-                                    >
-                                        <ArrowUpCircle className="mr-2 h-4 w-4" />
-                                        Withdraw
-                                    </Button>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="amount" className="text-sm font-medium">
-                                        Amount
-                                    </label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <DollarSign className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            id="amount"
-                                            type="number"
-                                            min="0.01"
-                                            step="0.01"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                            className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="description" className="text-sm font-medium">
-                                        Description
-                                    </label>
-                                    <input
-                                        id="description"
-                                        type="text"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                        placeholder="e.g. Deposit from bank account"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <Button className="bg-primary text-white hover:bg-primary/90" onClick={handleAddTransaction}>
-                                    {transactionType === "deposit" ? "Add Funds" : "Withdraw Funds"}
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+          accessorKey: "amount", 
+          header: "Amount",
+          Cell: ({ row }) => {
+               const val = Number(row.original.amount || 0);
+               const currency = row.original.currency;
+               
+               const isPositive = ['deposit', 'dividend', 'interest'].includes(row.original.transaction_type.toLowerCase());
+               
+               return (
+                   <span className={`font-medium ${isPositive ? "text-green-700" : "text-gray-900"}`}>
+                      {isPositive ? "+" : ""}
+                      {val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                       <span className="text-gray-500 text-xs ml-1">{currency}</span>
+                   </span>
+               )
+          },
+          Footer: ({ table }) => {
+              const total = table.getFilteredRowModel().rows.reduce((sum, row) => {
+                  return sum + Number(row.original.amount || 0);
+              }, 0);
+               const currency = table.getFilteredRowModel().rows[0]?.original.currency || "PLN"; // Fallback or take from row
+              
+              return (
+                <div className="font-bold text-gray-900">
+                  Total: {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                 </div>
+              );
+          },
+        },
+      ],
+      []
+    );
+
+  return (
+    <div className="space-y-8">
+      {/* 1. Summary Card */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+         <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                <DollarSign size={20} />
             </div>
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Cash Available</h3>
+         </div>
+         <div className="text-3xl font-bold text-gray-900">
+            {totalCash.toLocaleString(undefined, { style: "currency", currency })}
+         </div>
+      </div>
 
-            <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-                <div className="p-4 border-b border-gray-200 bg-gray-50">
-                    <h2 className="text-xl font-semibold text-gray-800">Cash Transaction History</h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-gray-50">
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Amount
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Description
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {transactions.map((transaction) => (
-                                <tr key={transaction.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            {transaction.type === "deposit" ? (
-                                                <ArrowDownCircle className="h-5 w-5 text-green-500" />
-                                            ) : (
-                                                <ArrowUpCircle className="h-5 w-5 text-red-500" />
-                                            )}
-                                            <span
-                                                className={`ml-2 px-2 py-1 text-xs rounded-full ${transaction.type === "deposit" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                                                    }`}
-                                            >
-                                                {transaction.type === "deposit" ? "Deposit" : "Withdrawal"}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        ${transaction.amount.toFixed(2)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.description}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+      {/* 2. Accounts Table */}
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+             <h3 className="text-sm font-semibold text-gray-700">Accounts & Balances</h3>
         </div>
-    )
+        <MaterialReactTable
+            columns={accountColumns}
+            data={accounts}
+            enableTopToolbar={false}
+            enableBottomToolbar={false}
+            enableColumnActions={false}
+            enableColumnFilters={false}
+            enablePagination={false}
+            enableSorting={true}
+            muiTablePaperProps={{
+                elevation: 0,
+                sx: { borderRadius: "0" }
+            }}
+            muiTableHeadCellProps={{
+                sx: {
+                    backgroundColor: "#f9fafb",
+                    fontWeight: "600",
+                    color: "#6b7280",
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em"
+                }
+            }}
+        />
+      </div>
+      
+      {/* 3. Funding History Table */}
+      <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+             <h3 className="text-sm font-semibold text-gray-700">Funding History</h3>
+        </div>
+        {fundingTransactions.length > 0 ? (
+            <MaterialReactTable
+                columns={fundingColumns}
+                data={fundingTransactions}
+                enableTopToolbar={false} // clean look
+                enableBottomToolbar={true}
+                enableColumnActions={false}
+                enableColumnFilters={false}
+                enablePagination={true}
+                enableSorting={true}
+                initialState={{
+                    sorting: [{ id: 'timestamp', desc: true }],
+                    pagination: { pageSize: 5, pageIndex: 0 }
+                }}
+                muiTablePaperProps={{
+                    elevation: 0,
+                    sx: { borderRadius: "0" }
+                }}
+                muiTableHeadCellProps={{
+                    sx: {
+                        backgroundColor: "#f9fafb",
+                        fontWeight: "600",
+                        color: "#6b7280",
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        letterSpacing: "0.05em"
+                    }
+                }}
+            />
+        ) : (
+            <div className="p-8 text-center text-gray-500 text-sm">
+                No deposits or withdrawals recorded yet.
+            </div>
+        )}
+      </div>
+    </div>
+  );
 }

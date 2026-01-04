@@ -192,6 +192,8 @@ export default function PortfolioManagement() {
                 isLoading={isLoading}
                 selectedPeriod={selectedPeriod}
                 externalTab={activeSubTab}
+                accounts={portfolio.accounts || []}
+                portfolioCurrency={portfolio.currency}
               />
             </TabsContent>
 
