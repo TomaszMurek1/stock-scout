@@ -29,7 +29,7 @@ export default function AlertsTab() {
     );
     
     const navigate = useNavigate();
-    const portfolioHoldings = useAppStore(useShallow((state) => state.portfolio.data?.holdings || []));
+    const portfolioHoldings = useAppStore(useShallow((state) => state.holdings));
     const watchlist = useAppStore(useShallow((state) => state.watchlist.data || []));
 
     // State to lookup names and prices
@@ -43,7 +43,7 @@ export default function AlertsTab() {
         const names: Record<string, string> = {};
         const newSmas: Record<string, { sma50?: number, sma200?: number }> = {};
         
-        portfolioHoldings.forEach((h: any) => {
+        portfolioHoldings.forEach((h) => {
              if (h.last_price) prices[h.ticker] = h.last_price; 
              if (h.name) names[h.ticker] = h.name;
              if (h.sma_50 || h.sma_200) {
@@ -51,7 +51,7 @@ export default function AlertsTab() {
              }
         });
 
-        watchlist.forEach((w: any) => {
+        watchlist.forEach((w) => {
             if (w.market_data?.last_price) {
                 prices[w.ticker] = w.market_data.last_price;
             }

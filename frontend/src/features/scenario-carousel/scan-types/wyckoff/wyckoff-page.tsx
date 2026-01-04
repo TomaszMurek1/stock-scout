@@ -17,11 +17,19 @@ import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
 import { HowItWorksSection } from "./HowItWorks";
 import { ChevronDown, ChevronUp, Settings, Activity } from "lucide-react";
+import { useScanJob } from "@/hooks/useScanJob";
 
 export default function WyckoffScanPage() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<IWyckoffData[] | null>(null);
   const [weightsExpanded, setWeightsExpanded] = useState(false);
+  const { startJob, isLoading, result, error, status, jobId } = useScanJob<IWyckoffData[]>({
+      onCompleted: (data) => {
+          if (data.length === 0) {
+              toast.info("No matches found above the score threshold.");
+          } else {
+              toast.success(`Found ${data.length} accumulation candidates!`);
+          }
+      }
+  });
 
   const form = useForm<WyckoffFormValues>({
     resolver: zodResolver(wyckoffFormSchema),
@@ -55,11 +63,9 @@ export default function WyckoffScanPage() {
     ];
   }, []);
 
-  const onSubmit: SubmitHandler<WyckoffFormValues> = async (data) => {
-    setIsLoading(true);
-    setResults(null);
-    try {
-      const response = await apiClient.post(
+  const onSubmit: SubmitHandler<WyckoffFormValues> = (data) => {
+    startJob(() =>
+      apiClient.post(
         "/technical-analysis/wyckoff",
         {
           lookback_days: data.lookbackDays,
@@ -74,28 +80,8 @@ export default function WyckoffScanPage() {
             signs_of_strength: data.weightSignsOfStrength,
           },
         }
-      );
-
-      if (response.data.status === "success") {
-        setResults(response.data.data);
-        if (response.data.data.length === 0) {
-          toast.info("No matches found above the score threshold.");
-        } else {
-          toast.success(`Found ${response.data.data.length} accumulation candidates!`);
-        }
-      } else {
-        toast.error("Scan failed.");
-      }
-      
-    } catch (error: any) {
-      console.error("API error:", error);
-      const errorMessage = error.response?.data?.detail
-        || error.message
-        || "Network error. Please try again.";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+      )
+    );
   };
 
   return (
@@ -206,11 +192,24 @@ export default function WyckoffScanPage() {
           form={form}
           formFields={formFields}
           isLoading={isLoading}
+          loadingText={status === "RUNNING" ? "Scanning in background..." : "Scanning..."}
           onSubmit={onSubmit}
         />
         
-        {/* Results - Memoized to prevent re-render on form changes */}
-        {useMemo(() => results && results.length > 0 && <WyckoffOutput results={results} />, [results])}
+        {/* Error Message */}
+         {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
+                <p>Error: {error}</p>
+            </div>
+        )}
+
+        {/* Results */}
+        {useMemo(() => result && result.length > 0 && <WyckoffOutput results={result} />, [result])}
+        {result && result.length === 0 && (
+             <div className="mt-6 text-center text-gray-500">
+                No results found matching your criteria.
+             </div>
+        )}
       </FormCardGenerator>
     </div>
   );

@@ -24,6 +24,7 @@ from api import (
     death_cross,
     choch,
     admin,
+    jobs,
     fundamentals,
     fibonacci_elliott,
     watchlist,
@@ -96,6 +97,7 @@ app.include_router(watchlist.router,                  prefix="/api/watchlist",  
 app.include_router(account_snapshot.router,           prefix="/api/snapshot",      tags=["Snapshots"])
 app.include_router(admin.router,                      prefix="/api/admin",         tags=["Admin", "Invitations"])
 app.include_router(admin_price_data.router,           prefix="/api/admin",         tags=["Admin"])
+app.include_router(jobs.router,                       prefix="/api",               tags=["Jobs"])
 app.include_router(auth.router,                       prefix="/api/auth",          tags=["Authentication"])
 
 @app.get("/")

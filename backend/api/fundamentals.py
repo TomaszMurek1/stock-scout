@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from database.base import get_db
 from datetime import datetime
@@ -20,20 +20,16 @@ from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
 from services.basket_resolver import resolve_baskets_to_companies
+from services.scan_job_service import create_job, run_scan_task
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.post("/ev-to-revenue")
-def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)):
+def run_ev_revenue_scan(db: Session, request: EVRevenueScanRequest):
     """
-    Search for companies in the specified baskets whose Enterprise Value to
-    Revenue ratio falls within a certain range.
+    Core logic for EV/Revenue scan, intended to run in the background.
     """
-    if not request.basket_ids:
-        raise HTTPException(status_code=400, detail="No baskets specified.")
-
     # 1) Resolve baskets to companies
     try:
         market_ids, companies = resolve_baskets_to_companies(db, request.basket_ids)
@@ -41,7 +37,7 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     if not companies:
-        raise HTTPException(status_code=404, detail="No companies found in selected baskets.")
+        return {"status": "success", "data": [], "message": "No companies found in selected baskets."}
 
     logger.info(f"Scanning {len(companies)} companies from baskets: {request.basket_ids}")
 
@@ -61,7 +57,6 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
 
         tickers = [company.ticker for company in market_companies]
 
-        # Batch fetch, which now returns info about delisted tickers
         fetch_and_save_stock_price_history_data_batch(
             tickers=tickers,
             market_name=market.name,
@@ -73,6 +68,8 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
         db.commit()
 
     # 4) Fetch/update financial data if necessary
+    # Optimization: we could batch this or only do it if stale.
+    # Currently it's doing it one-by-one which is slow.
     for c in companies:
         if c.market and c.market.market_id in market_ids:
             update_financials_for_tickers(
@@ -88,10 +85,10 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
         .filter(CompanyFinancials.market_id.in_(market_ids))
         .filter(CompanyFinancials.enterprise_value.isnot(None))
         .filter(CompanyFinancials.total_revenue.isnot(None))
-        .filter(CompanyFinancials.total_revenue != 0)  # Add this line!
+        .filter(CompanyFinancials.total_revenue != 0)
     )
 
-    # Calculate EV-to-Revenue dynamically (since it's not stored in DB)
+    # Calculate EV-to-Revenue dynamically
     if request.min_ev_to_revenue is not None:
         q = q.filter(
             (CompanyFinancials.enterprise_value / CompanyFinancials.total_revenue)
@@ -104,12 +101,8 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
         )
 
     matches = q.all()
-    if not matches:
-        raise HTTPException(
-            status_code=404, detail="No companies match the EV-to-Revenue criteria."
-        )
-
-    # 5) Format response
+    
+    # 6) Format response
     results = []
     for item in matches:
         ev_to_revenue = (
@@ -138,6 +131,28 @@ def ev_revenue_scan(request: EVRevenueScanRequest, db: Session = Depends(get_db)
         )
 
     return {"status": "success", "data": results}
+
+
+@router.post("/ev-to-revenue")
+def ev_revenue_scan(
+    request: EVRevenueScanRequest, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Initiate an asynchronous EV/Revenue scan.
+    """
+    if not request.basket_ids:
+        raise HTTPException(status_code=400, detail="No baskets specified.")
+
+    job = create_job(db, "ev_to_revenue")
+
+    def task_wrapper(db_session: Session):
+        return run_ev_revenue_scan(db_session, request)
+
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    
+    return {"job_id": job.id, "status": "PENDING"}
 
 
 @router.post("/break-even-companies")
@@ -198,12 +213,7 @@ def get_break_even_companies(
     val_to_check = (request.min_market_cap or 0) * 1_000_000
     for comp in companies:
         if val_to_check > 0:
-            # Check market cap if available (eager loading might be needed, or manual join)
-            # Accessing comp.market_data triggers a lazy load if not loaded.
-            # market_data is a LIST.
             md = comp.market_data[0] if comp.market_data else None
-            # If we HAVE market cap data, and it is less than threshold, skip update
-            # If we DON'T have market cap data, we must include it to let it update (and maybe find out it's small)
             if md and md.market_cap is not None and md.market_cap < val_to_check:
                 continue
 

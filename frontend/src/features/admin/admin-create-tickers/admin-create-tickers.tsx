@@ -10,11 +10,13 @@ import {
   CreateTickerValues,
 } from "./admin-create-tickers.helpers";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
+import { useScanJob } from "@/hooks/useScanJob";
+import { apiClient } from "@/services/apiClient";
 
 export default function AdminCreateTickersForm() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<ScanResultsProps | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+    const { startJob, isLoading, result, error, status } = useScanJob<any>({
+        onCompleted: (data) => toast.success("Companies added successfully")
+    });
 
   const form = useForm<CreateTickerValues>({
     resolver: zodResolver(createTickerSchema),
@@ -25,44 +27,14 @@ export default function AdminCreateTickersForm() {
   });
 
   const onSubmit: SubmitHandler<CreateTickerValues> = async (data) => {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(
-        `${API_URL}/admin/create-tickers2`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            country: data.country,
-            market: data.market,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.detail || "An error occurred during the scan"
-        );
-      }
-
-      const result: any = await response.json();
-      setResults(result);
-      console.log("Admin Create tickers", result.data);
-      toast.success("Golden Cross scan completed successfully");
-    } catch (error) {
-      console.error("Fetch error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Network error. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    startJob(() => 
+        apiClient.post("/admin/add-companies-job", {
+            market_code: data.market,
+            // tickers: ... if we supported manual list, but form seems to focus on whole market
+        })
+    );
   };
-
+    
   return (
     <FormCardGenerator
       title="Fill Market with Tickers"
@@ -72,10 +44,18 @@ export default function AdminCreateTickersForm() {
         form={form}
         formFields={createTickersFormFields}
         isLoading={isLoading}
+        loadingText={status === "RUNNING" ? "Processing..." : "Submit"}
         onSubmit={onSubmit}
       />
+      
+      {status === "RUNNING" && <p className="text-sm text-blue-600 animate-pulse mt-2">Job is running in background...</p>}
+      {error && <p className="text-sm text-red-600 mt-2">Error: {error}</p>}
 
-      {results && results.data && results.data.length > 0 && <div>test</div>}
+      {result && (
+           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <pre className="text-xs">{JSON.stringify(result, null, 2)}</pre>
+           </div>
+      )}
     </FormCardGenerator>
   );
 }

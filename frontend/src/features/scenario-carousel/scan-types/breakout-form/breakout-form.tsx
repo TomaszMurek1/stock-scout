@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormFieldsGenerator from "@/components/shared/forms/form-fields-generator";
-import { toast } from "react-toastify";
 import {
   BreakoutFormSchema,
   BreakoutFormValues,
@@ -12,10 +11,12 @@ import { apiClient } from "@/services/apiClient";
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 import { BreakoutScanResponse, IBreakoutResultItem } from "./breakout-form.types";
 import { BreakoutOutput } from "./breakout-output";
+import { useScanJob } from "@/hooks/useScanJob";
 
 const BreakoutForm: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<IBreakoutResultItem[]>([]);
+  const { startJob, isLoading, result, error, status } = useScanJob<BreakoutScanResponse>({
+    onCompleted: (data) => console.log("Consolidation scan completed", data),
+  });
 
   const form = useForm<BreakoutFormValues>({
     resolver: zodResolver(BreakoutFormSchema),
@@ -39,40 +40,18 @@ const BreakoutForm: React.FC = () => {
     ];
   }, []);
 
-  const onSubmit: SubmitHandler<BreakoutFormValues> = async (data) => {
-    setIsLoading(true);
-    setResults([]); // Clear previous results
-    
-    try {
-      const response = await apiClient.post<BreakoutScanResponse>(
-        "/technical-analysis/breakout",
-        {
-          consolidation_period: data.consolidationPeriod,
-          threshold_percentage: data.thresholdPercentage,
-          basket_ids: data.basketIds?.map((id) => Number(id)) || [],
-          min_market_cap: data.minMarketCap,
-        }
-      );
-
-      const scanData = response.data.data || [];
-      setResults(scanData);
-      
-      if (scanData.length > 0) {
-          toast.success(`Scan completed! Found ${scanData.length} matches.`);
-      } else {
-          toast.info("Scan completed. No breakout candidates found with current criteria.");
-      }
-      
-    } catch (error: any) {
-      console.error("API error:", error);
-      const errorMessage = error.response?.data?.detail
-        || error.message
-        || "Network error. Please try again.";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit: SubmitHandler<BreakoutFormValues> = (data) => {
+    startJob(() =>
+      apiClient.post("/technical-analysis/breakout", {
+        consolidation_period: data.consolidationPeriod,
+        threshold_percentage: data.thresholdPercentage,
+        basket_ids: data.basketIds?.map((id) => Number(id)) || [],
+        min_market_cap: data.minMarketCap,
+      })
+    );
   };
+
+  const results = result?.data || [];
 
   return (
     <div className="space-y-6">
@@ -80,10 +59,25 @@ const BreakoutForm: React.FC = () => {
         form={form}
         formFields={formFields} 
         isLoading={isLoading}
+        loadingText={status === "RUNNING" ? "Analyzing companies..." : "Scanning..."}
         onSubmit={onSubmit}
       />
+      
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
+          <p>Error: {error}</p>
+        </div>
+      )}
+
       {/* Results - Memoized to prevent re-render on form changes */}
       {useMemo(() => results.length > 0 && <BreakoutOutput results={results} />, [results])}
+      
+      {result && results.length === 0 && (
+        <div className="text-center text-gray-500 py-4">
+          No candidates found matching your consolidation criteria.
+        </div>
+      )}
     </div>
   );
 };

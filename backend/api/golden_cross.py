@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import time
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from services.auth.auth import get_current_user
 from database.analysis import AnalysisResult
@@ -17,6 +17,7 @@ from services.yfinance_data_update.data_update_service import (
 )
 from services.basket_resolver import resolve_baskets_to_companies
 from services.company_filter_service import filter_by_market_cap
+from services.scan_job_service import create_job, run_scan_task
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -219,25 +220,14 @@ def analyze_and_build_results(
                 }
             )
 
-
-@router.post("/golden-cross")
-def cached_golden_cross(
-    request: GoldenCrossRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+def run_golden_cross_scan(
+    db: Session,
+    request: GoldenCrossRequest
 ):
     """
-    Refactored: checks for a "golden cross" using the AnalysisResult cache.
+    Sync function to be run in background.
     """
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
-        )
-    if not request.markets and not request.basket_ids:
-        raise HTTPException(
-            status_code=400, detail="Select at least one market or basket."
-        )
-
+    # ... (Copied logic) ...
     short_window = request.short_window
     long_window = request.long_window
     days_to_look_back = request.days_to_look_back
@@ -315,3 +305,36 @@ def cached_golden_cross(
         return {"status": "success", "data": []}
     golden_cross_results.sort(key=lambda x: x["ticker"])
     return {"status": "success", "data": golden_cross_results}
+
+
+@router.post("/golden-cross")
+def start_golden_cross_scan(
+    request: GoldenCrossRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Start a background job for Golden Cross scan.
+    Returns: { "job_id": "uuid", "status": "PENDING" }
+    """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+        )
+    if not request.markets and not request.basket_ids:
+        raise HTTPException(
+            status_code=400, detail="Select at least one market or basket."
+        )
+
+    # Create Job record
+    job = create_job(db, "golden_cross")
+
+    # Define task wrapper
+    def task_wrapper(db_session: Session):
+        return run_golden_cross_scan(db_session, request)
+
+    # Enqueue background task
+    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+
+    return {"job_id": job.id, "status": "PENDING"}

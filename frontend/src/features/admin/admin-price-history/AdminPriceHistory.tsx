@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { apiClient } from "@/services/apiClient";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
 import BasketChipSelector from "@/components/shared/forms/BasketChipSelector";
+import { useScanJob } from "@/hooks/useScanJob";
 
 interface PriceHistoryResult {
   market: string;
@@ -38,8 +39,10 @@ export default function AdminPriceHistory() {
   });
   const [minMarketCap, setMinMarketCap] = useState<number>(500); // Default 500M USD
   const [forceUpdate, setForceUpdate] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<PriceHistoryResponse | null>(null);
+  
+  const { startJob, isLoading, result, error, status } = useScanJob<PriceHistoryResponse>({
+      onCompleted: (data) => toast.success(data.message || "Price history populated successfully")
+  });
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -49,30 +52,18 @@ export default function AdminPriceHistory() {
       return;
     }
 
-    setLoading(true);
-    setResults(null);
-
-    try {
-      const { data } = await apiClient.post<PriceHistoryResponse>(
-        "/admin/populate-price-history",
-        {
-          basket_ids: selectedBaskets.map((id) => Number(id)),
-          start_date: startDate,
-          end_date: endDate,
-          force_update: forceUpdate,
-          min_market_cap: minMarketCap > 0 ? minMarketCap : null,
-        }
-      );
-
-      setResults(data);
-      toast.success(data.message || "Price history populated successfully");
-    } catch (error: any) {
-      console.error("Price history population error", error);
-      const message = error?.response?.data?.detail || error.message || "Failed to populate price history";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
+    startJob(() => 
+        apiClient.post(
+            "/admin/populate-price-history",
+            {
+              basket_ids: selectedBaskets.map((id) => Number(id)),
+              start_date: startDate,
+              end_date: endDate,
+              force_update: forceUpdate,
+              min_market_cap: minMarketCap > 0 ? minMarketCap : null,
+            }
+        )
+    );
   };
 
   return (
@@ -136,27 +127,38 @@ export default function AdminPriceHistory() {
             type="submit"
             variant="contained"
             className="bg-slate-700 hover:bg-slate-800"
-            disabled={loading || selectedBaskets.length === 0}
-            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            disabled={isLoading || selectedBaskets.length === 0}
+            startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
           >
-            {loading ? "Populating..." : "Populate Price History"}
+            {isLoading ? "Queued/Populating..." : "Populate Price History"}
           </MuiButton>
-        </form>
+          
+          {status === "RUNNING" && (
+              <p className="text-sm text-blue-600 animate-pulse mt-2">Job is running in background...</p>
+          )}
 
-        {results && (
+        </form>
+        
+        {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
+                <p>Error: {error}</p>
+            </div>
+        )}
+
+        {result && (
           <div className="mt-6 space-y-4">
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="font-semibold text-green-900">{results.message}</p>
+              <p className="font-semibold text-green-900">{result.message}</p>
               <div className="text-sm text-green-700 mt-2">
-                <p>Companies processed: <strong>{results.companies_processed}</strong></p>
-                <p>Date range: <strong>{results.date_range.start}</strong> to <strong>{results.date_range.end}</strong></p>
+                <p>Companies processed: <strong>{result.companies_processed}</strong></p>
+                <p>Date range: <strong>{result.date_range.start}</strong> to <strong>{result.date_range.end}</strong></p>
               </div>
             </div>
 
-            {results.results.length > 0 && (
+            {result.results.length > 0 && (
               <div className="space-y-3">
                 <h3 className="font-semibold text-gray-900">Results by Market:</h3>
-                {results.results.map((item, idx) => (
+                {result.results.map((item, idx) => (
                   <div
                     key={idx}
                     className={`rounded border p-3 ${

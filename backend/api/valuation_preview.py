@@ -9,7 +9,7 @@ from database.base import get_db
 from database.portfolio import Portfolio, Transaction, TransactionType
 from database.company import Company
 from database.market import Market
-from database.stock_data import StockPriceHistory
+from database.stock_data import StockPriceHistory, CompanyMarketData
 from database.fx import FxRate
 
 router = APIRouter()
@@ -109,15 +109,33 @@ def preview_day_value(
 
     # --- latest price helper (<= as_of) ---
     def latest_price(company_id: int) -> Decimal | None:
+        # 1. Primary: StockPriceHistory (Historical/Consistent)
         row = (
             db.query(StockPriceHistory.close)
             .filter(StockPriceHistory.company_id == company_id, StockPriceHistory.date <= as_of)
             .order_by(StockPriceHistory.date.desc())
             .first()
         )
-        if not row or row[0] is None:
-            return None
-        return Decimal(str(row[0]))
+        if row and row[0] is not None:
+            return Decimal(str(row[0]))
+
+        # 2. Fallback: CompanyMarketData (Live/Snapshot)
+        # Only use this if as_of is today/future, otherwise historical accuracy is compromised?
+        # Actually, if we are missing history, latest market data is better than nothing.
+        # But we should be careful not to use "today's price" for a date 3 years ago.
+        # However, for "today" (which is the main discrepancy issue), this is what we want.
+        
+        # Simple Logic: If no history found, check live market data.
+        # This fixes the "New stock added today, no history yet" case.
+        md = (
+            db.query(CompanyMarketData.current_price)
+            .filter(CompanyMarketData.company_id == company_id)
+            .first()
+        )
+        if md and md[0] is not None:
+            return Decimal(str(md[0]))
+            
+        return None
 
     # --- holdings valuation ---
     total_securities = Decimal("0")

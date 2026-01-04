@@ -179,6 +179,7 @@ export default function PortfolioManagement() {
             <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
               <Summary
                 portfolio={portfolio}
+                accounts={portfolio.accounts || []} 
                 performance={performance}
                 holdings={holdings}
                 selectedPeriod={selectedPeriod}
@@ -191,6 +192,8 @@ export default function PortfolioManagement() {
                 isLoading={isLoading}
                 selectedPeriod={selectedPeriod}
                 externalTab={activeSubTab}
+                accounts={portfolio.accounts || []}
+                portfolioCurrency={portfolio.currency}
               />
             </TabsContent>
 

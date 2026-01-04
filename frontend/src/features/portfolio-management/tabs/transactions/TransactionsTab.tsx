@@ -1,169 +1,238 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ArrowDownCircle, ArrowUpCircle, DollarSign, Filter } from "lucide-react"
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { MaterialReactTable, type MRT_ColumnDef } from "material-react-table";
+import { ArrowDownCircle, ArrowUpCircle, DollarSign, Percent, FileText } from "lucide-react";
+import { Transaction } from "../../types";
+import { API_URL } from "@/services/apiClient";
 
-type TransactionType = "buy" | "sell" | "dividend" | "deposit" | "withdrawal"
-
-interface Transaction {
-    id: string
-    date: string
-    type: TransactionType
-    symbol: string
-    shares?: number
-    price?: number
-    amount: number
-    description: string
+interface TransactionsHistoryProps {
+  transactions?: Transaction[];
+  portfolioCurrency?: string;
 }
 
-export default function TransactionsHistory() {
-    const [transactions] = useState<Transaction[]>([
-        {
-            id: "1",
-            date: "2023-04-15",
-            type: "buy",
-            symbol: "AAPL",
-            shares: 5,
-            price: 170.25,
-            amount: 851.25,
-            description: "Buy 5 shares of Apple Inc.",
-        },
-        {
-            id: "2",
-            date: "2023-04-10",
-            type: "deposit",
-            symbol: "",
-            amount: 5000,
-            description: "Deposit from Bank Account ****1234",
-        },
-        {
-            id: "3",
-            date: "2023-04-05",
-            type: "dividend",
-            symbol: "MSFT",
-            amount: 25.5,
-            description: "Dividend payment from Microsoft Corporation",
-        },
-        {
-            id: "4",
-            date: "2023-04-01",
-            type: "sell",
-            symbol: "TSLA",
-            shares: 2,
-            price: 210.75,
-            amount: 421.5,
-            description: "Sell 2 shares of Tesla, Inc.",
-        },
-        {
-            id: "5",
-            date: "2023-03-25",
-            type: "withdrawal",
-            symbol: "",
-            amount: 1000,
-            description: "Withdrawal to Bank Account ****1234",
-        },
-    ])
+export default function TransactionsHistory({ transactions = [], portfolioCurrency = "PLN" }: TransactionsHistoryProps) {
+  
+  // Filter out Deposit/Withdrawal - these go to Cash Tab
+  const portfolioActivity = useMemo(() => {
+    return transactions.filter(t => 
+        !['deposit', 'withdrawal'].includes(t.transaction_type?.toLowerCase())
+    );
+  }, [transactions]);
 
-    const [filter, setFilter] = useState<TransactionType | "all">("all")
-
-    const filteredTransactions = filter === "all" ? transactions : transactions.filter((t) => t.type === filter)
-
-    const getTypeIcon = (type: TransactionType) => {
-        switch (type) {
-            case "buy":
-                return <ArrowDownCircle className="h-5 w-5 text-green-500" />
-            case "sell":
-                return <ArrowUpCircle className="h-5 w-5 text-red-500" />
-            case "dividend":
-                return <DollarSign className="h-5 w-5 text-blue-500" />
-            case "deposit":
-                return <ArrowDownCircle className="h-5 w-5 text-purple-500" />
-            case "withdrawal":
-                return <ArrowUpCircle className="h-5 w-5 text-orange-500" />
-        }
-    }
-
-    const getTypeLabel = (type: TransactionType) => {
-        return type.charAt(0).toUpperCase() + type.slice(1)
-    }
-
-    const getTypeColor = (type: TransactionType) => {
-        switch (type) {
-            case "buy":
-                return "bg-green-100 text-green-800"
-            case "sell":
-                return "bg-red-100 text-red-800"
-            case "dividend":
-                return "bg-blue-100 text-blue-800"
-            case "deposit":
-                return "bg-purple-100 text-purple-800"
-            case "withdrawal":
-                return "bg-amber-100 text-amber-800"
-        }
-    }
-
-    return (
-        <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">Transaction History</h2>
-                <div className="flex items-center space-x-2">
-                    <Filter className="h-4 w-4 text-gray-500" />
-                    <select
-                        className="text-sm border-gray-300 rounded-md"
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value as TransactionType | "all")}
-                    >
-                        <option value="all">All Transactions</option>
-                        <option value="buy">Buys</option>
-                        <option value="sell">Sells</option>
-                        <option value="dividend">Dividends</option>
-                        <option value="deposit">Deposits</option>
-                        <option value="withdrawal">Withdrawals</option>
-                    </select>
+  const columns = useMemo<MRT_ColumnDef<Transaction>[]>(
+    () => [
+      {
+        accessorKey: "timestamp",
+        header: "Date",
+        Cell: ({ cell }) => {
+            const date = new Date(cell.getValue<string>());
+            return (
+                <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">{date.toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-500">{date.toLocaleTimeString()}</span>
                 </div>
-            </div>
+            )
+        },
+        sortingFn: "datetime",
+        size: 120, // fixed width for date
+      },
+      {
+        accessorFn: (row) => row.transaction_type.charAt(0).toUpperCase() + row.transaction_type.slice(1).toLowerCase(),
+        id: "transaction_type",
+        header: "Type",
+        Cell: ({ cell }) => {
+            const type = cell.getValue<string>().toLowerCase();
+            let icon = <ArrowDownCircle className="h-4 w-4" />;
+            let colorClass = "bg-gray-100 text-gray-800 border-gray-200";
 
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead>
-                        <tr className="bg-gray-50">
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Description
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredTransactions.map((transaction) => (
-                            <tr key={transaction.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.date}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                        {getTypeIcon(transaction.type)}
-                                        <span className={`ml-2 px-2 py-1 text-xs rounded-full ${getTypeColor(transaction.type)}`}>
-                                            {getTypeLabel(transaction.type)}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{transaction.symbol}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {transaction.shares !== undefined ? transaction.shares : "-"}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {transaction.price !== undefined ? `$${transaction.price.toFixed(2)}` : "-"}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transaction.amount.toFixed(2)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.description}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    )
+            if (type === 'buy') {
+                icon = <ArrowDownCircle className="h-4 w-4 text-emerald-600" />;
+                colorClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+            } else if (type === 'sell') {
+                icon = <ArrowUpCircle className="h-4 w-4 text-amber-600" />;
+                 colorClass = "bg-amber-50 text-amber-700 border-amber-100";
+            } else if (type === 'dividend') {
+                icon = <DollarSign className="h-4 w-4 text-blue-600" />;
+                 colorClass = "bg-blue-50 text-blue-700 border-blue-100";
+            } else if (type === 'tax') {
+                icon = <FileText className="h-4 w-4 text-red-600" />;
+                 colorClass = "bg-red-50 text-red-700 border-red-100";
+            } else if (type === 'fee') {
+                icon = <DollarSign className="h-4 w-4 text-orange-600" />;
+                 colorClass = "bg-orange-50 text-orange-700 border-orange-100";
+            } else if (type === 'interest') {
+                icon = <Percent className="h-4 w-4 text-indigo-600" />;
+                 colorClass = "bg-indigo-50 text-indigo-700 border-indigo-100";
+            }
+
+            return (
+                <div className="flex items-center gap-2">
+                    {icon}
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass} capitalize`}>
+                        {type}
+                    </span>
+                </div>
+            );
+        },
+        filterVariant: 'multi-select',
+        filterSelectOptions: ['Buy', 'Sell', 'Dividend', 'Tax', 'Fee', 'Interest'],
+        size: 140,
+      },
+      {
+        accessorKey: "name", // Use name for sorting/filtering
+        header: "Company",
+        Cell: ({ row }) => {
+             const ticker = row.original.ticker;
+             
+             // If no ticker, just show name (e.g. for general fees if any)
+             if (!ticker) return <span className="text-gray-900 font-medium">{row.original.name || "-"}</span>;
+
+             return (
+                <Link to={`/stock-details/${ticker}`} className="flex items-center gap-3 w-full group no-underline" onClick={(e) => e.stopPropagation()}>
+                    <img
+                    src={`${API_URL}/stock-details/${ticker}/logo`}
+                    alt={ticker}
+                    className="w-8 h-8 object-contain bg-gray-200 border border-gray-100 rounded-md p-0.5"
+                    onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                    }}
+                    />
+                    <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{row.original.name}</span>
+                    <span className="text-xs text-gray-500 font-medium">{ticker}</span>
+                    </div>
+                </Link>
+             )
+        },
+        size: 250,
+      },
+      {
+        accessorKey: "shares",
+        header: "Shares",
+         Cell: ({ row }) => {
+            const type = row.original.transaction_type.toLowerCase();
+            if (['dividend', 'tax', 'fee', 'interest'].includes(type)) return <span className="text-gray-300">-</span>;
+
+            const val = Number(row.original.shares);
+            if (!val) return <span className="text-gray-300">-</span>;
+             return <span className="font-medium text-gray-700">{val.toLocaleString()}</span>;
+         },
+         size: 100,
+      },
+      {
+        accessorKey: "price",
+        header: "Price",
+        Cell: ({ row }) => {
+             const type = row.original.transaction_type.toLowerCase();
+             if (['dividend', 'tax', 'fee', 'interest'].includes(type)) return <span className="text-gray-300">-</span>;
+
+             const val = Number(row.original.price);
+             const currency = row.original.currency;
+             
+             // Price might be 0 for some types or if missing
+             if (!val) return <span className="text-gray-300">-</span>;
+
+             return (
+                 <span className="font-medium text-gray-900">
+                    {val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                     <span className="text-gray-400 text-xs ml-1">{currency}</span>
+                 </span>
+             )
+        },
+        size: 120,
+      },
+      {
+        id: "amount",
+        header: "Amount",
+        accessorFn: (row) => row.amount || 0,
+        Cell: ({ row }) => {
+            const originalAmount = Number(row.original.amount || 0);
+            const type = row.original.transaction_type.toLowerCase();
+            const txCurrency = row.original.currency;
+            const fxRate = Number(row.original.currency_rate || 1);
+            
+            // Color coding for amount
+            const isNegative = ['buy', 'fee', 'tax'].includes(type);
+            const isPositive = ['sell', 'dividend', 'interest'].includes(type);
+            
+            let amountClass = "text-gray-900";
+            if (isNegative) amountClass = "text-gray-900"; 
+            if (type === 'dividend' || type === 'interest') amountClass = "text-green-600 font-semibold";
+            
+            // Calculate in portfolio currency
+            const amountInPortfolioCcy = originalAmount * fxRate;
+            const isDifferentCurrency = txCurrency !== portfolioCurrency;
+
+            return (
+                 <div className="flex flex-col items-start">
+                     {/* Primary: Portfolio Currency */}
+                     <span className={`font-medium ${amountClass}`}>
+                        {amountInPortfolioCcy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                         <span className="text-gray-500 text-xs ml-1">{portfolioCurrency}</span>
+                     </span>
+                     
+                     {/* Secondary: Original Currency (if different) */}
+                     {isDifferentCurrency && (
+                         <span className="text-xs text-gray-400">
+                            {originalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {txCurrency}
+                         </span>
+                     )}
+                 </div>
+             )
+        },
+        size: 140,
+      },
+    ],
+    [portfolioCurrency]
+  );
+
+  return (
+    <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+        <MaterialReactTable
+            columns={columns}
+            data={portfolioActivity}
+            enableTopToolbar={true}
+            enableBottomToolbar={true}
+            enableColumnActions={false}
+            enableColumnFilters={true}
+            enablePagination={true}
+            enableSorting={true}
+            initialState={{
+                sorting: [{ id: 'timestamp', desc: true }],
+                pagination: { pageSize: 15, pageIndex: 0 },
+                columnFilters: [{ id: 'transaction_type', value: ['Buy', 'Sell', 'Dividend'] }],
+                density: 'compact',
+            }}
+            muiTablePaperProps={{
+                elevation: 0,
+                sx: { borderRadius: "0" }
+            }}
+            muiTableHeadCellProps={{
+                sx: {
+                    backgroundColor: "#f9fafb",
+                    fontWeight: "600",
+                    color: "#6b7280",
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em"
+                }
+            }}
+            muiTableBodyRowProps={{
+                sx: {
+                    '&:hover': {
+                        backgroundColor: '#f9fafb',
+                    }
+                }
+            }}
+            muiTableBodyCellProps={{
+                sx: {
+                    paddingTop: "0.75rem",
+                    paddingBottom: "0.75rem"
+                }
+            }}
+        />
+    </div>
+  );
 }

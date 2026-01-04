@@ -9,6 +9,8 @@ export interface WatchlistStock {
         last_price: number | null
         currency: string | null
         last_updated: string | null
+        sma_50?: number
+        sma_200?: number
     }
     note?: {
         title?: string | null

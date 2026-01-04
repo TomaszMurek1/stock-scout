@@ -68,6 +68,7 @@ export interface Portfolio {
   cash_available: number;
   invested_value_current: number;
   net_invested_cash: number;
+  accounts?: Account[];
 }
 
 export interface PerformanceMetrics {
@@ -131,6 +132,8 @@ export interface WatchlistStock {
     last_price: number | null;
     currency: string | null;
     last_updated: string | null;
+    sma_50?: number;
+    sma_200?: number;
   };
   note?: {
     research_status?: string | null;
@@ -155,13 +158,14 @@ export type Transaction = {
   id: number; // unique identifier for the transaction
   ticker: string;
   name: string;
-  transaction_type: "buy" | "sell";
+  transaction_type: "buy" | "sell" | "dividend" | "tax" | "fee" | "interest" | "deposit" | "withdrawal";
   shares: string | number;
   price: string | number;
   fee?: string | number; // optional, can be 0
   timestamp: string; // ISO date
   currency: string;
   currency_rate: string | number; // rate used when transaction was made
+  amount?: number; // Optional derived field
 };
 
 export type Holding = {
@@ -210,4 +214,6 @@ export type ApiHolding = {
   last_price: number;
   period_pnl: Record<string, number>;
   period_pnl_instrument_ccy: Record<string, number>;
+  sma_50?: number;
+  sma_200?: number;
 };

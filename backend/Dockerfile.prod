@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source code
 COPY . /app
 
+# Ensure the static directory exists and appuser has permission to write to it
+RUN mkdir -p /app/static/logos && chown -R appuser:appuser /app/static
+
 # Environment variables for Python
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1

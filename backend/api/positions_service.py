@@ -361,3 +361,81 @@ def recompute_position(db: Session, account_id: int, company_id: int) -> None:
         pos.instrument_currency_code = last_inst_ccy or base_ccy
 
     db.flush()
+
+
+def recompute_account_cash(db: Session, account_id: int) -> None:
+    """
+    Sum all cash-impacting transactions for this account and update Account.cash.
+    Handles multi-currency by converting to Account currency.
+    """
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        return
+
+    account_ccy = (account.currency or "PLN").upper()
+    
+    # Get all transactions for this account
+    txs = (
+        db.query(Transaction)
+        .filter(Transaction.account_id == account_id)
+        .all()
+    )
+    
+    cash_balance = Decimal("0")
+    
+    for tx in txs:
+        tx_ccy = (tx.currency or account_ccy).upper()
+        
+        # FX Rate: tx_ccy -> account_ccy
+        # If transaction stores a rate, valid ONLY if it converts TO the portfolio/account base.
+        # Assuming tx.currency_rate is always "How many AccountCCY for 1 TxCCY".
+        # If tx_ccy == account_ccy, rate is 1.
+        
+        if tx_ccy == account_ccy:
+            rate = Decimal("1")
+        else:
+            rate = _dec(tx.currency_rate or 1)
+            
+        qty = _dec(tx.quantity)
+        price = _dec(tx.price or 0)
+        fee = _dec(tx.fee or 0)
+        
+        # Cash Impact Logic
+        impact = Decimal("0")
+        
+        if tx.transaction_type == TransactionType.DEPOSIT:
+            impact = qty # Cash IN
+        elif tx.transaction_type == TransactionType.WITHDRAWAL:
+            impact = -qty # Cash OUT
+        elif tx.transaction_type == TransactionType.DIVIDEND:
+            impact = qty # Cash IN
+        elif tx.transaction_type == TransactionType.INTEREST:
+            impact = qty # Cash IN
+        elif tx.transaction_type == TransactionType.FEE:
+            impact = -qty # Cash OUT
+        elif tx.transaction_type == TransactionType.TAX:
+            impact = -qty # Cash OUT
+        elif tx.transaction_type == TransactionType.TRANSFER_IN:
+            impact = qty 
+        elif tx.transaction_type == TransactionType.TRANSFER_OUT:
+            impact = -qty
+            
+        elif tx.transaction_type == TransactionType.BUY:
+            # You pay: (qty * price) + fee
+            # But fee is often separate or included. 
+            # If fee is in the same currency as price/instrument? 
+            # Usually strict cash flow = -(qty*price) - fee
+            cost = (qty * price) + fee
+            impact = -cost
+            
+        elif tx.transaction_type == TransactionType.SELL:
+            # You get: (qty * price) - fee
+            proceeds = (qty * price) - fee
+            impact = proceeds
+            
+        # Add converted amount to total
+        cash_balance += impact * rate
+        
+    account.cash = cash_balance.quantize(Decimal("0.01"))
+    db.add(account)
+    db.flush()

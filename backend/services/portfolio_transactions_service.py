@@ -19,7 +19,16 @@ def get_transactions_for_portfolio(db: Session, portfolio_id: int, period: str =
         .options(selectinload(Transaction.company))
         .filter(
             Transaction.portfolio_id == portfolio_id,
-            Transaction.transaction_type.in_([TransactionType.BUY, TransactionType.SELL]),
+            Transaction.transaction_type.in_([
+                TransactionType.BUY, 
+                TransactionType.SELL,
+                TransactionType.DEPOSIT,
+                TransactionType.WITHDRAWAL,
+                TransactionType.DIVIDEND,
+                TransactionType.INTEREST,
+                TransactionType.FEE,
+                TransactionType.TAX
+            ]),
         )
     )
 
@@ -28,18 +37,40 @@ def get_transactions_for_portfolio(db: Session, portfolio_id: int, period: str =
 
     txs = query.order_by(Transaction.timestamp.asc()).all()
 
-    return [
-        {
+    results = []
+    for tx in txs:
+        # Determine effective "Amount"
+        # For pure cash flows (Deposit, Dividend, etc.), the quantity IS the amount.
+        # For trades (Buy/Sell), amount is Price * Quantity (or total_value if stored)
+        is_cash_flow = tx.transaction_type.name in [
+            "DEPOSIT", "WITHDRAWAL", "DIVIDEND", "INTEREST", "TAX", "FEE"
+        ]
+        
+        qty = float(tx.quantity)
+        price = float(tx.price or 0.0)
+        
+        if is_cash_flow:
+            amount = qty
+        elif tx.transaction_type.name in ["BUY", "SELL"]:
+             # Prefer calculating from Price * Qty because total_value in DB 
+             # has been found to be inconsistent (sometimes Portfolio Ccy, sometimes Tx Ccy).
+             # Price is reliably in Tx Ccy.
+             amount = qty * price
+        else:
+            amount = float(tx.total_value or (qty * price))
+            
+        results.append({
             "id": tx.id,
             "ticker": tx.company.ticker if tx.company else "",
             "name": tx.company.name if tx.company else "",
             "transaction_type": tx.transaction_type.value,
-            "shares": float(tx.quantity),
-            "price": float(tx.price),
+            "shares": qty,
+            "price": price,
             "fee": float(tx.fee or 0),
             "timestamp": tx.timestamp.isoformat(),
             "currency": tx.currency,
-            "currency_rate": tx.currency_rate
-        }
-        for tx in txs
-    ]
+            "currency_rate": tx.currency_rate,
+            "amount": amount
+        })
+
+    return results
