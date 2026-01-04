@@ -4,6 +4,7 @@ import { GenericIconType } from "../scenario-carousel.helpers";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface ScenarioCardProps {
   title: string;
@@ -25,6 +26,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
   isActive,
   onClick,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleStartScan = () => {
@@ -66,7 +68,7 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
               variant="outline"
               className="w-full bg-white border-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 font-semibold transition-all"
             >
-              Activate Scan <ArrowRight className="ml-2 h-4 w-4" />
+              {t("scans.common.activate_scan")} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </CardContent>
         </Card>

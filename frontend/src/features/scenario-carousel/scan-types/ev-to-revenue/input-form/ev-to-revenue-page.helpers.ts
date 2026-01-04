@@ -12,20 +12,20 @@ export const EvToRevenueFormFields: IFormGeneratorField<EvToRevenueValues>[] =
   [
     {
       name: "min_ev_to_revenue",
-      label: "Minimum EV/Revenue Ratio",
-      description: "Lower bound for the Enterprise Value to Revenue ratio (e.g., 0 for no minimum).",
+      label: "scans.ev_to_revenue.min_ev.label",
+      description: "scans.ev_to_revenue.min_ev.description",
       type: "number",
     },
     {
       name: "max_ev_to_revenue",
-      label: "Maximum EV/Revenue Ratio",
-      description: "Upper bound for the ratio. Lower values (e.g., 1-3) indicate potentially undervalued growth stocks.",
+      label: "scans.ev_to_revenue.max_ev.label",
+      description: "scans.ev_to_revenue.max_ev.description",
       type: "number",
     },
     {
       name: "basketIds",
-      label: "Select Baskets",
-      description: "Choose one or more baskets to scan for undervalued companies.",
+      label: "scans.common.basket_ids.label",
+      description: "scans.common.basket_ids.description",
       type: "basket-chips",
     },
   ];

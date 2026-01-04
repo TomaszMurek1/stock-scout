@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
@@ -39,6 +40,7 @@ interface ScanResultsProps {
 }
 
 export default function FibonacciElliottScanPage() {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // Use Zustand store
@@ -61,8 +63,8 @@ export default function FibonacciElliottScanPage() {
     return [
       {
         name: "minMarketCap",
-        label: "Minimum Market Cap (USD)",
-        description: "Filter stocks by minimum market capitalization",
+        label: t("scans.common.min_market_cap.label"),
+        description: t("scans.common.min_market_cap.description"),
         type: "number",
         inputProps: {
           min: 0,
@@ -71,8 +73,8 @@ export default function FibonacciElliottScanPage() {
       },
       {
         name: "pivotThreshold",
-        label: "Pivot Threshold (%)",
-        description: "Percentage threshold for detecting price pivots (1-20%)",
+        label: t("scans.fibonacci_elliott.pivot_threshold.label"),
+        description: t("scans.fibonacci_elliott.pivot_threshold.description"),
         type: "number",
         inputProps: {
           min: 0.01,
@@ -83,8 +85,8 @@ export default function FibonacciElliottScanPage() {
       },
       {
         name: "minKellyFraction",
-        label: "Minimum Kelly Fraction",
-        description: "Filter results by minimum Kelly Fraction (0-1)",
+        label: t("scans.fibonacci_elliott.min_kelly_fraction.label"),
+        description: t("scans.fibonacci_elliott.min_kelly_fraction.description"),
         type: "number",
         inputProps: {
           min: 0,
@@ -95,12 +97,12 @@ export default function FibonacciElliottScanPage() {
       },
       {
         name: "basketIds",
-        label: "Select baskets",
-        description: "Choose one or more baskets to define the scan universe.",
+        label: t("scans.common.basket_ids.label"),
+        description: t("scans.common.basket_ids.description"),
         type: "basket-chips",
       },
     ];
-  }, []);
+  }, [t]);
 
   // Clear results when navigating away from fibonacci-elliott routes
   useEffect(() => {
@@ -144,16 +146,16 @@ export default function FibonacciElliottScanPage() {
 
       console.log("Fibonacci & Elliott Scan Data:", result.data);
       if (result.data.length === 0) {
-        toast.info("No matches found given the criteria.");
+        toast.info(t("scans.common.no_results"));
       } else {
-        toast.success(`Found ${result.data.length} stocks with Elliott Wave patterns`);
+        toast.success(t("scans.common.accumulation_candidates_found", { count: result.data.length }));
       }
     } catch (error: any) {
       console.error("API error:", error);
 
       const errorMessage = error.response?.data?.detail
         || error.message
-        || "Network error. Please try again.";
+        || t("scans.common.error_network");
 
       toast.error(errorMessage);
     } finally {
@@ -165,10 +167,10 @@ export default function FibonacciElliottScanPage() {
     <div className="container">
       <BackToCarousel />
       <FormCardGenerator
-        title="Fibonacci & Elliott Wave Scan"
+        title={t("scans.fibonacci_elliott.title")}
         icon={Waves}
         subtitle={
-          <FormSubtitle description="Scan for stocks showing Elliott Wave patterns with Fibonacci retracements." />
+          <FormSubtitle description={t("scans.fibonacci_elliott.subtitle")} />
         }
         maxWidth="max-w-4xl"
       >

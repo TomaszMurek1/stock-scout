@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GoldenCrossOutput } from "./golden-cross-output";
@@ -18,6 +19,7 @@ import { Sun } from "lucide-react";
 import { useScanJob } from "@/hooks/useScanJob";
 
 export default function GoldenCrossScanPage() {
+  const { t } = useTranslation();
   const { startJob, isLoading, result, error, status } = useScanJob<ScanResultsProps['data']>({
     onCompleted: (data) => console.log("Scan completed", data),
   });
@@ -35,15 +37,19 @@ export default function GoldenCrossScanPage() {
 
   const formFields: IFormGeneratorField<GoldenCrossFormValues>[] = useMemo(() => {
     return [
-      ...baseGoldenCrossFields,
+      ...baseGoldenCrossFields.map(field => ({
+        ...field,
+        label: t(field.label),
+        description: t(field.description || "")
+      })),
       {
         name: "basketIds",
-        label: "Select baskets",
-        description: "Choose one or more baskets to define the scan universe.",
+        label: t("scans.common.basket_ids.label"),
+        description: t("scans.common.basket_ids.description"),
         type: "basket-chips",
       },
     ];
-  }, []);
+  }, [t]);
 
   const onSubmit: SubmitHandler<GoldenCrossFormValues> = (data) => {
     startJob(() =>
@@ -63,24 +69,24 @@ export default function GoldenCrossScanPage() {
     <div className="container">
       <BackToCarousel />
       <FormCardGenerator
-        title="Golden Cross Scan"
+        title={t("scans.golden_cross.title")}
         icon={Sun}
         subtitle={
-          <FormSubtitle description="Set parameters to scan for stocks showing a Golden Cross pattern." />
+          <FormSubtitle description={t("scans.golden_cross.subtitle")} />
         }
       >
         <FormFieldsGenerator<GoldenCrossFormValues>
           form={form}
           formFields={formFields}
           isLoading={isLoading}
-          loadingText={status === "RUNNING" ? "Scanning in background..." : "Starting..."}
+          loadingText={status === "RUNNING" ? t("scans.common.scanning") : t("scans.common.starting")}
           onSubmit={onSubmit}
         />
         
         {/* Error Message */}
         {error && (
             <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
-                <p>Error: {error}</p>
+                <p>{t("scans.common.error")}: {error}</p>
             </div>
         )}
 
@@ -91,7 +97,7 @@ export default function GoldenCrossScanPage() {
         
         {result && result.length === 0 && (
              <div className="mt-6 text-center text-gray-500">
-                No results found matching your criteria.
+                {t("scans.common.no_results")}
              </div>
         )}
 

@@ -6,6 +6,7 @@ import SignInForm from "./sign-in-form";
 import RegisterForm from "./register-form";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface SignInProps {
   onClose: () => void;
@@ -23,6 +24,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
   const [username, setUsername] = useState<string>("");
   const [isRegistering, setIsRegistering] = useState<boolean>(!!invitationCodeFromUrl); // Auto-switch to register if invitation code present
   const [error, setError] = useState<string>("");
+  const { t } = useTranslation();
 
   console.log("Invitation Code from URL:", invitationCodeFromUrl);
 
@@ -31,7 +33,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
     setEmail(newEmail);
     setEmailError(
       newEmail && !validateEmail(newEmail)
-        ? "Please enter a valid email address"
+        ? t("auth.valid_email")
         : ""
     );
   };
@@ -47,7 +49,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
         setUsername("");
         setPassword("");
         setEmail("");
-        onError("Registration successful. Please sign in.");
+        onError(t("auth.registration_successful"));
       } else {
         const response = await login(email, password);
         // Pass the entire token object instead of only the access token:
@@ -56,9 +58,9 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
       }
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response) {
-        onError(err.response.data.detail || "Authentication failed.");
+        onError(err.response.data.detail || t("auth.auth_failed"));
       } else {
-        onError("An unexpected error occurred.");
+        onError(t("auth.unexpected_error"));
       }
     }
   };
@@ -66,7 +68,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
   return (
     <Box sx={{ maxWidth: 400, margin: "auto", mt: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        {isRegistering ? "Register2" : "Sign In"}
+        {isRegistering ? t("auth.register2") : t("auth.sign_in")}
       </Typography>
       <form onSubmit={handleSubmit} noValidate>
         {isRegistering ? (
@@ -104,16 +106,16 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
               : !email || !password || Boolean(emailError)
           }
         >
-          {isRegistering ? "Register" : "Sign In"}
+          {isRegistering ? t("auth.register") : t("auth.sign_in")}
         </Button>
       </form>
       {!isRegistering ? (
         <Button onClick={() => setIsRegistering(true)} sx={{ mt: 2 }}>
-          Need an account? Register
+          {t("auth.need_account")}
         </Button>
       ) : (
         <Button onClick={() => setIsRegistering(false)} sx={{ mt: 2 }}>
-          Already have an account? Sign In
+          {t("auth.have_account")}
         </Button>
       )}
     </Box>

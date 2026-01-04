@@ -15,12 +15,14 @@ import { apiClient } from "@/services/apiClient"
 import { AppState, useAppStore } from "@/store/appStore"
 import { Company } from "@/features/company-search/types"
 import { CompanySearch } from "@/features/company-search/CompanySearch"
+import { useTranslation } from "react-i18next"
 
 export function AddWatchlistDialog() {
     const [open, setOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const refreshWatchlist = useAppStore((state: AppState) => state.refreshWatchlist)
+    const { t } = useTranslation()
 
     const handleAdd = async (company: Company) => {
         setError(null)
@@ -51,21 +53,21 @@ export function AddWatchlistDialog() {
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="text-gray-600">
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Stock
+                    {t("common.add_stock")}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Add stock to watchlist</DialogTitle>
+                    <DialogTitle>{t("watchlist.add_dialog_title")}</DialogTitle>
                     <DialogDescription>
-                        Search for a company and add it to your favorites list.
+                        {t("watchlist.add_dialog_desc")}
                     </DialogDescription>
                 </DialogHeader>
                 {error && (
                     <p className="text-sm text-red-600">{error}</p>
                 )}
                 <CompanySearch
-                    actionLabel="Add to Watchlist"
+                    actionLabel={t("watchlist.add_action")}
                     actionLoading={submitting}
                     onAction={handleAdd}
                     containerClassName="mx-0 px-0 py-0"

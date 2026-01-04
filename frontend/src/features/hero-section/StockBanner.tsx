@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Activity } from "lucide-react";
 import { apiClient, API_URL } from "@/services/apiClient";
 import { colors } from "./theme-colors";
+import { useTranslation } from "react-i18next";
 
 // Theme Configuration - utilizing your existing theme-colors
 const theme = {
@@ -43,6 +44,7 @@ export const StockBanner: React.FC<StockBannerProps> = ({
 }) => {
   const [candles, setCandles] = useState<Candle[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -120,26 +122,18 @@ export const StockBanner: React.FC<StockBannerProps> = ({
                 StockScan <span className="font-light text-slate-400">Pro</span>
               </h1>
               <div className="flex items-center space-x-2 mt-1">
-                <span className="relative flex h-2 w-2">
-                  <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full ${theme.liveIndicator} opacity-75`}
-                  ></span>
-                  <span
-                    className={`relative inline-flex rounded-full h-2 w-2 ${theme.liveIndicator}`}
-                  ></span>
-                </span>
+                {/* Removed live indicator spans */}
                 <span
                   className={`${theme.liveIndicatorText} text-xs font-bold uppercase tracking-wider`}
                 >
-                  Live Market Analysis
+                  {t("hero_banner.title")}
                 </span>
               </div>
             </div>
           </div>
 
           <p className={`text-base ${theme.secondaryText} leading-relaxed max-w-lg font-medium`}>
-            Real-time institutional-grade analytics, AI-powered thesis generation, and deep-dive
-            metrics for the modern investor.
+            {t("hero_banner.description")}
           </p>
         </div>
 

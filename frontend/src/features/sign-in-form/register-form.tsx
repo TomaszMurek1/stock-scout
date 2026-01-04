@@ -1,5 +1,6 @@
 import React from "react";
 import { TextField } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 interface RegisterFormProps {
   username: string;
@@ -19,36 +20,40 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onUsernameChange,
   onEmailChange,
   onPasswordChange,
-}) => (
-  <>
-    <TextField
-      fullWidth
-      margin="normal"
-      label="Username"
-      value={username}
-      onChange={onUsernameChange}
-      required
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      label="Email"
-      value={email}
-      onChange={onEmailChange}
-      error={Boolean(emailError)}
-      helperText={emailError}
-      required
-    />
-    <TextField
-      fullWidth
-      margin="normal"
-      label="Password"
-      type="password"
-      value={password}
-      onChange={onPasswordChange}
-      required
-    />
-  </>
-);
+}) => {
+  const { t } = useTranslation();
+  
+  return (
+    <>
+      <TextField
+        fullWidth
+        margin="normal"
+        label={t("auth.username")}
+        value={username}
+        onChange={onUsernameChange}
+        required
+      />
+      <TextField
+        fullWidth
+        margin="normal"
+        label={t("auth.email")}
+        value={email}
+        onChange={onEmailChange}
+        error={Boolean(emailError)}
+        helperText={emailError}
+        required
+      />
+      <TextField
+        fullWidth
+        margin="normal"
+        label={t("auth.password")}
+        type="password"
+        value={password}
+        onChange={onPasswordChange}
+        required
+      />
+    </>
+  );
+};
 
 export default RegisterForm;

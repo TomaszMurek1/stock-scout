@@ -17,29 +17,26 @@ export type GoldenCrossFormValues = z.infer<typeof goldenCrossFormSchema>;
 export const baseGoldenCrossFields: IFormGeneratorField<GoldenCrossFormValues>[] = [
   {
     name: "shortPeriod",
-    label: "Short Period (days)",
-    description:
-      "The number of days for the short-term moving average (e.g., 50 days).",
+    label: "scans.common.short_period.label",
+    description: "scans.common.short_period.description",
     type: "number",
   },
   {
     name: "longPeriod",
-    label: "Long Period (days)",
-    description:
-      "The number of days for the long-term moving average (e.g., 200 days).",
+    label: "scans.common.long_period.label",
+    description: "scans.common.long_period.description",
     type: "number",
   },
   {
     name: "daysToLookBack",
-    label: "Days to Look Back",
-    description:
-      "The number of days in the past to analyze for the Golden Cross pattern.",
+    label: "scans.common.days_to_look_back.label",
+    description: "scans.common.days_to_look_back.description",
     type: "number",
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (Millions USD)",
-    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
+    label: "scans.common.min_market_cap.label",
+    description: "scans.common.min_market_cap.description",
     type: "number",
   },
 ];

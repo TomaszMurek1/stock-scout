@@ -4,6 +4,7 @@ import React, { lazy, Suspense, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react";
 import { ApiHolding, Transaction, Period } from "../types";
+import { useTranslation } from "react-i18next";
 
 const HoldingsTab = lazy(() => import("./holdings/HoldingsTab"));
 const WatchlistTab = lazy(() => import("./watchlist/WatchlistTab"));
@@ -34,6 +35,7 @@ export default function PortfolioTabs({
   portfolioCurrency,
 }: PortfolioTabsProps) {
   const [activeTab, setActiveTab] = useState("holdings");
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     if (externalTab) {
@@ -48,32 +50,32 @@ export default function PortfolioTabs({
       <TabsList className="bg-slate-100/50 p-1 h-auto grid grid-cols-6 gap-2 mb-6">
         <TabsTrigger value="holdings" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <BarChart3 className="h-4 w-4" />
-          <span className="font-medium">Your Stocks</span>
+          <span className="font-medium">{t("portfolio.tabs.your_stocks")}</span>
         </TabsTrigger>
         {/* ... triggers ... */}
         <TabsTrigger value="watchlist" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <BarChart3 className="h-4 w-4" />
-          <span className="font-medium">Watchlist</span>
+          <span className="font-medium">{t("portfolio.tabs.watchlist")}</span>
         </TabsTrigger>
         <TabsTrigger value="alerts" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <Bell className="h-4 w-4" />
-          <span className="font-medium">Alerts</span>
+          <span className="font-medium">{t("portfolio.tabs.alerts")}</span>
         </TabsTrigger>
         <TabsTrigger value="transactions" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <Clock className="h-4 w-4" />
-          <span className="font-medium">Transactions</span>
+          <span className="font-medium">{t("portfolio.tabs.transactions")}</span>
         </TabsTrigger>
         <TabsTrigger value="cash" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <DollarSign className="h-4 w-4" />
-          <span className="font-medium">Cash</span>
+          <span className="font-medium">{t("portfolio.tabs.cash")}</span>
         </TabsTrigger>
         <TabsTrigger value="risk" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
           <PieChart className="h-4 w-4" />
-          <span className="font-medium">Risk</span>
+          <span className="font-medium">{t("portfolio.tabs.risk")}</span>
         </TabsTrigger>
       </TabsList>
 
-      <Suspense fallback={<div>Loading tab…</div>}>
+      <Suspense fallback={<div>{t("common.loading")}</div>}>
         <TabsContent value="holdings" className="min-h-[500px]">
           <HoldingsTab 
              holdings={byHolding ?? []} 

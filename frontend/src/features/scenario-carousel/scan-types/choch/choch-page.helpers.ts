@@ -12,14 +12,14 @@ export type ChochFormValues = z.infer<typeof chochFormSchema>;
 export const baseChochFields: IFormGeneratorField<ChochFormValues>[] = [
   {
     name: "lookbackPeriod",
-    label: "Lookback Period (days)",
-    description: "Number of periods to determine local highs/lows (e.g. 10). Higher value means finding more significant peaks/troughs.",
+    label: "scans.choch.lookback_period.label",
+    description: "scans.choch.lookback_period.description",
     type: "number",
   },
   {
     name: "daysToCheck",
-    label: "Pattern Lookback Days",
-    description: "How many days back to look for the confirmed pattern setup.",
+    label: "scans.choch.days_to_check.label",
+    description: "scans.choch.days_to_check.description",
     type: "number",
   },
   {

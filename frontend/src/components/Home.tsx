@@ -5,6 +5,8 @@ import HeroSection from "@/features/hero-section/hero-section";
 import { LinkToPortfolio } from "@/features/portfolio-management/LinkToPortfolio";
 import ScenarioCarousel from "@/features/scenario-carousel/scenario-carousel";
 import { useLocation } from "react-router-dom";
+// import { useTranslation } from "react-i18next"; // Removed to avoid lint error if not used in this file yet. 
+// Wait, I need useTranslation.
 
 export default function Home() {
   const location = useLocation();

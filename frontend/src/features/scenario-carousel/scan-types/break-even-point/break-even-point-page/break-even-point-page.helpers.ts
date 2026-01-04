@@ -11,14 +11,14 @@ export type BreakEvenPointValues = z.infer<typeof BreakEvenPointFormSchema>;
 export const BreakEvenBaseFields: IFormGeneratorField<BreakEvenPointValues>[] = [
   {
     name: "thresholdPct",
-    label: "Loss Threshold (%)",
-    description: "Maximum % of revenue the company can be losing. Profitable firms always pass.",
+    label: "scans.break_even_point.threshold_pct.label",
+    description: "scans.break_even_point.threshold_pct.description",
     type: "number",
   },
   {
     name: "minMarketCap",
-    label: "Min Market Cap (Millions USD)",
-    description: "Minimum market capitalization in millions USD (e.g., 1000 for $1B). Values are converted using latest FX rates.",
+    label: "scans.common.min_market_cap.label",
+    description: "scans.common.min_market_cap.description",
     type: "number",
   },
 ];

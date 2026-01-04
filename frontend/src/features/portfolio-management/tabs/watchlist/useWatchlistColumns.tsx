@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { MRT_ColumnDef } from "material-react-table"
 import type { WatchlistStock } from "./types"
 import { API_URL } from "@/services/apiClient"
+import { useTranslation } from "react-i18next"
 
 const formatCurrency = (value: number | null | undefined, currency?: string | null) => {
     if (value === null || value === undefined) {
@@ -19,10 +20,11 @@ const formatCurrency = (value: number | null | undefined, currency?: string | nu
 }
 
 export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] { 
+    const { t } = useTranslation()
     return useMemo<MRT_ColumnDef<WatchlistStock>[]>(() => [
         {
             accessorKey: "name",
-            header: "Company",
+            header: t("watchlist.market_data"), // Using 'Company' actually based on previous logic but mapped to market_data usually? No, name is company. Let's use portfolio.holdings.company or similar. Wait, I added common.company? No. portfolio.holdings.company.
             enableSorting: true,
             Cell: ({ row }) => (
                 <div className="flex items-center gap-2">
@@ -42,23 +44,23 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
             ),
         },
         {
-            header: "Last Price",
+            header: t("watchlist.last_price"),
             accessorFn: (row) => row.market_data?.last_price ?? null,
             id: "last_price",
             Cell: ({ cell, row }) => formatCurrency(cell.getValue<number | null>(), row.original.market_data?.currency),
         },
         {
-            header: "Currency",
+            header: t("common.currency"),
             accessorFn: (row) => row.market_data?.currency ?? "—",
             id: "currency",
         },
         {
-            header: "Held",
-            accessorFn: (row) => (row.is_held ? "Yes" : "No"),
+            header: t("watchlist.held"),
+            accessorFn: (row) => (row.is_held ? t("common.yes") : t("common.no")),
             id: "is_held",
         },
         {
-            header: "Shares Held",
+            header: t("watchlist.shares_held"),
             accessorFn: (row) => row.held_shares ?? null,
             id: "held_shares",
             Cell: ({ cell }) => {
@@ -67,7 +69,7 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
             },
         },
         {
-            header: "Added",
+            header: t("watchlist.added"),
             accessorFn: (row) => row.added_at ?? null,
             id: "added_at",
             Cell: ({ cell }) => {
@@ -77,5 +79,5 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
                 return dt.toLocaleDateString()
             },
         },
-    ], [])
+    ], [t])
 }

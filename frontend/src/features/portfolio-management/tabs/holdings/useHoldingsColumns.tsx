@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import type { ApiHolding, Period } from "../../types";
 import { renderInvested, renderCurrentValue, renderGainLoss, renderPeriodGainLoss } from "./holdingsRenderers";
 import { API_URL } from "@/services/apiClient";
+import { useTranslation } from "react-i18next";
 
 interface UseHoldingsColumnsOptions {
   portfolioCurrency?: string;
@@ -14,12 +15,13 @@ export function useHoldingsColumns(
   options: UseHoldingsColumnsOptions
 ): MRT_ColumnDef<ApiHolding>[] {
   const { portfolioCurrency = "PLN", selectedPeriod = "ytd" } = options ?? {};
+  const { t } = useTranslation();
 
   return useMemo<MRT_ColumnDef<ApiHolding>[]>(
     () => [
       {
         accessorKey: "name",
-        header: "Company",
+        header: t("portfolio.holdings.company"),
         Cell: ({ row }) => (
           <div 
              className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
@@ -46,11 +48,11 @@ export function useHoldingsColumns(
           </div>
         ),
       },
-      { accessorKey: "shares", header: "Shares" },
+      { accessorKey: "shares", header: t("common.shares") },
 
       {
         id: "invested",
-        header: "Invested",
+        header: t("portfolio.holdings.invested"),
         Cell: ({ row }) =>
           renderInvested({
             holding: row.original,
@@ -73,7 +75,7 @@ export function useHoldingsColumns(
 
       {
         id: "currentValue",
-        header: "Current Value",
+        header: t("portfolio.holdings.current_value"),
         Cell: ({ row }) =>
           renderCurrentValue({
             holding: row.original,
@@ -101,7 +103,7 @@ export function useHoldingsColumns(
 
       {
         id: "gainLoss",
-        header: "Gain / Loss",
+        header: t("portfolio.holdings.gain_loss"),
         Cell: ({ row }) =>
           renderGainLoss({
             holding: row.original,
@@ -131,7 +133,7 @@ export function useHoldingsColumns(
       },
       {
         id: "periodGainLoss",
-        header: `Gain / Loss (${selectedPeriod.toUpperCase()})`,
+        header: `${t("portfolio.holdings.gain_loss")} (${selectedPeriod.toUpperCase()})`,
         Cell: ({ row }) =>
           renderPeriodGainLoss({
             holding: row.original,
@@ -157,6 +159,6 @@ export function useHoldingsColumns(
         },
       },
     ],
-    [portfolioCurrency, selectedPeriod]
+    [portfolioCurrency, selectedPeriod, t]
   );
 }
