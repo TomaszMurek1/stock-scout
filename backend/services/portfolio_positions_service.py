@@ -311,17 +311,22 @@ def ensure_portfolio_prices_fresh(db: Session, portfolio, background_tasks: Back
 def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
     """
     Returns a list of holdings for the given portfolio with PnL.
+    Optimized: Batches current prices + FX rates + historical data.
     """
     account_ids = [a.id for a in portfolio.accounts]
     if not account_ids:
         return []
 
     positions = _get_raw_positions(db, account_ids)
+    if not positions:
+        return []
+
     company_ids = [pos.company_id for pos in positions]
-    # Determine authoritative currency for each position (Market > Cached)
-    # We map position_id -> currency_code to avoid re-evaluating inside loop
+    
+    # 1. Determine authoritative currency and collect set for batching
     pos_currency_map = {}
     instrument_currencies = set()
+    portfolio_ccy = portfolio.currency
     
     for pos in positions:
         ccy = pos.instrument_currency_code
@@ -331,40 +336,88 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
         pos_currency_map[pos.id] = ccy
         instrument_currencies.add(ccy)
 
-    portfolio_ccy = portfolio.currency
+    # 2. Batch Fetch: Current Prices
+    # We prioritize StockPriceHistory (latest), then CompanyMarketData
+    # Let's fetch both in bulk and merge in memory.
     
+    # bulk CompanyMarketData
+    cmd_map = {}
+    cw_rows = db.query(CompanyMarketData).filter(CompanyMarketData.company_id.in_(company_ids)).all()
+    for row in cw_rows:
+        cmd_map[row.company_id] = _to_d(row.current_price)
+
+    # bulk StockPriceHistory (latest per company)
+    # Getting "latest" efficiency in SQL for many companies can be tricky (WINDOW func or distinct ON).
+    # Since we already fetched bulk history for sparklines, maybe we can reuse?
+    # Actually, `_fetch_historical_data` gets history up to Today... but it uses `min_date`.
+    # It might miss the true "latest" if min_date is far back.
+    # Let's do a dedicated distinct query for latest prices.
+    sph_latest_map = {}
+    latest_sph_rows = (
+        db.query(StockPriceHistory.company_id, StockPriceHistory.close)
+        .filter(StockPriceHistory.company_id.in_(company_ids))
+        .order_by(StockPriceHistory.company_id, StockPriceHistory.date.desc())
+        .distinct(StockPriceHistory.company_id)
+        .all()
+    )
+    for cid, close in latest_sph_rows:
+        sph_latest_map[cid] = _to_d(close)
+
+    # 3. Batch Fetch: Current FX Rates
+    # We need rate from InstCCY -> PortfolioCCY
+    # Fetch all needed pairs
+    needed_pairs = instrument_currencies - {portfolio_ccy}
+    current_fx_map = {portfolio_ccy: Decimal("1.0")} # Base map
+    
+    if needed_pairs:
+        # We need to fetch latest rates for these
+        # We can use the existing helper logic but generalized
+        # For now, let's just loop locally if we don't want to rewrite helper
+        # Or better: Fetch all FxRates for these base currencies to target where date is recent?
+        # A simple loop calling get_latest_fx_rate is N queries (where N = num currencies).
+        # Typically N is small (USD, EUR, PLN, GBP...). So N=3-4 queries is fine compared to N=50 positions.
+        # But let's be cleaner.
+        
+        for ccy in needed_pairs:
+             rate = get_latest_fx_rate(db, ccy, portfolio_ccy)
+             current_fx_map[ccy] = _to_d(rate) if rate else Decimal("1.0")
+    
+    # 4. Fetch Historical Data (Batch)
     metrics_svc = PortfolioMetricsService(db)
     periods = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd"]
     
-    # Pre-fetch Data
     first_tx_map = _fetch_first_transactions(db, portfolio.id, company_ids)
     ref_prices, ref_fx_rates, period_start_dates = _fetch_historical_data(
         db, metrics_svc, periods, company_ids, portfolio_ccy, instrument_currencies
     )
     
     holdings = []
-    
-    # Output Rounding Configuration
     DISPLAY_QUANT = Decimal("0.01")
     
+    # 5. Build Result
     for pos in positions:
-        current_price = _get_current_price(db, pos.company_id)
+        cid = pos.company_id
         
-        # Use determined currency
+        # Resolve Current Price
+        current_price = sph_latest_map.get(cid)
+        if current_price is None:
+            current_price = cmd_map.get(cid, Decimal("0"))
+        
         inst_ccy = pos_currency_map.get(pos.id, pos.instrument_currency_code)
         
-        fx_rate_to_portfolio = _get_current_fx_rate(
-            db, inst_ccy, portfolio_ccy
-        )
+        # Resolve Current FX
+        fx_rate_to_portfolio = current_fx_map.get(inst_ccy, Decimal("1.0"))
+        # If caching missed (unlikely) or direct match failed, maybe fallback?
+        # (Assuming optimization covers mostly used pairs)
         
         # Calculate PnL for each period
         pnl_map = {}
         pnl_map_instrument = {}
-        c_prices = ref_prices.get(pos.company_id, {})
+        c_prices = ref_prices.get(cid, {})
         
-        d_curr = _to_d(current_price)
+        d_curr = current_price
         d_qty = _to_d(pos.quantity)
-        d_fx = _to_d(fx_rate_to_portfolio)
+        d_fx = fx_rate_to_portfolio
         
         for p in periods:
             ref_price_val = c_prices.get(p)
@@ -373,12 +426,6 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
             first_tx = first_tx_map.get(pos.company.ticker)
             is_new_position = False
             
-            # Logic: If acquired after period start, use Cost Basis as Reference
-            # CORRECTION for New Positions:
-            # If the position was acquired AFTER the period started, using the historical price 
-            # at period start yields a hypothetical "Asset Return", not "User Return".
-            # To approximate User PnL (matching the Breakdown's Net Purchase logic), 
-            # we use Average Cost as the reference price for these new positions.
             if first_tx and p_start and first_tx > p_start:
                  ref_price_val = _to_d(pos.avg_cost_instrument_ccy)
                  is_new_position = True
@@ -394,15 +441,11 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                 
                 # Portfolio PnL
                 if is_new_position:
-                    # New Position: Compare Current Market Value (PLN) vs Paid Cost Basis (PLN).
-                    # This captures PRICE changes + CURRENCY changes on the principal.
                     d_avg_port = _to_d(pos.avg_cost_portfolio_ccy)
                     curr_val_base = d_curr * d_qty * d_fx
                     cost_basis_base = d_avg_port * d_qty
                     val = curr_val_base - cost_basis_base
                 else:
-                    # Existing Position: Use start-of-period FX rate to capture currency impact on principal.
-                    # PnL = (Current Price * Current FX) - (Start Price * Start FX)
                     d_hist_fx = Decimal("1.0")
                     if inst_ccy != portfolio_ccy:
                          raw_fx = ref_fx_rates.get(inst_ccy, {}).get(p)
@@ -412,20 +455,17 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                     hist_val_base = d_ref * d_qty * d_hist_fx
                     val = curr_val_base - hist_val_base
             
-            # Round for display
             pnl_map[p] = float(val.quantize(DISPLAY_QUANT, rounding=ROUND_HALF_UP))
             pnl_map_instrument[p] = float(val_instrument.quantize(DISPLAY_QUANT, rounding=ROUND_HALF_UP))
 
         # Calculate ITD PnL
         d_avg_cost_inst = _to_d(pos.avg_cost_instrument_ccy)
-        
         itd_pnl_inst = (d_curr - d_avg_cost_inst) * d_qty
         pnl_map_instrument["itd"] = float(itd_pnl_inst.quantize(DISPLAY_QUANT, rounding=ROUND_HALF_UP))
         
         d_avg_cost_port = _to_d(pos.avg_cost_portfolio_ccy)
         current_val_port = d_curr * d_qty * d_fx
         cost_basis_port = d_avg_cost_port * d_qty
-        
         pnl_map["itd"] = float((current_val_port - cost_basis_port).quantize(DISPLAY_QUANT, rounding=ROUND_HALF_UP))
 
         holdings.append(

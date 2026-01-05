@@ -699,6 +699,7 @@ def _get_portfolio_state_at(db: Session, portfolio_id: int, as_of: date):
 def _get_companies_valuation(db: Session, as_of: date, company_ids: list[int], base_ccy: str, portfolio_id: int):
     """
     Returns {company_id: {price: Decimal, fx: Decimal, type: str}}
+    Optimized: Batch fetch prices and FX.
     """
     if not company_ids:
         return {}
@@ -707,6 +708,7 @@ def _get_companies_valuation(db: Session, as_of: date, company_ids: list[int], b
     
     has_instr = hasattr(Company, "instrument_type")
     
+    # 1. Fetch Company Metadata (Currency, Type)
     if has_instr:
         data = (
             db.query(Company.company_id, Company.instrument_type, Market.currency)
@@ -721,6 +723,46 @@ def _get_companies_valuation(db: Session, as_of: date, company_ids: list[int], b
             .filter(Company.company_id.in_(company_ids))
             .all()
         )
+        
+    # 2. Batch Fetch Prices (Closest <= as_of)
+    # This is tricky in SQL for "closest date per group".
+    # Strategy: Fetch history in range [as_of - 5 days, as_of] for these companies
+    # and resolve in memory. This avoids N queries.
+    min_date = as_of - timedelta(days=7) # Safety window
+    
+    raw_prices = (
+        db.query(StockPriceHistory.company_id, StockPriceHistory.date, StockPriceHistory.close)
+        .filter(
+            StockPriceHistory.company_id.in_(company_ids),
+            StockPriceHistory.date >= min_date,
+            StockPriceHistory.date <= as_of
+        )
+        .order_by(StockPriceHistory.company_id, StockPriceHistory.date.desc())
+        .all()
+    )
+    
+    price_map = {} # cid -> price
+    for cid, dt, close in raw_prices:
+        if cid not in price_map and close is not None:
+             price_map[cid] = Decimal(str(close))
+             
+    # Fallback: CompanyMarketData (Current Price)
+    # Only if we miss history (e.g. today is holiday or brand new data)
+    missing_price_cids = [cid for cid in company_ids if cid not in price_map]
+    if missing_price_cids:
+        cmd_rows = (
+            db.query(CompanyMarketData.company_id, CompanyMarketData.current_price)
+            .filter(CompanyMarketData.company_id.in_(missing_price_cids))
+            .all()
+        )
+        for cid, cp in cmd_rows:
+            if cp is not None:
+                price_map[cid] = Decimal(str(cp))
+
+    # 3. Batch Fetch FX Rates
+    # Collect needed currencies
+    inst_currencies = set()
+    comp_info_map = {} # cid -> (itype, ccy)
     
     for row in data:
         if has_instr:
@@ -728,28 +770,37 @@ def _get_companies_valuation(db: Session, as_of: date, company_ids: list[int], b
         else:
             cid, mkt_ccy = row
             itype = "stock"
-
-        price_row = (
-            db.query(StockPriceHistory.close)
-            .filter(StockPriceHistory.company_id == cid, StockPriceHistory.date <= as_of)
-            .order_by(StockPriceHistory.date.desc())
-            .first()
-        )
-        price = None
-        if price_row and price_row[0] is not None:
-             price = Decimal(str(price_row[0]))
-        else:
-             md = db.query(CompanyMarketData.current_price).filter(CompanyMarketData.company_id == cid).first()
-             if md and md[0] is not None:
-                 price = Decimal(str(md[0]))
-        
-        inst_ccy = (mkt_ccy or base_ccy).upper()
-        rate = fx_to_base_for_currency(db, as_of, inst_ccy, base_ccy, portfolio_id, fallback_company_id=cid)
-        if rate is None:
-            rate = Decimal("0")
             
+        ccy = (mkt_ccy or base_ccy).upper()
+        inst_currencies.add(ccy)
+        comp_info_map[cid] = (itype, ccy)
+        
+    # Fetch rates for all unique instrument currencies -> Base
+    fx_map = {} # ccy -> rate
+    # Use existing helper or bulk logic? 
+    # Let's reuse the logic: if ccy == base, 1.0. Else fetch.
+    # Since number of currencies is small (USD, EUR...), loop queries are acceptable compare to N companies.
+    # But let's be safe and use `get_fx_rates_batch_for_date` if possible or just loop.
+    
+    from services.fx.fx_rate_helper import get_fx_rate_for_date
+    for ccy in inst_currencies:
+        if ccy == base_ccy:
+            fx_map[ccy] = Decimal("1.0")
+        else:
+            r = get_fx_rate_for_date(db, ccy, base_ccy, as_of)
+            fx_map[ccy] = Decimal(str(r)) if r is not None else Decimal("0")
+
+    # 4. Assembly
+    for cid in company_ids:
+        if cid not in comp_info_map:
+            continue
+            
+        itype, ccy = comp_info_map[cid]
+        price = price_map.get(cid)
+        rate = fx_map.get(ccy, Decimal("0"))
+        
         result[cid] = {
-            "price": price,
+            "price": price, # Can be None
             "fx": rate,
             "type": (itype or "stock").lower()
         }
