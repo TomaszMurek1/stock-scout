@@ -6,32 +6,13 @@ from sqlalchemy.orm import Session
 from database.valuation import PortfolioValuationDaily
 from database.portfolio import Transaction
 from database.account import Account
-from api.valuation_materialize import run_materialize_range
+from services.valuation.materialization_service import (
+    run_materialize_range, 
+    get_last_pvd_date, 
+    get_first_tx_date, 
+    delete_range_pvd
+)
 from api.positions_service import recompute_account_cash
-
-def _get_last_pvd_date(db: Session, portfolio_id: int) -> date | None:
-    return (
-        db.query(func.max(PortfolioValuationDaily.date))
-          .filter(PortfolioValuationDaily.portfolio_id == portfolio_id)
-          .scalar()
-    )
-
-def _get_first_tx_date(db: Session, portfolio_id: int) -> date | None:
-    dt = (
-        db.query(func.min(Transaction.timestamp))
-          .filter(Transaction.portfolio_id == portfolio_id)
-          .scalar()
-    )
-    return dt.date() if dt else None
-
-def _delete_range(db: Session, portfolio_id: int, start: date, end: date) -> None:
-    db.query(PortfolioValuationDaily)\
-      .filter(
-          PortfolioValuationDaily.portfolio_id == portfolio_id,
-          and_(PortfolioValuationDaily.date >= start,
-               PortfolioValuationDaily.date <= end),
-      ).delete(synchronize_session=False)
-    db.commit()
 
 def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date, *, end: date | None = None) -> None:
     """
@@ -42,11 +23,11 @@ def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date, *, end: 
     from datetime import date as _date
     end = end or _date.today()
 
-    last_pvd = _get_last_pvd_date(db, portfolio_id)
+    last_pvd = get_last_pvd_date(db, portfolio_id)
 
     if last_pvd is None:
         # No PVD yet: start from the first ever transaction (or tx_day as fallback)
-        start = _get_first_tx_date(db, portfolio_id) or tx_day
+        start = get_first_tx_date(db, portfolio_id) or tx_day
     else:
         # Back-dated (or same-day) tx → start at tx_day; otherwise extend the tail
         start = tx_day if tx_day <= last_pvd else (last_pvd + timedelta(days=1))
@@ -55,9 +36,8 @@ def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date, *, end: 
         return  # nothing to do
 
     # Overwrite existing rows in [start..end] to preserve cash chain correctness
-    _delete_range(db, portfolio_id, start, end)
+    delete_range_pvd(db, portfolio_id, start, end)
 
-    # Compute daily rows for [start..today]
     # Compute daily rows for [start..today]
     run_materialize_range(portfolio_id=portfolio_id, start=start, end=end, db=db)
 
