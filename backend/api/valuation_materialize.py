@@ -18,6 +18,8 @@ from database.portfolio import Portfolio, Transaction, TransactionType
 from database.account import Account
 from database.valuation import PortfolioValuationDaily
 from database.company import Company
+from database.market import Market
+from database.stock_data import StockPriceHistory, CompanyMarketData
 from api.valuation_preview import preview_day_value, fx_to_base_for_currency
 from services.scan_job_service import create_job, run_scan_task
 
@@ -389,32 +391,370 @@ def run_materialize_range(
         # no transactions at all
         return {"portfolio_id": portfolio_id, "points": []}
 
-    # both are 'date', safe to compare
-    cur = max(start, first_dt)
+    # Effective start is at least the first transaction
+    actual_start = max(start, first_dt)
+    
+    # If the requested range is entirely before the first transaction
+    if actual_start > end:
+         return {"portfolio_id": portfolio_id, "points": []}
+
+    # 1. OPTIMIZATION: Calculate state (Cash + Holdings) at (actual_start - 1_day)
+    # This is the "Base State" we will incrementally update.
+    base_date = actual_start - timedelta(days=1)
+    
+    current_cash, current_positions = _get_portfolio_state_at(db, portfolio_id, base_date)
+    
+    # ensure portfolio exists to get base currency
+    pf = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    if not pf:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    base_ccy = (pf.currency or "USD").upper()
+    
+    # 2. Fetch ALL transactions in the range [actual_start, end]
+    range_txs = (
+        db.query(Transaction)
+        .filter(
+            Transaction.portfolio_id == portfolio_id,
+            func.date(Transaction.timestamp) >= actual_start,
+            func.date(Transaction.timestamp) <= end
+        )
+        .order_by(Transaction.timestamp)
+        .all()
+    )
+    
+    # Group transactions by date
+    from collections import defaultdict
+    txs_by_date = defaultdict(list)
+    for tx in range_txs:
+        txs_by_date[tx.timestamp.date()].append(tx)
+        
     out = []
     
-    # Chunking might be needed if range is HUGE, but typically it runs day by day.
-    # To report progress, we could update job status? run_scan_task doesn't support progress updates yet easily.
-    # Just run it.
-    
+    # 3. Iterate day-by-day
+    cur = actual_start
     while cur <= end:
-        res = run_materialize_day(portfolio_id=portfolio_id, as_of=cur, db=db)
-        out.append(
-            {
-                "date": res["date"],
-                "total_value": res["total_value"],
-                "by_stock": res["by_stock"],
-                "by_etf": res["by_etf"],
-                "by_bond": res["by_bond"],
-                "by_crypto": res["by_crypto"],
-                "by_commodity": res["by_commodity"],
-                "by_cash": res["by_cash"],
-                "net_contributions": res["net_contributions"],
-            }
+        # A. Update State with today's transactions
+        todays_txs = txs_by_date.get(cur, [])
+        
+        daily_net_contrib = Decimal("0")
+        
+        # Pre-fetch account currencies (cached map)
+        account_currencies = {
+            a_id: (ccy or "").upper() 
+            for a_id, ccy in db.query(Account.id, Account.currency).filter(Account.portfolio_id == portfolio_id).all()
+        }
+
+        for tx in todays_txs:
+            # -- Update Cash --
+            tx_ccy = (tx.currency or base_ccy).upper()
+            acc_ccy = account_currencies.get(tx.account_id, base_ccy)
+            should_convert_to_base = (acc_ccy == base_ccy) and (tx_ccy != base_ccy)
+            
+            rate = _dec(tx.currency_rate or 1)
+            
+            if should_convert_to_base:
+                target_ccy = base_ccy
+                factor = rate
+            else:
+                target_ccy = tx_ccy
+                factor = Decimal("1")
+                
+            ttype = tx.transaction_type
+            delta = Decimal("0")
+            
+            # Cash impact
+            if ttype == TransactionType.DEPOSIT:
+                delta = _dec(tx.quantity)
+            elif ttype == TransactionType.WITHDRAWAL:
+                delta = -_dec(tx.quantity)
+            elif ttype == TransactionType.DIVIDEND:
+                delta = _dec(tx.quantity)
+            elif ttype == TransactionType.INTEREST:
+                delta = _dec(tx.quantity)
+            elif ttype == TransactionType.FEE:
+                delta = -_dec(tx.quantity)
+            elif ttype == TransactionType.TAX:
+                delta = -_dec(tx.quantity)
+            elif ttype == TransactionType.TRANSFER_IN:
+                delta = _dec(tx.quantity)
+            elif ttype == TransactionType.TRANSFER_OUT:
+                delta = -_dec(tx.quantity)
+            elif ttype == TransactionType.BUY:
+                total_cost = (_dec(tx.quantity) * _dec(tx.price or 0)) + _dec(tx.fee or 0)
+                delta = -total_cost
+            elif ttype == TransactionType.SELL:
+                total_proceeds = (_dec(tx.quantity) * _dec(tx.price or 0)) - _dec(tx.fee or 0)
+                delta = total_proceeds
+            
+            current_cash[target_ccy] = current_cash.get(target_ccy, Decimal("0")) + (delta * factor)
+
+            # -- Update Positions --
+            if tx.company_id:
+                cid = tx.company_id
+                if ttype == TransactionType.BUY:
+                    current_positions[cid] = current_positions.get(cid, Decimal("0")) + _dec(tx.quantity)
+                elif ttype == TransactionType.SELL:
+                     current_positions[cid] = current_positions.get(cid, Decimal("0")) - _dec(tx.quantity)
+                elif ttype == TransactionType.TRANSFER_IN:
+                     current_positions[cid] = current_positions.get(cid, Decimal("0")) + _dec(tx.quantity)
+                elif ttype == TransactionType.TRANSFER_OUT:
+                     current_positions[cid] = current_positions.get(cid, Decimal("0")) - _dec(tx.quantity)
+            
+            # -- Net Contributions (External Flow) --
+            if ttype in (TransactionType.DEPOSIT, TransactionType.WITHDRAWAL, TransactionType.FEE, 
+                         TransactionType.TAX, TransactionType.DIVIDEND, TransactionType.INTEREST):
+                 
+                flux_fx = Decimal("1")
+                if tx_ccy != base_ccy:
+                     flux_fx = _dec(tx.currency_rate) if tx.currency_rate is not None else Decimal("1")
+                
+                amount = _dec(tx.quantity)
+                val = amount * flux_fx
+                
+                if ttype in (TransactionType.WITHDRAWAL, TransactionType.FEE, TransactionType.TAX):
+                    daily_net_contrib -= val
+                else:
+                    daily_net_contrib += val
+
+        # B. Calculate Valuation
+        
+        # 1. Cash Value in Base
+        total_cash_val = Decimal("0")
+        for ccy, amt in current_cash.items():
+            if amt == 0: continue
+            rate = fx_to_base_for_currency(db, cur, ccy, base_ccy, portfolio_id, None)
+            if rate:
+                total_cash_val += amt * rate
+        
+        # 2. Securities Value
+        active_cids = [c for c, q in current_positions.items() if abs(q) > Decimal("1e-9")]
+        
+        valuation_data = _get_companies_valuation(db, cur, active_cids, base_ccy, portfolio_id)
+        
+        bucket = {
+            "stock": Decimal("0"),
+            "etf": Decimal("0"),
+            "bond": Decimal("0"),
+            "crypto": Decimal("0"),
+            "commodity": Decimal("0"),
+        }
+        
+        for cid in active_cids:
+            qty = current_positions[cid]
+            info = valuation_data.get(cid)
+            if not info:
+                 continue
+            
+            price = info["price"]
+            if price is None:
+                continue
+
+            # Value in instrument currency
+            val_inst = qty * price
+            
+            # Convert to base
+            fx = info["fx"]
+            val_base = val_inst * fx
+            
+            itype = info["type"]
+            if itype in bucket:
+                bucket[itype] += val_base
+            else:
+                bucket["stock"] += val_base
+
+        # Quantize results
+        by_stock = bucket["stock"].quantize(Decimal("0.0001"))
+        by_etf = bucket["etf"].quantize(Decimal("0.0001"))
+        by_bond = bucket["bond"].quantize(Decimal("0.0001"))
+        by_crypto = bucket["crypto"].quantize(Decimal("0.0001"))
+        by_commodity = bucket["commodity"].quantize(Decimal("0.0001"))
+        by_cash = total_cash_val.quantize(Decimal("0.0001"))
+        net_contrib = daily_net_contrib.quantize(Decimal("0.0001"))
+
+        total_value = (by_cash + by_stock + by_etf + by_bond + by_crypto + by_commodity).quantize(Decimal("0.0001"))
+
+        # C. Upsert to DB
+        stmt = insert(PortfolioValuationDaily).values(
+            portfolio_id=portfolio_id,
+            date=cur,
+            total_value=total_value,
+            by_stock=by_stock,
+            by_etf=by_etf,
+            by_bond=by_bond,
+            by_crypto=by_crypto,
+            by_commodity=by_commodity,
+            by_cash=by_cash,
+            net_contributions=net_contrib,
+            created_at=datetime.utcnow(),
+        ).on_conflict_do_update(
+            index_elements=["portfolio_id", "date"],
+            set_={
+                "total_value": total_value,
+                "by_stock": by_stock,
+                "by_etf": by_etf,
+                "by_bond": by_bond,
+                "by_crypto": by_crypto,
+                "by_commodity": by_commodity,
+                "by_cash": by_cash,
+                "net_contributions": net_contrib,
+            },
         )
+        db.execute(stmt)
+        
+        out.append({
+            "date": cur.isoformat(),
+            "total_value": str(total_value),
+            "by_stock": str(by_stock),
+            "by_etf": str(by_etf),
+            "by_bond": str(by_bond),
+            "by_crypto": str(by_crypto),
+            "by_commodity": str(by_commodity),
+            "by_cash": str(by_cash),
+            "net_contributions": str(net_contrib),
+        })
+
         cur += timedelta(days=1)
 
+    db.commit()
     return {"portfolio_id": portfolio_id, "points": out}
+
+
+def _get_portfolio_state_at(db: Session, portfolio_id: int, as_of: date):
+    """
+    Returns (cash_dict, positions_dict) at end of as_of.
+    Uses generic 'since beginning' approach but only called once.
+    """
+    cash_map = {} # {ccy: Decimal}
+    pos_map = {}  # {company_id: Decimal}
+    
+    # Fetch ALL txs <= as_of
+    txs = (
+        db.query(Transaction)
+        .filter(
+            Transaction.portfolio_id == portfolio_id,
+            func.date(Transaction.timestamp) <= as_of
+        )
+        .order_by(Transaction.timestamp)
+        .all()
+    )
+    
+    pf = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    base_ccy = (pf.currency or "USD").upper()
+    
+    account_currencies = {
+        a_id: (ccy or "").upper() 
+        for a_id, ccy in db.query(Account.id, Account.currency).filter(Account.portfolio_id == portfolio_id).all()
+    }
+
+    for tx in txs:
+         # -- Cash --
+        tx_ccy = (tx.currency or base_ccy).upper()
+        acc_ccy = account_currencies.get(tx.account_id, base_ccy)
+        should_convert_to_base = (acc_ccy == base_ccy) and (tx_ccy != base_ccy)
+        
+        rate = _dec(tx.currency_rate or 1)
+        
+        if should_convert_to_base:
+            target_ccy = base_ccy
+            factor = rate
+        else:
+            target_ccy = tx_ccy
+            factor = Decimal("1")
+            
+        ttype = tx.transaction_type
+        delta = Decimal("0")
+        
+        if ttype == TransactionType.DEPOSIT: delta = _dec(tx.quantity)
+        elif ttype == TransactionType.WITHDRAWAL: delta = -_dec(tx.quantity)
+        elif ttype == TransactionType.DIVIDEND: delta = _dec(tx.quantity)
+        elif ttype == TransactionType.INTEREST: delta = _dec(tx.quantity)
+        elif ttype == TransactionType.FEE: delta = -_dec(tx.quantity)
+        elif ttype == TransactionType.TAX: delta = -_dec(tx.quantity)
+        elif ttype == TransactionType.TRANSFER_IN: delta = _dec(tx.quantity)
+        elif ttype == TransactionType.TRANSFER_OUT: delta = -_dec(tx.quantity)
+        elif ttype == TransactionType.BUY:
+            total_cost = (_dec(tx.quantity) * _dec(tx.price or 0)) + _dec(tx.fee or 0)
+            delta = -total_cost
+        elif ttype == TransactionType.SELL:
+            total_proceeds = (_dec(tx.quantity) * _dec(tx.price or 0)) - _dec(tx.fee or 0)
+            delta = total_proceeds
+        
+        cash_map[target_ccy] = cash_map.get(target_ccy, Decimal("0")) + (delta * factor)
+        
+        # -- Positions --
+        if tx.company_id:
+            cid = tx.company_id
+            q = _dec(tx.quantity)
+            if ttype == TransactionType.BUY:
+                pos_map[cid] = pos_map.get(cid, Decimal("0")) + q
+            elif ttype == TransactionType.SELL:
+                pos_map[cid] = pos_map.get(cid, Decimal("0")) - q
+            elif ttype == TransactionType.TRANSFER_IN:
+                pos_map[cid] = pos_map.get(cid, Decimal("0")) + q
+            elif ttype == TransactionType.TRANSFER_OUT:
+                pos_map[cid] = pos_map.get(cid, Decimal("0")) - q
+                
+    return cash_map, pos_map
+
+def _get_companies_valuation(db: Session, as_of: date, company_ids: list[int], base_ccy: str, portfolio_id: int):
+    """
+    Returns {company_id: {price: Decimal, fx: Decimal, type: str}}
+    """
+    if not company_ids:
+        return {}
+        
+    result = {}
+    
+    has_instr = hasattr(Company, "instrument_type")
+    
+    if has_instr:
+        data = (
+            db.query(Company.company_id, Company.instrument_type, Market.currency)
+            .join(Market, Market.market_id == Company.market_id)
+            .filter(Company.company_id.in_(company_ids))
+            .all()
+        )
+    else:
+        data = (
+            db.query(Company.company_id, Market.currency)
+            .join(Market, Market.market_id == Company.market_id)
+            .filter(Company.company_id.in_(company_ids))
+            .all()
+        )
+    
+    for row in data:
+        if has_instr:
+            cid, itype, mkt_ccy = row
+        else:
+            cid, mkt_ccy = row
+            itype = "stock"
+
+        price_row = (
+            db.query(StockPriceHistory.close)
+            .filter(StockPriceHistory.company_id == cid, StockPriceHistory.date <= as_of)
+            .order_by(StockPriceHistory.date.desc())
+            .first()
+        )
+        price = None
+        if price_row and price_row[0] is not None:
+             price = Decimal(str(price_row[0]))
+        else:
+             md = db.query(CompanyMarketData.current_price).filter(CompanyMarketData.company_id == cid).first()
+             if md and md[0] is not None:
+                 price = Decimal(str(md[0]))
+        
+        inst_ccy = (mkt_ccy or base_ccy).upper()
+        rate = fx_to_base_for_currency(db, as_of, inst_ccy, base_ccy, portfolio_id, fallback_company_id=cid)
+        if rate is None:
+            rate = Decimal("0")
+            
+        result[cid] = {
+            "price": price,
+            "fx": rate,
+            "type": (itype or "stock").lower()
+        }
+        
+    return result
 
 
 # ---------- endpoints ----------

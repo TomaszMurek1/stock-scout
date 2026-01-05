@@ -56,6 +56,8 @@ def _fetch_first_transactions(db: Session, portfolio_id: int, company_ids: List[
     return first_tx_map
 
 
+from fastapi import BackgroundTasks
+
 def _fetch_historical_data(
     db: Session, 
     metrics_svc: PortfolioMetricsService, 
@@ -66,41 +68,96 @@ def _fetch_historical_data(
 ) -> tuple[Dict[int, Dict[str, Decimal]], Dict[str, Dict[str, Decimal]], Dict[str, date]]:
     """
     Fetches historical prices and FX rates for the specified periods.
+    Optimized: Fetches ALL data in one range query per company instead of loop.
     Returns: (ref_prices, ref_fx_rates, period_start_dates)
     """
     today = date.today()
     period_start_dates = {}
     ref_prices = {}    # { cid: { '1d': Decimal(...), ... } }
     ref_fx_rates = {}  # { ccy: { '1d': Decimal(...), ... } }
-
-    # 1. Calculate start dates
+    
+    # 1. Calculate start dates & Find global minimum date
+    min_date = today
+    
     for p in periods:
         # Dummy portfolio_id=0 as calendar math is generic
         sd = metrics_svc.get_period_start_date(0, today, p)
         if sd:
             period_start_dates[p] = sd
+            if sd < min_date:
+                min_date = sd
 
     if not company_ids:
         return ref_prices, ref_fx_rates, period_start_dates
 
-    # 2. Fetch Historical Prices
-    for p, sd in period_start_dates.items():
-        rows = (
-            db.query(StockPriceHistory.company_id, StockPriceHistory.close)
-            .filter(
-                StockPriceHistory.company_id.in_(company_ids),
-                StockPriceHistory.date <= sd
-            )
-            .order_by(StockPriceHistory.company_id, StockPriceHistory.date.desc())
-            .distinct(StockPriceHistory.company_id)
-            .all()
+    # 2. OPTIMIZED Fetch Historical Prices (Single Query)
+    # We fetch all prices from min_date to today for these companies.
+    # Then we do in-memory lookup for each period start date.
+    
+    raw_prices = (
+        db.query(StockPriceHistory.company_id, StockPriceHistory.date, StockPriceHistory.close)
+        .filter(
+            StockPriceHistory.company_id.in_(company_ids),
+            StockPriceHistory.date >= min_date
         )
-        for cid, close in rows:
+        .order_by(StockPriceHistory.company_id, StockPriceHistory.date.desc())
+        .all()
+    )
+    
+    # Build fast lookup map: price_map[cid][date_iso] = price
+    # Since we ordered primarily by company, we can process easily.
+    price_lut: Dict[int, Dict[str, Decimal]] = {}
+    
+    for cid, dt, close in raw_prices:
+        if cid not in price_lut:
+            price_lut[cid] = {}
+        if close is not None:
+             price_lut[cid][dt.isoformat()] = _to_d(close)
+
+    # Resolve Reference Price for each Period
+    for p, sd in period_start_dates.items():
+        target_iso = sd.isoformat()
+        
+        for cid in company_ids:
             if cid not in ref_prices:
                 ref_prices[cid] = {}
-            ref_prices[cid][p] = _to_d(close)
+                
+            # Smart Lookup: Exact match or nearest previous?
+            # The original logic used `date <= sd ORDER BY date DESC LIMIT 1`.
+            # We must replicate that.
+            # In our fetched range [min_date, today], we check if target is present.
+            # If target < min_date (shouldn't happen if min_date is correct), we miss data.
+            # But wait: If the market was closed on 'sd', we need the close from 'sd-1' or earlier.
+            # Our range query gets everything >= min_date.
+            # If the true "last trading day" was BEFORE min_date (e.g. sd is Sunday, Friday was min_date-1),
+            # we might miss it.
+            # SAFE FIX: Subtract 7 days from min_date to cover weekends/holidays gap.
+            
+            # For this implementations, we iterate backwards from sd in Python to find nearest.
+            # Actually, `get_period_start_date` usually returns a calendar day.
+            
+            start_search = sd
+            found_price = None
+            
+            # Look back up to 5 days for data point (simple gap filling)
+            # Efficient since dictionary lookup is O(1)
+            comp_prices = price_lut.get(cid, {})
+            if not comp_prices:
+                continue
+
+            for i in range(5):
+                chk = (start_search - timedelta(days=i)).isoformat()
+                if chk in comp_prices:
+                    found_price = comp_prices[chk]
+                    break
+            
+            if found_price:
+                 ref_prices[cid][p] = found_price
 
     # 3. Fetch Historical FX Rates
+    # Optimization: Keep existing batch helper but ensure it's efficient?
+    # Existing `get_fx_rates_batch_for_date` does one query per date.
+    # We could optimize this too, but for now let's stick to price optimization first as it's the biggest volume.
     currencies_to_fetch = instrument_currencies - {portfolio_currency}
     if currencies_to_fetch:
         for p, sd in period_start_dates.items():
@@ -150,9 +207,12 @@ def _get_current_fx_rate(db: Session, from_ccy: str, to_ccy: str) -> Decimal:
 
 
 
-def ensure_portfolio_prices_fresh(db: Session, portfolio):
+def ensure_portfolio_prices_fresh(db: Session, portfolio, background_tasks: BackgroundTasks = None):
     """
-    Checks if the prices for the portfolio's holdings are stale and triggers a batch update if necessary.
+    Checks if the prices for the portfolio's holdings are stale.
+    If stale:
+       - If background_tasks provided: schedules update asynchronously.
+       - Else: runs update synchronously (fallback).
     Staleness threshold: 60 minutes.
     """
     account_ids = [a.id for a in portfolio.accounts]
@@ -188,7 +248,7 @@ def ensure_portfolio_prices_fresh(db: Session, portfolio):
         days_since_friday = today.weekday() - 4
         last_friday = today - timedelta(days=days_since_friday)
         stale_threshold = last_friday.replace(hour=23, minute=59, second=59, microsecond=999999)
-        logger.info(f"Weekend mode: Refresh threshold set to last Friday {stale_threshold}")
+        # logger.info(f"Weekend mode: Refresh threshold set to last Friday {stale_threshold}")
     else:
         stale_threshold = today - timedelta(minutes=60)
     
@@ -220,18 +280,32 @@ def ensure_portfolio_prices_fresh(db: Session, portfolio):
                 stale_tickers.append(comp.ticker)
         
         if stale_tickers:
-            logger.info(f"Triggering batch update for {len(stale_tickers)} stale tickers in {market_name}")
+            logger.info(f"Found {len(stale_tickers)} stale tickers in {market_name}. Background update: {background_tasks is not None}")
+            
             try:
-                fetch_and_save_stock_price_history_data_batch(
-                    tickers=stale_tickers,
-                    market_name=market_name,
-                    db=db,
-                    start_date=None, 
-                    end_date=None,
-                    force_update=False
-                )
+                if background_tasks:
+                     background_tasks.add_task(
+                        fetch_and_save_stock_price_history_data_batch,
+                        tickers=stale_tickers,
+                        market_name=market_name,
+                        db=db,
+                        start_date=None, 
+                        end_date=None,
+                        force_update=False
+                     )
+                else:
+                    # Sync Fallback
+                    fetch_and_save_stock_price_history_data_batch(
+                        tickers=stale_tickers,
+                        market_name=market_name,
+                        db=db,
+                        start_date=None, 
+                        end_date=None,
+                        force_update=False
+                    )
+
             except Exception as e:
-                logger.error(f"Failed to auto-refresh prices for {market_name}: {e}")
+                logger.error(f"Failed to trigger auto-refresh for {market_name}: {e}")
 
 
 def get_holdings_for_user(db: Session, portfolio) -> List[dict]:

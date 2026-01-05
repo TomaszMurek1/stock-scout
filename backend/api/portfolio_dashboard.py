@@ -16,17 +16,19 @@ from database.alert import Alert
 
 router = APIRouter()
 
-@router.get("/dashboard")
-def get_portfolio_dashboard(
+from fastapi import APIRouter, Depends, Query, BackgroundTasks
+
+@router.get("/dashboard/core")
+def get_portfolio_dashboard_core(
+    background_tasks: BackgroundTasks,
     portfolio = Depends(get_user_portfolio),
     user = Depends(get_current_user),
     as_of_date: Optional[str] = Query(None),
-    tx_period: str = Query("1M"),
     db: Session = Depends(get_db),
 ):
     # Auto-refresh stale prices (older than 1h), protecting against redundant API calls.
     # checking staleness of PRICES
-    ensure_portfolio_prices_fresh(db, portfolio)
+    ensure_portfolio_prices_fresh(db, portfolio, background_tasks)
 
     from services.valuation.rematerializ import rematerialize_from_tx
     from datetime import date, timedelta
@@ -71,13 +73,7 @@ def get_portfolio_dashboard(
 
     portfolio_id = portfolio.id
     end_date = parse_as_of_date(as_of_date)
-    svc = PortfolioMetricsService(db)
-
-    performance = svc.build_performance_summary(
-        portfolio_id,
-        end_date,
-        include_all_breakdowns=True,
-    )
+    # CORE: No performance service call here
 
     holdings = get_holdings_for_user(db, portfolio)
     watchlist = build_watchlist_full_for_user(db, user)
@@ -86,21 +82,21 @@ def get_portfolio_dashboard(
 
     snapshot = get_portfolio_snapshot(db, portfolio)
 
+    # Simplified net_invested_cash until performance loads ITD
+    # Or calculate partial ITD flow here if fast?
+    # For speed, we stick to snapshot, which should be accurate enough for "Total Cash Invested"
+    # The original code preferred performance breakdown ITD.
+    # We can fetch ITD stats separately if needed, but snapshot is fine.
+    
     return {
         "portfolio": {
             "id": portfolio.id,
             "name": portfolio.name,
             "currency": portfolio.currency,
-            # from snapshot (fallback to 0.0 if no valuation yet)
             "total_value": snapshot["total_value"] if snapshot else 0.0,
             "cash_available": snapshot["cash_available"] if snapshot else 0.0,
             "invested_value_current": snapshot["invested_value_current"] if snapshot else 0.0,
-            # Correction: Use ITD Net External Flows (Deposits - Withdrawals) for "Net Deposits"
-            # instead of net_invested (Buys - Sells) from snapshot.
-            "net_invested_cash": (
-                performance.get("breakdowns", {}).get("itd", {}).get("cash_flows", {}).get("net_external")
-                or (snapshot["net_invested_cash"] if snapshot else 0.0)
-            ),
+            "net_invested_cash": snapshot["net_invested_cash"] if snapshot else 0.0, 
             "accounts": [
                 {
                     "id": acc.id,
@@ -113,7 +109,8 @@ def get_portfolio_dashboard(
             ]
         },
         "as_of_date": end_date.isoformat(),
-        "performance": performance,
+        # Performance is omitted or empty
+        "performance": {}, 
         "holdings": holdings,
         "watchlist": watchlist,
         "transactions": transactions,
@@ -129,3 +126,51 @@ def get_portfolio_dashboard(
             for acc in portfolio.accounts
         ]
     }
+
+
+@router.get("/dashboard/performance")
+def get_portfolio_dashboard_performance(
+    portfolio = Depends(get_user_portfolio),
+    as_of_date: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    portfolio_id = portfolio.id
+    end_date = parse_as_of_date(as_of_date)
+    svc = PortfolioMetricsService(db)
+
+    # This is the heavy part
+    performance = svc.build_performance_summary(
+        portfolio_id,
+        end_date,
+        include_all_breakdowns=True,
+    )
+    
+    return {
+        "portfolio_id": portfolio_id,
+        "performance": performance
+    }
+
+
+# Backwards compatibility (Deprecate soon)
+@router.get("/dashboard")
+def get_portfolio_dashboard_legacy(
+    portfolio = Depends(get_user_portfolio),
+    user = Depends(get_current_user),
+    as_of_date: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    # Call core
+    core = get_portfolio_dashboard_core(portfolio, user, as_of_date, db)
+    
+    # Call performance
+    perf_resp = get_portfolio_dashboard_performance(portfolio, as_of_date, db)
+    
+    # Merge
+    core["performance"] = perf_resp["performance"]
+    
+    # Correction for net_invested_cash if possible
+    itd = perf_resp["performance"].get("breakdowns", {}).get("itd", {}).get("cash_flows", {}).get("net_external")
+    if itd:
+        core["portfolio"]["net_invested_cash"] = itd
+        
+    return core

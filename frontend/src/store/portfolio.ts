@@ -60,32 +60,58 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
     set({ isLoading: true });
     const setWatchlistLoadingState = get().setWatchlistLoadingState;
     setWatchlistLoadingState(true, "watchlist/dashboardPending");
+    
     try {
-      const { data } = await apiClient.get<{
+      // 1. Fetch Core Data (Fast Analysis)
+      const { data: coreData } = await apiClient.get<{
         portfolio: Portfolio;
-        performance: PortfolioPerformance;
+        performance: PortfolioPerformance; // will be empty initially
         watchlist: WatchlistStock[];
         transactions: Transaction[];
         holdings: ApiHolding[];
         accounts: Account[];
         alerts: Alert[];
-      }>("/portfolio/dashboard");
+      }>("/portfolio/dashboard/core");
       
-      applyDashboardData(data);
+      // Render initial state immediately
+      applyDashboardData(coreData);
+      set({ isLoading: false }); // Unblock UI
 
-      // Pre-load FX rates for all currency pairs
-      const portfolioCurrency = data.portfolio.currency;
+      // 2. Fetch Performance Metrics (Slow Analysis)
+      try {
+           const { data: perfData } = await apiClient.get<{
+             portfolio_id: number;
+             performance: PortfolioPerformance;
+           }>("/portfolio/dashboard/performance");
+           
+           // Update performance data silently (or with separate loading indicator if we had one)
+           set((state: PortfolioSlice) => ({
+             performance: perfData.performance,
+             // Update net invested cash if ITD flows available
+             portfolio: {
+                ...state.portfolio,
+                net_invested_cash: perfData.performance.breakdowns?.itd?.cash_flows?.net_external || state.portfolio.net_invested_cash
+             }
+           }), false, "portfolio/dashboard/performanceFulfilled");
+           
+      } catch (perfError) {
+          console.error("Failed to load performance metrics:", perfError);
+          // Don't fail the whole dashboard if metrics fail
+      }
+
+      // Pre-load FX rates for all currency pairs (Background)
+      const portfolioCurrency = coreData.portfolio.currency;
       const currencies = new Set<string>();
 
       // Collect currencies from holdings
-      data.holdings.forEach((holding) => {
+      coreData.holdings.forEach((holding) => {
         if (holding.instrument_ccy && holding.instrument_ccy !== portfolioCurrency) {
           currencies.add(holding.instrument_ccy);
         }
       });
 
       // Collect currencies from watchlist
-      data.watchlist.forEach((stock) => {
+      coreData.watchlist.forEach((stock) => {
         if (stock.market_data?.currency && stock.market_data.currency !== portfolioCurrency) {
           currencies.add(stock.market_data.currency);
         }
@@ -131,10 +157,9 @@ export const createPortfolioSlice = (set: any, get: any): PortfolioSlice => {
       }
     } catch (error) {
       setWatchlistLoadingState(false, "watchlist/dashboardRejected");
-      throw error;
-    } finally {
       set({ isLoading: false });
-    }
+      throw error;
+    } 
   };
 
   return {
