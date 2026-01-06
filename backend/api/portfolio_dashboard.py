@@ -99,6 +99,7 @@ def get_portfolio_dashboard_core(
             "cash_available": snapshot["cash_available"] if snapshot else 0.0,
             "invested_value_current": snapshot["invested_value_current"] if snapshot else 0.0,
             "net_invested_cash": snapshot["net_invested_cash"] if snapshot else 0.0, 
+            "net_deposits": snapshot["net_deposits"] if snapshot else 0.0,
             "accounts": [
                 {
                     "id": acc.id,

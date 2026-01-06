@@ -41,13 +41,19 @@ def get_portfolio_snapshot(
         db.query(Transaction)
         .filter(
             Transaction.portfolio_id == portfolio.id,
-            Transaction.transaction_type.in_([TransactionType.BUY, TransactionType.SELL]),
+            Transaction.transaction_type.in_([
+                TransactionType.BUY, TransactionType.SELL,
+                TransactionType.DEPOSIT, TransactionType.WITHDRAWAL,
+                TransactionType.TRANSFER_IN, TransactionType.TRANSFER_OUT
+            ]),
+            Transaction.transaction_type.in_([TransactionType.BUY, TransactionType.SELL, TransactionType.DEPOSIT, TransactionType.WITHDRAWAL, TransactionType.TRANSFER_IN, TransactionType.TRANSFER_OUT]),
             func.date(Transaction.timestamp) <= pvd.date,  # up to same date as valuation
         )
         .all()
     )
 
     net_invested = Decimal("0")
+    net_deposits = Decimal("0")
 
     for tx in tx_rows:
         qty = _dec(tx.quantity)
@@ -61,6 +67,7 @@ def get_portfolio_snapshot(
         else:
             fx = _dec(tx.currency_rate or 1)
 
+        # 1. Invested Cash (Existing)
         if tx.transaction_type == TransactionType.BUY:
             # Money OUT = (qty * price + fee)
             cash_out_base = (qty * price + fee) * fx
@@ -69,12 +76,28 @@ def get_portfolio_snapshot(
             # Money IN = (qty * price - fee)
             cash_in_base = (qty * price - fee) * fx
             net_invested -= cash_in_base
+            
+        # 2. Net External Deposits (New)
+        # Using same FX rules (approximate but consistent)
+        # For deposits/withdrawals, quantity is the amount.
+        amount = qty * fx
+        if tx.transaction_type == TransactionType.DEPOSIT:
+            net_deposits += amount
+        elif tx.transaction_type == TransactionType.WITHDRAWAL:
+            net_deposits -= amount
+        # Treat transfers as deposits/withdrawals for portfolio context?
+        # Usually yes.
+        elif tx.transaction_type == TransactionType.TRANSFER_IN:
+            net_deposits += amount
+        elif tx.transaction_type == TransactionType.TRANSFER_OUT:
+            net_deposits -= amount
 
     # Round everything to 2 decimals for dashboard
     total_value = total_value.quantize(Decimal("0.01"))
     cash_available = cash_available.quantize(Decimal("0.01"))
     invested_value_current = invested_value_current.quantize(Decimal("0.01"))
     net_invested = net_invested.quantize(Decimal("0.01"))
+    net_deposits = net_deposits.quantize(Decimal("0.01"))
 
     return {
         "as_of": pvd.date.isoformat(),
@@ -82,4 +105,5 @@ def get_portfolio_snapshot(
         "cash_available": float(cash_available),
         "invested_value_current": float(invested_value_current),
         "net_invested_cash": float(net_invested),
+        "net_deposits": float(net_deposits),
     }

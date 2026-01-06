@@ -64,20 +64,20 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
           <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><ArrowDownRight size={20} /></div>
           <Label tooltip={t("portfolio.summary.tooltips.net_deposits")}>{t("portfolio.summary.net_deposits")}</Label>
         </div>
-        <Value value={portfolio.net_invested_cash} currency={currency} />
+        <Value value={portfolio.net_deposits ?? portfolio.net_invested_cash} currency={currency} />
       </Card>
    
       <Card>
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-orange-50 rounded-lg text-orange-600"><TrendingUp size={20} /></div>
-           <Label tooltip={t("portfolio.summary.tooltips.total_pnl_itd")}>
-             {t(pnlValue >= 0 ? "portfolio.summary.gain" : "portfolio.summary.loss")}
+           <Label tooltip={t("portfolio.summary.tooltips.total_pnl_lifetime")}>
+             {t("portfolio.summary.total_pnl")}
            </Label>
         </div>
         <Value 
-          value={pnlValue} 
+          value={portfolio.total_value - (portfolio.net_deposits ?? portfolio.net_invested_cash)} 
           currency={currency} 
-          className={pnlValue >= 0 ? "text-green-600" : "text-red-600"}
+          className={(portfolio.total_value - (portfolio.net_deposits ?? portfolio.net_invested_cash)) >= 0 ? "text-green-600" : "text-red-600"}
         />
       </Card>
     </div>

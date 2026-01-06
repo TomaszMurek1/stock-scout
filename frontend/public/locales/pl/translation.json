@@ -187,7 +187,8 @@
             "personal_return": "🏦 Twój Osobisty IRR (RZECZYWISTY)\n\n Jaki był mój zwrot biorąc pod uwagę KIEDY zainwestowałem?\n\n Jak to działa:\n Stopa procentowa dająca Twoje dokładne wyniki\n KARA za złe wyczucie czasu, NAGRADZA za dobre\n\n RZECZYWISTE? TAK - używa prawdziwych kwot i dat",
             "invested_value": "Aktualna wartość rynkowa wszystkich Twoich aktywnych pozycji.",
             "net_deposits": "Suma depozytów netto (Wpłaty - Wypłaty). Jest to rzeczywista gotówka, którą wpłaciłeś do portfela.",
-            "total_pnl_itd": "Zysk lub strata z Twoich bieżących aktywnych pozycji (niezrealizowane). Nie obejmuje zrealizowanych zysków ze sprzedanych akcji."
+            "total_pnl_itd": "Zysk lub strata z Twoich bieżących aktywnych pozycji (niezrealizowane). Nie obejmuje zrealizowanych zysków ze sprzedanych akcji.",
+            "total_pnl_lifetime": "Całkowity zysk lub strata od momentu powstania portfela. Obejmuje zarówno zyski z obecnie posiadanych akcji (niezrealizowane), jak i z zakończonych inwestycji (zrealizowane), a także dywidendy i opłaty."
         }
     }
   },

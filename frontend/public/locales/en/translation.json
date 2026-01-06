@@ -187,7 +187,8 @@
             "personal_return": "🏦 YOUR PERSONAL IRR (ACTUAL)\n\n What was my return considering WHEN I invested?\n\n How it works:\n Interest rate that produces your exact results\n PUNISHES bad timing, REWARDS good timing\n\n Example:\n Added 140k on Nov 16\n Value dropped 5%by Dec 14\n That entire 140k sat through the drop\n\n ACTUAL? YES - uses your real amounts and dates\n\n Includes FX? YES - all holdings in PLN\n\n Why it's usually worst:\n Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL.",
             "invested_value": "Current market value of all your active holdings.",
             "net_deposits": "Total Net Deposits (Deposits - Withdrawals). This is the actual cash you have put into the portfolio.",
-            "total_pnl_itd": "Profit or Loss on your current active holdings (Unrealized). Does not include realized gains from sold stocks."
+            "total_pnl_itd": "Profit or Loss on your current active holdings (Unrealized). Does not include realized gains from sold stocks.",
+            "total_pnl_lifetime": "Total profit or loss since the portfolio inception. Includes both gains from currently held stocks (unrealized) and closed investments (realized), as well as dividends and fees."
         }
     }
   },
