@@ -33,11 +33,26 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
   }
   
   // Prioritize performance data (ITD) if available to match DetailedBreakdown
-  const investedValue = itd?.invested?.ending_value ?? portfolio.invested_value_current;
-  const cashValue = accounts?.reduce((sum: number, acc: any) => sum + (acc.cash || 0), 0) || 0;
-  const totalValue = investedValue + cashValue;
-  const netDeposits = itd?.cash_flows?.net_external ?? portfolio.net_deposits ?? portfolio.net_invested_cash;
-  const totalPnL = totalValue - netDeposits;
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  const investedValue = round2(itd?.invested?.ending_value ?? portfolio.invested_value_current);
+  const cashValue = round2(accounts?.reduce((sum: number, acc: any) => sum + (acc.cash || 0), 0) || 0);
+  const totalValue = round2(investedValue + cashValue);
+  const netDeposits = round2(itd?.cash_flows?.net_external ?? portfolio.net_deposits ?? portfolio.net_invested_cash);
+  
+  // Calculate PnL:
+  // Option A (Asset Method): Total Value - Net Deposits
+  // Option B (Component Method): Gains + Income - Expenses
+  // We prioritize Option B to match DetailedBreakdown exactly.
+  let totalPnL = 0;
+  if (itd) {
+     const gains = itd.invested?.capital_gains ?? 0;
+     const income = (itd.income_expenses?.dividends ?? 0) + (itd.income_expenses?.interest ?? 0);
+     const expenses = Math.abs((itd.income_expenses?.fees ?? 0) + (itd.income_expenses?.taxes ?? 0));
+     totalPnL = round2(gains + income - expenses);
+  } else {
+     totalPnL = round2(totalValue - netDeposits);
+  }
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

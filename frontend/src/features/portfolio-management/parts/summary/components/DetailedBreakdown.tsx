@@ -37,11 +37,14 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
       );
   }
 
+  // HELPER: Consistent rounding to 2 decimals to prevent penny mismatched
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
   // CALCULATION LOGIC
   
   // 1. Unrealized PnL (Active Positions)
   // Sum of (Current Value - Invested Value) for all holdings
-  const activeUnrealizedPnL = holdings.reduce((sum, h) => {
+  const activeUnrealizedPnLRaw = holdings.reduce((sum, h) => {
       // Use gain_loss_value if available (e.g. from totals hook)
       if (h.gain_loss_value !== undefined) return sum + h.gain_loss_value;
       
@@ -56,34 +59,38 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
       const gain = current - invested;
       return sum + gain;
   }, 0);
+  const activeUnrealizedPnL = round2(activeUnrealizedPnLRaw);
 
   // 2. Total Capital Gains (Trading Result)
   // From ITD if available, else breakdown
-  const totalCapitalGains = itd?.invested?.capital_gains ?? breakdown?.invested?.capital_gains ?? 0;
+  const totalCapitalGainsRaw = itd?.invested?.capital_gains ?? breakdown?.invested?.capital_gains ?? 0;
+  const totalCapitalGains = round2(totalCapitalGainsRaw);
 
   // 3. Realized PnL (Closed Positions)
   // Total - Unrealized
-  const realizedPnL = totalCapitalGains - activeUnrealizedPnL;
+  const realizedPnL = round2(totalCapitalGains - activeUnrealizedPnL);
 
   // 4. Income & Expenses
   // Use ITD for "Total Portfolio Profit" context
-  const income = (itd?.income_expenses?.dividends || 0) + (itd?.income_expenses?.interest || 0);
+  const incomeRaw = (itd?.income_expenses?.dividends || 0) + (itd?.income_expenses?.interest || 0);
+  const income = round2(incomeRaw);
   
   // Expenses are costs, so we treat them as negative for PnL but positive magnitude for display
   const rawExpenses = (itd?.income_expenses?.fees || 0) + (itd?.income_expenses?.taxes || 0);
-  const netExpenses = Math.abs(rawExpenses); // Magnitude of cost
+  const netExpenses = round2(Math.abs(rawExpenses)); // Magnitude of cost
 
   // 5. Total Profit
   // Profit = Gains + Income - Cost
-  const totalProfit = totalCapitalGains + income - netExpenses;
+  // Calculate from ROUNDED components to ensure visual consistency
+  const totalProfit = round2(totalCapitalGains + income - netExpenses);
 
   // 6. Capital Structure
-  const netDeposits = itd?.cash_flows?.net_external ?? 0;
+  const netDeposits = round2(itd?.cash_flows?.net_external ?? 0);
   
   // 7. Value
-  const endingInvested = itd?.invested?.ending_value ?? 0;
-  const cashBalance = accounts.reduce((sum, acc) => sum + (acc.cash || 0), 0);
-  const totalValue = endingInvested + cashBalance;
+  const endingInvested = round2(itd?.invested?.ending_value ?? 0);
+  const cashBalance = round2(accounts.reduce((sum, acc) => sum + (acc.cash || 0), 0));
+  const totalValue = round2(endingInvested + cashBalance);
 
   // Validation: Total Value should approx equal Net Deposits + Total Profit
   // 14974 + 3069 = 18043. Matches closely.
