@@ -48,16 +48,16 @@ export function WatchlistTable() {
           <div className="space-y-4">
             <div className="space-y-1">
               <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
-                {t("watchlist.market_data")}
+                {t("portfolio.watchlist.market_data")}
               </p>
               <p>
-                <span className="font-medium">Last price:</span>{" "}
+                <span className="font-medium">{t("portfolio.watchlist.last_price")}:</span>{" "}
                 {market_data?.last_price !== null && market_data?.last_price !== undefined
                   ? `${market_data.last_price} ${market_data?.currency ?? ""}`
                   : "—"}
               </p>
               <p>
-                <span className="font-medium">{t("watchlist.last_updated")}:</span>{" "}
+                <span className="font-medium">{t("portfolio.watchlist.last_updated")}:</span>{" "}
                 {market_data?.last_updated
                   ? new Date(market_data.last_updated).toLocaleString()
                   : "—"}
@@ -66,16 +66,16 @@ export function WatchlistTable() {
 
             <div className="space-y-1">
               <p className="font-semibold text-gray-900 border-b border-gray-200 pb-1 mb-2">
-                {t("watchlist.research_status")}
+                {t("portfolio.watchlist.research_status")}
               </p>
               {note ? (
                 <>
                   <p>
-                    <span className="font-medium">{t("watchlist.status")}:</span>{" "}
+                    <span className="font-medium">{t("portfolio.watchlist.status")}:</span>{" "}
                     <span className="capitalize">{note.research_status?.replace("_", " ") ?? "—"}</span>
                   </p>
                   <p>
-                    <span className="font-medium">{t("watchlist.sentiment")}:</span>{" "}
+                    <span className="font-medium">{t("portfolio.watchlist.sentiment")}:</span>{" "}
                     {note.sentiment_trend ? (
                       <span
                         className={`font-medium capitalize ${
@@ -93,16 +93,16 @@ export function WatchlistTable() {
                     )}
                   </p>
                   <p>
-                    <span className="font-medium">{t("watchlist.tags")}:</span>{" "}
+                    <span className="font-medium">{t("portfolio.watchlist.tags")}:</span>{" "}
                     {note.tags && note.tags.length > 0 ? note.tags.join(", ") : "—"}
                   </p>
                   <p>
-                    <span className="font-medium">{t("watchlist.last_updated")}:</span>{" "}
+                    <span className="font-medium">{t("portfolio.watchlist.last_updated")}:</span>{" "}
                     {note.updated_at ? new Date(note.updated_at).toLocaleDateString() : "—"}
                   </p>
                 </>
               ) : (
-                <p className="text-gray-500 italic">{t("watchlist.no_note")}</p>
+                <p className="text-gray-500 italic">{t("portfolio.watchlist.no_note")}</p>
               )}
             </div>
           </div>
@@ -159,7 +159,7 @@ export function WatchlistTable() {
   if (isLoading && data.length === 0) {
     return (
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4">
-        <p className="text-gray-600">{t("watchlist.loading")}</p>
+        <p className="text-gray-600">{t("portfolio.watchlist.loading")}</p>
       </div>
     );
   }
@@ -184,7 +184,7 @@ export function WatchlistTable() {
         positionActionsColumn="last"
         renderRowActions={({ row }) => (
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <Tooltip title={t("watchlist.remove_tooltip")}>
+            <Tooltip title={t("portfolio.watchlist.remove_tooltip")}>
               <IconButton size="small" onClick={() => handleRemove(row.original)}>
                 <Star className="h-4 w-4 text-amber-600 fill-amber-500" />
               </IconButton>

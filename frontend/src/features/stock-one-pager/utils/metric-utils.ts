@@ -1,4 +1,5 @@
 import { formatCurrency, formatNumber, formatPercentage } from "@/utils/formatting";
+import { TFunction } from "i18next";
 import { Nullable } from "@/components/types/shared.types";
 import { 
   StockData, 
@@ -79,17 +80,19 @@ export const getMetricStatus = (label: string, raw:Nullable<number>): MetricStat
 // --- Builders ---
 
 export const buildProfitabilityGrowthMetrics = (
+  t: TFunction,
   analysisDashboard: AnalysisDashboard,
   financialPerformance: FinancialPerformance
 ): MetricConfig[] => [
   (() => {
     const meets = meetsThreshold(analysisDashboard.return_on_assets, 0.15);
     return {
-      label: "Return on Assets (ROA)",
+      id: "roa",
+      label: t("stock_one_pager.metrics.roa.label"),
       value: formatPercentage(analysisDashboard.return_on_assets),
-      criterion: "ROA (≥15%)",
-      definition: "ROA = Net Income / Total Assets",
-      description: "How efficiently assets are used to generate profit.",
+      criterion: t("stock_one_pager.metrics.roa.criterion"),
+      definition: t("stock_one_pager.metrics.roa.definition"),
+      description: t("stock_one_pager.metrics.roa.description"),
       meets,
       status: statusFromMeets(meets),
     };
@@ -97,11 +100,12 @@ export const buildProfitabilityGrowthMetrics = (
   (() => {
     const meets = meetsThreshold(analysisDashboard.return_on_invested_capital, 0.15);
     return {
-      label: "ROIC",
+      id: "roic",
+      label: t("stock_one_pager.metrics.roic.label"),
       value: formatPercentage(analysisDashboard.return_on_invested_capital),
-      criterion: "ROIC (≥15%)",
-      definition: "ROIC = Operating Income / (Debt + Equity)",
-      description: "Efficiency of allocated capital.",
+      criterion: t("stock_one_pager.metrics.roic.criterion"),
+      definition: t("stock_one_pager.metrics.roic.definition"),
+      description: t("stock_one_pager.metrics.roic.description"),
       meets,
       status: statusFromMeets(meets),
     };
@@ -109,11 +113,12 @@ export const buildProfitabilityGrowthMetrics = (
   (() => {
     const meets = meetsThreshold(financialPerformance.operating_margin, 0.2);
     return {
-      label: "Operating Margin",
+      id: "operating_margin",
+      label: t("stock_one_pager.metrics.operating_margin.label"),
       value: formatPercentage(financialPerformance.operating_margin),
-      criterion: "Operating Margin (≥20%)",
-      definition: "Operating Margin = Operating Income / Revenue",
-      description: "Profit after core operations costs.",
+      criterion: t("stock_one_pager.metrics.operating_margin.criterion"),
+      definition: t("stock_one_pager.metrics.operating_margin.definition"),
+      description: t("stock_one_pager.metrics.operating_margin.description"),
       meets,
       status: statusFromMeets(meets),
     };
@@ -121,18 +126,19 @@ export const buildProfitabilityGrowthMetrics = (
   (() => {
     const meets = meetsThreshold(analysisDashboard.forecast_revenue_growth_rate, 0.05);
     return {
-      label: "Revenue CAGR (2Y)",
+      id: "revenue_cagr_2y",
+      label: t("stock_one_pager.metrics.revenue_cagr_2y.label"),
       value: formatPercentage(analysisDashboard.forecast_revenue_growth_rate),
-      criterion: "Revenue CAGR 2Y (≥5%)",
-      definition: "Compound annual revenue growth over last 2 years.",
-      description: "Average annual revenue growth rate.",
+      criterion: t("stock_one_pager.metrics.revenue_cagr_2y.criterion"),
+      definition: t("stock_one_pager.metrics.revenue_cagr_2y.definition"),
+      description: t("stock_one_pager.metrics.revenue_cagr_2y.description"),
       meets,
       status: statusFromMeets(meets),
     };
   })(),
 ];
 
-export const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard): MetricConfig[] => {
+export const buildSafetyMetrics = (t: TFunction, analysisDashboard: AnalysisDashboard): MetricConfig[] => {
   const currentRatioValue = formatNumber(analysisDashboard.current_ratio, 2);
   const currentRatioMeets = meetsThreshold(analysisDashboard.current_ratio, 1);
   const debtToAssetsMeets = meetsThreshold(analysisDashboard.debt_to_assets, 0.4, true);
@@ -142,38 +148,42 @@ export const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard): Metric
 
   return [
     {
-      label: "Current Ratio",
+      id: "current_ratio",
+      label: t("stock_one_pager.metrics.current_ratio.label"),
       value: `${currentRatioValue}x`,
-      criterion: "Current Ratio (>1.0)",
-      description: "Ability to pay short-term obligations.",
-      definition: "Current Ratio = Current Assets / Current Liabilities",
+      criterion: t("stock_one_pager.metrics.current_ratio.criterion"),
+      description: t("stock_one_pager.metrics.current_ratio.description"),
+      definition: t("stock_one_pager.metrics.current_ratio.definition"),
       meets: currentRatioMeets,
       status: statusFromMeets(currentRatioMeets),
     },
     {
-      label: "Debt to Assets",
+      id: "debt_to_assets",
+      label: t("stock_one_pager.metrics.debt_to_assets.label"),
       value: formatPercentage(analysisDashboard.debt_to_assets),
-      criterion: "Debt to Assets (<40%)",
-      description: "Proportion of assets financed by debt.",
-      definition: "Debt to Assets = Total Debt / Total Assets",
+      criterion: t("stock_one_pager.metrics.debt_to_assets.criterion"),
+      description: t("stock_one_pager.metrics.debt_to_assets.description"),
+      definition: t("stock_one_pager.metrics.debt_to_assets.definition"),
       meets: debtToAssetsMeets,
       status: statusFromMeets(debtToAssetsMeets),
     },
     {
-      label: "Interest Coverage",
+      id: "interest_coverage",
+      label: t("stock_one_pager.metrics.interest_coverage.label"),
       value: `${interestCoverageFormatted}x`,
-      criterion: "Interest Coverage (>3x)",
-      description: "Ability to pay interest on outstanding debt.",
-      definition: "Interest Coverage = Operating Income / Interest Expense",
+      criterion: t("stock_one_pager.metrics.interest_coverage.criterion"),
+      description: t("stock_one_pager.metrics.interest_coverage.description"),
+      definition: t("stock_one_pager.metrics.interest_coverage.definition"),
       meets: interestCoverageMeets,
       status: statusFromMeets(interestCoverageMeets),
     },
     {
-      label: "Ohlson Score",
+      id: "ohlson_score",
+      label: t("stock_one_pager.metrics.ohlson_score.label"),
       value: formatPercentage(analysisDashboard.ohlson_indicator_score),
-      criterion: "Ohlson Score (<2%)",
-      description: "Probability of bankruptcy.",
-      definition: "Ohlson O-Score model.",
+      criterion: t("stock_one_pager.metrics.ohlson_score.criterion"),
+      description: t("stock_one_pager.metrics.ohlson_score.description"),
+      definition: t("stock_one_pager.metrics.ohlson_score.definition"),
       meets: ohlsonMeets,
       status: statusFromMeets(ohlsonMeets),
     },
@@ -181,87 +191,96 @@ export const buildSafetyMetrics = (analysisDashboard: AnalysisDashboard): Metric
 };
 
 export const buildValuationTimingMetrics = (
+  t: TFunction,
   analysisDashboard: AnalysisDashboard,
   currencyCode: string
 ): MetricConfig[] => {
   const meets = meetsThreshold(analysisDashboard.upside, 0.1);
   return [
     {
-      label: "Upside Potential",
+      id: "upside_potential",
+      label: t("stock_one_pager.metrics.upside_potential.label"),
       value: formatPercentage(analysisDashboard.upside),
-      criterion: "Upside (≥10%)",
-      definition: "Upside = (Target - Current) / Current",
-      description: "Potential gain to analyst target price.",
+      criterion: t("stock_one_pager.metrics.upside_potential.criterion"),
+      definition: t("stock_one_pager.metrics.upside_potential.definition"),
+      description: t("stock_one_pager.metrics.upside_potential.description"),
       meets,
       status: statusFromMeets(meets),
     },
     {
-      label: "Analyst Target",
+      id: "analyst_target",
+      label: t("stock_one_pager.metrics.analyst_target.label"),
       value: formatCurrency({
         value: analysisDashboard.analyst_price_target,
         currency: currencyCode,
         notation: "compact",
       }),
-      criterion: "Consensus Price Target.",
-      definition: "Mean analyst 12-month price target.",
-      description: "Average price target from Wall St analysts.",
+      criterion: t("stock_one_pager.metrics.analyst_target.criterion"),
+      definition: t("stock_one_pager.metrics.analyst_target.definition"),
+      description: t("stock_one_pager.metrics.analyst_target.description"),
       status: "neutral" as MetricStatus,
     },
   ];
 };
 
-export const buildValuationMetrics = (valuationMetrics: ValuationMetrics): MetricConfig[] => [
+export const buildValuationMetrics = (t: TFunction, valuationMetrics: ValuationMetrics): MetricConfig[] => [
   {
-    label: "P/E Ratio",
+    id: "pe_ratio",
+    label: t("stock_one_pager.metrics.pe_ratio.label"),
     value: valuationMetrics.pe_ratio?.toFixed(2) || "N/A",
-    criterion: "Price to Earnings.",
-    definition: "P/E = Price / EPS",
-    description: "Price paid for $1 of earnings.",
+    criterion: t("stock_one_pager.metrics.pe_ratio.criterion"),
+    definition: t("stock_one_pager.metrics.pe_ratio.definition"),
+    description: t("stock_one_pager.metrics.pe_ratio.description"),
     status: getMetricStatus("P/E Ratio", valuationMetrics.pe_ratio),
   },
   {
-    label: "EV/EBITDA",
+    id: "ev_ebitda",
+    label: t("stock_one_pager.metrics.ev_ebitda.label"),
     value: valuationMetrics.ev_ebitda?.toFixed(2) || "N/A",
-    criterion: "EV / EBITDA.",
-    definition: "Enterprise Value / EBITDA",
-    description: "Capital-structure neutral valuation.",
+    criterion: t("stock_one_pager.metrics.ev_ebitda.criterion"),
+    definition: t("stock_one_pager.metrics.ev_ebitda.definition"),
+    description: t("stock_one_pager.metrics.ev_ebitda.description"),
     status: getMetricStatus("EV/EBITDA", valuationMetrics.ev_ebitda),
   },
   {
-    label: "Div Yield",
+    id: "dividend_yield",
+    label: t("stock_one_pager.metrics.dividend_yield.label"),
     value: valuationMetrics.dividend_yield
       ? formatPercentage(valuationMetrics.dividend_yield)
       : "N/A",
-    criterion: "Dividend Yield.",
-    definition: "Div Yield = Dividend / Price",
-    description: "Annual return from dividends.",
+    criterion: t("stock_one_pager.metrics.dividend_yield.criterion"),
+    definition: t("stock_one_pager.metrics.dividend_yield.definition"),
+    description: t("stock_one_pager.metrics.dividend_yield.description"),
     status: getMetricStatus("Dividend Yield", valuationMetrics.dividend_yield),
   },
 ];
 
-export const buildRiskMetrics = (riskMetrics: RiskMetrics): MetricConfig[] => [
+export const buildRiskMetrics = (t: TFunction, riskMetrics: RiskMetrics): MetricConfig[] => [
   {
-    label: "Volatility (Ann)",
+    id: "volatility",
+    label: t("stock_one_pager.metrics.volatility.label"),
     value: formatPercentage(riskMetrics.annual_volatility),
-    criterion: "Annualized Standard Deviation.",
-    definition: "Std Dev of returns * sqrt(252).",
-    description: "Measure of price variation.",
+    criterion: t("stock_one_pager.metrics.volatility.criterion"),
+    definition: t("stock_one_pager.metrics.volatility.definition"),
+    description: t("stock_one_pager.metrics.volatility.description"),
     status: getMetricStatus("Annual Volatility", riskMetrics.annual_volatility),
   },
   {
-    label: "Max Drawdown",
+    id: "max_drawdown",
+    label: t("stock_one_pager.metrics.max_drawdown.label"),
     value: formatPercentage(riskMetrics.max_drawdown),
-    criterion: "Max loss from peak.",
-    definition: "Peak to trough decline.",
-    description: "Deepest drop in the period.",
+    criterion: t("stock_one_pager.metrics.max_drawdown.criterion"),
+    definition: t("stock_one_pager.metrics.max_drawdown.definition"),
+    description: t("stock_one_pager.metrics.max_drawdown.description"),
     status: getMetricStatus("Max Drawdown", riskMetrics.max_drawdown),
   },
   {
-    label: "Beta",
+    id: "beta",
+    label: t("stock_one_pager.metrics.beta.label"),
     value: riskMetrics.beta?.toFixed(2) || "N/A",
-    criterion: "Market sensitivity.",
-    definition: "Covariance / Variance of market.",
-    description: "Volatility relative to market (1.0).",
+    criterion: t("stock_one_pager.metrics.beta.criterion"),
+    definition: t("stock_one_pager.metrics.beta.definition"),
+    description: t("stock_one_pager.metrics.beta.description"),
     status: getMetricStatus("Beta", riskMetrics.beta),
   },
 ];

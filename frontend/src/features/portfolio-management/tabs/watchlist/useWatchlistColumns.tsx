@@ -24,7 +24,7 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
     return useMemo<MRT_ColumnDef<WatchlistStock>[]>(() => [
         {
             accessorKey: "name",
-            header: t("watchlist.market_data"), // Using 'Company' actually based on previous logic but mapped to market_data usually? No, name is company. Let's use portfolio.holdings.company or similar. Wait, I added common.company? No. portfolio.holdings.company.
+            header: t("portfolio.holdings.company"), 
             enableSorting: true,
             Cell: ({ row }) => (
                 <div className="flex items-center gap-2">
@@ -44,7 +44,7 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
             ),
         },
         {
-            header: t("watchlist.last_price"),
+            header: t("portfolio.watchlist.last_price"),
             accessorFn: (row) => row.market_data?.last_price ?? null,
             id: "last_price",
             Cell: ({ cell, row }) => formatCurrency(cell.getValue<number | null>(), row.original.market_data?.currency),
@@ -55,12 +55,12 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
             id: "currency",
         },
         {
-            header: t("watchlist.held"),
+            header: t("portfolio.watchlist.held"),
             accessorFn: (row) => (row.is_held ? t("common.yes") : t("common.no")),
             id: "is_held",
         },
         {
-            header: t("watchlist.shares_held"),
+            header: t("portfolio.watchlist.shares_held"),
             accessorFn: (row) => row.held_shares ?? null,
             id: "held_shares",
             Cell: ({ cell }) => {
@@ -69,7 +69,7 @@ export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] {
             },
         },
         {
-            header: t("watchlist.added"),
+            header: t("portfolio.watchlist.added"),
             accessorFn: (row) => row.added_at ?? null,
             id: "added_at",
             Cell: ({ cell }) => {

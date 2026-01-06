@@ -133,6 +133,7 @@ export interface AnalysisDashboard {
 export type MetricStatus = "success" | "danger" | "warning" | "neutral" | "good" | "bad";
 
 export interface MetricConfig {
+  id: string;
   label: string;
   value: string | number;
   description: string;

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { MetricTooltipContent } from "../components/metric-tooltip-content";
 import { formatCurrency, formatNumber, formatPercentage } from "@/utils/formatting";
 import { 
@@ -140,45 +141,47 @@ export const MetricsColumn: React.FC<MetricsColumnProps> = ({
   riskMetrics,
   isRefreshed = false,
 }) => {
+  const { t } = useTranslation();
+
   const safetyMetrics = analysisDashboard 
-    ? buildSafetyMetrics(analysisDashboard).map((m: MetricConfig) => {
-        if (m.label === "Current Ratio") return { ...m, icon: <Icons.Shield /> };
-        if (m.label === "Debt to Assets") return { ...m, icon: <Icons.Scale /> };
-        if (m.label === "Interest Coverage") return { ...m, icon: <Icons.ChartBar /> };
-        if (m.label === "Ohlson Score") return { ...m, icon: <Icons.Shield /> };
+    ? buildSafetyMetrics(t, analysisDashboard).map((m: MetricConfig) => {
+        if (m.id === "current_ratio") return { ...m, icon: <Icons.Shield /> };
+        if (m.id === "debt_to_assets") return { ...m, icon: <Icons.Scale /> };
+        if (m.id === "interest_coverage") return { ...m, icon: <Icons.ChartBar /> };
+        if (m.id === "ohlson_score") return { ...m, icon: <Icons.Shield /> };
         return m;
       })
     : [];
 
   const valuationTimingMetrics = analysisDashboard
-    ? buildValuationTimingMetrics(analysisDashboard, currencyCode).map((m: MetricConfig) => {
-        if (m.label === "Upside Potential") return { ...m, icon: <Icons.TrendingUp /> };
-        if (m.label === "Analyst Target") return { ...m, icon: <Icons.Dollar /> };
+    ? buildValuationTimingMetrics(t, analysisDashboard, currencyCode).map((m: MetricConfig) => {
+        if (m.id === "upside_potential") return { ...m, icon: <Icons.TrendingUp /> };
+        if (m.id === "analyst_target") return { ...m, icon: <Icons.Dollar /> };
         return m;
       })
     : [];
 
   const profitabilityMetrics = analysisDashboard
-    ? buildProfitabilityGrowthMetrics(analysisDashboard, financialPerformance).map((m: MetricConfig) => {
-        if (m.label === "Return on Assets (ROA)") return { ...m, icon: <Icons.TrendingUp /> };
-        if (m.label === "ROIC") return { ...m, icon: <Icons.Cog /> };
-        if (m.label === "Operating Margin") return { ...m, icon: <Icons.Pie /> };
-        if (m.label === "Revenue CAGR (2Y)") return { ...m, icon: <Icons.TrendingUp /> };
+    ? buildProfitabilityGrowthMetrics(t, analysisDashboard, financialPerformance).map((m: MetricConfig) => {
+        if (m.id === "roa") return { ...m, icon: <Icons.TrendingUp /> };
+        if (m.id === "roic") return { ...m, icon: <Icons.Cog /> };
+        if (m.id === "operating_margin") return { ...m, icon: <Icons.Pie /> };
+        if (m.id === "revenue_cagr_2y") return { ...m, icon: <Icons.TrendingUp /> };
         return m;
       })
     : [];
 
-  const valuationList = buildValuationMetrics(valuationMetrics).map((m: MetricConfig) => {
-    if (m.label === "P/E Ratio") return { ...m, icon: <Icons.Scale /> };
-    if (m.label === "EV/EBITDA") return { ...m, icon: <Icons.Dollar /> };
-    if (m.label === "Div Yield") return { ...m, icon: <Icons.Banknote /> };
+  const valuationList = buildValuationMetrics(t, valuationMetrics).map((m: MetricConfig) => {
+    if (m.id === "pe_ratio") return { ...m, icon: <Icons.Scale /> };
+    if (m.id === "ev_ebitda") return { ...m, icon: <Icons.Dollar /> };
+    if (m.id === "dividend_yield") return { ...m, icon: <Icons.Banknote /> };
     return m;
   });
 
-  const riskList = buildRiskMetrics(riskMetrics).map((m: MetricConfig) => {
-    if (m.label === "Volatility (Ann)") return { ...m, icon: <Icons.Shield /> };
-    if (m.label === "Max Drawdown") return { ...m, icon: <Icons.TrendingDown /> };
-    if (m.label === "Beta") return { ...m, icon: <Icons.ChartBar /> };
+  const riskList = buildRiskMetrics(t, riskMetrics).map((m: MetricConfig) => {
+    if (m.id === "volatility") return { ...m, icon: <Icons.Shield /> };
+    if (m.id === "max_drawdown") return { ...m, icon: <Icons.TrendingDown /> };
+    if (m.id === "beta") return { ...m, icon: <Icons.ChartBar /> };
     return m;
   });
 
@@ -187,19 +190,19 @@ export const MetricsColumn: React.FC<MetricsColumnProps> = ({
       {analysisDashboard && (
         <>
           <MetricGroupCard
-            title="Safety Filters"
+            title={t("stock_one_pager.metric_groups.safety_filters")}
             titleIcon={<Icons.Shield />}
             metrics={safetyMetrics}
             isRefreshed={isRefreshed}
           />
           <MetricGroupCard
-            title="Valuation & Timing"
+            title={t("stock_one_pager.metric_groups.valuation_timing")}
             titleIcon={<Icons.Scale />}
             metrics={valuationTimingMetrics}
             isRefreshed={isRefreshed}
           />
           <MetricGroupCard
-            title="Profitability & Growth"
+            title={t("stock_one_pager.metric_groups.profitability_growth")}
             titleIcon={<Icons.TrendingUp />}
             metrics={profitabilityMetrics}
             isRefreshed={isRefreshed}
@@ -207,13 +210,13 @@ export const MetricsColumn: React.FC<MetricsColumnProps> = ({
         </>
       )}
       <MetricGroupCard 
-        title="Valuation Ratios" 
+        title={t("stock_one_pager.metric_groups.valuation_ratios")} 
         titleIcon={<Icons.Scale />} 
         metrics={valuationList} 
         isRefreshed={isRefreshed}
       />
       <MetricGroupCard 
-        title="Risk Analysis" 
+        title={t("stock_one_pager.metric_groups.risk_analysis")} 
         titleIcon={<Icons.Shield />} 
         metrics={riskList} 
         isRefreshed={isRefreshed}

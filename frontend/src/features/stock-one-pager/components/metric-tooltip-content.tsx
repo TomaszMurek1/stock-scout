@@ -1,4 +1,4 @@
-import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface MetricTooltipContentProps {
   value: string | number;
@@ -22,11 +22,12 @@ export const MetricTooltipContent: React.FC<MetricTooltipContentProps> = ({
   valueColorClass = "text-emerald-600",
   labels = {},
 }) => {
+  const { t } = useTranslation();
   const {
-    value: labelValue = "Value",
-    description: labelDescription = "Description",
-    definition: labelDefinition = "Definition",
-    criterion: labelCriterion = "Criterion",
+    value: labelValue = t("stock_one_pager.tooltip.value"),
+    description: labelDescription = t("stock_one_pager.tooltip.description"),
+    definition: labelDefinition = t("stock_one_pager.tooltip.definition"),
+    criterion: labelCriterion = t("stock_one_pager.tooltip.criterion"),
   } = labels;
 
   return (

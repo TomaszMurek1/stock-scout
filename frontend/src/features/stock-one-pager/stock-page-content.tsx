@@ -1,4 +1,5 @@
 import { FC, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { StockData } from "./stock-one-pager.types";
 import StockHeader from "./parts/stock-header";
 import CompanyOverviewCard from "./parts/company-overview-card";
@@ -42,6 +43,8 @@ const StockPageContentComponent: FC<StockPageContentProps> = ({
     analysis_dashboard,
   } = stock;
 
+  const { t } = useTranslation();
+
   const currencyCode = executive_summary?.currency ?? "USD";
 
   return (
@@ -65,19 +68,19 @@ const StockPageContentComponent: FC<StockPageContentProps> = ({
                 value="overview"
                 className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
               >
-                Overview
+                {t("stock_one_pager.tabs.overview")}
               </TabsTrigger>
               <TabsTrigger 
                 value="financials"
                 className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
               >
-                Financials
+                {t("stock_one_pager.tabs.financials")}
               </TabsTrigger>
               <TabsTrigger 
                 value="notes"
                 className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
               >
-                Notes
+                {t("stock_one_pager.tabs.notes")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="space-y-4">

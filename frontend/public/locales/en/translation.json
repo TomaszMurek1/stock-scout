@@ -1,4 +1,9 @@
 {
+  "footer": {
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "copyright": "© {{year}} StockScan Pro"
+  },
   "common": {
     "buy_instrument": "Buy instrument",
     "no_transactions": "No transactions recorded for this holding yet.",
@@ -64,6 +69,7 @@
         "sentiment": "Sentiment",
         "tags": "Tags",
         "no_note": "No research note available.",
+        "untitled_note": "Untitled Note",
         "thesis": "Thesis",
         "next_catalyst": "Next Catalyst",
         "target_price": "Target Price",
@@ -466,5 +472,253 @@
     "unexpected_error": "An unexpected error occurred.",
     "need_account": "Need an account? Register",
     "have_account": "Already have an account? Sign In"
+  },
+  "stock_one_pager": {
+    "tabs": {
+      "overview": "Overview",
+      "financials": "Financials",
+      "notes": "Notes"
+    },
+    "header": {
+      "market_cap": "Market Cap",
+      "range_52w": "52W Range",
+      "buy": "Buy",
+      "sell": "Sell"
+    },
+    "overview": {
+      "title": "Company Overview",
+      "no_description": "No description available."
+    },
+    "metrics": {
+      "pe_ratio": {
+        "label": "P/E Ratio",
+        "description": "Price compared to earnings; what you pay for $1 of profit.",
+        "definition": "P/E = Price / EPS",
+        "criterion": "Typically 10–25 is reasonable; extremes need justification."
+      },
+      "ev_ebitda": {
+        "label": "EV/EBITDA",
+        "description": "Valuation neutral to capital structure.",
+        "definition": "EV/EBITDA = Enterprise Value / EBITDA",
+        "criterion": "Lower is generally cheaper vs market/peers."
+      },
+      "revenue_growth": {
+        "label": "Revenue Growth",
+        "description": "Year-over-year revenue growth rate.",
+        "definition": "YoY Revenue Growth",
+        "criterion": "Consistently positive; >10% is solid growth."
+      },
+      "gross_margin": {
+        "label": "Gross Margin",
+        "description": "Profit after production costs; reflects pricing power.",
+        "definition": "Gross Margin = (Revenue - COGS) / Revenue",
+        "criterion": "Higher than peers is an advantage; drop signals pressure."
+      },
+      "net_margin": {
+        "label": "Net Margin",
+        "description": "Bottom line profitability after all costs.",
+        "definition": "Net Margin = Net Income / Revenue",
+        "criterion": "Stable or rising trend; compare to industry median."
+      },
+      "rule_of_40": {
+        "label": "Rule of 40",
+        "description": "Balance of growth and profitability.",
+        "definition": "Rule of 40 = Rev Growth + Profit Margin",
+        "criterion": ">40% is excellent; <30% needs improvement."
+      },
+      "peg_ratio": {
+        "label": "PEG Ratio",
+        "description": "P/E adjusted for growth.",
+        "definition": "PEG = P/E / Growth Rate",
+        "criterion": "<1 is undervalued; >2 is overvalued."
+      },
+      "dividend_yield": {
+        "label": "Div Yield",
+        "description": "Annual return from dividends.",
+        "definition": "Div Yield = Dividend / Price",
+        "criterion": "Higher is better for income, excessive may signal risk."
+      },
+      "price_to_sales": {
+        "label": "Price to Sales",
+        "description": "Valuation relative to revenue.",
+        "definition": "P/S = Market Cap / Revenue",
+        "criterion": "Compare to historical range and peers."
+      },
+      "price_to_book": {
+        "label": "Price to Book",
+        "description": "Valuation relative to net assets.",
+        "definition": "P/B = Price / Book Value per Share",
+        "criterion": "<1 may indicate value trap or deep value."
+      },
+      "operating_margin": {
+        "label": "Operating Margin",
+        "description": "Profit after core operations costs.",
+        "definition": "Operating Margin = Operating Income / Revenue",
+        "criterion": ">20% indicates strong operational efficiency."
+      },
+      "ebitda_margin": {
+        "label": "EBITDA Margin",
+        "description": "Earnings before interest, taxes, depr, amort margin.",
+        "definition": "EBITDA / Revenue",
+        "criterion": "High margin indicates strong cash generation potential."
+      },
+      "fcf_margin": {
+        "label": "FCF Margin",
+        "description": "Free Cash Flow as percentage of revenue.",
+        "definition": "FCF / Revenue",
+        "criterion": ">10% is healthy cash generation."
+      },
+      "cash_conversion": {
+        "label": "Cash Conversion",
+        "description": "How much profit turns into cash.",
+        "definition": "FCF / Net Income",
+        "criterion": ">90% indicates high quality earnings."
+      },
+      "capex_ratio": {
+        "label": "CapEx Ratio",
+        "description": "Capital intensity of the business.",
+        "definition": "CapEx / Revenue",
+        "criterion": "Lower implies asset-light model."
+      },
+      "roa": {
+        "label": "Return on Assets (ROA)",
+        "description": "How efficiently assets are used to generate profit.",
+        "definition": "ROA = Net Income / Total Assets",
+        "criterion": "ROA (≥15%) is efficient."
+      },
+      "roic": {
+        "label": "ROIC",
+        "description": "Efficiency of allocated capital.",
+        "definition": "ROIC = Operating Income / (Debt + Equity)",
+        "criterion": "ROIC (≥15%) indicates moat."
+      },
+      "revenue_cagr_2y": {
+        "label": "Revenue CAGR (2Y)",
+        "description": "Average annual revenue growth rate.",
+        "definition": "Compound annual revenue growth over last 2 years.",
+        "criterion": "Revenue CAGR 2Y (≥5%)."
+      },
+      "current_ratio": {
+        "label": "Current Ratio",
+        "description": "Ability to pay short-term obligations.",
+        "definition": "Current Ratio = Current Assets / Current Liabilities",
+        "criterion": "Current Ratio (>1.0) is safe."
+      },
+      "debt_to_assets": {
+        "label": "Debt to Assets",
+        "description": "Proportion of assets financed by debt.",
+        "definition": "Debt to Assets = Total Debt / Total Assets",
+        "criterion": "Debt to Assets (<40%)."
+      },
+      "interest_coverage": {
+        "label": "Interest Coverage",
+        "description": "Ability to pay interest on outstanding debt.",
+        "definition": "Interest Coverage = Operating Income / Interest Expense",
+        "criterion": "Interest Coverage (>3x) is safe."
+      },
+      "ohlson_score": {
+        "label": "Ohlson Score",
+        "description": "Probability of bankruptcy.",
+        "definition": "Ohlson O-Score model.",
+        "criterion": "Ohlson Score (<2%) is safe."
+      },
+      "upside_potential": {
+        "label": "Upside Potential",
+        "description": "Potential gain to analyst target price.",
+        "definition": "Upside = (Target - Current) / Current",
+        "criterion": "Upside (≥10%) is attractive."
+      },
+      "analyst_target": {
+        "label": "Analyst Target",
+        "description": "Average price target from Wall St analysts.",
+        "definition": "Mean analyst 12-month price target.",
+        "criterion": "Consensus Price Target."
+      },
+      "volatility": {
+        "label": "Volatility (Ann)",
+        "description": "Measure of price variation.",
+        "definition": "Std Dev of returns * sqrt(252).",
+        "criterion": "Annualized Standard Deviation."
+      },
+      "max_drawdown": {
+        "label": "Max Drawdown",
+        "description": "Deepest drop in the period.",
+        "definition": "Peak to trough decline.",
+        "criterion": "Max loss from peak."
+      },
+      "beta": {
+        "label": "Beta",
+        "description": "Volatility relative to market (1.0).",
+        "definition": "Covariance / Variance of market.",
+        "criterion": "Market sensitivity."
+      }
+    },
+    "metric_groups": {
+      "safety_filters": "Safety Filters",
+      "valuation_timing": "Valuation & Timing",
+      "profitability_growth": "Profitability & Growth",
+      "valuation_ratios": "Valuation Ratios",
+      "risk_analysis": "Risk Analysis",
+      "technical_indicators": "Technical Indicators",
+      "key_metrics": "Key Metrics"
+    },
+    "key_metrics_card": {
+      "hover_info": "Hover info icon for definitions & criteria"
+    },
+    "tooltip": {
+      "value": "Value",
+      "description": "Description",
+      "definition": "Definition",
+      "criterion": "Criterion",
+      "formula": "Formula",
+      "threshold": "Threshold"
+    },
+    "chart_metrics": {
+      "performance": {
+        "label": "Performance",
+        "description": "Overall percentage change in price during the selected period.",
+        "definition": "(End Price - Start Price) / Start Price"
+      },
+      "volatility": {
+        "label": "Volatility",
+        "description": "Measures the degree of variation of a trading price series over time.",
+        "definition": "Annualized Standard Deviation of daily returns."
+      },
+      "max_drawdown": {
+        "label": "Max Drawdown",
+        "description": "The maximum observed loss from a peak to a trough of an investment.",
+        "definition": "Max observed peak-to-trough decline over the period."
+      },
+      "from_min": {
+        "label": "From Min",
+        "description": "Current price's percentage increase from the lowest price in the period.",
+        "definition": "(Current Price - Min Price) / Min Price"
+      },
+      "from_max": {
+        "label": "From Max",
+        "description": "Current price's percentage decrease from the highest price in the period.",
+        "definition": "(Current Price - Max Price) / Max Price"
+      }
+    },
+    "technical_indicators": {
+      "volatility_30d": {
+        "label": "Volatility (30d)",
+        "description": "Annualized standard deviation of daily returns over the last 30 days.",
+        "definition": "Volatility = StdDev(Daily Returns) * sqrt(252)",
+        "criterion": "Higher values indicate more price movement risk."
+      },
+      "golden_cross": {
+        "label": "Golden Cross",
+        "description": "Bullish signal where short-term moving average crosses above long-term moving average.",
+        "definition": "50-day SMA > 200-day SMA",
+        "criterion": "A positive signal for potential upward trend."
+      },
+      "death_cross": {
+        "label": "Death Cross",
+        "description": "Bearish signal where short-term moving average crosses below long-term moving average.",
+        "definition": "50-day SMA < 200-day SMA",
+        "criterion": "A negative signal for potential downward trend."
+      }
+    }
   }
 }

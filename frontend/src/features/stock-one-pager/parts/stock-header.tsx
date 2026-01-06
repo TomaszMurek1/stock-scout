@@ -1,5 +1,6 @@
 "use client"
 import { FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HeartIcon,
   GlobeAltIcon,
@@ -38,6 +39,7 @@ const StockHeader: FC<StockHeaderProps> = ({
 }) => {
   const logoUrl = `${API_URL}/stock-details/${ticker}/logo`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
+  const { t } = useTranslation();
 
   const { isFavorite, handleWatchlistClick } = useWatchlistActions(ticker, executiveSummary?.name || undefined);
   
@@ -139,7 +141,7 @@ const StockHeader: FC<StockHeaderProps> = ({
           </div>
 
           <div className="text-sm text-gray-600 text-right">
-            Market Cap:{" "}
+            {t("stock_one_pager.header.market_cap")}:{" "}
             {marketCap != null
               ? formatCurrency({
                   value: marketCap,
@@ -158,7 +160,7 @@ const StockHeader: FC<StockHeaderProps> = ({
                   currency: executiveSummary.currency,
                 })}
               </span>
-              <span>52W Range</span>
+              <span>{t("stock_one_pager.header.range_52w")}</span>
               <span>
                 {formatCurrency({
                   value: max52Week,
@@ -179,13 +181,13 @@ const StockHeader: FC<StockHeaderProps> = ({
               className="w-24 bg-teal-600 hover:bg-teal-700 text-white border-none"
               onClick={onBuyClick}
             >
-              Buy
+              {t("stock_one_pager.header.buy")}
             </Button>
             <Button
               className="w-24 bg-blue-600 hover:bg-blue-700 text-white border-none"
               onClick={onSellClick}
             >
-              Sell
+              {t("stock_one_pager.header.sell")}
             </Button>
           </div>
         </div>
