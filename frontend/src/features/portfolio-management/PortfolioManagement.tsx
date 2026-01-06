@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, startTransition, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Header } from "./parts/Header";
+import LoadingScreen from "@/components/shared/loading-screen";
 import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
 import AddStockModal from "./modals/add-stock/AddStockModal";
@@ -15,8 +16,11 @@ import { useTranslation } from "react-i18next";
 
 
 export default function PortfolioManagement() {
+  const [isMounting, setIsMounting] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "performance">("portfolio");
+  // Keep track of which tabs have been loaded to forceMount them after first visit
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(["portfolio"]));
   const [activeSubTab, setActiveSubTab] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd");
   const location = useLocation();
@@ -48,6 +52,8 @@ export default function PortfolioManagement() {
     portfolio,
   });
 
+  const accounts = useMemo(() => portfolio.accounts || [], [portfolio.accounts]);
+
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -57,11 +63,13 @@ export default function PortfolioManagement() {
     }
   }, [refreshPortfolio]);
 
-  useEffect(() => {
-    refreshPortfolio();
-  }, [refreshPortfolio]);
 
-  if (!portfolio || !totals) return <div>No portfolio found</div>;
+
+  useEffect(() => {
+    setIsMounting(false);
+  }, []);
+
+  if (isMounting || !portfolio || !totals) return <LoadingScreen message={t("common.loading")} />;
 
   const handleAddSuccess = () => {
     setIsAddModalOpen(false);
@@ -78,7 +86,16 @@ export default function PortfolioManagement() {
           <AnimatedTabs
             defaultValue="portfolio"
             value={activeTab}
-            onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
+            onValueChange={(val) => {
+              startTransition(() => {
+                setActiveTab(val as "portfolio" | "performance");
+                setLoadedTabs(prev => {
+                  const next = new Set(prev);
+                  next.add(val);
+                  return next;
+                });
+              });
+            }}
             className="space-y-6"
             ref={tabsRef}
           >
@@ -99,10 +116,10 @@ export default function PortfolioManagement() {
               </FramerTabTrigger>
             </AnimatedTabsList>
 
-            <AnimatedTabsContent value="portfolio" forceMount={true} className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="portfolio" forceMount={loadedTabs.has("portfolio") || undefined} className="space-y-6 animate-in fade-in-0 mt-0">
               <Summary
                 portfolio={portfolio}
-                accounts={portfolio.accounts || []} 
+                accounts={accounts} 
                 performance={performance}
                 holdings={holdings}
                 selectedPeriod={selectedPeriod}
@@ -116,12 +133,12 @@ export default function PortfolioManagement() {
                 isLoading={isLoading}
                 selectedPeriod={selectedPeriod}
                 externalTab={activeSubTab}
-                accounts={portfolio.accounts || []}
+                accounts={accounts}
                 portfolioCurrency={portfolio.currency}
               />
             </AnimatedTabsContent>
 
-            <AnimatedTabsContent value="performance" forceMount={true} className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="performance" forceMount={loadedTabs.has("performance") || undefined} className="space-y-6 animate-in fade-in-0 mt-0">
               <Performance />
             </AnimatedTabsContent>
           </AnimatedTabs>

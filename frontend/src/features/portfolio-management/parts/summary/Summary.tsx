@@ -7,7 +7,7 @@ import { PeriodSelector } from "./components/SummaryShared";
 import { PortfolioBrief } from "./components/PortfolioBrief";
 import { ReturnsAnalysis } from "./components/ReturnsAnalysis";
 import { DetailedBreakdown } from "./components/DetailedBreakdown";
-import { SummaryEmptyState, SummaryLoadingState } from "./components/SummaryEmptyState";
+import { SummaryEmptyState } from "./components/SummaryEmptyState";
 import { useTranslation } from "react-i18next";
 
 interface SummaryProps {
@@ -20,7 +20,7 @@ interface SummaryProps {
   isLoading?: boolean;
 }
 
-export default function Summary({ portfolio, accounts, performance, holdings, selectedPeriod, onPeriodChange, isLoading }: SummaryProps) {
+const Summary = React.memo<SummaryProps>(({ portfolio, accounts, performance, holdings, selectedPeriod, onPeriodChange, isLoading }) => {
   const { currency } = portfolio;
   const { t } = useTranslation();
   const breakdown = performance?.breakdowns?.[selectedPeriod] || performance?.breakdowns?.ytd || performance?.breakdowns?.itd;
@@ -83,4 +83,6 @@ export default function Summary({ portfolio, accounts, performance, holdings, se
       )}
     </div>
   );
-}
+});
+
+export default Summary;

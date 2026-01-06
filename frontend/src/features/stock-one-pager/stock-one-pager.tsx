@@ -13,13 +13,14 @@ import {
 import LoadingScreen from "@/components/shared/loading-screen";
 import ErrorScreen from "@/components/shared/error-screen";
 import { StockPageContent } from "./stock-page-content";
+import { useTranslation } from "react-i18next";
 
 export const StockOnePager: FC = () => {
   const { ticker } = useParams();
   const [searchParams] = useSearchParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"buy" | "sell">("buy");
-
+  const { t } = useTranslation();
   const shortWindow = Number(searchParams.get("short_window") ?? 50);
   const longWindow = Number(searchParams.get("long_window") ?? 200);
   useEffect(() => {
@@ -38,7 +39,7 @@ export const StockOnePager: FC = () => {
     setIsAddModalOpen(true);
   }, []);
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return <LoadingScreen message={t("common.loading")} />;
   if (error) return <ErrorScreen error={new Error(error)} />;
   if (!stock) return null;
   if (stock.delisted) {
