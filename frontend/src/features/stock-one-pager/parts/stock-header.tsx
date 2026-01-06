@@ -6,10 +6,12 @@ import {
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 import { Button, Badge } from "@/components/ui/Layout";
-import { formatCurrency } from "@/utils/formatting";
+import { formatCurrency, formatPercentage } from "@/utils/formatting";
 import { API_URL } from "@/services/apiClient";
-import type { FinancialPerformance, StockData } from "./stock-one-pager.types";
-import { useWatchlistActions, useStockMetrics } from "./stock-header.hooks";
+import type { StockData, MetricConfig, FinancialPerformance } from "../stock-one-pager.types";
+import { useWatchlistActions, useStockMetrics } from "../hooks/stock-header.hooks";
+import { MetricTooltipContent } from "../components/metric-tooltip-content";
+import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
 
 interface StockHeaderProps {
   ticker: string | undefined;
@@ -19,6 +21,7 @@ interface StockHeaderProps {
   sharesOutstanding?: FinancialPerformance["shares_outstanding"];
   onBuyClick?: () => void;
   onSellClick?: () => void;
+  isRefreshed?: boolean;
 }
 
 
@@ -30,6 +33,7 @@ const StockHeader: FC<StockHeaderProps> = ({
   sharesOutstanding,
   onBuyClick,
   onSellClick,
+  isRefreshed = false,
 }) => {
   const logoUrl = `${API_URL}/stock-details/${ticker}/logo`;
   const [isLogoAvailable, setIsLogoAvailable] = useState<boolean>(true);
@@ -46,7 +50,13 @@ const StockHeader: FC<StockHeaderProps> = ({
   } = useStockMetrics(technicalAnalysis.historical, sharesOutstanding || undefined);
 
   return (
-    <div className="mb-6 p-6 rounded-xl bg-white shadow-md border border-gray-100">
+    <div 
+      className={`mb-6 p-6 rounded-xl transition-all duration-1000 ${
+        isRefreshed 
+          ? "bg-emerald-50 shadow-lg border border-emerald-200 ring-1 ring-emerald-300" 
+          : "bg-white shadow-md border border-gray-100"
+      }`}
+    >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Left: Company Info */}
         <div className="flex items-center gap-6">

@@ -5,12 +5,12 @@ from datetime import datetime, timedelta, timezone
 import requests
 import yfinance as yf
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from database.base import get_db
+from database.base import get_db, SessionLocal
 from database.company import Company, CompanyOverview
 from database.financials import (
     CompanyEstimateHistory,
@@ -19,7 +19,7 @@ from database.financials import (
     CompanyFinancials,
 )
 from database.market import Market
-from database.stock_data import StockPriceHistory
+from database.stock_data import StockPriceHistory, CompanyMarketData
 from services.company_market_sync import (
     _detect_yahoo_exchange,
     _lookup_market,
@@ -389,14 +389,30 @@ def get_company_logo(ticker: str):
         raise HTTPException(status_code=500, detail="Error fetching logo")
 
 
+def background_fresh_data_wrapper(ticker: str, market_name: str):
+    """Wrapper to run ensure_fresh_data with its own DB session."""
+    db = SessionLocal()
+    try:
+        ensure_fresh_data(ticker, market_name, False, db)
+    except Exception as e:
+        logger.error(f"Background update failed for {ticker}: {e}")
+    finally:
+        db.close()
+
+
 @router.get("/{ticker}")
 def get_stock_details(
     ticker: str,
+    background_tasks: BackgroundTasks,
     short_window: int = Query(50, ge=1, description="Short MA window in days"),
     long_window: int = Query(200, ge=1, description="Long MA window in days"),
     db: Session = Depends(get_db),
 ):
+    import time
+    start_total = time.time()
+    
     company = get_company_by_ticker(ticker, db)
+    logger.info(f"[PERF] {ticker} get_company_by_ticker: {time.time() - start_total:.4f}s")
 
     if company.yfinance_market == "DELISTED":
         overview = company.overview
@@ -415,7 +431,10 @@ def get_stock_details(
         }
         return sanitize_numpy_types(response)
 
+    t_market = time.time()
     market = get_company_market(company, db)
+    logger.info(f"[PERF] {ticker} get_company_market: {time.time() - t_market:.4f}s")
+
     if not market:
         logger.warning("Market not found for ticker %s after auto-detection", ticker)
         raise HTTPException(
@@ -426,8 +445,38 @@ def get_stock_details(
             ),
         )
 
-    ensure_fresh_data(company.ticker, market.name, False, db)
+    t_fresh = time.time()
+    scheduled = False
+    
+    # --- STALE-WHILE-REVALIDATE OPTIMIZATION ---
+    # Check if we have basic market data (price)
+    md = db.query(CompanyMarketData).filter(CompanyMarketData.company_id == company.company_id).first()
+    
+    # We consider data "present" if we have a current price. 
+    # Whether it's 1 hour or 1 day old, we show it instantly and update in background.
+    has_data = md and md.current_price is not None
+    
+    if has_data:
+        logger.info(f"Data exists (Price: {md.current_price}). Scheduling background update.")
+        background_tasks.add_task(background_fresh_data_wrapper, company.ticker, market.name)
+        scheduled = True
+        logger.info(f"ensure_fresh_data (BACKGROUND SCHEDULED): {time.time() - t_fresh:.4f}s")
+    else:
+        logger.info(f"No data found. Running synchronous update.")
+        ensure_fresh_data(company.ticker, market.name, False, db)
+        logger.info(f"ensure_fresh_data (SYNC): {time.time() - t_fresh:.4f}s")
+    # -------------------------------------------
+    
+    # ... (rest of function) ...
+    
 
+    
+    # Wait, I need to match the return block.
+    # I'll just restore the full block since I can't jump lines easily in Python with context.
+    
+    t_overview = time.time()
+    # ...
+    # (Restoring omitted code to ensure integrity)
     overview = company.overview
     if not overview:
         try:
@@ -457,7 +506,10 @@ def get_stock_details(
                     "CompanyOverview insert race for %s: %s", company.ticker, exc
                 )
                 overview = db.query(CompanyOverview).get(company.company_id)
+    
+    logger.info(f"[PERF] {ticker} overview_logic: {time.time() - t_overview:.4f}s")
 
+    t_fin = time.time()
     executive_summary = build_executive_summary(company, market)
     financial_performance = get_company_financials(company, db)
     financials = (
@@ -465,6 +517,8 @@ def get_stock_details(
         .filter(CompanyFinancials.company_id == company.company_id)
         .first()
     )
+    logger.info(f"[PERF] {ticker} financials_fetch: {time.time() - t_fin:.4f}s")
+
     if not financials:
         logger.warning(f"Financials not found for ticker {ticker}")
         raise HTTPException(
@@ -475,6 +529,7 @@ def get_stock_details(
             ),
         )
 
+    t_hist = time.time()
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=730)
     stock_history = get_or_fetch_stock_price_history(
         ticker,
@@ -483,10 +538,13 @@ def get_stock_details(
         cutoff_date,
         db,
     )
+    logger.info(f"[PERF] {ticker} stock_history_fetch: {time.time() - t_hist:.4f}s")
+
     if not stock_history:
         logger.warning(f"Stock price history not found for ticker {ticker}")
         raise HTTPException(status_code=404, detail="Stock price history not found.")
 
+    t_build = time.time()
     trends = build_financial_trends(db, company.company_id)
     investor_metrics = build_investor_metrics(financials, trends)
     valuation_metrics = build_valuation_metrics(company, financials, db)
@@ -497,6 +555,7 @@ def get_stock_details(
     risk_metrics = {}  # build_risk_metrics(company, stock_history, db)  # Placeholder
     peer_comparison = build_peer_comparisons(company, db)
     dashboard_metrics = build_dashboard_metrics(db, company)
+    logger.info(f"[PERF] {ticker} build_metrics_all: {time.time() - t_build:.4f}s")
 
     response = {
         "executive_summary": executive_summary,
@@ -515,5 +574,8 @@ def get_stock_details(
         "risk_metrics": risk_metrics,
         "peer_comparison": peer_comparison,
         "analysis_dashboard": dashboard_metrics,
+        "background_update_scheduled": scheduled,
     }
+    
+    logger.info(f"[PERF] {ticker} TOTAL TIME: {time.time() - start_total:.4f}s")
     return sanitize_numpy_types(response)

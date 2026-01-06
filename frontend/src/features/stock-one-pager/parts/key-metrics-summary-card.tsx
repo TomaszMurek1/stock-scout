@@ -1,26 +1,15 @@
 import React from "react";
-import { Card, Badge, Tooltip } from "@/components/ui/Layout";
-import { MetricTooltipContent } from "./metric-tooltip-content";
-import type { StockData } from "./stock-one-pager.types";
+import { Badge, Tooltip } from "@/components/ui/Layout";
+import { MetricTooltipContent } from "../components/metric-tooltip-content";
+import type { StockData, MetricConfig } from "../stock-one-pager.types";
 import { formatPercentage } from "@/utils/formatting";
+import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
 
 interface KeyMetricsSummaryCardProps {
   valuationMetrics: StockData["valuation_metrics"];
   investorMetrics: StockData["investor_metrics"];
   financialPerformance: StockData["financial_performance"];
-}
-
-interface MetricConfig {
-  label: string;
-  value: string | number;
-  description: string;
-  definition: string;
-  criterion: string;
-  valueClass?: string;
-  isProgressBar?: boolean;
-  progressValue?: number; // 0-100
-  progressThreshold?: number; // Value at which it becomes "good"
-  progressMax?: number;
+  isRefreshed?: boolean;
 }
 
 const MetricItem = ({ config }: { config: MetricConfig }) => {
@@ -101,6 +90,7 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
   valuationMetrics,
   investorMetrics,
   financialPerformance,
+  isRefreshed = false,
 }) => {
   const metrics: MetricConfig[] = [
     {
@@ -179,8 +169,8 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
   ];
 
   return (
-    <Card className="bg-white shadow-sm border-slate-200">
-      <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-lg">
+    <RefreshedCard isRefreshed={isRefreshed} className="shadow-sm border-slate-200">
+      <RefreshedHeader isRefreshed={isRefreshed} className="px-5 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-lg bg-slate-50/50">
         <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wide">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -200,7 +190,9 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
           Key Metrics
         </h3>
         <Badge variant="neutral">FY 2024</Badge>
-      </div>
+      </RefreshedHeader>
+
+
 
       <div className="p-4">
         <div className="grid grid-cols-2 gap-x-2 gap-y-4">
@@ -214,7 +206,7 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
           Hover info icon for definitions & criteria
         </p>
       </div>
-    </Card>
+    </RefreshedCard>
   );
 };
 

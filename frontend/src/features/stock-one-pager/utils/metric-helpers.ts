@@ -1,5 +1,5 @@
 import { formatCurrency } from "@/utils/formatting";
-import type { MetricStatus } from "./metric-card";
+import type { MetricStatus } from "../stock-one-pager.types";
 
 export const formatCompactCurrencyValue = (
   value: number | null | undefined,

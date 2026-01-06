@@ -129,3 +129,22 @@ export interface AnalysisDashboard {
   analyst_price_target?: Nullable<number>;
   upside?: Nullable<number>;
 }
+
+export type MetricStatus = "success" | "danger" | "warning" | "neutral" | "good" | "bad";
+
+export interface MetricConfig {
+  label: string;
+  value: string | number;
+  description: string;
+  definition: string;
+  criterion: string;
+  icon?: React.ReactNode;
+  status?: MetricStatus;
+  meets?: boolean;
+  valueClass?: string;
+  isProgressBar?: boolean;
+  progressValue?: number; // 0-100
+  progressThreshold?: number; // Value at which it becomes "good"
+  progressMax?: number;
+}
+

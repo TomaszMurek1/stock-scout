@@ -11,16 +11,18 @@ import {
   Legend,
   Area,
 } from "recharts";
-import { formatCompactCurrencyValue } from "./metric-helpers";
-import type { FinancialTrends } from "./stock-one-pager.types";
+import { formatCompactCurrencyValue } from "../utils/metric-helpers";
+import { RefreshedCard } from "../components/refreshed-card";
+import type { FinancialTrends } from "../stock-one-pager.types";
 import { format, parseISO } from "date-fns";
 
 interface GrowthChartProps {
   trends: FinancialTrends;
   currency?: string | null;
+  isRefreshed?: boolean;
 }
 
-export const GrowthChart: FC<GrowthChartProps> = ({ trends, currency }) => {
+export const GrowthChart: FC<GrowthChartProps> = ({ trends, currency, isRefreshed = false }) => {
   const data = useMemo(() => {
     // Prefer quarterly data for better granularity, fallback to annual
     const source = trends.quarterly?.revenue?.length ? trends.quarterly : trends.annual;
@@ -59,7 +61,7 @@ export const GrowthChart: FC<GrowthChartProps> = ({ trends, currency }) => {
   if (!data.length) return <div className="text-slate-300 text-center py-10">No growth data available.</div>;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <RefreshedCard isRefreshed={isRefreshed} className="rounded-2xl border border-slate-200 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Growth Trend</p>
@@ -166,6 +168,6 @@ export const GrowthChart: FC<GrowthChartProps> = ({ trends, currency }) => {
           />
         </ComposedChart>
       </ResponsiveContainer>
-    </div>
+    </RefreshedCard>
   );
 };

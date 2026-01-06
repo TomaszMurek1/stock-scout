@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, Button, Input, Textarea } from "@/components/ui/Layout";
 import { CompanyNote, Sentiment, ResearchStatus } from "@/types";
 import { apiClient } from "@/services/apiClient";
+import { useStockData } from "../hooks/useStockData";
+import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
 import { toast } from "react-toastify";
 
 interface Props {

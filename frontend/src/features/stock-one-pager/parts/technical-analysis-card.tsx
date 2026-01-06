@@ -1,17 +1,19 @@
 import { FC, useState, useMemo } from "react";
-import { Card, Badge } from "@/components/ui/Layout";
+import { Badge } from "@/components/ui/Layout";
+import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
 import { ChartBarIcon } from "@heroicons/react/24/outline";
-import StockChart from "./stock-chart";
-import type { StockData } from "./stock-one-pager.types";
+import StockChart from "../components/stock-chart";
+import type { StockData } from "../stock-one-pager.types";
 import { subMonths, subYears, startOfYear, isAfter, parseISO } from "date-fns";
-import { PeriodSelector, Period } from "./period-selector";
-import { ChartMetrics } from "./chart-metrics";
+import { PeriodSelector, Period } from "../components/period-selector";
+import { ChartMetrics } from "../components/chart-metrics";
 
 interface TechnicalAnalysisChartCardProps {
   technicalAnalysis: StockData["technical_analysis"];
   riskMetrics: StockData["risk_metrics"];
   shortWindow?: number;
   longWindow?: number;
+  isRefreshed?: boolean;
 }
 
 const calculateVolatility = (prices: number[]): number => {
@@ -54,6 +56,7 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
   technicalAnalysis,
   shortWindow = 50,
   longWindow = 200,
+  isRefreshed = false,
 }) => {
   const [period, setPeriod] = useState<Period>("1Y");
 
@@ -115,9 +118,9 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
   }, [filteredData]);
 
   return (
-    <Card>
+    <RefreshedCard isRefreshed={isRefreshed}>
       {/* Header Section */}
-      <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white rounded-t-xl">
+      <RefreshedHeader isRefreshed={isRefreshed} className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 rounded-t-xl transition-colors duration-1000">
         <h3 className="font-semibold text-slate-900 flex items-center gap-2 text-lg">
           <div className="p-2 bg-primary/10 rounded-lg">
             <ChartBarIcon className="h-5 w-5 text-primary" />
@@ -125,10 +128,10 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
           Technical Analysis
         </h3>
         <PeriodSelector selectedPeriod={period} onSelect={setPeriod} />
-      </div>
+      </RefreshedHeader>
 
       {/* Chart Section */}
-      <div className="px-5 bg-white">
+      <div className={`px-5 transition-colors duration-1000 ${isRefreshed ? "bg-emerald-50/30" : "bg-white"}`}>
         <div className="flex gap-2 mb-4 justify-end">
           <Badge variant="neutral" className="bg-teal-50 text-teal-700 border-teal-100">
             {`SMA ${shortWindow}`}
@@ -147,7 +150,9 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
       </div>
 
       {/* Metrics Footer */}
-      <div className="px-5 pt-3 pb-5 bg-slate-50/50 border-t border-slate-100 rounded-b-xl">
+      <div className={`px-5 pt-3 pb-5 border-t border-slate-100 rounded-b-xl transition-colors duration-1000 ${
+          isRefreshed ? "bg-emerald-100/30" : "bg-slate-50/50"
+      }`}>
         <ChartMetrics
           volatility={volatility}
           maxDrawdown={maxDrawdown}
@@ -156,7 +161,7 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
           periodPerformance={periodPerformance}
         />
       </div>
-    </Card>
+    </RefreshedCard>
   );
 };
 

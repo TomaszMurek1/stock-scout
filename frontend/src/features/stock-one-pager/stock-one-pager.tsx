@@ -1,15 +1,15 @@
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { useStockData } from "./useStockData";
-import StockHeader from "./stock-header";
-import CompanyOverviewCard from "./company-overview-card";
-import TechnicalAnalysisChartCard from "./technical-analysis-card";
-import FinancialTrendsCard from "./financial-trends.card";
-import KeyMetricsSummaryCard from "./key-metrics-summary-card";
-import TechnicalIndicatorsCard from "./technical-indicators-card";
-import TradePanel from "./trade-panel";
-import { GrowthChart } from "./growth-chart";
-import { MetricsColumn } from "./metrics-column";
+import { useStockData } from "./hooks/useStockData";
+import StockHeader from "./parts/stock-header";
+import CompanyOverviewCard from "./parts/company-overview-card";
+import TechnicalAnalysisChartCard from "./parts/technical-analysis-card";
+import FinancialTrendsCard from "./parts/financial-trends.card";
+import KeyMetricsSummaryCard from "./parts/key-metrics-summary-card";
+import TechnicalIndicatorsCard from "./parts/technical-indicators-card";
+import TradePanel from "./parts/trade-panel";
+import { GrowthChart } from "./parts/growth-chart";
+import { MetricsColumn } from "./parts/metrics-column";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CompanyNotes } from "./company-notes";
+import { CompanyNotes } from "./parts/company-notes";
 import LoadingScreen from "@/components/shared/loading-screen";
 import ErrorScreen from "@/components/shared/error-screen";
 
@@ -30,7 +30,11 @@ export const StockOnePager: FC = () => {
 
   const shortWindow = Number(searchParams.get("short_window") ?? 50);
   const longWindow = Number(searchParams.get("long_window") ?? 200);
-  const { stock, isLoading, error } = useStockData(ticker, shortWindow, longWindow);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [ticker]);
+
+  const { stock, isLoading, error, isRefreshed } = useStockData(ticker, shortWindow, longWindow);
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={new Error(error)} />;
@@ -87,6 +91,7 @@ export const StockOnePager: FC = () => {
           sharesOutstanding={financial_performance?.shares_outstanding}
           onBuyClick={openBuyModal}
           onSellClick={openSellModal}
+          isRefreshed={isRefreshed}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -114,24 +119,33 @@ export const StockOnePager: FC = () => {
               </TabsList>
               <TabsContent value="overview" className="space-y-4">
                 <div className="space-y-6">
-                  <CompanyOverviewCard description={company_overview?.description} />
+                  <CompanyOverviewCard 
+                    description={company_overview?.description} 
+                    isRefreshed={isRefreshed}
+                  />
                   <TechnicalAnalysisChartCard
                     technicalAnalysis={technical_analysis}
                     riskMetrics={risk_metrics}
                     shortWindow={shortWindow}
                     longWindow={longWindow}
+                    isRefreshed={isRefreshed}
                   />
                 </div>
               </TabsContent>
               <TabsContent value="financials" className="space-y-4">
                 <div className="space-y-6">
                   {analysis_dashboard && (
-                    <GrowthChart trends={financial_trends} currency={currencyCode} />
+                    <GrowthChart 
+                      trends={financial_trends} 
+                      currency={currencyCode} 
+                      isRefreshed={isRefreshed}
+                    />
                   )}
 
                   <FinancialTrendsCard
                     financialTrends={financial_trends}
                     currency={executive_summary?.currency}
+                    isRefreshed={isRefreshed}
                   />
                 </div>
               </TabsContent>
@@ -146,6 +160,7 @@ export const StockOnePager: FC = () => {
               valuationMetrics={valuation_metrics}
               investorMetrics={investor_metrics}
               financialPerformance={financial_performance}
+              isRefreshed={isRefreshed}
             />
 
             <MetricsColumn
@@ -154,9 +169,13 @@ export const StockOnePager: FC = () => {
               valuationMetrics={valuation_metrics}
               financialPerformance={financial_performance}
               riskMetrics={risk_metrics}
+              isRefreshed={isRefreshed}
             />
 
-            <TechnicalIndicatorsCard technicalAnalysis={technical_analysis} />
+            <TechnicalIndicatorsCard 
+              technicalAnalysis={technical_analysis} 
+              isRefreshed={isRefreshed}
+            />
           </div>
         </div>
       </div>
