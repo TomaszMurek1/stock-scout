@@ -126,6 +126,7 @@
     "summary": {
         "net_liquidity": "Wartość Netto",
         "todays_pnl": "Dzisiejszy zysk/strata",
+        "money_made_lost": "Zysk / Strata Pieniężna",
         "total_pnl": "Całkowity zysk/strata",
         "buying_power": "Siła Nabywcza",
         "returns_analysis": "Analiza Zwrotów",
@@ -437,7 +438,7 @@
     "title": "Analiza Rynku",
     "description": "Analityka na poziomie instytucjonalnym, generowanie tez wspierane przez AI oraz szczegółowe metryki dla nowoczesnego inwestora."
   },
-  "header": {
+  "nav_header": {
     "home": "Strona Główna",
     "about": "O nas",
     "contact": "Kontakt"

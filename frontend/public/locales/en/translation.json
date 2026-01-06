@@ -126,6 +126,7 @@
     "summary": {
         "net_liquidity": "Net Liquidity",
         "todays_pnl": "Today's P&L",
+        "money_made_lost": "Money Made / Lost",
         "total_pnl": "Total P&L",
         "buying_power": "Buying Power",
         "returns_analysis": "Returns Analysis",
@@ -437,7 +438,7 @@
     "title": "Market Analysis",
     "description": "Institutional-grade analytics, AI-powered thesis generation, and deep-dive metrics for the modern investor."
   },
-  "header": {
+  "nav_header": {
     "home": "Home",
     "about": "About",
     "contact": "Contact"

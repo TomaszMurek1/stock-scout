@@ -86,12 +86,12 @@ const Header: React.FC = () => {
           <ul className="flex space-x-4 items-center">
             <li>
               <Link to="/" className="text-gray-600 hover:text-gray-800">
-                {t("header.home")}
+                {t("nav_header.home")}
               </Link>
             </li>
             <li>
               <Link to="/about" className="text-gray-600 hover:text-gray-800">
-                {t("header.about")}
+                {t("nav_header.about")}
               </Link>
             </li>
             {/* <li>
