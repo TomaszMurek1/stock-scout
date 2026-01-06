@@ -68,36 +68,14 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
   // 4. Income & Expenses
   // Use ITD for "Total Portfolio Profit" context
   const income = (itd?.income_expenses?.dividends || 0) + (itd?.income_expenses?.interest || 0);
-  const expenses = (itd?.income_expenses?.fees || 0) + (itd?.income_expenses?.taxes || 0); // usually positive in obj, needs negation? 
-  // API normally returns positive for sums, but check if they are negative.
-  // In `portfolio_metrics_service.py` they are returned as sums.
-  // In `debug_income.py` result, TAX was negative (-8.3).
-  // `_sum_flows` sums `quantity * currency_rate`.
-  // Tax/Fee type usually has negative quantity? Or positive quantity and negative sign in sum logic?
-  // Let's assume the value from `itd.income_expenses` is SIGNED correctly if it came from `_sum_flows`? 
-  // Wait, `calculate_returns_breakdown` calls `_sum_flows` which sums directly.
-  // If Tax q=-10, it returns -10.
-  // `portfolio_metrics_service.py`: 
-  // `fees = self._sum_flows(..., [TransactionType.FEE])`
-  // `taxes = self._sum_flows(..., [TransactionType.TAX])`
-  // So `expenses` variable here will likely be NEGATIVE if it sums negative flows.
-  // But let's check UI usage: `value={(itd.income_expenses.fees + itd.income_expenses.taxes) * -1}`
-  // The existing code MULTIPLIED BY -1.
-  // This implies the incoming values are NEGATIVE, and we want to show them as POSITIVE cost (red colored).
-  // Or incoming are POSITIVE and we want to negate?
-  // `debug_income.py` showed `TAX: -8.3`. So they are negative.
-  // So `fees + taxes` = negative number (e.g. -10).
-  // Existing UI: `value={... * -1}` -> displays `10`.
-  // I will show them as is, but styled red if negative.
-
-  const netExpenses = (itd?.income_expenses?.fees || 0) + (itd?.income_expenses?.taxes || 0);
+  
+  // Expenses are costs, so we treat them as negative for PnL but positive magnitude for display
+  const rawExpenses = (itd?.income_expenses?.fees || 0) + (itd?.income_expenses?.taxes || 0);
+  const netExpenses = Math.abs(rawExpenses); // Magnitude of cost
 
   // 5. Total Profit
-  // Capital Gains + Income + Expenses (which are negative)
-  // OR `itd.total_pnl_ex_flows` if available?
-  // `PortfolioBrief` calculates `Total PnL` = `Total Value - Net Deposits`.
-  // Let's stick to adding components to be explicit.
-  const totalProfit = totalCapitalGains + income + netExpenses;
+  // Profit = Gains + Income - Cost
+  const totalProfit = totalCapitalGains + income - netExpenses;
 
   // 6. Capital Structure
   const netDeposits = itd?.cash_flows?.net_external ?? 0;
@@ -113,31 +91,32 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
        {/* CARD 1: PERFORMANCE BREAKDOWN */}
-       <Card className="border-l-4 border-blue-500 pl-5">
+       <Card className="border-l-4 border-blue-500 pl-5 h-full">
           <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
              <DollarSign className="w-5 h-5 text-gray-500"/>
              {t("portfolio.summary.detailed_breakdown")}
           </h4>
-          <div className="space-y-1"> // Main list container
-             {/* 1. Active Positions */}
-             <DataRow 
-                label={t("portfolio.summary.unrealized_pl")} 
-                value={activeUnrealizedPnL} 
-                currency={currency} 
-                valueClassName={activeUnrealizedPnL >= 0 ? "text-emerald-600" : "text-red-600"}
-             />
+          <div className="space-y-1">
+             {/* SECTION 2: Top Rows */}
+             <div className="min-h-[5rem]"> 
+                 <DataRow 
+                    label={t("portfolio.summary.unrealized_pl")} 
+                    value={activeUnrealizedPnL} 
+                    currency={currency} 
+                    valueClassName={activeUnrealizedPnL >= 0 ? "text-emerald-600" : "text-red-600"}
+                 />
+                 <DataRow 
+                    label={t("portfolio.summary.realized_pl")} 
+                    value={realizedPnL} 
+                    currency={currency} 
+                    valueClassName={realizedPnL >= 0 ? "text-emerald-600" : "text-red-600"}
+                    className="!border-b-0" 
+                 />
+             </div>
              
-             {/* 2. Closed Positions - No bottom border to avoid clash with next section */}
-             <DataRow 
-                label={t("portfolio.summary.realized_pl")} 
-                value={realizedPnL} 
-                currency={currency} 
-                valueClassName={realizedPnL >= 0 ? "text-emerald-600" : "text-red-600"}
-                className="!border-b-0" 
-             />
-             
-             {/* 3. Total Trading Result - Top Border Separator */}
-             <div className="pt-2 mt-1 border-t border-gray-200">
+             {/* SECTION 3: Middle Content (Fixed Min Height for Alignment) */}
+             <div className="min-h-[11rem] flex flex-col pt-2 border-t border-gray-100">
+                {/* Total Trading Result */}
                 <DataRow 
                     label={t("portfolio.summary.capital_gains")} 
                     value={totalCapitalGains} 
@@ -146,28 +125,28 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
                     valueClassName={totalCapitalGains >= 0 ? "text-emerald-700" : "text-red-700"}
                     className="!border-b-0"
                 />
+
+                {/* Cash Impact Box */}
+                <div className="mt-3 bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1 shadow-sm flex-1">
+                    <DataRow 
+                        label={t("portfolio.summary.dividends_interest")} 
+                        value={income} 
+                        currency={currency} 
+                        valueClassName="text-emerald-600" 
+                        className="border-gray-200"
+                    />
+                    <DataRow 
+                        label={t("portfolio.summary.fees_taxes")} 
+                        value={netExpenses} 
+                        currency={currency} 
+                        valueClassName="text-red-500" 
+                        className="!border-b-0" 
+                    />
+                </div>
              </div>
 
-             {/* 4. Cash Impact Box */}
-             <div className="mt-3 bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1 shadow-sm">
-                <DataRow 
-                    label={t("portfolio.summary.dividends_interest")} 
-                    value={income} 
-                    currency={currency} 
-                    valueClassName="text-emerald-600" 
-                    className="border-gray-200"
-                />
-                <DataRow 
-                    label={t("portfolio.summary.fees_taxes")} 
-                    value={netExpenses} 
-                    currency={currency} 
-                    valueClassName="text-red-500" 
-                    className="!border-b-0" 
-                />
-             </div>
-
-             {/* 5. Total Portfolio Profit - No top border, margin separates from box */}
-             <div className="pt-3 mt-1">
+             {/* SECTION 4: Footer (Total PnL) */}
+             <div className="pt-3 border-t-2 border-gray-100 mt-2">
                  <DataRow 
                     label={t("portfolio.summary.total_pnl")} 
                     value={totalProfit} 
@@ -181,12 +160,13 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
        </Card>
 
        {/* CARD 2: CAPITAL STRUCTURE */}
-       <Card className="border-l-4 border-indigo-500 pl-5">
+       <Card className="border-l-4 border-indigo-500 pl-5 h-full">
           <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
              {t("portfolio.summary.total_market_value")}
           </h4>
           <div className="space-y-1">
-              {/* Money Sources */}
+              {/* SECTION 2: Top Rows */}
+              <div className="min-h-[5rem]">
                  <DataRow 
                     label={t("portfolio.summary.net_deposits")} 
                     value={netDeposits} 
@@ -200,36 +180,41 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
                     valueClassName={totalProfit >= 0 ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}
                     className="!border-b-0"
                  />
-
-              {/* Composition Bar - Separated Section */}
-              <div className="pt-4 mt-2 border-t border-gray-200 pb-2">
-                 <div className="flex justify-between text-sm text-gray-500 mb-2 font-medium">
-                    <span>{t("portfolio.summary.invested_value")}</span>
-                    <span>{t("portfolio.summary.cash_balance")}</span>
-                 </div>
-                 {/* Visual Bar */}
-                 <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
-                    <div 
-                        className="h-full bg-blue-500" 
-                        style={{ width: `${Math.max(0, Math.min(100, (endingInvested / totalValue) * 100))}%` }}
-                    />
-                    <div 
-                        className="h-full bg-emerald-400" 
-                        style={{ width: `${Math.max(0, Math.min(100, (cashBalance / totalValue) * 100))}%` }}
-                    />
-                 </div>
-                 <div className="flex justify-between mt-1.5 text-xs font-semibold">
-                     <span className="text-blue-600">{((endingInvested / totalValue) * 100).toFixed(1)}%</span>
-                     <span className="text-emerald-600">{((cashBalance / totalValue) * 100).toFixed(1)}%</span>
-                 </div>
               </div>
 
-              {/* Final Values */}
-              <div className="space-y-1 mt-2">
-                 <DataRow label={t("portfolio.summary.invested_value")} value={endingInvested} currency={currency} />
-                 <DataRow label={t("portfolio.summary.cash_balance")} value={cashBalance} currency={currency} className="!border-b-0" />
-                 
-                 <div className="pt-2 mt-1 border-t border-gray-200">
+              {/* SECTION 3: Middle Content (Fixed Min Height for Alignment) */}
+              <div className="min-h-[11rem] flex flex-col pt-2 border-t border-gray-100">
+                  {/* Composition Bar */}
+                  <div className="pb-2">
+                     <div className="flex justify-between text-sm text-gray-500 mb-2 font-medium">
+                        <span>{t("portfolio.summary.invested_value")}</span>
+                        <span>{t("portfolio.summary.cash_balance")}</span>
+                     </div>
+                     <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
+                        <div 
+                            className="h-full bg-blue-500" 
+                            style={{ width: `${Math.max(0, Math.min(100, (endingInvested / totalValue) * 100))}%` }}
+                        />
+                        <div 
+                            className="h-full bg-emerald-400" 
+                            style={{ width: `${Math.max(0, Math.min(100, (cashBalance / totalValue) * 100))}%` }}
+                        />
+                     </div>
+                     <div className="flex justify-between mt-1.5 text-xs font-semibold">
+                         <span className="text-blue-600">{((endingInvested / totalValue) * 100).toFixed(1)}%</span>
+                         <span className="text-emerald-600">{((cashBalance / totalValue) * 100).toFixed(1)}%</span>
+                     </div>
+                  </div>
+
+                  {/* Filler space / Lower Rows */}
+                  <div className="mt-auto space-y-1">
+                     <DataRow label={t("portfolio.summary.invested_value")} value={endingInvested} currency={currency} />
+                     <DataRow label={t("portfolio.summary.cash_balance")} value={cashBalance} currency={currency} className="!border-b-0" />
+                  </div>
+              </div>
+
+              {/* SECTION 4: Footer (Total Value) */}
+                 <div className="pt-3 mt-2 border-t-2 border-gray-100">
                     <DataRow 
                         label={t("portfolio.summary.total_value")} 
                         value={totalValue} 
@@ -239,7 +224,6 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
                         className="!border-b-0"
                     />
                  </div>
-              </div>
           </div>
        </Card>
      </div>
