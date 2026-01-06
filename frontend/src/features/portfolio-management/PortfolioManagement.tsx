@@ -9,7 +9,7 @@ import AddStockModal from "./modals/add-stock/AddStockModal";
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData";
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnimatedTabs, AnimatedTabsContent, AnimatedTabsList, FramerTabTrigger } from "@/components/ui/animated-tabs";
 import { Period } from "./types";
 import { useTranslation } from "react-i18next";
 
@@ -75,29 +75,31 @@ export default function PortfolioManagement() {
         <div className="p-6 rounded-xl bg-gray-100  space-y-6">
           <Header onAdd={() => setIsAddModalOpen(true)} />
 
-          <Tabs
+          <AnimatedTabs
             defaultValue="portfolio"
             value={activeTab}
             onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
             className="space-y-6"
             ref={tabsRef}
           >
-            <TabsList className="bg-slate-100/50 p-1 h-auto inline-flex">
-              <TabsTrigger
+            <AnimatedTabsList className="bg-slate-100/50 p-1 h-auto inline-flex gap-1">
+              <FramerTabTrigger
                 value="portfolio"
-                className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+                isSelected={activeTab === "portfolio"}
+                className="px-6 py-2"
               >
                 {t("portfolio.tabs.portfolio")}
-              </TabsTrigger>
-              <TabsTrigger
+              </FramerTabTrigger>
+              <FramerTabTrigger
                 value="performance"
-                className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+                isSelected={activeTab === "performance"}
+                className="px-6 py-2"
               >
                 {t("portfolio.tabs.performance")}
-              </TabsTrigger>
-            </TabsList>
+              </FramerTabTrigger>
+            </AnimatedTabsList>
 
-            <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="portfolio" forceMount={true} className="space-y-6 animate-in fade-in-0 mt-0">
               <Summary
                 portfolio={portfolio}
                 accounts={portfolio.accounts || []} 
@@ -117,12 +119,12 @@ export default function PortfolioManagement() {
                 accounts={portfolio.accounts || []}
                 portfolioCurrency={portfolio.currency}
               />
-            </TabsContent>
+            </AnimatedTabsContent>
 
-            <TabsContent value="performance" className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="performance" forceMount={true} className="space-y-6 animate-in fade-in-0 mt-0">
               <Performance />
-            </TabsContent>
-          </Tabs>
+            </AnimatedTabsContent>
+          </AnimatedTabs>
         </div>
 
         <AddStockModal

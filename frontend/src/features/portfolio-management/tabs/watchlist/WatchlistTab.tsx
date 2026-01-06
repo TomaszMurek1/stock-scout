@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { WatchlistTable } from "./WatchlistTable";
@@ -7,7 +7,7 @@ import { AppState, useAppStore } from "@/store/appStore";
 import { AddWatchlistDialog } from "./AddWatchlistDialog";
 import { useTranslation } from "react-i18next";
 
-export default function WatchlistTab() {
+const WatchlistTab = React.memo(() => {
   const loadWatchlist = useAppStore((state: AppState) => state.loadWatchlist);
   const refreshWatchlist = useAppStore((state: AppState) => state.refreshWatchlist);
   const isLoading = useAppStore((state: AppState) => state.watchlist.isLoading);
@@ -20,7 +20,7 @@ export default function WatchlistTab() {
   }, [refreshWatchlist]);
 
   useEffect(() => {
-    console.log("Loading watchlist...");
+    // console.log("Loading watchlist..."); // Removed strict mode log pollution
     loadWatchlist().catch((err) => {
       console.error("Failed to load watchlist", err);
     });
@@ -49,4 +49,6 @@ export default function WatchlistTab() {
       </div>
     </div>
   );
-}
+});
+
+export default WatchlistTab;

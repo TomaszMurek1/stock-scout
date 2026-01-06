@@ -1,7 +1,7 @@
 "use client";
 
 import React, { lazy, Suspense, useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AnimatedTabs, AnimatedTabsContent, AnimatedTabsList, FramerTabTrigger } from "@/components/ui/animated-tabs";
 import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react";
 import { ApiHolding, Transaction, Period } from "../types";
 import { useTranslation } from "react-i18next";
@@ -46,37 +46,71 @@ export default function PortfolioTabs({
   const bgColor =
     "data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900";
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="bg-slate-100/50 p-1 h-auto grid grid-cols-6 gap-2 mb-6">
-        <TabsTrigger value="holdings" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
+    <AnimatedTabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <AnimatedTabsList className="bg-slate-100/50 p-1 w-full justify-start overflow-x-auto no-scrollbar gap-1 mb-6">
+        <FramerTabTrigger 
+            value="holdings" 
+            isSelected={activeTab === "holdings"}
+            layoutId="portfolio-subtabs"
+            className="flex-1 min-w-[120px]"
+        >
           <BarChart3 className="h-4 w-4" />
           <span className="font-medium">{t("portfolio.tabs.your_stocks")}</span>
-        </TabsTrigger>
-        {/* ... triggers ... */}
-        <TabsTrigger value="watchlist" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
+        </FramerTabTrigger>
+        
+        <FramerTabTrigger 
+            value="watchlist" 
+            isSelected={activeTab === "watchlist"}
+            layoutId="portfolio-subtabs"
+            className="flex-1 min-w-[120px]"
+        >
           <BarChart3 className="h-4 w-4" />
           <span className="font-medium">{t("portfolio.tabs.watchlist")}</span>
-        </TabsTrigger>
-        <TabsTrigger value="alerts" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
+        </FramerTabTrigger>
+
+        <FramerTabTrigger 
+            value="alerts" 
+            isSelected={activeTab === "alerts"}
+            layoutId="portfolio-subtabs"
+            className="flex-1 min-w-[120px]"
+        >
           <Bell className="h-4 w-4" />
           <span className="font-medium">{t("portfolio.tabs.alerts")}</span>
-        </TabsTrigger>
-        <TabsTrigger value="transactions" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
+        </FramerTabTrigger>
+
+        <FramerTabTrigger 
+            value="transactions" 
+            isSelected={activeTab === "transactions"}
+            layoutId="portfolio-subtabs"
+            className="flex-1 min-w-[120px]"
+        >
           <Clock className="h-4 w-4" />
           <span className="font-medium">{t("portfolio.tabs.transactions")}</span>
-        </TabsTrigger>
-        <TabsTrigger value="cash" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
+        </FramerTabTrigger>
+
+        <FramerTabTrigger 
+            value="cash" 
+            isSelected={activeTab === "cash"}
+            layoutId="portfolio-subtabs"
+            className="flex-1 min-w-[120px]"
+        >
           <DollarSign className="h-4 w-4" />
           <span className="font-medium">{t("portfolio.tabs.cash")}</span>
-        </TabsTrigger>
-        <TabsTrigger value="risk" className={`flex items-center justify-center gap-2 py-2.5 rounded-md transition-all ${bgColor}`}>
+        </FramerTabTrigger>
+
+        <FramerTabTrigger 
+            value="risk" 
+            isSelected={activeTab === "risk"}
+            layoutId="portfolio-subtabs"
+            className="flex-1 min-w-[120px]"
+        >
           <PieChart className="h-4 w-4" />
           <span className="font-medium">{t("portfolio.tabs.risk")}</span>
-        </TabsTrigger>
-      </TabsList>
+        </FramerTabTrigger>
+      </AnimatedTabsList>
 
       <Suspense fallback={<div>{t("common.loading")}</div>}>
-        <TabsContent value="holdings" className="min-h-[500px]">
+        <AnimatedTabsContent value="holdings" forceMount={true} className="min-h-[500px]">
           <HoldingsTab 
              holdings={byHolding ?? []} 
              transactions={transactions} 
@@ -84,23 +118,23 @@ export default function PortfolioTabs({
              isLoading={isLoading} 
              selectedPeriod={selectedPeriod}
           />
-        </TabsContent>
-        <TabsContent value="watchlist" className="min-h-[500px]">
+        </AnimatedTabsContent>
+        <AnimatedTabsContent value="watchlist" forceMount={true} className="min-h-[500px]">
           <WatchlistTab />
-        </TabsContent>
-        <TabsContent value="alerts" className="min-h-[500px]">
+        </AnimatedTabsContent>
+        <AnimatedTabsContent value="alerts" forceMount={true} className="min-h-[500px]">
           <AlertsTab />
-        </TabsContent>
-        <TabsContent value="transactions" className="min-h-[500px]">
+        </AnimatedTabsContent>
+        <AnimatedTabsContent value="transactions" forceMount={true} className="min-h-[500px]">
           <TransactionsTab transactions={transactions} portfolioCurrency={portfolioCurrency} />
-        </TabsContent>
-        <TabsContent value="cash" className="min-h-[500px]">
+        </AnimatedTabsContent>
+        <AnimatedTabsContent value="cash" forceMount={true} className="min-h-[500px]">
           <CashTab accounts={accounts} transactions={transactions} />
-        </TabsContent>
-        <TabsContent value="risk" className="min-h-[500px]">
+        </AnimatedTabsContent>
+        <AnimatedTabsContent value="risk" forceMount={true} className="min-h-[500px]">
           <RiskTab />
-        </TabsContent>
+        </AnimatedTabsContent>
       </Suspense>
-    </Tabs>
+    </AnimatedTabs>
   );
 }
