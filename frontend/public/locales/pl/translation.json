@@ -149,7 +149,9 @@
         "net_deposits": "Depozyty Netto",
         "cash_available": "Dostępna Gotówka",
         "total_value": "Całkowita Wartość",
-        "total_pnl_itd": "Całkowity Zysk/Strata (ITD)",
+        "gain": "Niezrealizowany Zysk (ITD)",
+        "loss": "Niezrealizowana Strata (ITD)",
+        "total_pnl_itd": "Niezrealizowany Zysk/Strata (ITD)",
         "analysis_invested": "Analiza (Zainwestowane)",
         "beginning_invested": "Początkowa Inwestycja",
         "net_purchases": "Zakupy Netto",
@@ -182,7 +184,10 @@
             "money_made_lost": "💰 RZECZYWISTE ZYSKI/STRATY\n\n Czy zarobiłem pieniądze?\n\n Jak to działa:\n (Koniec - Początek - Wpłaty) ÷ Całkowite Inwestycje\n\n Przykład:\n Start 11k zł, dodano 142k zł, koniec 152k zł\n = Strata 1.9k zł na 153k razem = -1.2%\n\n Uwzględnia FX? TAK\n\n Dlaczego się różni: Liczy się ILE pieniędzy miałeś w różnym czasie.",
             "pick_quality": "🎯 UMIEJĘTNOŚĆ DOBORU AKCJI (HIPOTETYCZNA)\n\n Czy moje typy były dobre?\n\n Jak to działa:\n Wyobraź sobie 100 zł zainwestowane na POCZĄTKU okresu\n Każdego dnia rośnie/maleje o % portfela\n ZAKŁADA, że kupiłeś wszystkie akcje 1. dnia\n\n HIPOTETYCZNE? TAK - to tylko narzędzie miary",
             "strategy_quality": "📊 OGÓLNA STRATEGIA (HIPOTETYCZNA)\n\n Czy strategia była dobra (w tym trzymanie gotówki)?\n\n Jak to działa:\n (Śr. % Gotówki × 0%) + (Śr. % Akcji × Jakość Typów)\n ZAKŁADA, że wszystkie zakupy nastąpiły na początku\n\n HIPOTETYCZNE? TAK",
-            "personal_return": "🏦 Twój Osobisty IRR (RZECZYWISTY)\n\n Jaki był mój zwrot biorąc pod uwagę KIEDY zainwestowałem?\n\n Jak to działa:\n Stopa procentowa dająca Twoje dokładne wyniki\n KARA za złe wyczucie czasu, NAGRADZA za dobre\n\n RZECZYWISTE? TAK - używa prawdziwych kwot i dat"
+            "personal_return": "🏦 Twój Osobisty IRR (RZECZYWISTY)\n\n Jaki był mój zwrot biorąc pod uwagę KIEDY zainwestowałem?\n\n Jak to działa:\n Stopa procentowa dająca Twoje dokładne wyniki\n KARA za złe wyczucie czasu, NAGRADZA za dobre\n\n RZECZYWISTE? TAK - używa prawdziwych kwot i dat",
+            "invested_value": "Aktualna wartość rynkowa wszystkich Twoich aktywnych pozycji.",
+            "net_deposits": "Suma depozytów netto (Wpłaty - Wypłaty). Jest to rzeczywista gotówka, którą wpłaciłeś do portfela.",
+            "total_pnl_itd": "Zysk lub strata z Twoich bieżących aktywnych pozycji (niezrealizowane). Nie obejmuje zrealizowanych zysków ze sprzedanych akcji."
         }
     }
   },

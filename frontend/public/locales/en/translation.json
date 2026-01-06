@@ -148,8 +148,10 @@
         "invested_value": "Invested Value",
         "net_deposits": "Net Deposits",
         "cash_available": "Cash Available",
+        "gain": "Unrealized Gain (ITD)",
+        "loss": "Unrealized Loss (ITD)",
         "total_value": "Total Value",
-        "total_pnl_itd": "Total PnL (ITD)",
+        "total_pnl_itd": "Unrealized Gain / Loss (ITD)",
         "analysis_invested": "Analysis (Invested)",
         "beginning_invested": "Beginning Invested",
         "net_purchases": "Net Purchases",
@@ -182,7 +184,10 @@
             "money_made_lost": "💰 ACTUAL MONEY GAINED/LOST\n\n Did I make money?\n\n How it works:\n (Ending - Beginning - Money Added) ÷ Total Invested\n\n Example:\n Started 11k zł, added 142k zł, ended 152k zł\n = Lost 1.9k zł on 153k total = -1.2%\n\n Includes FX? YES - USD stocks lose value if PLN strengthens\n\n Why it differs: Cares about HOW MUCH money you had at different times. Adding 140k before a drop = bigger loss.",
             "pick_quality": "🎯 STOCK PICKING SKILL (HYPOTHETICAL)\n\n Were my stock picks good (ignoring when I bought)?\n\n How it works:\n Imagine 100 zł invested at START of period\n Each day: grows/shrinks by your portfolio's daily %\n ASSUMES you bought all stocks on day 1 (not actual dates)\n\n Example (YTD):\n 100 zł on Jan 1\n Day 1: +4% → 104 zł\n Day 2: -2% → 101.92 zł\n ...\n Dec 14: 123.87 zł = +23.87%\n\n HYPOTHETICAL? YES - not your actual money, just a measurement tool\n\n Includes FX? YES - PLN strengthening = USD stocks lose PLN value\n\n Why can be positive when you lost money:\n Treats every day equally. 10 months up (small capital) outweighs 1 month down (large capital).",
             "strategy_quality": "📊 OVERALL STRATEGY (HYPOTHETICAL)\n\n Was my strategy good (including keeping cash)?\n\n How it works:\n (Avg % Cash × 0%) + (Avg % Stocks × Pick Quality)\n ASSUMES all purchases happened at period start\n\n Example:\n 70% cash + 30% stocks at +24%\n = 30% × 24% = +7.2%\n\n HYPOTHETICAL? YES - same 100 zł concept\n\n Includes FX? YES - stocks and foreign cash both include FX\n\n Why POSITIVE when you LOST money:\n Measures strategy quality over TIME, not dollars. Like a fund manager's skill rating vs your account balance. Good strategies can lose money with bad timing.",
-            "personal_return": "🏦 YOUR PERSONAL IRR (ACTUAL)\n\n What was my return considering WHEN I invested?\n\n How it works:\n Interest rate that produces your exact results\n PUNISHES bad timing, REWARDS good timing\n\n Example:\n Added 140k on Nov 16\n Value dropped 5%by Dec 14\n That entire 140k sat through the drop\n\n ACTUAL? YES - uses your real amounts and dates\n\n Includes FX? YES - all holdings in PLN\n\n Why it's usually worst:\n Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL."
+            "personal_return": "🏦 YOUR PERSONAL IRR (ACTUAL)\n\n What was my return considering WHEN I invested?\n\n How it works:\n Interest rate that produces your exact results\n PUNISHES bad timing, REWARDS good timing\n\n Example:\n Added 140k on Nov 16\n Value dropped 5%by Dec 14\n That entire 140k sat through the drop\n\n ACTUAL? YES - uses your real amounts and dates\n\n Includes FX? YES - all holdings in PLN\n\n Why it's usually worst:\n Hard to time perfectly! Most add money when they have it (often after gains = high prices). This is NORMAL.",
+            "invested_value": "Current market value of all your active holdings.",
+            "net_deposits": "Total Net Deposits (Deposits - Withdrawals). This is the actual cash you have put into the portfolio.",
+            "total_pnl_itd": "Profit or Loss on your current active holdings (Unrealized). Does not include realized gains from sold stocks."
         }
     }
   },
