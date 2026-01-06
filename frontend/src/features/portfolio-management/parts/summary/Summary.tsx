@@ -75,6 +75,8 @@ export default function Summary({ portfolio, accounts, performance, holdings, se
             itd={itd} 
             selectedPeriod={selectedPeriod} 
             currency={currency}
+            holdings={holdings}
+            accounts={accounts}
             isLoading={!hasPerformance}
           />
         </>
