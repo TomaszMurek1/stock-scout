@@ -101,7 +101,7 @@ class PortfolioMetricsService:
                 .order_by(Transaction.timestamp.asc())
                 .first()
             )
-            return first_tx[0].date() if first_tx else None
+            return first_tx[0].date() - timedelta(days=1) if first_tx else None
 
         # Default fallback
         return end_date - timedelta(days=30)
@@ -396,11 +396,17 @@ class PortfolioMetricsService:
         start_pvd = self._get_valuation_at_date(portfolio_id, start_date)
         end_pvd = self._get_valuation_at_date(portfolio_id, end_date)
         
-        if not start_pvd or not end_pvd:
+        if not end_pvd:
             return {}
 
         # Safe Decimals
-        start_val = _to_d(start_pvd.total_value)
+        if start_pvd:
+            start_val = _to_d(start_pvd.total_value)
+            start_cash = _to_d(start_pvd.by_cash)
+        else:
+            # Before inception or no prior history
+            start_val = D("0")
+            start_cash = D("0")
         
         # Override Ending Values if provided (for Today's live view)
         if override_ending_vals:
@@ -411,7 +417,7 @@ class PortfolioMetricsService:
             end_val = _to_d(end_pvd.total_value)
             end_cash = _to_d(end_pvd.by_cash)
         
-        start_cash = _to_d(start_pvd.by_cash)
+
 
         
         # Derive

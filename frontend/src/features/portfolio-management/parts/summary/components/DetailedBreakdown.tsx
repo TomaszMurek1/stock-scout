@@ -112,7 +112,7 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, is
                  <DataRow label={t("portfolio.summary.total_net_deposits")} value={itd.cash_flows?.net_external || 0} currency={currency} valueClassName="text-blue-600" />
                  <DataRow label={t("portfolio.summary.total_net_invested")} value={itd.invested.net_trades} currency={currency} />
                  <DataRow 
-                     label={t("portfolio.summary.total_pnl_itd")} 
+                     label={t("portfolio.summary.capital_gains")}
                      value={itd.invested.capital_gains} 
                      currency={currency} 
                      isBold 

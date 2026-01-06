@@ -32,7 +32,12 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
     );
   }
   
-  const pnlValue = itd?.invested ? itd.invested.capital_gains : (itd?.pnl?.unrealized_gains_residual || 0);
+  // Prioritize performance data (ITD) if available to match DetailedBreakdown
+  const investedValue = itd?.invested?.ending_value ?? portfolio.invested_value_current;
+  const cashValue = accounts?.reduce((sum: number, acc: any) => sum + (acc.cash || 0), 0) || 0;
+  const totalValue = investedValue + cashValue;
+  const netDeposits = itd?.cash_flows?.net_external ?? portfolio.net_deposits ?? portfolio.net_invested_cash;
+  const totalPnL = totalValue - netDeposits;
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -41,14 +46,14 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
           <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Wallet size={20} /></div>
           <Label>{t("portfolio.summary.total_value")}</Label>
         </div>
-        <Value value={portfolio.total_value} currency={currency} />
+        <Value value={totalValue} currency={currency} />
       </Card>
       <Card>
          <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><PieChart size={20} /></div>
           <Label tooltip={t("portfolio.summary.tooltips.invested_value")}>{t("portfolio.summary.invested_value")}</Label>
         </div>
-        <Value value={portfolio.invested_value_current} currency={currency} />
+        <Value value={investedValue} currency={currency} />
       </Card>
     
       <Card>
@@ -56,7 +61,7 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
           <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><DollarSign size={20} /></div>
           <Label>{t("portfolio.summary.cash_available")}</Label>
         </div>
-        <Value value={accounts?.reduce((sum: number, acc: any) => sum + (acc.cash || 0), 0) || 0} currency={currency} />
+        <Value value={cashValue} currency={currency} />
       </Card>
 
        <Card>
@@ -64,7 +69,7 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
           <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><ArrowDownRight size={20} /></div>
           <Label tooltip={t("portfolio.summary.tooltips.net_deposits")}>{t("portfolio.summary.net_deposits")}</Label>
         </div>
-        <Value value={portfolio.net_deposits ?? portfolio.net_invested_cash} currency={currency} />
+        <Value value={netDeposits} currency={currency} />
       </Card>
    
       <Card>
@@ -75,9 +80,9 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
            </Label>
         </div>
         <Value 
-          value={portfolio.total_value - (portfolio.net_deposits ?? portfolio.net_invested_cash)} 
+          value={totalPnL} 
           currency={currency} 
-          className={(portfolio.total_value - (portfolio.net_deposits ?? portfolio.net_invested_cash)) >= 0 ? "text-green-600" : "text-red-600"}
+          className={totalPnL >= 0 ? "text-green-600" : "text-red-600"}
         />
       </Card>
     </div>
