@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { AppState, useAppStore } from "@/store/appStore";
@@ -42,6 +42,7 @@ export const useAddStockForm = ({
     reset,
     setValue,
     watch,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
@@ -85,24 +86,28 @@ export const useAddStockForm = ({
     }
   }, [portfolio?.id, accounts.length, isPortfolioLoading, refreshPortfolio]);
 
-  // Set default account on load
+  // Set default account on load (only if not set)
   useEffect(() => {
-    if (safeAccounts.length > 0) {
+    if (safeAccounts.length > 0 && !getValues("account_id")) {
        setValue("account_id", safeAccounts[0].id);
     }
-  }, [safeAccounts, setValue]); 
+  }, [safeAccounts, setValue, getValues]); 
 
   // Reset form when modal closes
+  // Reset form when modal closes (with delay for animation)
   useEffect(() => {
     if (!isOpen) {
-      reset();
-      setSelectedTicker("");
-      setSelectedCompany(null);
+      const timer = setTimeout(() => {
+        reset();
+        setSelectedTicker("");
+        setSelectedCompany(null);
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, reset]); 
 
-  // Pre-select ticker if provided
-  useEffect(() => {
+  // Pre-select ticker if provided (useLayoutEffect to avoid paint flash/freeze)
+  useLayoutEffect(() => {
     if (isOpen && initialTicker && !selectedTicker) {
       // Construct company object from passed props
       const company: Company = {
@@ -247,8 +252,7 @@ export const useAddStockForm = ({
       } as any);
 
       toast.success("Position added!");
-      reset();
-      setSelectedTicker("");
+      // Don't reset here, let the useEffect handle it after animation
       onClose();
       onSuccess?.();
     } catch (err: any) {
