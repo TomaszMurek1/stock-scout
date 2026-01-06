@@ -3,6 +3,7 @@ import { PieChart, ArrowDownRight, DollarSign, Wallet, TrendingUp } from "lucide
 import { Card, Label, Value } from "./SummaryShared";
 import { Portfolio, PortfolioPerformance } from "../../../types";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 
 interface PortfolioBriefProps {
   portfolio: Portfolio;
@@ -53,7 +54,22 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
   } else {
      totalPnL = round2(totalValue - netDeposits);
   }
+
+  const handleCopyAccount = () => {
+      // Use first available IBAN from accounts
+      const accountWithIban = accounts?.find(a => a.iban);
+      
+      if (accountWithIban?.iban) {
+          navigator.clipboard.writeText(accountWithIban.iban);
+          toast.success(t("portfolio.summary.bank_account_copied"), {
+              position: "bottom-right",
+              autoClose: 3000
+          });
+      }
+  };
   
+  const hasIban = accounts?.some(a => a.iban);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
        <Card>
@@ -73,8 +89,18 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
     
       <Card>
          <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><DollarSign size={20} /></div>
-          <Label>{t("portfolio.summary.cash_available")}</Label>
+            <button 
+                onClick={hasIban ? handleCopyAccount : undefined}
+                className={`p-2 rounded-lg transition-all duration-700 ${
+                    hasIban 
+                    ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse-slow" 
+                    : "bg-emerald-50 text-emerald-600 cursor-default"
+                }`}
+                title={hasIban ? t("portfolio.summary.copy_bank_account") : undefined}
+            >
+                <DollarSign size={20} />
+            </button>
+            <Label>{t("portfolio.summary.cash_available")}</Label>
         </div>
         <Value value={cashValue} currency={currency} />
       </Card>

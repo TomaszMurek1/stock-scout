@@ -43,6 +43,7 @@ export interface Account {
   type: string;
   currency: string;
   cash: number;
+  iban?: string;
 }
 
 export interface UserPortfolioResponse {

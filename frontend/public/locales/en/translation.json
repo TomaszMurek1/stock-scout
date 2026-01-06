@@ -148,6 +148,8 @@
         "invested_value": "Invested Value",
         "net_deposits": "Net Deposits",
         "cash_available": "Cash Available",
+        "copy_bank_account": "Copy bank account number",
+        "bank_account_copied": "Bank account number copied to clipboard",
         "gain": "Unrealized Gain (ITD)",
         "loss": "Unrealized Loss (ITD)",
         "total_value": "Total Value",

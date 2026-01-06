@@ -106,7 +106,8 @@ def get_portfolio_dashboard_core(
                     "name": acc.name,
                     "type": acc.account_type,
                     "currency": acc.currency or portfolio.currency,
-                    "cash": float(acc.cash)
+                    "cash": float(acc.cash),
+                    "iban": acc.iban
                 }
                 for acc in portfolio.accounts
             ]
@@ -124,7 +125,8 @@ def get_portfolio_dashboard_core(
                 "name": acc.name,
                 "type": acc.account_type,
                 "currency": acc.currency or portfolio.currency,
-                "cash": float(acc.cash)
+                "cash": float(acc.cash),
+                "iban": acc.iban
             }
             for acc in portfolio.accounts
         ]

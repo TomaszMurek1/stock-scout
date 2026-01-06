@@ -148,6 +148,8 @@
         "invested_value": "Wartość Inwestycji",
         "net_deposits": "Depozyty Netto",
         "cash_available": "Dostępna Gotówka",
+        "copy_bank_account": "Kopiuj numer konta",
+        "bank_account_copied": "Numer konta skopiowany do schowka",
         "total_value": "Całkowita Wartość",
         "gain": "Niezrealizowany Zysk (ITD)",
         "loss": "Niezrealizowana Strata (ITD)",

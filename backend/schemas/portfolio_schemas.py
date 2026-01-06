@@ -235,6 +235,7 @@ class AccountSchema(BaseModel):
     type: str  # e.g. "BROKERAGE", "BANK"
     currency: str
     cash: float
+    iban: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 
