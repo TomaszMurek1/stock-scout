@@ -1,4 +1,9 @@
 {
+  "footer": {
+    "privacy": "Prywatność",
+    "terms": "Regulamin",
+    "copyright": "© {{year}} StockScan Pro"
+  },
   "common": {
     "buy_instrument": "Kup instrument",
     "no_transactions": "Brak transakcji dla tej pozycji.",
@@ -64,6 +69,7 @@
         "sentiment": "Sentyment",
         "tags": "Tagi",
         "no_note": "Brak notatki analitycznej.",
+        "untitled_note": "Notatka bez tytułu",
         "thesis": "Teza",
         "next_catalyst": "Następny Katalizator",
         "target_price": "Cena Docelowa",
@@ -126,6 +132,7 @@
     "summary": {
         "net_liquidity": "Wartość Netto",
         "todays_pnl": "Dzisiejszy zysk/strata",
+        "money_made_lost": "Zysk / Strata Pieniężna",
         "total_pnl": "Całkowity zysk/strata",
         "buying_power": "Siła Nabywcza",
         "returns_analysis": "Analiza Zwrotów",
@@ -141,8 +148,12 @@
         "invested_value": "Wartość Inwestycji",
         "net_deposits": "Depozyty Netto",
         "cash_available": "Dostępna Gotówka",
+        "copy_bank_account": "Kopiuj numer konta",
+        "bank_account_copied": "Numer konta skopiowany do schowka",
         "total_value": "Całkowita Wartość",
-        "total_pnl_itd": "Całkowity Zysk/Strata (ITD)",
+        "gain": "Niezrealizowany Zysk (ITD)",
+        "loss": "Niezrealizowana Strata (ITD)",
+        "total_pnl_itd": "Niezrealizowany Zysk/Strata (ITD)",
         "analysis_invested": "Analiza (Zainwestowane)",
         "beginning_invested": "Początkowa Inwestycja",
         "net_purchases": "Zakupy Netto",
@@ -175,7 +186,11 @@
             "money_made_lost": "💰 RZECZYWISTE ZYSKI/STRATY\n\n Czy zarobiłem pieniądze?\n\n Jak to działa:\n (Koniec - Początek - Wpłaty) ÷ Całkowite Inwestycje\n\n Przykład:\n Start 11k zł, dodano 142k zł, koniec 152k zł\n = Strata 1.9k zł na 153k razem = -1.2%\n\n Uwzględnia FX? TAK\n\n Dlaczego się różni: Liczy się ILE pieniędzy miałeś w różnym czasie.",
             "pick_quality": "🎯 UMIEJĘTNOŚĆ DOBORU AKCJI (HIPOTETYCZNA)\n\n Czy moje typy były dobre?\n\n Jak to działa:\n Wyobraź sobie 100 zł zainwestowane na POCZĄTKU okresu\n Każdego dnia rośnie/maleje o % portfela\n ZAKŁADA, że kupiłeś wszystkie akcje 1. dnia\n\n HIPOTETYCZNE? TAK - to tylko narzędzie miary",
             "strategy_quality": "📊 OGÓLNA STRATEGIA (HIPOTETYCZNA)\n\n Czy strategia była dobra (w tym trzymanie gotówki)?\n\n Jak to działa:\n (Śr. % Gotówki × 0%) + (Śr. % Akcji × Jakość Typów)\n ZAKŁADA, że wszystkie zakupy nastąpiły na początku\n\n HIPOTETYCZNE? TAK",
-            "personal_return": "🏦 Twój Osobisty IRR (RZECZYWISTY)\n\n Jaki był mój zwrot biorąc pod uwagę KIEDY zainwestowałem?\n\n Jak to działa:\n Stopa procentowa dająca Twoje dokładne wyniki\n KARA za złe wyczucie czasu, NAGRADZA za dobre\n\n RZECZYWISTE? TAK - używa prawdziwych kwot i dat"
+            "personal_return": "🏦 Twój Osobisty IRR (RZECZYWISTY)\n\n Jaki był mój zwrot biorąc pod uwagę KIEDY zainwestowałem?\n\n Jak to działa:\n Stopa procentowa dająca Twoje dokładne wyniki\n KARA za złe wyczucie czasu, NAGRADZA za dobre\n\n RZECZYWISTE? TAK - używa prawdziwych kwot i dat",
+            "invested_value": "Aktualna wartość rynkowa wszystkich Twoich aktywnych pozycji.",
+            "net_deposits": "Suma depozytów netto (Wpłaty - Wypłaty). Jest to rzeczywista gotówka, którą wpłaciłeś do portfela.",
+            "total_pnl_itd": "Zysk lub strata z Twoich bieżących aktywnych pozycji (niezrealizowane). Nie obejmuje zrealizowanych zysków ze sprzedanych akcji.",
+            "total_pnl_lifetime": "Całkowity zysk lub strata od momentu powstania portfela. Obejmuje zarówno zyski z obecnie posiadanych akcji (niezrealizowane), jak i z zakończonych inwestycji (zrealizowane), a także dywidendy i opłaty."
         }
     }
   },
@@ -437,7 +452,7 @@
     "title": "Analiza Rynku",
     "description": "Analityka na poziomie instytucjonalnym, generowanie tez wspierane przez AI oraz szczegółowe metryki dla nowoczesnego inwestora."
   },
-  "header": {
+  "nav_header": {
     "home": "Strona Główna",
     "about": "O nas",
     "contact": "Kontakt"
@@ -465,5 +480,253 @@
     "unexpected_error": "Wystąpił nieoczekiwany błąd.",
     "need_account": "Potrzebujesz konta? Zarejestruj się",
     "have_account": "Masz już konto? Zaloguj się"
+  },
+  "stock_one_pager": {
+    "tabs": {
+      "overview": "Przegląd",
+      "financials": "Finanse",
+      "notes": "Notatki"
+    },
+    "header": {
+      "market_cap": "Kapitalizacja",
+      "range_52w": "Zakres 52T",
+      "buy": "Kup",
+      "sell": "Sprzedaj"
+    },
+    "overview": {
+      "title": "Przegląd Spółki",
+      "no_description": "Brak dostępnego opisu."
+    },
+    "metrics": {
+      "pe_ratio": {
+        "label": "Cena/Zysk (P/E)",
+        "description": "Cena akcji w stosunku do zysków; ile płacisz za 1 USD zysku.",
+        "definition": "P/E = Cena / Zysk na Akcję (EPS)",
+        "criterion": "Typowo 10–25 to rozsądny zakres; skrajności wymagają uzasadnienia."
+      },
+      "ev_ebitda": {
+        "label": "EV/EBITDA",
+        "description": "Wycena niezależna od struktury kapitału.",
+        "definition": "EV/EBITDA = Wartość Przedsiębiorstwa / EBITDA",
+        "criterion": "Niższy wynik oznacza tańszą wycenę na tle rynku/branży."
+      },
+      "revenue_growth": {
+        "label": "Wzrost Przych.",
+        "description": "Tempo wzrostu przychodów rok do roku.",
+        "definition": "Wzrost Przych. R/R",
+        "criterion": "Konsekwentnie dodatni; >10% to solidny wzrost."
+      },
+      "gross_margin": {
+        "label": "Marża Brutto",
+        "description": "Zysk po kosztach produkcji; odzwierciedla siłę cenową.",
+        "definition": "Marża Brutto = (Przychód - KWS) / Przychód",
+        "criterion": "Wyższa niż konkurencja to przewaga; spadek sygnalizuje presję."
+      },
+      "net_margin": {
+        "label": "Marża Netto",
+        "description": "Rentowność po odliczeniu wszystkich kosztów.",
+        "definition": "Marża Netto = Zysk Netto / Przychód",
+        "criterion": "Stabilny lub rosnący trend; porównuj do mediany."
+      },
+      "rule_of_40": {
+        "label": "Reguła 40",
+        "description": "Równowaga wzrostu i rentowności.",
+        "definition": "Reguła 40 = Wzrost Przych. + Marża Zysku",
+        "criterion": ">40% to świetny wynik; <30% wymaga poprawy."
+      },
+      "peg_ratio": {
+        "label": "Wskaźnik PEG",
+        "description": "P/E skorygowane o wzrost.",
+        "definition": "PEG = P/E / Stopa Wzrostu",
+        "criterion": "<1 to niedowartościowanie; >2 przewartościowanie."
+      },
+      "dividend_yield": {
+        "label": "Stopa Dywid.",
+        "description": "Roczny zwrot z dywidend.",
+        "definition": "Stopa Dywid. = Dywidenda / Cena",
+        "criterion": "Wyższa lepsza dla dochodu, zbyt wysoka może oznaczać ryzyko."
+      },
+      "price_to_sales": {
+        "label": "Cena/Przychód",
+        "description": "Wycena w stosunku do przychodów.",
+        "definition": "P/S = Kapitalizacja / Przychód",
+        "criterion": "Porównuj do historii i konkurencji."
+      },
+      "price_to_book": {
+        "label": "Cena/Wartość Ks.",
+        "description": "Wycena w stosunku do aktywów netto.",
+        "definition": "P/B = Cena / Wartość Księgowa na Akcję",
+        "criterion": "<1 może oznaczać pułapkę wartości lub okazję."
+      },
+      "operating_margin": {
+        "label": "Marża Oper.",
+        "description": "Zysk po kosztach operacyjnych.",
+        "definition": "Marża Oper. = Zysk Operacyjny / Przychód",
+        "criterion": ">20% wskazuje na wysoką efektywność operacyjną."
+      },
+      "ebitda_margin": {
+        "label": "Marża EBITDA",
+        "description": "Zysk przed odsetkami, podatkami i amortyzacją.",
+        "definition": "EBITDA / Przychód",
+        "criterion": "Wysoka marża wskazuje na potencjał generowania gotówki."
+      },
+      "fcf_margin": {
+        "label": "Marża FCF",
+        "description": "Wolne przepływy pieniężne jako procent przychodu.",
+        "definition": "FCF / Przychód",
+        "criterion": ">10% to zdrowa generacja gotówki."
+      },
+      "cash_conversion": {
+        "label": "Konwersja Gotówki",
+        "description": "Ile zysku zamienia się w gotówkę.",
+        "definition": "FCF / Zysk Netto",
+        "criterion": ">90% wskazuje na wysoką jakość zysków."
+      },
+      "capex_ratio": {
+        "label": "Wskaźnik CapEx",
+        "description": "Kapitałochłonność biznesu.",
+        "definition": "CapEx / Przychód",
+        "criterion": "Niższy oznacza model 'asset-light'."
+      },
+      "roa": {
+        "label": "Zwrot z Aktywów (ROA)",
+        "description": "Jak efektywnie aktywa generują zysk.",
+        "definition": "ROA = Zysk Netto / Aktywa Ogółem",
+        "criterion": "ROA (≥15%) jest efektywne."
+      },
+      "roic": {
+        "label": "ROIC",
+        "description": "Efektywność alokowanego kapitału.",
+        "definition": "ROIC = Zysk Operacyjny / (Dług + Kapitał)",
+        "criterion": "ROIC (≥15%) wskazuje na fosę (moat)."
+      },
+      "revenue_cagr_2y": {
+        "label": "CAGR Przych. (2L)",
+        "description": "Średnioroczne tempo wzrostu przychodów.",
+        "definition": "Złożona roczna stopa wzrostu z 2 lat.",
+        "criterion": "CAGR Przych. 2L (≥5%)."
+      },
+      "current_ratio": {
+        "label": "Wskaźnik Płynności",
+        "description": "Zdolność do spłaty krótkoterminowych zobowiązań.",
+        "definition": "Płynność = Aktywa Obrotowe / Zobowiązania Krótkoterminowe",
+        "criterion": "Wskaźnik (>1.0) jest bezpieczny."
+      },
+      "debt_to_assets": {
+        "label": "Dług do Aktywów",
+        "description": "Część aktywów finansowana długiem.",
+        "definition": "Dług / Aktywa Ogółem",
+        "criterion": "Stosunek (<40%)."
+      },
+      "interest_coverage": {
+        "label": "Pokrycie Odsetek",
+        "description": "Zdolność do spłaty odsetek od długu.",
+        "definition": "Pokrycie = Zysk Operacyjny / Koszty Odsetek",
+        "criterion": "Pokrycie (>3x) jest bezpieczne."
+      },
+      "ohlson_score": {
+        "label": "Wskaźnik Ohlsona",
+        "description": "Prawdopodobieństwo bankructwa.",
+        "definition": "Model O-Score Ohlsona.",
+        "criterion": "Wynik (<2%) jest bezpieczny."
+      },
+      "upside_potential": {
+        "label": "Potencjał Wzrostu",
+        "description": "Potencjalny zysk do ceny docelowej analityków.",
+        "definition": "Upside = (Cel - Obecna) / Obecna",
+        "criterion": "Potencjał (≥10%) jest atrakcyjny."
+      },
+      "analyst_target": {
+        "label": "Cel Analityków",
+        "description": "Średnia cena docelowa analityków z Wall St.",
+        "definition": "Średnia 12-miesięczna cena docelowa.",
+        "criterion": "Konsensus Ceny Docelowej."
+      },
+      "volatility": {
+        "label": "Zmienność (Roczna)",
+        "description": "Miara zmienności ceny.",
+        "definition": "Odchylenie Std Zwrotów * sqrt(252).",
+        "criterion": "Roczne Odchylenie Standardowe."
+      },
+      "max_drawdown": {
+        "label": "Maks. Obsunięcie",
+        "description": "Najgłębszy spadek w okresie.",
+        "definition": "Spadek od szczytu do dołka.",
+        "criterion": "Maksymalna strata od szczytu."
+      },
+      "beta": {
+        "label": "Beta",
+        "description": "Zmienność względem rynku (1.0).",
+        "definition": "Kowariancja / Wariancja rynku.",
+        "criterion": "Wrażliwość na rynek."
+      }
+    },
+    "metric_groups": {
+      "safety_filters": "Filtry Bezpieczeństwa",
+      "valuation_timing": "Wycena i Timing",
+      "profitability_growth": "Zyskowność i Wzrost",
+      "valuation_ratios": "Wskaźniki Wyceny",
+      "risk_analysis": "Analiza Ryzyka",
+      "technical_indicators": "Wskaźniki Techniczne",
+      "key_metrics": "Kluczowe Wskaźniki"
+    },
+    "key_metrics_card": {
+      "hover_info": "Najedź na ikonę info dla definicji i kryteriów"
+    },
+    "tooltip": {
+      "value": "Wartość",
+      "description": "Opis",
+      "definition": "Definicja",
+      "criterion": "Kryterium",
+      "formula": "Formuła",
+      "threshold": "Próg"
+    },
+    "chart_metrics": {
+      "performance": {
+        "label": "Wynik",
+        "description": "Całkowita procentowa zmiana ceny w wybranym okresie.",
+        "definition": "(Cena końcowa - Cena początkowa) / Cena początkowa"
+      },
+      "volatility": {
+        "label": "Zmienność",
+        "description": "Mierzy stopień zmienności szeregu cen w czasie.",
+        "definition": "Roczne odchylenie standardowe dziennych zwrotów."
+      },
+      "max_drawdown": {
+        "label": "Maks. Obsunięcie",
+        "description": "Maksymalna zaobserwowana strata od szczytu do dołka inwestycji.",
+        "definition": "Maksymalny zaobserwowany spadek od szczytu do dołka w danym okresie."
+      },
+      "from_min": {
+        "label": "Od Minimum",
+        "description": "Procentowy wzrost obecnej ceny od najniższej ceny w danym okresie.",
+        "definition": "(Obecna cena - Cena minimalna) / Cena minimalna"
+      },
+      "from_max": {
+        "label": "Od Maksimum",
+        "description": "Procentowy spadek obecnej ceny od najwyższej ceny w danym okresie.",
+        "definition": "(Obecna cena - Cena maksymalna) / Cena maksymalna"
+      }
+    },
+    "technical_indicators": {
+      "volatility_30d": {
+        "label": "Zmienność (30d)",
+        "description": "Roczne odchylenie standardowe dziennych zwrotów z ostatnich 30 dni.",
+        "definition": "Zmienność = Odch.Std(Dzienne Zwroty) * sqrt(252)",
+        "criterion": "Wyższe wartości wskazują na większe ryzyko ruchu cen."
+      },
+      "golden_cross": {
+        "label": "Złoty Krzyż",
+        "description": "Sygnał hossy, gdy krótkoterminowa średnia krocząca przecina od dołu długoterminową.",
+        "definition": "SMA 50 > SMA 200",
+        "criterion": "Pozytywny sygnał dla potencjalnego trendu wzrostowego."
+      },
+      "death_cross": {
+        "label": "Krzyż Śmierci",
+        "description": "Sygnał bessy, gdy krótkoterminowa średnia krocząca przecina od góry długoterminową.",
+        "definition": "SMA 50 < SMA 200",
+        "criterion": "Negatywny sygnał dla potencjalnego trendu spadkowego."
+      }
+    }
   }
 }

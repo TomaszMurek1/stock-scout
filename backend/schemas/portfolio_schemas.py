@@ -70,6 +70,7 @@ class TradeResponse(BaseModel):
 class PositionOut(BaseModel):
     ticker: str
     company_id: int
+    account_id: int
     shares: float
     average_cost: float
     market_price: Optional[float]
@@ -234,6 +235,7 @@ class AccountSchema(BaseModel):
     type: str  # e.g. "BROKERAGE", "BANK"
     currency: str
     cash: float
+    iban: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 

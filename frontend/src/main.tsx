@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./i18n";
@@ -12,7 +12,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <React.Suspense fallback={<div className="flex items-center justify-center h-screen">Loading StockScan...</div>}>
+            <App />
+          </React.Suspense>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

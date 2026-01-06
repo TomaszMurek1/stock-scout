@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { StockData, MetricConfig } from "../stock-one-pager.types";
 import { MetricGroupCard } from "../components/metric-group-card";
 import { 
@@ -17,13 +18,16 @@ const TechnicalIndicatorsCard: FC<TechnicalIndicatorsCardProps> = ({
   technicalAnalysis,
   isRefreshed = false,
 }) => {
+  const { t } = useTranslation();
+
   const metrics: MetricConfig[] = [
     {
-      label: "Volatility (30d)",
+      id: "volatility_30d",
+      label: t("stock_one_pager.technical_indicators.volatility_30d.label"),
       value: `${technicalAnalysis.volatility_30d}%`,
-      description: "Annualized standard deviation of daily returns over the last 30 days.",
-      definition: "Volatility = StdDev(Daily Returns) * sqrt(252)",
-      criterion: "Higher values indicate more price movement risk.",
+      description: t("stock_one_pager.technical_indicators.volatility_30d.description"),
+      definition: t("stock_one_pager.technical_indicators.volatility_30d.definition"),
+      criterion: t("stock_one_pager.technical_indicators.volatility_30d.criterion"),
       status: technicalAnalysis.volatility_30d > 40 ? "warning" : "neutral",
       icon: <Activity className="w-4 h-4" />,
       isProgressBar: true,
@@ -31,20 +35,22 @@ const TechnicalIndicatorsCard: FC<TechnicalIndicatorsCardProps> = ({
       progressMax: 100,
     },
     {
-      label: "Golden Cross",
+      id: "golden_cross",
+      label: t("stock_one_pager.technical_indicators.golden_cross.label"),
       value: technicalAnalysis.golden_cross ? "Yes" : "No",
-      description: "Bullish signal where short-term moving average crosses above long-term moving average.",
-      definition: "50-day SMA > 200-day SMA",
-      criterion: "A positive signal for potential upward trend.",
+      description: t("stock_one_pager.technical_indicators.golden_cross.description"),
+      definition: t("stock_one_pager.technical_indicators.golden_cross.definition"),
+      criterion: t("stock_one_pager.technical_indicators.golden_cross.criterion"),
       status: technicalAnalysis.golden_cross ? "success" : "neutral",
       icon: <Sun className="w-4 h-4" />,
     },
     {
-      label: "Death Cross",
+      id: "death_cross",
+      label: t("stock_one_pager.technical_indicators.death_cross.label"),
       value: technicalAnalysis.death_cross ? "Yes" : "No",
-      description: "Bearish signal where short-term moving average crosses below long-term moving average.",
-      definition: "50-day SMA < 200-day SMA",
-      criterion: "A negative signal for potential downward trend.",
+      description: t("stock_one_pager.technical_indicators.death_cross.description"),
+      definition: t("stock_one_pager.technical_indicators.death_cross.definition"),
+      criterion: t("stock_one_pager.technical_indicators.death_cross.criterion"),
       status: technicalAnalysis.death_cross ? "danger" : "neutral",
       icon: <Skull className="w-4 h-4" />,
     },
@@ -52,7 +58,7 @@ const TechnicalIndicatorsCard: FC<TechnicalIndicatorsCardProps> = ({
 
   return (
     <MetricGroupCard
-      title="Technical Indicators"
+      title={t("stock_one_pager.metric_groups.technical_indicators")}
       titleIcon={<ChartBar className="h-5 w-5" />}
       metrics={metrics}
       isRefreshed={isRefreshed}

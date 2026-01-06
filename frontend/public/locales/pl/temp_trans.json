@@ -1,0 +1,26 @@
+{
+  "portfolio": {
+    "summary": {
+      "total_value": "Wartość Portfela",
+      "invested_value": "Zainwestowano",
+      "cash_available": "Gotówka",
+      "net_deposits": "Wpłaty Netto",
+      "gain": "Zysk (ITD)",
+      "loss": "Strata (ITD)",
+      "capital_gains": "Zyski Kapitałowe (Razem)",
+      "unrealized_gains": "Niezrealizowany Zysk",
+      "realized_gains": "Zrealizowany Zysk",
+      "total_gain_loss": "Razem (Zreal. + Niezreal.)",
+      "dividends": "Dywidendy",
+      "interest": "Odsetki",
+      "fees_taxes": "Opłaty i Podatki",
+      "simple_return": "Zwrot Prosty",
+      "tooltips": {
+        "invested_value": "Obecna wartość Twoich akcji i innych instrumentów.",
+        "net_deposits": "Suma wszystkich wpłat pomniejszona o wypłaty.",
+        "total_pnl_itd": "Wszystkie zyski i straty od początku istnienia portfela.",
+        "total_pnl_realized_plus_unrealized": "Suma zysków ze sprzedaży oraz aktualnego wzrostu wartości akcji."
+      }
+    }
+  }
+}

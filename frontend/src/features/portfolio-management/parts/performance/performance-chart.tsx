@@ -1,20 +1,20 @@
-import { FC, useEffect, useMemo, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { TrendingUp } from "lucide-react";
 import {
   Area,
   AreaChart,
   CartesianGrid,
   Legend,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { format, subDays, subMonths, subYears, startOfYear, parseISO } from "date-fns";
+import { format, subMonths, subYears, startOfYear, parseISO } from "date-fns";
 import { Card } from "@/components/ui/Layout";
 import { useAppStore } from "@/store/appStore";
 import { apiClient } from "@/services/apiClient";
 import { PeriodSelector } from "@/features/stock-one-pager/components/period-selector";
+import { PersistentResponsiveContainer } from "@/components/shared/PersistentResponsiveContainer";
 
 // Reuse the Period type from existing selector
 type Period = "1M" | "1Q" | "YTD" | "1Y" | "All";
@@ -36,7 +36,8 @@ interface ValuationSeriesResponse {
   points: ValuationPoint[];
 }
 
-const PerformanceChart: FC = () => {
+// Wrap in memo to prevent re-renders when hidden
+const PerformanceChartComponent: FC = () => {
   const portfolio = useAppStore((state) => state.portfolio);
   const [period, setPeriod] = useState<Period>("1Y");
   const [data, setData] = useState<ValuationPoint[]>([]);
@@ -142,7 +143,7 @@ const PerformanceChart: FC = () => {
             </p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <PersistentResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorStocks" x1="0" y1="0" x2="0" y2="1">
@@ -201,11 +202,11 @@ const PerformanceChart: FC = () => {
                  );
               })}
             </AreaChart>
-          </ResponsiveContainer>
+          </PersistentResponsiveContainer>
         )}
       </div>
     </Card>
   );
 };
 
-export default PerformanceChart;
+export default React.memo(PerformanceChartComponent);

@@ -1,4 +1,5 @@
 import { FC, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { StockData } from "./stock-one-pager.types";
 import StockHeader from "./parts/stock-header";
 import CompanyOverviewCard from "./parts/company-overview-card";
@@ -10,6 +11,7 @@ import { GrowthChart } from "./parts/growth-chart";
 import { MetricsColumn } from "./parts/metrics-column";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanyNotes } from "./parts/company-notes";
+import { StockContentTabs } from "./stock-content-tabs";
 
 interface StockPageContentProps {
   stock: StockData;
@@ -42,6 +44,8 @@ const StockPageContentComponent: FC<StockPageContentProps> = ({
     analysis_dashboard,
   } = stock;
 
+  const { t } = useTranslation();
+
   const currencyCode = executive_summary?.currency ?? "USD";
 
   return (
@@ -59,63 +63,22 @@ const StockPageContentComponent: FC<StockPageContentProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="grid grid-cols-3 h-auto bg-slate-100/50 p-1">
-              <TabsTrigger 
-                value="overview"
-                className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger 
-                value="financials"
-                className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
-              >
-                Financials
-              </TabsTrigger>
-              <TabsTrigger 
-                value="notes"
-                className="text-xs py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
-              >
-                Notes
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="space-y-4">
-              <div className="space-y-6">
-                <CompanyOverviewCard 
-                  description={company_overview?.description} 
-                  isRefreshed={isRefreshed}
-                />
-                <TechnicalAnalysisChartCard
-                  technicalAnalysis={technical_analysis}
-                  riskMetrics={risk_metrics}
-                  shortWindow={shortWindow}
-                  longWindow={longWindow}
-                  isRefreshed={isRefreshed}
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="financials" className="space-y-4">
-              <div className="space-y-6">
-                {analysis_dashboard && (
-                  <GrowthChart 
-                    trends={financial_trends} 
-                    currency={currencyCode} 
-                    isRefreshed={isRefreshed}
-                  />
-                )}
-
-                <FinancialTrendsCard
-                  financialTrends={financial_trends}
-                  currency={executive_summary?.currency}
-                  isRefreshed={isRefreshed}
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="notes">
-              <CompanyNotes ticker={ticker || ""} />
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-6">
+            <StockContentTabs 
+                 t={t} 
+                 company_overview={company_overview}
+                 technical_analysis={technical_analysis}
+                 risk_metrics={risk_metrics}
+                 shortWindow={shortWindow}
+                 longWindow={longWindow}
+                 isRefreshed={isRefreshed}
+                 financial_trends={financial_trends}
+                 executive_summary={executive_summary}
+                 analysis_dashboard={analysis_dashboard}
+                 currencyCode={currencyCode}
+                 ticker={ticker}
+            />
+          </div>
         </div>
 
         <div className="space-y-6">

@@ -13,6 +13,8 @@ from utils.portfolio_utils import parse_as_of_date
 from database.base import get_db
 from services.portfolio_metrics_service import PortfolioMetricsService
 from database.alert import Alert
+from decimal import Decimal
+
 
 router = APIRouter()
 
@@ -97,13 +99,15 @@ def get_portfolio_dashboard_core(
             "cash_available": snapshot["cash_available"] if snapshot else 0.0,
             "invested_value_current": snapshot["invested_value_current"] if snapshot else 0.0,
             "net_invested_cash": snapshot["net_invested_cash"] if snapshot else 0.0, 
+            "net_deposits": snapshot["net_deposits"] if snapshot else 0.0,
             "accounts": [
                 {
                     "id": acc.id,
                     "name": acc.name,
                     "type": acc.account_type,
                     "currency": acc.currency or portfolio.currency,
-                    "cash": float(acc.cash)
+                    "cash": float(acc.cash),
+                    "iban": acc.iban
                 }
                 for acc in portfolio.accounts
             ]
@@ -121,7 +125,8 @@ def get_portfolio_dashboard_core(
                 "name": acc.name,
                 "type": acc.account_type,
                 "currency": acc.currency or portfolio.currency,
-                "cash": float(acc.cash)
+                "cash": float(acc.cash),
+                "iban": acc.iban
             }
             for acc in portfolio.accounts
         ]
@@ -138,11 +143,56 @@ def get_portfolio_dashboard_performance(
     end_date = parse_as_of_date(as_of_date)
     svc = PortfolioMetricsService(db)
 
+    # --- Live Value Override Logic ---
+    # 1. Fetch current holdings (with latest prices)
+    holdings = get_holdings_for_user(db, portfolio)
+    
+    # 2. Sum invested value (Live)
+    # Holdings already contain price * quantity * fx logic in `period_pnl` calculation or we recompute?
+    # get_holdings_for_user returns dicts. Let's recompute safe total.
+    live_invested = sum(
+        Decimal(str(h["shares"])) * 
+        Decimal(str(h["last_price"])) * 
+        Decimal(str(h["fx_rate_to_portfolio_ccy"])) 
+        for h in holdings
+    )
+    
+    # 3. Sum cash (Real-time from accounts)
+    live_cash = sum(Decimal(str(a.cash)) for a in portfolio.accounts)
+    
+    # 4. Total Live Value
+    live_total_value = live_invested + live_cash
+    
+    # 5. Live PnL Map (Sum of period_pnl from holdings)
+    live_pnl_map = {}
+    # We exclude 'itd' from PnL override because ITD PnL includes realized history 
+    # which is NOT in the holdings table. Forcing it to match table causes 
+    # math artifacts (phantom 'starting investment').
+    PERIODS_TO_SUM = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd"]
+    
+    # Initialize
+    for p in PERIODS_TO_SUM:
+        live_pnl_map[p] = Decimal("0")
+        
+    for h in holdings:
+        ppnl = h.get("period_pnl", {})
+        for p in PERIODS_TO_SUM:
+            val = ppnl.get(p)
+            if val is not None:
+                live_pnl_map[p] += Decimal(str(val))
+
+    overrides = {
+        "total_value": live_total_value,
+        "cash_val": live_cash,
+        "period_pnl_map": live_pnl_map
+    }
+
     # This is the heavy part
     performance = svc.build_performance_summary(
         portfolio_id,
         end_date,
         include_all_breakdowns=True,
+        current_values_override=overrides
     )
     
     return {

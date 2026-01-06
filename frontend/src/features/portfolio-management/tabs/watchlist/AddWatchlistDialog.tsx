@@ -58,16 +58,16 @@ export function AddWatchlistDialog() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>{t("watchlist.add_dialog_title")}</DialogTitle>
+                    <DialogTitle>{t("portfolio.watchlist.add_dialog_title")}</DialogTitle>
                     <DialogDescription>
-                        {t("watchlist.add_dialog_desc")}
+                        {t("portfolio.watchlist.add_dialog_desc")}
                     </DialogDescription>
                 </DialogHeader>
                 {error && (
                     <p className="text-sm text-red-600">{error}</p>
                 )}
                 <CompanySearch
-                    actionLabel={t("watchlist.add_action")}
+                    actionLabel={t("portfolio.watchlist.add_action")}
                     actionLoading={submitting}
                     onAction={handleAdd}
                     containerClassName="mx-0 px-0 py-0"

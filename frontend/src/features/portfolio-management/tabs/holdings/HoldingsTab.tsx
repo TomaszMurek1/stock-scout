@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MaterialReactTable, type MRT_Row } from "material-react-table";
 import { Trash2, Bell } from "lucide-react";
@@ -21,7 +21,7 @@ interface HoldingsTabProps {
   selectedPeriod?: Period;
 }
 
-export default function HoldingsTab({ holdings, transactions, onRemove, isLoading, selectedPeriod = "ytd" }: HoldingsTabProps) {
+const HoldingsTab =  React.memo(({ holdings, transactions, onRemove, isLoading, selectedPeriod = "ytd" }: HoldingsTabProps) => {
   const navigate = useNavigate();
   const [alertModalTicker, setAlertModalTicker] = useState<string | null>(null);
   const columns = useHoldingsColumns({ selectedPeriod });
@@ -31,20 +31,16 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
   const groupedHoldings = useMemo(() => {
     if (!holdings) return [];
     
+    // ... logic remains same ...
     const groups: Record<string, ApiHolding> = {};
 
     for (const h of holdings) {
       const key = h.ticker.toUpperCase();
       if (!groups[key]) {
-        // Clone to avoid mutating original if needed, though here we're creating new object structure effectively
-        groups[key] = { ...h }; 
-        // Ensure PnL objects are cloned so we can sum into them safely
-        groups[key].period_pnl = { ...h.period_pnl };
-        groups[key].period_pnl_instrument_ccy = { ...h.period_pnl_instrument_ccy };
+         groups[key] = { ...h, period_pnl: {...h.period_pnl}, period_pnl_instrument_ccy: {...h.period_pnl_instrument_ccy} }; 
       } else {
         const existing = groups[key];
         
-        // Weighted averages for costs
         const totalShares = existing.shares + h.shares;
         if (totalShares > 0) {
           existing.average_cost_instrument_ccy = 
@@ -54,10 +50,8 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
             (existing.average_cost_portfolio_ccy * existing.shares + h.average_cost_portfolio_ccy * h.shares) / totalShares;
         }
 
-        // Sum shares
         existing.shares += h.shares;
 
-        // Sum PnLs
         for (const pKey in h.period_pnl) {
           existing.period_pnl[pKey] = (existing.period_pnl[pKey] || 0) + (h.period_pnl[pKey] || 0);
         }
@@ -136,7 +130,7 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
         </div>
       );
     },
-    [transactionsByTicker]
+    [transactionsByTicker, t]
   );
 
   if (isLoading && (!holdings || holdings.length === 0)) {
@@ -189,10 +183,9 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
         renderDetailPanel={renderDetailPanel}
         muiTableBodyRowProps={{
           sx: {
-            // cursor: "pointer", // Removed pointer cursor since row is not clickable for nav
+            // cursor: "pointer", 
             backgroundColor: "#fff",
           },
-          // onClick: () => navigate(`/stock-details/${row.original.ticker}`), // REMOVED
         }}
         muiTopToolbarProps={{
           sx: {
@@ -222,4 +215,6 @@ export default function HoldingsTab({ holdings, transactions, onRemove, isLoadin
       )}
     </div>
   );
-}
+});
+
+export default HoldingsTab;

@@ -43,6 +43,7 @@ export interface Account {
   type: string;
   currency: string;
   cash: number;
+  iban?: string;
 }
 
 export interface UserPortfolioResponse {
@@ -68,6 +69,7 @@ export interface Portfolio {
   cash_available: number;
   invested_value_current: number;
   net_invested_cash: number;
+  net_deposits?: number;
   accounts?: Account[];
 }
 
@@ -207,6 +209,7 @@ export type ApiHolding = {
   ticker: string;
   name: string;
   shares: number;
+  account_id: number;
   instrument_ccy: string;
   average_cost_portfolio_ccy: number;
   average_cost_instrument_ccy: number;

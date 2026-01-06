@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Badge, Tooltip } from "@/components/ui/Layout";
 import { MetricTooltipContent } from "../components/metric-tooltip-content";
 import type { StockData, MetricConfig } from "../stock-one-pager.types";
@@ -34,7 +35,6 @@ const MetricItem = ({ config }: { config: MetricConfig }) => {
           description={description}
           definition={definition}
           criterion={criterion}
-          labels={{ description: "What it means" }}
         />
       }
     >
@@ -92,32 +92,36 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
   financialPerformance,
   isRefreshed = false,
 }) => {
+  const { t } = useTranslation();
+
   const metrics: MetricConfig[] = [
     {
-      label: "P/E Ratio",
+      id: "pe_ratio",
+      label: t("stock_one_pager.metrics.pe_ratio.label"),
       value: valuationMetrics.pe_ratio?.toFixed(2) || "N/A",
-      description: "Stosunek ceny akcji do zysków; ile płacisz za 1 USD zysku.",
-      definition: "P/E = Price per Share / Earnings per Share (EPS)",
-      criterion:
-        "Typowo 10–25 uznawane za rozsądny przedział; skrajne wartości wymagają uzasadnienia.",
+      description: t("stock_one_pager.metrics.pe_ratio.description"),
+      definition: t("stock_one_pager.metrics.pe_ratio.definition"),
+      criterion: t("stock_one_pager.metrics.pe_ratio.criterion"),
       valueClass: "text-slate-900",
       isProgressBar: false,
     },
     {
-      label: "EV/EBITDA",
+      id: "ev_ebitda",
+      label: t("stock_one_pager.metrics.ev_ebitda.label"),
       value: valuationMetrics.ev_ebitda?.toFixed(2) || "N/A",
-      description: "Wycena względna wobec EBITDA, neutralna na strukturę kapitału.",
-      definition: "EV/EBITDA = Enterprise Value / EBITDA",
-      criterion: "Niżej zwykle taniej vs. rynek/branża; porównuj do mediany sektorowej.",
+      description: t("stock_one_pager.metrics.ev_ebitda.description"),
+      definition: t("stock_one_pager.metrics.ev_ebitda.definition"),
+      criterion: t("stock_one_pager.metrics.ev_ebitda.criterion"),
       valueClass: "text-slate-900",
       isProgressBar: false,
     },
     {
-      label: "Revenue Growth",
+      id: "revenue_growth",
+      label: t("stock_one_pager.metrics.revenue_growth.label"),
       value: investorMetrics.revenue_growth != null ? `${investorMetrics.revenue_growth.toFixed(2)}%` : "N/A",
-      description: "Tempo wzrostu przychodu rok do roku; powinno być dodatnie.",
-      definition: "YoY Revenue Growth",
-      criterion: "Stabilnie dodatnie tempo; >10% to solidne tempo wzrostu.",
+      description: t("stock_one_pager.metrics.revenue_growth.description"),
+      definition: t("stock_one_pager.metrics.revenue_growth.definition"),
+      criterion: t("stock_one_pager.metrics.revenue_growth.criterion"),
       valueClass:
         (investorMetrics.revenue_growth ?? 0) >= 10
           ? "text-emerald-600"
@@ -130,12 +134,12 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
       progressMax: 30,
     },
     {
-      label: "Gross Margin",
+      id: "gross_margin",
+      label: t("stock_one_pager.metrics.gross_margin.label"),
       value: formatPercentage(financialPerformance.gross_margin),
-      description:
-        "Marża brutto po kosztach wytworzenia; odzwierciedla siłę cenową i efektywność produkcji.",
-      definition: "Gross Margin = (Revenue − COGS) / Revenue",
-      criterion: "Wyższa niż w branży to przewaga; spadki mogą sygnalizować presję kosztową.",
+      description: t("stock_one_pager.metrics.gross_margin.description"),
+      definition: t("stock_one_pager.metrics.gross_margin.definition"),
+      criterion: t("stock_one_pager.metrics.gross_margin.criterion"),
       valueClass: (financialPerformance.gross_margin ?? 0) > 0.5 ? "text-emerald-600" : "text-slate-900",
       isProgressBar: true,
       progressValue: (financialPerformance.gross_margin ?? 0) * 100,
@@ -143,11 +147,12 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
       progressMax: 90,
     },
     {
-      label: "Net Margin",
+      id: "net_margin",
+      label: t("stock_one_pager.metrics.net_margin.label"),
       value: formatPercentage(financialPerformance.net_margin),
-      description: "Rentowność netto po wszystkich kosztach i podatkach.",
-      definition: "Net Margin = Net Income / Revenue",
-      criterion: "Stabilny lub rosnący trend; porównuj do mediany w branży.",
+      description: t("stock_one_pager.metrics.net_margin.description"),
+      definition: t("stock_one_pager.metrics.net_margin.definition"),
+      criterion: t("stock_one_pager.metrics.net_margin.criterion"),
       valueClass: (financialPerformance.net_margin ?? 0) > 0.15 ? "text-emerald-600" : "text-slate-900",
       isProgressBar: true,
       progressValue: (financialPerformance.net_margin ?? 0) * 100,
@@ -155,11 +160,12 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
       progressMax: 40,
     },
     {
-      label: "Rule of 40",
+      id: "rule_of_40",
+      label: t("stock_one_pager.metrics.rule_of_40.label"),
       value: investorMetrics.rule_of_40 != null ? `${investorMetrics.rule_of_40.toFixed(2)}%` : "N/A",
-      description: "Heurystyka równowagi wzrostu i rentowności; >40% uchodzi za zdrowy miks.",
-      definition: "Rule of 40 = Revenue Growth + Profit Margin (np. FCF/EBITDA).",
-      criterion: "Powyżej 40% – zielone światło; 30–40% – w porządku, poniżej 30% – do poprawy.",
+      description: t("stock_one_pager.metrics.rule_of_40.description"),
+      definition: t("stock_one_pager.metrics.rule_of_40.definition"),
+      criterion: t("stock_one_pager.metrics.rule_of_40.criterion"),
       valueClass: (investorMetrics.rule_of_40 ?? 0) >= 40 ? "text-emerald-600" : "text-amber-600",
       isProgressBar: true,
       progressValue: investorMetrics.rule_of_40 ?? 0,
@@ -187,7 +193,7 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
             <path d="M12 2v20" />
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
-          Key Metrics
+          {t("stock_one_pager.metric_groups.key_metrics")}
         </h3>
         <Badge variant="neutral">FY 2024</Badge>
       </RefreshedHeader>
@@ -203,7 +209,7 @@ export const KeyMetricsSummaryCard: React.FC<KeyMetricsSummaryCardProps> = ({
       </div>
       <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/30 rounded-b-lg">
         <p className="text-[10px] text-slate-400 text-center">
-          Hover info icon for definitions & criteria
+          {t("stock_one_pager.key_metrics_card.hover_info")}
         </p>
       </div>
     </RefreshedCard>

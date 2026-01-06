@@ -20,7 +20,7 @@ i18n
     },
     defaultNS: 'translation',
     react: {
-        useSuspense: false,
+        useSuspense: true,
     },
   });
 

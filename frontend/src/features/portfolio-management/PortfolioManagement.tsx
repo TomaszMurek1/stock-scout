@@ -1,22 +1,26 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, startTransition, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Header } from "./parts/Header";
+import LoadingScreen from "@/components/shared/loading-screen";
 import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
 import AddStockModal from "./modals/add-stock/AddStockModal";
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData";
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnimatedTabs, AnimatedTabsContent, AnimatedTabsList, FramerTabTrigger } from "@/components/ui/animated-tabs";
 import { Period } from "./types";
 import { useTranslation } from "react-i18next";
 
 
 export default function PortfolioManagement() {
+  const [isMounting, setIsMounting] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "performance">("portfolio");
+  // Keep track of which tabs have been loaded to forceMount them after first visit
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(["portfolio"]));
   const [activeSubTab, setActiveSubTab] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("ytd");
   const location = useLocation();
@@ -48,6 +52,8 @@ export default function PortfolioManagement() {
     portfolio,
   });
 
+  const accounts = useMemo(() => portfolio.accounts || [], [portfolio.accounts]);
+
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -57,11 +63,13 @@ export default function PortfolioManagement() {
     }
   }, [refreshPortfolio]);
 
-  useEffect(() => {
-    refreshPortfolio();
-  }, [refreshPortfolio]);
 
-  if (!portfolio || !totals) return <div>No portfolio found</div>;
+
+  useEffect(() => {
+    setIsMounting(false);
+  }, []);
+
+  if (isMounting || !portfolio || !totals) return <LoadingScreen message={t("common.loading")} />;
 
   const handleAddSuccess = () => {
     setIsAddModalOpen(false);
@@ -75,32 +83,43 @@ export default function PortfolioManagement() {
         <div className="p-6 rounded-xl bg-gray-100  space-y-6">
           <Header onAdd={() => setIsAddModalOpen(true)} />
 
-          <Tabs
+          <AnimatedTabs
             defaultValue="portfolio"
             value={activeTab}
-            onValueChange={(val) => setActiveTab(val as "portfolio" | "performance")}
+            onValueChange={(val) => {
+              startTransition(() => {
+                setActiveTab(val as "portfolio" | "performance");
+                setLoadedTabs(prev => {
+                  const next = new Set(prev);
+                  next.add(val);
+                  return next;
+                });
+              });
+            }}
             className="space-y-6"
             ref={tabsRef}
           >
-            <TabsList className="bg-slate-100/50 p-1 h-auto inline-flex">
-              <TabsTrigger
+            <AnimatedTabsList className="bg-slate-100/50 p-1 h-auto flex overflow-x-auto no-scrollbar gap-1 w-full sm:w-auto justify-start">
+              <FramerTabTrigger
                 value="portfolio"
-                className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+                isSelected={activeTab === "portfolio"}
+                className="px-6 py-2"
               >
                 {t("portfolio.tabs.portfolio")}
-              </TabsTrigger>
-              <TabsTrigger
+              </FramerTabTrigger>
+              <FramerTabTrigger
                 value="performance"
-                className="px-6 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900 transition-all rounded-md"
+                isSelected={activeTab === "performance"}
+                className="px-6 py-2"
               >
                 {t("portfolio.tabs.performance")}
-              </TabsTrigger>
-            </TabsList>
+              </FramerTabTrigger>
+            </AnimatedTabsList>
 
-            <TabsContent value="portfolio" className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="portfolio" forceMount={loadedTabs.has("portfolio") || undefined} className="space-y-6 animate-in fade-in-0 mt-0">
               <Summary
                 portfolio={portfolio}
-                accounts={portfolio.accounts || []} 
+                accounts={accounts} 
                 performance={performance}
                 holdings={holdings}
                 selectedPeriod={selectedPeriod}
@@ -114,15 +133,15 @@ export default function PortfolioManagement() {
                 isLoading={isLoading}
                 selectedPeriod={selectedPeriod}
                 externalTab={activeSubTab}
-                accounts={portfolio.accounts || []}
+                accounts={accounts}
                 portfolioCurrency={portfolio.currency}
               />
-            </TabsContent>
+            </AnimatedTabsContent>
 
-            <TabsContent value="performance" className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="performance" forceMount={loadedTabs.has("performance") || undefined} className="space-y-6 animate-in fade-in-0 mt-0">
               <Performance />
-            </TabsContent>
-          </Tabs>
+            </AnimatedTabsContent>
+          </AnimatedTabs>
         </div>
 
         <AddStockModal

@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { Nullable } from "@/components/types/shared.types";
 import { StockData } from "../stock-one-pager.types";
@@ -9,20 +10,23 @@ interface CompanyOverviewCardProps {
   isRefreshed?: boolean;
 }
 
-const CompanyOverviewCard: FC<CompanyOverviewCardProps> = ({ description, isRefreshed = false }) => (
+const CompanyOverviewCard: FC<CompanyOverviewCardProps> = ({ description, isRefreshed = false }) => {
+  const { t } = useTranslation();
+  
+  return (
   <RefreshedCard isRefreshed={isRefreshed}>
     <RefreshedHeader isRefreshed={isRefreshed} className="p-4 border-b border-slate-100 bg-slate-50/50">
       <h3 className="font-semibold text-slate-900 flex items-center gap-2">
         <InformationCircleIcon className="h-5 w-5 text-primary" />
-        Company Overview
+        {t("stock_one_pager.overview.title")}
       </h3>
     </RefreshedHeader>
     <RefreshedContent isRefreshed={isRefreshed} className="p-4">
       <p className="text-gray-700 leading-relaxed">
-        {description || "No description available."}
+        {description || t("stock_one_pager.overview.no_description")}
       </p>
     </RefreshedContent>
   </RefreshedCard>
-);
+)};
 
 export default CompanyOverviewCard;

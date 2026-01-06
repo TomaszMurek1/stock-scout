@@ -19,6 +19,7 @@ interface AddStockModalProps {
   initialName?: string;
   initialCurrency?: string;
   initialPrice?: number;
+  initialType?: "buy" | "sell";
 }
 
 const AddStockModal: FC<AddStockModalProps> = ({ 
@@ -28,36 +29,40 @@ const AddStockModal: FC<AddStockModalProps> = ({
   initialTicker,
   initialName,
   initialCurrency,
-  initialPrice 
+  initialPrice,
+  initialType = "buy"
 }) => {
   const [isReady, setIsReady] = useState(false);
+  const [currentType, setCurrentType] = useState<"buy" | "sell">(initialType);
 
   useEffect(() => {
     if (isOpen) {
-      // Start fresh to show loader if re-opening (though usually component unmounts?)
-      // We set it to true after a tiny delay to allow main thread to paint the Modal Shell first
+      setCurrentType(initialType);
       const timer = setTimeout(() => {
         setIsReady(true);
-      }, 50); // 50ms delay
+      }, 50); 
       return () => clearTimeout(timer);
     } else {
-      // When closing, wait for animation to finish before resetting state
       const timer = setTimeout(() => {
         setIsReady(false);
-      }, 300); // 300ms match Dialog exit animation
+      }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, initialType]);
+
+  const isBuy = currentType === "buy";
+  const headerGradient = isBuy ? "from-teal-600 to-teal-700 border-teal-500" : "from-blue-700 to-blue-800 border-blue-500";
+  const titleText = isBuy ? "Add Position (Buy)" : "Reduce Position (Sell)";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[650px] bg-slate-50 p-0 overflow-hidden border-none shadow-2xl rounded-xl [&>button]:text-white [&>button]:hover:text-white/80">
-        <DialogHeader className="from-blue-800 to-blue-900 bg-gradient-to-br border-b-4 border-blue-400 px-6 py-4 relative">
+      <DialogContent className="sm:max-w-[650px] bg-slate-50 p-0 overflow-hidden border-none shadow-2xl rounded-xl [&>button.absolute]:hidden">
+        <DialogHeader className={`${headerGradient} bg-gradient-to-br border-b-4 px-6 py-4 relative transition-colors duration-300`}>
           <DialogTitle className="text-white text-xl font-bold flex items-center gap-2">
-            Add Position
+            {titleText}
           </DialogTitle>
-          <DialogDescription className="text-blue-100/70 text-xs text-left font-medium">
-            Enter the details of your stock purchase manually.
+          <DialogDescription className="text-white/70 text-xs text-left font-medium">
+            {isBuy ? "Enter details to purchase stock." : "Enter details to sell stock from your portfolio."}
           </DialogDescription>
         </DialogHeader>
 
@@ -70,10 +75,12 @@ const AddStockModal: FC<AddStockModalProps> = ({
             initialName={initialName}
             initialCurrency={initialCurrency}
             initialPrice={initialPrice}
+            initialType={initialType}
+            onTypeChange={setCurrentType}
           />
         ) : (
           <div className="flex h-[500px] items-center justify-center">
-             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+             <Loader2 className={`h-8 w-8 animate-spin ${isBuy ? "text-teal-600" : "text-blue-600"}`} />
           </div>
         )}
       </DialogContent>

@@ -19,10 +19,10 @@ export const Header: FC<HeaderProps> = ({ onAdd }) => {
           {t("portfolio_header.portfolio_management")}
         </h1>
         <p className="text-sm text-muted-foreground text-left" style={{ margin: 0, padding: 0, textAlign: 'left' }}>
-          {t("header.track_positions")}
+          {t("portfolio_header.track_positions")}
         </p>
       </div>
-      <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 text-white">
+      <Button onClick={onAdd} className="bg-teal-600 hover:bg-teal-700 text-white border-none">
         {t("common.buy_instrument")}
       </Button>
     </div>

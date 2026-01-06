@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { formatPercentage } from "@/utils/formatting";
 import { TrendingDown, TrendingUp, Activity, AlertTriangle, ArrowRight } from "lucide-react"; // Import ArrowRight for neutral performance
 import { Tooltip } from "@/components/ui/Layout";
@@ -19,6 +20,8 @@ export const ChartMetrics: FC<ChartMetricsProps> = ({
   percentFromMax,
   periodPerformance,
 }) => {
+  const { t } = useTranslation();
+
   const getVolatilityStyles = (val: number) => {
     if (val < 0.2) return { color: "text-green-700", bgColor: "bg-green-50", borderColor: "border-green-100" };
     if (val < 0.4) return { color: "text-yellow-700", bgColor: "bg-yellow-50", borderColor: "border-yellow-100" };
@@ -57,43 +60,43 @@ export const ChartMetrics: FC<ChartMetricsProps> = ({
 
   const metrics = [
     {
-      label: "Performance",
+      label: t("stock_one_pager.chart_metrics.performance.label"),
       value: `${periodPerformance > 0 ? "+" : ""}${formatPercentage(periodPerformance)}`,
       icon: periodPerformance > 0 ? TrendingUp : periodPerformance < 0 ? TrendingDown : ArrowRight,
-      description: "Overall percentage change in price during the selected period.",
-      definition: "(End Price - Start Price) / Start Price",
+      description: t("stock_one_pager.chart_metrics.performance.description"),
+      definition: t("stock_one_pager.chart_metrics.performance.definition"),
       ...performanceStyles,
     },
     {
-      label: "Volatility",
+      label: t("stock_one_pager.chart_metrics.volatility.label"),
       value: formatPercentage(volatility),
       icon: Activity,
-      description: "Measures the degree of variation of a trading price series over time.",
-      definition: "Annualized Standard Deviation of daily returns.",
+      description: t("stock_one_pager.chart_metrics.volatility.description"),
+      definition: t("stock_one_pager.chart_metrics.volatility.definition"),
       ...volatilityStyles,
     },
     {
-      label: "Max Drawdown",
+      label: t("stock_one_pager.chart_metrics.max_drawdown.label"),
       value: formatPercentage(maxDrawdown),
       icon: AlertTriangle,
-      description: "The maximum observed loss from a peak to a trough of an investment.",
-      definition: "Max observed peak-to-trough decline over the period.",
+      description: t("stock_one_pager.chart_metrics.max_drawdown.description"),
+      definition: t("stock_one_pager.chart_metrics.max_drawdown.definition"),
       ...drawdownStyles,
     },
     {
-      label: "From Min",
+      label: t("stock_one_pager.chart_metrics.from_min.label"),
       value: `${percentFromMin > 0 ? "+" : ""}${formatPercentage(percentFromMin)}`,
       icon: TrendingUp,
-      description: "Current price's percentage increase from the lowest price in the period.",
-      definition: "(Current Price - Min Price) / Min Price",
+      description: t("stock_one_pager.chart_metrics.from_min.description"),
+      definition: t("stock_one_pager.chart_metrics.from_min.definition"),
       ...fromMinStyles,
     },
     {
-      label: "From Max",
+      label: t("stock_one_pager.chart_metrics.from_max.label"),
       value: `${percentFromMax > 0 ? "+" : ""}${formatPercentage(percentFromMax)}`,
       icon: TrendingDown,
-      description: "Current price's percentage decrease from the highest price in the period.",
-      definition: "(Current Price - Max Price) / Max Price",
+      description: t("stock_one_pager.chart_metrics.from_max.description"),
+      definition: t("stock_one_pager.chart_metrics.from_max.definition"),
       ...fromMaxStyles,
     },
   ];
@@ -119,7 +122,10 @@ export const ChartMetrics: FC<ChartMetricsProps> = ({
                     value={metric.value}
                     description={metric.description}
                     definition={metric.definition}
-                    labels={{ definition: "Formula", criterion: "Threshold" }}
+                    labels={{ 
+                      definition: t("stock_one_pager.tooltip.formula"), 
+                      criterion: t("stock_one_pager.tooltip.threshold") 
+                    }}
                   />
                 }
               >

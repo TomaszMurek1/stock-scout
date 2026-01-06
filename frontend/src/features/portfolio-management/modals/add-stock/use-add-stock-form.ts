@@ -25,6 +25,7 @@ interface UseAddStockFormProps {
   initialName?: string;
   initialCurrency?: string;
   initialPrice?: number;
+  initialType?: "buy" | "sell";
 }
 
 export const useAddStockForm = ({ 
@@ -34,7 +35,8 @@ export const useAddStockForm = ({
   initialTicker,
   initialName,
   initialCurrency,
-  initialPrice 
+  initialPrice,
+  initialType = "buy"
 }: UseAddStockFormProps) => {
   const {
     register,
@@ -56,15 +58,26 @@ export const useAddStockForm = ({
   });
 
   const [loading, setLoading] = useState(false);
+  const [transactionType, setTransactionType] = useState<"buy" | "sell">(initialType);
   const [selectedTicker, setSelectedTicker] = useState<string>("");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  
   const buy = useAppStore((state: AppState) => state.buy);
+  const sell = useAppStore((state: AppState) => state.sell);
   const portfolio = useAppStore((state: AppState) => state.portfolio);
   const accounts = useAppStore((state: AppState) => state.accounts);
+  const holdings = useAppStore((state: AppState) => state.holdings);
   const refreshPortfolio = useAppStore((state: AppState) => state.refreshPortfolio);
   const isPortfolioLoading = useAppStore((state: AppState) => state.isLoading);
   const fxRates = useAppStore((state: AppState) => state.fxRates);
   const setFxRates = useAppStore((state: AppState) => state.setFxRates);
+
+  // Update transaction type if prop changes (e.g. re-opening modal)
+  useEffect(() => {
+    if (isOpen) {
+        setTransactionType(initialType);
+    }
+  }, [isOpen, initialType]);
 
   // Watch form values for sum calculation
   const shares = watch("shares") || 0;
@@ -93,7 +106,6 @@ export const useAddStockForm = ({
     }
   }, [safeAccounts, setValue, getValues]); 
 
-  // Reset form when modal closes
   // Reset form when modal closes (with delay for animation)
   useEffect(() => {
     if (!isOpen) {
@@ -101,10 +113,11 @@ export const useAddStockForm = ({
         reset();
         setSelectedTicker("");
         setSelectedCompany(null);
+        setTransactionType(initialType);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, reset]); 
+  }, [isOpen, reset, initialType]); 
 
   // Pre-select ticker if provided (useLayoutEffect to avoid paint flash/freeze)
   useLayoutEffect(() => {
@@ -133,12 +146,19 @@ export const useAddStockForm = ({
   // Calculate total in Trade Currency (Stock Currency)
   const sumStock = shares * price;
   
-  // Calculate actual cost in account currency (what user pays)
+  // Calculate actual cost in account currency (what user pays/receives)
   const sumAccount = (sumStock * accountCurrencyRate) + fee;
 
-  // Balance validation
+  // Balance validation (BUY ONLY)
   const availableBalance = selectedAccount?.cash || 0;
-  const hasInsufficientBalance = sumAccount > availableBalance && sumAccount > 0;
+  const hasInsufficientBalance = transactionType === "buy" && sumAccount > availableBalance && sumAccount > 0;
+
+  // Shares validation (SELL ONLY)
+  // We need to find the holding for THIS specific account.
+  // Since `ApiHolding` now has `account_id`, we can filter precise.
+  const currentHolding = holdings.find(h => h.ticker === selectedTicker && h.account_id === accountId);
+  const availableShares = currentHolding?.shares || 0;
+  const hasInsufficientShares = transactionType === "sell" && shares > availableShares;
 
   // Get FX rate from store or fetch if missing
   useEffect(() => {
@@ -198,91 +218,104 @@ export const useAddStockForm = ({
               high: item.high,
               low: item.low,
               close: item.close,
-            }))
-          };
-          setFxRates(fxRatesForStore);
-        } else {
+              }))
+            };
+            setFxRates(fxRatesForStore);
+          } else {
+            setValue(fieldName, 1);
+          }
+        } catch (error) {
+          console.error(`Error fetching FX rate for ${pairKey}:`, error);
           setValue(fieldName, 1);
         }
+      };
+  
+      getFxRates();
+    }, [currency, portfolio?.currency, selectedTicker, fxRates, setValue, accountCurrency, watch, setFxRates]);
+  
+    const handleTickerSelect = async (company: Company) => {
+      setSelectedTicker(company.ticker);
+      setSelectedCompany(company);
+      setValue("symbol", company.ticker);
+      
+      if (company.currency) {
+        setValue("currency", company.currency);
+      }
+  
+      try {
+        const response = await apiClient.get(`/stocks-ohlc/${company.ticker}/candles`, {
+          params: { limit: 1 }
+        });
+        
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const latestCandle = response.data[response.data.length - 1];
+          setValue("price", latestCandle.close);
+        }
       } catch (error) {
-        console.error(`Error fetching FX rate for ${pairKey}:`, error);
-        setValue(fieldName, 1);
+        console.error(`Could not fetch price for ${company.ticker}:`, error);
       }
     };
+  
+    const onSubmit: SubmitHandler<FormValues> = async (data) => {
+      setLoading(true);
+      try {
+        const payload = {
+          ticker: data.symbol.toUpperCase(),
+          shares: data.shares,
+          price: data.price,
+          // For sell, fee reduces the total proceed (but we usually handle it as separate entry or subtraction logic on backend)
+          // Here we just pass it. Backend logic for SELL usually expects positive fee.
+          fee: data.fee / data.account_currency_rate, 
+          currency: data.currency.toUpperCase(),
+          currency_rate: data.currency_rate,
+          account_currency_rate: data.account_currency_rate,
+          trade_date: data.trade_date,
+          account_id: data.account_id,
+        };
 
-    getFxRates();
-  }, [currency, portfolio?.currency, selectedTicker, fxRates, setValue, accountCurrency, watch, setFxRates]);
-
-  const handleTickerSelect = async (company: Company) => {
-    setSelectedTicker(company.ticker);
-    setSelectedCompany(company);
-    setValue("symbol", company.ticker);
-    
-    if (company.currency) {
-      setValue("currency", company.currency);
-    }
-
-    try {
-      const response = await apiClient.get(`/stocks-ohlc/${company.ticker}/candles`, {
-        params: { limit: 1 }
-      });
-      
-      if (Array.isArray(response.data) && response.data.length > 0) {
-        const latestCandle = response.data[response.data.length - 1];
-        setValue("price", latestCandle.close);
+        if (transactionType === "buy") {
+          await buy(payload as any);
+          toast.success("Position added!");
+        } else {
+          await sell(payload as any);
+          toast.success("Position sold!");
+        }
+  
+        // Don't reset here, let the useEffect handle it after animation
+        onClose();
+        onSuccess?.();
+      } catch (err: any) {
+        console.error(err);
+        const msg = err?.response?.data?.detail || err?.message || `Could not ${transactionType} position`;
+        toast.error(String(msg));
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(`Could not fetch price for ${company.ticker}:`, error);
-    }
+    };
+  
+    return {
+      register,
+      handleSubmit,
+      watch,
+      errors,
+      loading: loading || isSubmitting,
+      selectedTicker,
+      portfolio,
+      safeAccounts,
+      accountCurrency,
+      sumStock,
+      sumAccount,
+      currency,
+      handleTickerSelect,
+      onSubmit,
+      selectedAccount,
+      hasInsufficientBalance,
+      availableBalance,
+      selectedCompany,
+      isPortfolioLoading,
+      transactionType,
+      setTransactionType,
+      availableShares,
+      hasInsufficientShares,
+    };
   };
-
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    setLoading(true);
-    try {
-      await buy({
-        ticker: data.symbol.toUpperCase(),
-        shares: data.shares,
-        price: data.price,
-        fee: data.fee / data.account_currency_rate,
-        currency: data.currency.toUpperCase(),
-        currency_rate: data.currency_rate,
-        account_currency_rate: data.account_currency_rate,
-        trade_date: data.trade_date,
-        account_id: data.account_id,
-      } as any);
-
-      toast.success("Position added!");
-      // Don't reset here, let the useEffect handle it after animation
-      onClose();
-      onSuccess?.();
-    } catch (err: any) {
-      console.error(err);
-      const msg = err?.response?.data?.detail || err?.message || "Could not add position";
-      toast.error(String(msg));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return {
-    register,
-    handleSubmit,
-    watch,
-    errors,
-    loading: loading || isSubmitting,
-    selectedTicker,
-    portfolio,
-    safeAccounts,
-    accountCurrency,
-    sumStock,
-    sumAccount,
-    currency,
-    handleTickerSelect,
-    onSubmit,
-    selectedAccount,
-    hasInsufficientBalance,
-    availableBalance,
-    selectedCompany,
-    isPortfolioLoading,
-  };
-};
