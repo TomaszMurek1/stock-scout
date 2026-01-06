@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { AppState, useAppStore } from "@/store/appStore";
@@ -21,15 +21,28 @@ interface UseAddStockFormProps {
   onClose: () => void;
   onSuccess?: () => void;
   isOpen: boolean;
+  initialTicker?: string;
+  initialName?: string;
+  initialCurrency?: string;
+  initialPrice?: number;
 }
 
-export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormProps) => {
+export const useAddStockForm = ({ 
+  onClose, 
+  onSuccess, 
+  isOpen, 
+  initialTicker,
+  initialName,
+  initialCurrency,
+  initialPrice 
+}: UseAddStockFormProps) => {
   const {
     register,
     handleSubmit,
     reset,
     setValue,
     watch,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
@@ -44,9 +57,12 @@ export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormP
 
   const [loading, setLoading] = useState(false);
   const [selectedTicker, setSelectedTicker] = useState<string>("");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const buy = useAppStore((state: AppState) => state.buy);
   const portfolio = useAppStore((state: AppState) => state.portfolio);
   const accounts = useAppStore((state: AppState) => state.accounts);
+  const refreshPortfolio = useAppStore((state: AppState) => state.refreshPortfolio);
+  const isPortfolioLoading = useAppStore((state: AppState) => state.isLoading);
   const fxRates = useAppStore((state: AppState) => state.fxRates);
   const setFxRates = useAppStore((state: AppState) => state.setFxRates);
 
@@ -63,20 +79,56 @@ export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormP
   // Dynamic Account Currency
   const accountCurrency = selectedAccount?.currency || portfolio?.currency || "USD"; 
   
-  // Set default account on load
+  // Ensure portfolio data is loaded
   useEffect(() => {
-    if (safeAccounts.length > 0) {
+    if ((!portfolio?.id || accounts.length === 0) && !isPortfolioLoading) {
+      refreshPortfolio();
+    }
+  }, [portfolio?.id, accounts.length, isPortfolioLoading, refreshPortfolio]);
+
+  // Set default account on load (only if not set)
+  useEffect(() => {
+    if (safeAccounts.length > 0 && !getValues("account_id")) {
        setValue("account_id", safeAccounts[0].id);
     }
-  }, [safeAccounts, setValue]); 
+  }, [safeAccounts, setValue, getValues]); 
 
   // Reset form when modal closes
+  // Reset form when modal closes (with delay for animation)
   useEffect(() => {
     if (!isOpen) {
-      reset();
-      setSelectedTicker("");
+      const timer = setTimeout(() => {
+        reset();
+        setSelectedTicker("");
+        setSelectedCompany(null);
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, reset]); 
+
+  // Pre-select ticker if provided (useLayoutEffect to avoid paint flash/freeze)
+  useLayoutEffect(() => {
+    if (isOpen && initialTicker && !selectedTicker) {
+      // Construct company object from passed props
+      const company: Company = {
+        ticker: initialTicker,
+        name: initialName || initialTicker,
+        currency: initialCurrency || null,
+      };
+
+      setSelectedCompany(company);
+      setSelectedTicker(initialTicker);
+      setValue("symbol", initialTicker);
+      
+      if (initialCurrency) {
+        setValue("currency", initialCurrency);
+      }
+      
+      if (initialPrice) {
+        setValue("price", initialPrice);
+      }
+    }
+  }, [isOpen, initialTicker, selectedTicker, initialName, initialCurrency, initialPrice, setValue]);
 
   // Calculate total in Trade Currency (Stock Currency)
   const sumStock = shares * price;
@@ -163,6 +215,7 @@ export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormP
 
   const handleTickerSelect = async (company: Company) => {
     setSelectedTicker(company.ticker);
+    setSelectedCompany(company);
     setValue("symbol", company.ticker);
     
     if (company.currency) {
@@ -199,8 +252,7 @@ export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormP
       } as any);
 
       toast.success("Position added!");
-      reset();
-      setSelectedTicker("");
+      // Don't reset here, let the useEffect handle it after animation
       onClose();
       onSuccess?.();
     } catch (err: any) {
@@ -230,5 +282,7 @@ export const useAddStockForm = ({ onClose, onSuccess, isOpen }: UseAddStockFormP
     selectedAccount,
     hasInsufficientBalance,
     availableBalance,
+    selectedCompany,
+    isPortfolioLoading,
   };
 };

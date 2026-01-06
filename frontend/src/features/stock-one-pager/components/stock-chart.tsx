@@ -18,7 +18,7 @@ import {
   fillHistoricalData,
   formatDate,
   type HistoricalData,
-} from "./stock-chart.helpers";
+} from "../utils/stock-chart.helpers";
 import { StockChartLegend } from "./stock-chart-legend";
 import { StockChartTooltip } from "./stock-chart-tooltip";
 

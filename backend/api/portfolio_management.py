@@ -16,7 +16,7 @@ from database.portfolio import Transaction
 from database.account import Account
 from database.company import Company
 from schemas.portfolio_schemas import TradeBase, TradeResponse, TransactionType
-from api.valuation_materialize import rematerialize_from_tx
+from services.valuation.rematerializ import rematerialize_from_tx
 from services.fx.fx_rate_service import fetch_and_save_fx_rate
 from database.fx import FxRate
 from decimal import Decimal, getcontext

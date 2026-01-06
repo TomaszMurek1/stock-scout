@@ -17,9 +17,10 @@ interface SummaryProps {
   holdings?: any[]; // Optional list of holdings
   selectedPeriod: Period;
   onPeriodChange: (p: Period) => void;
+  isLoading?: boolean;
 }
 
-export default function Summary({ portfolio, accounts, performance, holdings, selectedPeriod, onPeriodChange }: SummaryProps) {
+export default function Summary({ portfolio, accounts, performance, holdings, selectedPeriod, onPeriodChange, isLoading }: SummaryProps) {
   const { currency } = portfolio;
   const { t } = useTranslation();
   const breakdown = performance?.breakdowns?.[selectedPeriod] || performance?.breakdowns?.ytd || performance?.breakdowns?.itd;
@@ -29,6 +30,12 @@ export default function Summary({ portfolio, accounts, performance, holdings, se
   const hasPerformance = !!(breakdown && itd && perf);
   const hasHoldings = (portfolio.invested_value_current > 0) || (holdings && holdings.length > 0);
 
+  // If loading, we calculate effective loading states for children.
+  // We want to show skeletons if we are globally loading.
+  const isGlobalLoading = isLoading; 
+  // Partial loading for performance (if core loaded but perf pending)
+  const isPerfLoading = isGlobalLoading || !hasPerformance;
+
   return (
     <div className="space-y-8">
       {/* 1. Top Level Brief (Invested, Net Deposits, Cash, PnL) */}
@@ -37,13 +44,12 @@ export default function Summary({ portfolio, accounts, performance, holdings, se
         accounts={accounts} 
         performance={performance} 
         currency={currency} 
+        isLoading={isPerfLoading}
       />
 
       {/* 2. States or Detailed Analysis */}
-      {!hasHoldings ? (
+      {!hasHoldings && !isGlobalLoading ? (
         <SummaryEmptyState />
-      ) : !hasPerformance ? (
-        <SummaryLoadingState />
       ) : (
         <>
           {/* Header & Period Selector */}
@@ -55,11 +61,12 @@ export default function Summary({ portfolio, accounts, performance, holdings, se
             <PeriodSelector selected={selectedPeriod} onSelect={onPeriodChange} />
           </div>
 
-          {/* 3. Returns Cards */}
+          {/* 3. Returns Cards (Handles its own loading state) */}
           <ReturnsAnalysis 
             breakdown={breakdown} 
             perf={perf} 
-            selectedPeriod={selectedPeriod} 
+            selectedPeriod={selectedPeriod}
+            isLoading={isPerfLoading}
           />
 
           {/* 4. Detailed Breakdown Tables */}
@@ -67,7 +74,8 @@ export default function Summary({ portfolio, accounts, performance, holdings, se
             breakdown={breakdown} 
             itd={itd} 
             selectedPeriod={selectedPeriod} 
-            currency={currency} 
+            currency={currency}
+            isLoading={!hasPerformance}
           />
         </>
       )}

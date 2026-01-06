@@ -9,11 +9,28 @@ interface PortfolioBriefProps {
   accounts: any[];
   performance: PortfolioPerformance;
   currency: any;
+  isLoading?: boolean;
 }
 
-export const PortfolioBrief = ({ portfolio, accounts, performance, currency }: PortfolioBriefProps) => {
+export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isLoading }: PortfolioBriefProps) => {
   const itd = performance?.breakdowns?.itd;
   const { t } = useTranslation();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 bg-gray-100 rounded-lg"></div>
+              <div className="h-4 bg-gray-100 rounded w-24"></div>
+            </div>
+            <div className="h-8 bg-gray-200 rounded w-32 mt-2"></div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

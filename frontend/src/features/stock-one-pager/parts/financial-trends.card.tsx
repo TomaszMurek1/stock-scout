@@ -1,5 +1,6 @@
 import { FC, useState, useMemo } from "react";
-import { Card, Badge } from "@/components/ui/Layout";
+import { Badge } from "@/components/ui/Layout";
+import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
 import {
   Tabs,
   TabsContent,
@@ -16,7 +17,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import type { StockData } from "./stock-one-pager.types";
+import type { StockData } from "../stock-one-pager.types";
 import { formatCurrency } from "@/utils/formatting";
 import { format, parseISO } from "date-fns";
 import { Nullable } from "@/components/types/shared.types";
@@ -24,6 +25,7 @@ import { Nullable } from "@/components/types/shared.types";
 interface FinancialTrendsCardProps {
   financialTrends: StockData["financial_trends"];
   currency: Nullable<string>;
+  isRefreshed?: boolean;
 }
 
 type MetricKey = "revenue" | "net_income" | "ebitda" | "free_cash_flow" | "gross_profit" | "operating_income";
@@ -40,6 +42,7 @@ const METRIC_LABELS: Record<MetricKey, string> = {
 const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
   financialTrends,
   currency,
+  isRefreshed = false,
 }) => {
   const [period, setPeriod] = useState<"annual" | "quarterly">("quarterly");
   const [activeTab, setActiveTab] = useState<MetricKey>("revenue");
@@ -129,8 +132,8 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
   );
 
   return (
-    <Card className="overflow-hidden bg-white shadow-sm border border-slate-200">
-      <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30">
+    <RefreshedCard isRefreshed={isRefreshed} className="overflow-hidden shadow-sm border border-slate-200">
+      <RefreshedHeader isRefreshed={isRefreshed} className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30">
         <h3 className="font-bold text-slate-900 flex items-center gap-2 text-lg">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
             <line x1="12" y1="20" x2="12" y2="10"></line>
@@ -158,7 +161,7 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
                 Annual
             </button>
         </div>
-      </div>
+      </RefreshedHeader>
 
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MetricKey)} className="mb-6">
@@ -255,7 +258,7 @@ const FinancialTrendsCard: FC<FinancialTrendsCardProps> = ({
             </div>
         </div>
       </div>
-    </Card>
+    </RefreshedCard>
   );
 };
 

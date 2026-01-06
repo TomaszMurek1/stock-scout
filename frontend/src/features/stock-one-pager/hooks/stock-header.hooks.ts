@@ -2,7 +2,7 @@ import { useMemo, useEffect, useCallback } from "react";
 import type { MouseEvent } from 'react';
 import { apiClient } from "@/services/apiClient";
 import { AppState, useAppStore } from "@/store/appStore";
-import type { StockData } from "./stock-one-pager.types";
+import type { StockData } from "../stock-one-pager.types";
 
 export const useWatchlistActions = (ticker: string | undefined, companyName: string | undefined) => {
   const watchlist = useAppStore((state: AppState) => state.watchlist.data);
