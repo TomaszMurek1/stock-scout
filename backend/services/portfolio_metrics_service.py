@@ -385,7 +385,13 @@ class PortfolioMetricsService:
             
         return self._xirr_solver(xirr_flows)
 
-    def calculate_returns_breakdown(self, portfolio_id: int, start_date: date, end_date: date) -> Dict:
+    def calculate_returns_breakdown(
+        self, 
+        portfolio_id: int, 
+        start_date: date, 
+        end_date: date,
+        override_ending_vals: Optional[Dict[str, Decimal]] = None
+    ) -> Dict:
         """Generates detailed PnL decomposition (Cash, Invested, Flows)."""
         start_pvd = self._get_valuation_at_date(portfolio_id, start_date)
         end_pvd = self._get_valuation_at_date(portfolio_id, end_date)
@@ -395,9 +401,18 @@ class PortfolioMetricsService:
 
         # Safe Decimals
         start_val = _to_d(start_pvd.total_value)
-        end_val = _to_d(end_pvd.total_value)
+        
+        # Override Ending Values if provided (for Today's live view)
+        if override_ending_vals:
+            end_val = override_ending_vals.get("total_value", _to_d(end_pvd.total_value))
+            end_cash = override_ending_vals.get("cash_val", _to_d(end_pvd.by_cash))
+            # Invested is derived: Total - Cash
+        else:
+            end_val = _to_d(end_pvd.total_value)
+            end_cash = _to_d(end_pvd.by_cash)
+        
         start_cash = _to_d(start_pvd.by_cash)
-        end_cash = _to_d(end_pvd.by_cash)
+
         
         # Derive
         start_invested = start_val - start_cash
@@ -423,6 +438,32 @@ class PortfolioMetricsService:
         
         # Invested PnL = Change in Invested Capital - Net Injection of Capital (Buys - Sells)
         invested_pnl = (end_invested - start_invested) - net_trades
+
+        # Target PnL Override (Force alignment with holdings table)
+        if override_ending_vals and "target_pnl" in override_ending_vals:
+            target = override_ending_vals["target_pnl"]
+            if target is not None:
+                # We trust the target PnL (from live table) more than the derived one.
+                # To maintain equation consistency: PnL = (End - Start) - NetTrades
+                # We adjust Start: Start = End - NetTrades - PnL
+                invested_pnl = target
+                # Recalculate start_invested to match the equation
+                start_invested = end_invested - net_trades - invested_pnl
+                
+                # Also update base start_val for consistency (StartVal = StartInv + StartCash)
+                start_val = start_invested + start_cash
+                
+                # Update Total PnL (Total = Invested + Income - Fees)
+                # Note: This ignores 'unrealized_gains_residual' complexity and assumes simple additive model
+                total_pnl = invested_pnl + (net_external * 0) # Net external doesn't affect PnL directly here? 
+                # Wait, Total PnL = (EndVal - StartVal) - NetExternal
+                # Let's re-verify:
+                # EndVal - StartVal = (EndInv + EndCash) - (StartInv + StartCash)
+                # = (EndInv - StartInv) + (EndCash - StartCash)
+                # = (InvPnL + NetTrades) + (EndCash - StartCash)
+                # This seems correct. We just re-derive Total PnL from the new StartVal:
+                total_pnl = (end_val - start_val) - net_external
+
         
         # Simple Return % = Capital Gains / (Beginning Invested + Net Trades)
         # This answers: "What % did my capital grow, accounting for new money added?"
@@ -431,6 +472,7 @@ class PortfolioMetricsService:
         
         # Detect timing quality scenarios (for UI warnings)
         timing_quality = "neutral"
+
         warning_type = None
         
         simple_ret_float = float(simple_return_pct)
@@ -486,7 +528,8 @@ class PortfolioMetricsService:
         self,
         portfolio_id: int,
         end_date: date,
-        include_all_breakdowns: bool = False
+        include_all_breakdowns: bool = False,
+        current_values_override: Optional[Dict[str, Decimal]] = None
     ) -> Dict:
         """Returns the full dashboard performance card data."""
         ttwr_map = {}
@@ -497,8 +540,12 @@ class PortfolioMetricsService:
         breakdowns = {}
         
         ALWAYS_BREAKDOWN = {"ytd", "itd"}
+        
+        # Determine if "end_date" matches "today" to apply overrides
+        is_today = (end_date == date.today())
 
         for p in PERIODS:
+
             start = self.get_period_start_date(portfolio_id, end_date, p)
             if not start:
                 continue
@@ -512,7 +559,23 @@ class PortfolioMetricsService:
             mwrr_map[p] = float(mwrr)
             
             if include_all_breakdowns or p in ALWAYS_BREAKDOWN:
-                bd = self.calculate_returns_breakdown(portfolio_id, start, end_date)
+                # Apply override ONLY if end_date is today and we have overrides
+                overrides_bd = None
+                if is_today and current_values_override:
+                    # Create a copy to not mutate original
+                    overrides_bd = current_values_override.copy()
+                    
+                    # Check if we have a target PnL map for periods
+                    pnl_map = current_values_override.get("period_pnl_map")
+                    if pnl_map and p in pnl_map:
+                         overrides_bd["target_pnl"] = pnl_map[p]
+
+                bd = self.calculate_returns_breakdown(
+                    portfolio_id, 
+                    start, 
+                    end_date,
+                    override_ending_vals=overrides_bd
+                )
                 breakdowns[p] = serialize_breakdown(bd)
                 start_dates[p] = start.isoformat()
                 end_dates[p] = end_date.isoformat()
