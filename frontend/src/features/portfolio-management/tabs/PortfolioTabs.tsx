@@ -47,70 +47,70 @@ export default function PortfolioTabs({
     "data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900";
   return (
     <AnimatedTabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <AnimatedTabsList className="bg-slate-100/50 p-1 w-full justify-start overflow-x-auto no-scrollbar gap-1 mb-6">
+      <AnimatedTabsList className="sticky top-0 z-20 bg-gray-100/95 backdrop-blur supports-[backdrop-filter]:bg-gray-100/60 py-2 -mx-1 px-1 w-full flex h-auto justify-start overflow-x-auto no-scrollbar gap-2 mb-6">
         <FramerTabTrigger 
             value="holdings" 
             isSelected={activeTab === "holdings"}
             layoutId="portfolio-subtabs"
-            className="flex-1 min-w-[120px]"
+            className="flex-none px-4"
         >
           <BarChart3 className="h-4 w-4" />
-          <span className="font-medium">{t("portfolio.tabs.your_stocks")}</span>
+          <span>{t("portfolio.tabs.your_stocks")}</span>
         </FramerTabTrigger>
         
         <FramerTabTrigger 
             value="watchlist" 
             isSelected={activeTab === "watchlist"}
             layoutId="portfolio-subtabs"
-            className="flex-1 min-w-[120px]"
+            className="flex-none px-4"
         >
           <BarChart3 className="h-4 w-4" />
-          <span className="font-medium">{t("portfolio.tabs.watchlist")}</span>
+          <span>{t("portfolio.tabs.watchlist")}</span>
         </FramerTabTrigger>
 
         <FramerTabTrigger 
             value="alerts" 
             isSelected={activeTab === "alerts"}
             layoutId="portfolio-subtabs"
-            className="flex-1 min-w-[120px]"
+            className="flex-none px-4"
         >
           <Bell className="h-4 w-4" />
-          <span className="font-medium">{t("portfolio.tabs.alerts")}</span>
+          <span>{t("portfolio.tabs.alerts")}</span>
         </FramerTabTrigger>
 
         <FramerTabTrigger 
             value="transactions" 
             isSelected={activeTab === "transactions"}
             layoutId="portfolio-subtabs"
-            className="flex-1 min-w-[120px]"
+            className="flex-none px-4"
         >
           <Clock className="h-4 w-4" />
-          <span className="font-medium">{t("portfolio.tabs.transactions")}</span>
+          <span>{t("portfolio.tabs.transactions")}</span>
         </FramerTabTrigger>
 
         <FramerTabTrigger 
             value="cash" 
             isSelected={activeTab === "cash"}
             layoutId="portfolio-subtabs"
-            className="flex-1 min-w-[120px]"
+            className="flex-none px-4"
         >
           <DollarSign className="h-4 w-4" />
-          <span className="font-medium">{t("portfolio.tabs.cash")}</span>
+          <span>{t("portfolio.tabs.cash")}</span>
         </FramerTabTrigger>
 
         <FramerTabTrigger 
             value="risk" 
             isSelected={activeTab === "risk"}
             layoutId="portfolio-subtabs"
-            className="flex-1 min-w-[120px]"
+            className="flex-none px-4"
         >
           <PieChart className="h-4 w-4" />
-          <span className="font-medium">{t("portfolio.tabs.risk")}</span>
+          <span>{t("portfolio.tabs.risk")}</span>
         </FramerTabTrigger>
       </AnimatedTabsList>
 
       <Suspense fallback={<div>{t("common.loading")}</div>}>
-        <AnimatedTabsContent value="holdings" forceMount={true} className="min-h-[500px]">
+        <AnimatedTabsContent value="holdings" forceMount={true} className="min-h-[calc(100vh-220px)]">
           <HoldingsTab 
              holdings={byHolding ?? []} 
              transactions={transactions} 
@@ -119,19 +119,19 @@ export default function PortfolioTabs({
              selectedPeriod={selectedPeriod}
           />
         </AnimatedTabsContent>
-        <AnimatedTabsContent value="watchlist" forceMount={true} className="min-h-[500px]">
+        <AnimatedTabsContent value="watchlist" forceMount={true} className="min-h-[calc(100vh-220px)]">
           <WatchlistTab />
         </AnimatedTabsContent>
-        <AnimatedTabsContent value="alerts" forceMount={true} className="min-h-[500px]">
+        <AnimatedTabsContent value="alerts" forceMount={true} className="min-h-[calc(100vh-220px)]">
           <AlertsTab />
         </AnimatedTabsContent>
-        <AnimatedTabsContent value="transactions" forceMount={true} className="min-h-[500px]">
+        <AnimatedTabsContent value="transactions" forceMount={true} className="min-h-[calc(100vh-220px)]">
           <TransactionsTab transactions={transactions} portfolioCurrency={portfolioCurrency} />
         </AnimatedTabsContent>
-        <AnimatedTabsContent value="cash" forceMount={true} className="min-h-[500px]">
+        <AnimatedTabsContent value="cash" forceMount={true} className="min-h-[calc(100vh-220px)]">
           <CashTab accounts={accounts} transactions={transactions} />
         </AnimatedTabsContent>
-        <AnimatedTabsContent value="risk" forceMount={true} className="min-h-[500px]">
+        <AnimatedTabsContent value="risk" forceMount={true} className="min-h-[calc(100vh-220px)]">
           <RiskTab />
         </AnimatedTabsContent>
       </Suspense>

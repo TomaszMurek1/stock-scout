@@ -82,7 +82,7 @@ export default function PortfolioManagement() {
             className="space-y-6"
             ref={tabsRef}
           >
-            <AnimatedTabsList className="bg-slate-100/50 p-1 h-auto inline-flex gap-1">
+            <AnimatedTabsList className="bg-slate-100/50 p-1 h-auto flex overflow-x-auto no-scrollbar gap-1 w-full sm:w-auto justify-start">
               <FramerTabTrigger
                 value="portfolio"
                 isSelected={activeTab === "portfolio"}
