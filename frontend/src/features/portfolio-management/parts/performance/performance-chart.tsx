@@ -14,7 +14,7 @@ import { format, subDays, subMonths, subYears, startOfYear, parseISO } from "dat
 import { Card } from "@/components/ui/Layout";
 import { useAppStore } from "@/store/appStore";
 import { apiClient } from "@/services/apiClient";
-import { PeriodSelector } from "@/features/stock-one-pager/period-selector";
+import { PeriodSelector } from "@/features/stock-one-pager/components/period-selector";
 
 // Reuse the Period type from existing selector
 type Period = "1M" | "1Q" | "YTD" | "1Y" | "All";

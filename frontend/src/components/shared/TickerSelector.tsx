@@ -10,12 +10,14 @@ interface TickerSelectorProps {
     onSelect: (company: Company) => void
     placeholder?: string
     className?: string
+    initialSelection?: Company | null
 }
 
 export function TickerSelector({
     onSelect,
     placeholder = "Search for ticker...",
     className = "",
+    initialSelection = null,
 }: TickerSelectorProps) {
     const [results, setResults] = useState<Company[]>([])
     const [selected, setSelected] = useState<Company | null>(null)
@@ -60,6 +62,17 @@ export function TickerSelector({
         setResults([])
         baseClear()
     }
+
+    // Sync from props
+    React.useEffect(() => {
+        if (initialSelection) {
+            setSelected(initialSelection)
+            setSearch(`${initialSelection.ticker} — ${initialSelection.name}`)
+        } else {
+            setSelected(null)
+            setSearch("")
+        }
+    }, [initialSelection, setSearch])
 
     return (
         <div ref={wrapperRef} className={`relative ${className}`}>

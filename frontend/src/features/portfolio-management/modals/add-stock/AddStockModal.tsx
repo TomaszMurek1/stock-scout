@@ -21,12 +21,24 @@ interface AddStockModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialTicker?: string;
+  initialName?: string;
+  initialCurrency?: string;
+  initialPrice?: number;
 }
 
 const LABEL_CLASS = "text-blue-900 font-bold text-[10px] uppercase tracking-wider";
 const INPUT_CLASS = "bg-white text-xs h-9 focus:border-blue-500 focus:ring-blue-500";
 
-const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const AddStockModal: FC<AddStockModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSuccess, 
+  initialTicker,
+  initialName,
+  initialCurrency,
+  initialPrice 
+}) => {
   const {
     register,
     handleSubmit,
@@ -45,7 +57,17 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
     selectedAccount,
     hasInsufficientBalance,
     availableBalance,
-  } = useAddStockForm({ onClose, onSuccess, isOpen });
+    selectedCompany,
+    isPortfolioLoading,
+  } = useAddStockForm({ 
+    onClose, 
+    onSuccess, 
+    isOpen, 
+    initialTicker,
+    initialName,
+    initialCurrency,
+    initialPrice 
+  });
 
   const getInputClassName = (hasError: boolean) => 
     `${hasError ? "border-red-500" : "border-slate-300"} ${INPUT_CLASS}`;
@@ -66,10 +88,19 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
           {/* Row 1: Instrument (3) / Date (1) */}
           <div className="col-span-3 grid gap-2">
             <Label htmlFor="symbol" className={LABEL_CLASS}>Instrument</Label>
-            <TickerSelector
-              onSelect={handleTickerSelect}
-              placeholder="Search ticker..."
-            />
+            {initialTicker ? (
+              <Input
+                value={selectedCompany ? `${selectedCompany.ticker} — ${selectedCompany.name}` : "Loading..."}
+                disabled
+                className="bg-slate-100 font-medium text-slate-700 disabled:opacity-100"
+              />
+            ) : (
+              <TickerSelector
+                onSelect={handleTickerSelect}
+                placeholder="Search ticker..."
+                initialSelection={selectedCompany}
+              />
+            )}
             <input
               type="hidden"
               {...register("symbol", { required: true })}
@@ -166,13 +197,18 @@ const AddStockModal: FC<AddStockModalProps> = ({ isOpen, onClose, onSuccess }) =
             <select
               id="account_id"
               {...register("account_id", { required: true, valueAsNumber: true })}
+              disabled={isPortfolioLoading}
               className="flex h-9 w-full rounded-md border border-slate-300 bg-white px-3 py-1 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-semibold text-slate-700"
             >
-              {safeAccounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} ({acc.currency}) - Cash: {acc.cash.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </option>
-              ))}
+              {isPortfolioLoading ? (
+                 <option>Loading accounts...</option>
+              ) : (
+                safeAccounts.map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name} ({acc.currency}) - Cash: {acc.cash.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </option>
+                ))
+              )}
             </select>
           </div>
           <div className="col-span-1 grid gap-2">

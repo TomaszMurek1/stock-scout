@@ -10,6 +10,7 @@ import TechnicalIndicatorsCard from "./parts/technical-indicators-card";
 import TradePanel from "./parts/trade-panel";
 import { GrowthChart } from "./parts/growth-chart";
 import { MetricsColumn } from "./parts/metrics-column";
+import AddStockModal from "../portfolio-management/modals/add-stock/AddStockModal";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ export const StockOnePager: FC = () => {
   const [searchParams] = useSearchParams();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [tradeAction, setTradeAction] = useState<"buy" | "sell">("buy");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const shortWindow = Number(searchParams.get("short_window") ?? 50);
   const longWindow = Number(searchParams.get("long_window") ?? 200);
@@ -71,8 +73,7 @@ export const StockOnePager: FC = () => {
       : 0;
 
   const openBuyModal = () => {
-    setTradeAction("buy");
-    setIsTradeModalOpen(true);
+    setIsAddModalOpen(true);
   };
 
   const openSellModal = () => {
@@ -198,6 +199,15 @@ export const StockOnePager: FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <AddStockModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        initialTicker={ticker}
+        initialName={executive_summary.name || undefined}
+        initialCurrency={executive_summary.currency || undefined}
+        initialPrice={latestPrice}
+      />
     </div>
   );
 };
