@@ -22,7 +22,7 @@ export const Header: FC<HeaderProps> = ({ onAdd }) => {
           {t("header.track_positions")}
         </p>
       </div>
-      <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 text-white">
+      <Button onClick={onAdd} className="bg-teal-600 hover:bg-teal-700 text-white border-none">
         {t("common.buy_instrument")}
       </Button>
     </div>

@@ -18,6 +18,8 @@ interface AddStockFormProps {
   initialName?: string;
   initialCurrency?: string;
   initialPrice?: number;
+  initialType?: "buy" | "sell";
+  onTypeChange?: (type: "buy" | "sell") => void;
 }
 
 const LABEL_CLASS = "text-blue-900 font-bold text-[10px] uppercase tracking-wider";
@@ -30,7 +32,9 @@ export const AddStockForm: FC<AddStockFormProps> = ({
   initialTicker,
   initialName,
   initialCurrency,
-  initialPrice 
+  initialPrice,
+  initialType,
+  onTypeChange
 }) => {
   const {
     register,
@@ -52,6 +56,10 @@ export const AddStockForm: FC<AddStockFormProps> = ({
     availableBalance,
     selectedCompany,
     isPortfolioLoading,
+    transactionType,
+    setTransactionType,
+    availableShares,
+    hasInsufficientShares,
   } = useAddStockForm({ 
     onClose, 
     onSuccess, 
@@ -59,14 +67,52 @@ export const AddStockForm: FC<AddStockFormProps> = ({
     initialTicker,
     initialName,
     initialCurrency,
-    initialPrice 
+    initialPrice,
+    initialType
   });
 
+  const handleTypeChange = (type: "buy" | "sell") => {
+      setTransactionType(type);
+      onTypeChange?.(type);
+  };
+
+  const isBuy = transactionType === "buy";
+  const themeColor = isBuy ? "teal" : "blue";
+  const ThemeButton = isBuy ? "bg-teal-600 hover:bg-teal-700 shadow-teal-600/20" : "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20";
+  
   const getInputClassName = (hasError: boolean) => 
     `${hasError ? "border-red-500" : "border-slate-300"} ${INPUT_CLASS}`;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="min-h-[500px] p-6 grid grid-cols-4 gap-x-4 gap-y-7">
+    <form onSubmit={handleSubmit(onSubmit)} className="min-h-[500px] p-6 grid grid-cols-4 gap-x-4 gap-y-7 content-start">
+      {/* Type Toggle */}
+      <div className="col-span-4 flex justify-center mb-2">
+        <div className="bg-slate-100 p-1 rounded-lg flex gap-1">
+          <button
+            type="button"
+            onClick={() => handleTypeChange("buy")}
+            className={`px-6 py-1.5 rounded-md text-xs font-bold transition-all ${
+              isBuy 
+                ? "bg-white text-teal-700 shadow-sm" 
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Buy
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTypeChange("sell")}
+            className={`px-6 py-1.5 rounded-md text-xs font-bold transition-all ${
+              !isBuy 
+                ? "bg-white text-blue-700 shadow-sm" 
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Sell
+          </button>
+        </div>
+      </div>
+
       {/* Row 1: Instrument (3) / Date (1) */}
       <div className="col-span-3 grid gap-2">
         <Label htmlFor="symbol" className={LABEL_CLASS}>Instrument</Label>
@@ -102,7 +148,12 @@ export const AddStockForm: FC<AddStockFormProps> = ({
 
       {/* Row 2: Shares (1) / Price (1) / Currency (1) / FX (1) */}
       <div className="col-span-1 grid gap-2">
-        <Label htmlFor="shares" className={LABEL_CLASS}>Shares</Label>
+        <div className="flex justify-between items-baseline">
+           <Label htmlFor="shares" className={LABEL_CLASS}>Shares</Label>
+           {!isBuy && selectedTicker && (
+             <span className="text-[10px] text-slate-500">Max: {availableShares}</span>
+           )}
+        </div>
         <Input
           id="shares"
           type="number"
@@ -215,8 +266,17 @@ export const AddStockForm: FC<AddStockFormProps> = ({
         hasInsufficientBalance={hasInsufficientBalance}
         availableBalance={availableBalance}
       />
+      
+      {/* Insufficient Shares Warning (Sell) */}
+      {hasInsufficientShares && (
+        <div className="col-span-4 -mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+            <span className="text-xs font-semibold text-red-800">
+                Insufficient Shares: You only have {availableShares} {selectedTicker} in this account.
+            </span>
+        </div>
+      )}
 
-      <DialogFooter className="col-span-4 mt-2 flex justify-end gap-3">
+      <DialogFooter className="col-span-4 mt-auto flex justify-end gap-3">
         <Button
           type="button"
           variant="ghost"
@@ -228,11 +288,14 @@ export const AddStockForm: FC<AddStockFormProps> = ({
         </Button>
         <Button 
           type="submit" 
-          disabled={loading || !selectedTicker || hasInsufficientBalance}
-          className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || !selectedTicker || hasInsufficientBalance || hasInsufficientShares}
+          className={`${ThemeButton} text-white font-bold px-8 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {loading ? "Adding..." : "Add Position"}
+          {loading 
+            ? (isBuy ? "Adding..." : "Selling...") 
+            : (isBuy ? "Add Position" : "Sell Position")
+          }
         </Button>
       </DialogFooter>
     </form>

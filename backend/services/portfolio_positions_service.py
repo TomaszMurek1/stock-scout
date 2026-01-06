@@ -473,6 +473,7 @@ def get_holdings_for_user(db: Session, portfolio) -> List[dict]:
                 "ticker": pos.company.ticker,
                 "name": pos.company.name,
                 "shares": float(pos.quantity),
+                "account_id": pos.account_id,
                 "instrument_ccy": inst_ccy,
                 "average_cost_instrument_ccy": float(pos.avg_cost_instrument_ccy),
                 "average_cost_portfolio_ccy": float(pos.avg_cost_portfolio_ccy),

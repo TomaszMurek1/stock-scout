@@ -70,6 +70,7 @@ class TradeResponse(BaseModel):
 class PositionOut(BaseModel):
     ticker: str
     company_id: int
+    account_id: int
     shares: float
     average_cost: float
     market_price: Optional[float]

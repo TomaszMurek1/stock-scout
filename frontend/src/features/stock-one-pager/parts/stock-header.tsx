@@ -5,7 +5,8 @@ import {
   GlobeAltIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
-import { Button, Badge } from "@/components/ui/Layout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/Layout";
 import { formatCurrency, formatPercentage } from "@/utils/formatting";
 import { API_URL } from "@/services/apiClient";
 import type { StockData, MetricConfig, FinancialPerformance } from "../stock-one-pager.types";
@@ -175,15 +176,13 @@ const StockHeader: FC<StockHeaderProps> = ({
 
           <div className="mt-4 flex gap-2">
             <Button
-              variant="primary"
-              className="w-24"
+              className="w-24 bg-teal-600 hover:bg-teal-700 text-white border-none"
               onClick={onBuyClick}
             >
               Buy
             </Button>
             <Button
-              variant="danger"
-              className="w-24"
+              className="w-24 bg-blue-600 hover:bg-blue-700 text-white border-none"
               onClick={onSellClick}
             >
               Sell
