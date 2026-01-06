@@ -13,21 +13,44 @@ export function useStockData(
 
   useEffect(() => {
     if (!ticker) return;
+
+    // Create an abort controller to cancel request if component unmounts or ticker changes
+    const controller = new AbortController();
+
     (async () => {
       try {
         setLoading(true);
         setError(null);
+        
         const response = await apiClient.get<StockData>(
           `/stock-details/${ticker}`,
-          { params: { short_window: shortWindow, long_window: longWindow } }
+          { 
+            params: { short_window: shortWindow, long_window: longWindow },
+            signal: controller.signal 
+          }
         );
-        setStock(response.data);
+        
+        // Only update state if not aborted
+        if (!controller.signal.aborted) {
+            setStock(response.data);
+        }
       } catch (err: any) {
+        // Ignore abort errors
+        if (err.name === 'CanceledError' || err.name === 'AbortError' || controller.signal.aborted) {
+            return;
+        }
         setError(err.message || "Failed to fetch stock details.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+            setLoading(false);
+        }
       }
     })();
+
+    // Cleanup function cancels the request
+    return () => {
+        controller.abort();
+    };
   }, [ticker, shortWindow, longWindow]);
 
   return { stock, isLoading, error };
