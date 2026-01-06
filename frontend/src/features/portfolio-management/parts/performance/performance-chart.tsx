@@ -5,7 +5,6 @@ import {
   AreaChart,
   CartesianGrid,
   Legend,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -15,6 +14,7 @@ import { Card } from "@/components/ui/Layout";
 import { useAppStore } from "@/store/appStore";
 import { apiClient } from "@/services/apiClient";
 import { PeriodSelector } from "@/features/stock-one-pager/components/period-selector";
+import { PersistentResponsiveContainer } from "@/components/shared/PersistentResponsiveContainer";
 
 // Reuse the Period type from existing selector
 type Period = "1M" | "1Q" | "YTD" | "1Y" | "All";
@@ -143,7 +143,7 @@ const PerformanceChartComponent: FC = () => {
             </p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <PersistentResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorStocks" x1="0" y1="0" x2="0" y2="1">
@@ -202,7 +202,7 @@ const PerformanceChartComponent: FC = () => {
                  );
               })}
             </AreaChart>
-          </ResponsiveContainer>
+          </PersistentResponsiveContainer>
         )}
       </div>
     </Card>

@@ -3,6 +3,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChartIcon, BarChart3 } from "lucide-react"
+import { PersistentResponsiveContainer } from "@/components/shared/PersistentResponsiveContainer"
 
 const sectorData = [
     { name: "Technology", value: 45 },
@@ -28,7 +29,7 @@ export default function RiskAnalysis() {
                 </CardHeader>
                 <CardContent>
                     <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <PersistentResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={sectorData}
@@ -47,7 +48,7 @@ export default function RiskAnalysis() {
                                 <Tooltip formatter={(value) => `${value}%`} />
                                 <Legend />
                             </PieChart>
-                        </ResponsiveContainer>
+                        </PersistentResponsiveContainer>
                     </div>
                 </CardContent>
             </Card>
