@@ -38,7 +38,7 @@ export const MetricGroupCard = ({
                       value={metric.value}
                       description={metric.description}
                       definition={metric.definition}
-                      criterion={metric.tooltip}
+                      criterion={metric.criterion}
                       labels={{ definition: "Formula", criterion: "Threshold" }}
                     />
                   }

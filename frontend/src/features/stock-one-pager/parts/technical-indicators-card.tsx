@@ -1,11 +1,12 @@
 import { FC } from "react";
-import { Card } from "@/components/ui/Layout";
-import { ChartBarIcon } from "@heroicons/react/24/outline";
-import { StockData } from "../stock-one-pager.types";
-import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import { StockData, MetricConfig } from "../stock-one-pager.types";
+import { MetricGroupCard } from "../components/metric-group-card";
+import { 
+  Sun, 
+  Skull, 
+  Activity,
+  ChartBar
+} from "lucide-react";
 
 interface TechnicalIndicatorsCardProps {
   technicalAnalysis: StockData["technical_analysis"];
@@ -15,45 +16,48 @@ interface TechnicalIndicatorsCardProps {
 const TechnicalIndicatorsCard: FC<TechnicalIndicatorsCardProps> = ({
   technicalAnalysis,
   isRefreshed = false,
-}) => (
-  <RefreshedCard isRefreshed={isRefreshed}>
-    <RefreshedHeader isRefreshed={isRefreshed} className="p-4 border-b border-slate-100">
-      <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-        <ChartBarIcon className="h-5 w-5 text-primary" />
-        Technical Indicators
-      </h3>
-    </RefreshedHeader>
-    <div className="p-4">
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Volatility (30d)</span>
-            <span className="text-sm font-medium">
-              {technicalAnalysis.volatility_30d}%
-            </span>
-          </div>
-          <Progress
-            value={Math.min(technicalAnalysis.volatility_30d * 5, 100)}
-            className="h-2"
-            indicatorClassName="bg-amber-500"
-          />
-        </div>
+}) => {
+  const metrics: MetricConfig[] = [
+    {
+      label: "Volatility (30d)",
+      value: `${technicalAnalysis.volatility_30d}%`,
+      description: "Annualized standard deviation of daily returns over the last 30 days.",
+      definition: "Volatility = StdDev(Daily Returns) * sqrt(252)",
+      criterion: "Higher values indicate more price movement risk.",
+      status: technicalAnalysis.volatility_30d > 40 ? "warning" : "neutral",
+      icon: <Activity className="w-4 h-4" />,
+      isProgressBar: true,
+      progressValue: technicalAnalysis.volatility_30d,
+      progressMax: 100,
+    },
+    {
+      label: "Golden Cross",
+      value: technicalAnalysis.golden_cross ? "Yes" : "No",
+      description: "Bullish signal where short-term moving average crosses above long-term moving average.",
+      definition: "50-day SMA > 200-day SMA",
+      criterion: "A positive signal for potential upward trend.",
+      status: technicalAnalysis.golden_cross ? "success" : "neutral",
+      icon: <Sun className="w-4 h-4" />,
+    },
+    {
+      label: "Death Cross",
+      value: technicalAnalysis.death_cross ? "Yes" : "No",
+      description: "Bearish signal where short-term moving average crosses below long-term moving average.",
+      definition: "50-day SMA < 200-day SMA",
+      criterion: "A negative signal for potential downward trend.",
+      status: technicalAnalysis.death_cross ? "danger" : "neutral",
+      icon: <Skull className="w-4 h-4" />,
+    },
+  ];
 
-        <div className="pt-2">
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Golden Cross</span>
-            <Badge variant={technicalAnalysis.golden_cross ? "success" : "default"}>
-              {technicalAnalysis.golden_cross ? "Yes" : "No"}
-            </Badge>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Death Cross</span>
-            <Badge variant={technicalAnalysis.death_cross ? "danger" : "default"}>
-              {technicalAnalysis.death_cross ? "Yes" : "No"}
-            </Badge>
-          </div>
-        </div>
-
-  </RefreshedCard>
-);
+  return (
+    <MetricGroupCard
+      title="Technical Indicators"
+      titleIcon={<ChartBar className="h-5 w-5" />}
+      metrics={metrics}
+      isRefreshed={isRefreshed}
+    />
+  );
+};
 
 export default TechnicalIndicatorsCard;
