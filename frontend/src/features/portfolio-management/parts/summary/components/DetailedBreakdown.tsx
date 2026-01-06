@@ -118,7 +118,7 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
              <DollarSign className="w-5 h-5 text-gray-500"/>
              {t("portfolio.summary.detailed_breakdown")}
           </h4>
-          <div className="space-y-1">
+          <div className="space-y-1"> // Main list container
              {/* 1. Active Positions */}
              <DataRow 
                 label={t("portfolio.summary.unrealized_pl")} 
@@ -127,49 +127,54 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
                 valueClassName={activeUnrealizedPnL >= 0 ? "text-emerald-600" : "text-red-600"}
              />
              
-             {/* 2. Closed Positions */}
+             {/* 2. Closed Positions - No bottom border to avoid clash with next section */}
              <DataRow 
                 label={t("portfolio.summary.realized_pl")} 
                 value={realizedPnL} 
                 currency={currency} 
                 valueClassName={realizedPnL >= 0 ? "text-emerald-600" : "text-red-600"}
+                className="!border-b-0" 
              />
              
-             {/* 3. Total Trading Result */}
-             <div className="pt-2 mt-2 border-t border-gray-100">
+             {/* 3. Total Trading Result - Top Border Separator */}
+             <div className="pt-2 mt-1 border-t border-gray-200">
                 <DataRow 
                     label={t("portfolio.summary.capital_gains")} 
                     value={totalCapitalGains} 
                     currency={currency} 
                     isBold
                     valueClassName={totalCapitalGains >= 0 ? "text-emerald-700" : "text-red-700"}
+                    className="!border-b-0"
                 />
              </div>
 
              {/* 4. Cash Impact Box */}
-             <div className="mt-4 bg-slate-50 rounded-lg p-3 border border-slate-100 space-y-1">
+             <div className="mt-3 bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1 shadow-sm">
                 <DataRow 
                     label={t("portfolio.summary.dividends_interest")} 
                     value={income} 
                     currency={currency} 
                     valueClassName="text-emerald-600" 
+                    className="border-gray-200"
                 />
                 <DataRow 
                     label={t("portfolio.summary.fees_taxes")} 
                     value={netExpenses} 
                     currency={currency} 
                     valueClassName="text-red-500" 
+                    className="!border-b-0" 
                 />
              </div>
 
-             {/* 5. Total Portfolio Profit */}
-             <div className="pt-4 mt-2 border-t border-gray-200">
+             {/* 5. Total Portfolio Profit - No top border, margin separates from box */}
+             <div className="pt-3 mt-1">
                  <DataRow 
                     label={t("portfolio.summary.total_pnl")} 
                     value={totalProfit} 
                     currency={currency} 
                     isBold 
                     valueClassName={`text-xl ${totalProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                    className="!border-b-0"
                  />
              </div>
           </div>
@@ -180,9 +185,8 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
           <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
              {t("portfolio.summary.total_market_value")}
           </h4>
-          <div className="">
+          <div className="space-y-1">
               {/* Money Sources */}
-              <div className="space-y-1">
                  <DataRow 
                     label={t("portfolio.summary.net_deposits")} 
                     value={netDeposits} 
@@ -194,17 +198,17 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
                     value={totalProfit} 
                     currency={currency} 
                     valueClassName={totalProfit >= 0 ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}
+                    className="!border-b-0"
                  />
-              </div>
 
-              {/* Composition Bar */}
-              <div className="pt-4 border-t border-gray-100">
-                 <div className="flex justify-between text-sm text-gray-500 mb-2">
+              {/* Composition Bar - Separated Section */}
+              <div className="pt-4 mt-2 border-t border-gray-200 pb-2">
+                 <div className="flex justify-between text-sm text-gray-500 mb-2 font-medium">
                     <span>{t("portfolio.summary.invested_value")}</span>
                     <span>{t("portfolio.summary.cash_balance")}</span>
                  </div>
                  {/* Visual Bar */}
-                 <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                 <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
                     <div 
                         className="h-full bg-blue-500" 
                         style={{ width: `${Math.max(0, Math.min(100, (endingInvested / totalValue) * 100))}%` }}
@@ -214,24 +218,25 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
                         style={{ width: `${Math.max(0, Math.min(100, (cashBalance / totalValue) * 100))}%` }}
                     />
                  </div>
-                 <div className="flex justify-between mt-1 text-xs font-medium">
+                 <div className="flex justify-between mt-1.5 text-xs font-semibold">
                      <span className="text-blue-600">{((endingInvested / totalValue) * 100).toFixed(1)}%</span>
                      <span className="text-emerald-600">{((cashBalance / totalValue) * 100).toFixed(1)}%</span>
                  </div>
               </div>
 
               {/* Final Values */}
-              <div className="space-y-1 pt-2">
+              <div className="space-y-1 mt-2">
                  <DataRow label={t("portfolio.summary.invested_value")} value={endingInvested} currency={currency} />
-                 <DataRow label={t("portfolio.summary.cash_balance")} value={cashBalance} currency={currency} />
+                 <DataRow label={t("portfolio.summary.cash_balance")} value={cashBalance} currency={currency} className="!border-b-0" />
                  
-                 <div className="pt-4 mt-2 border-t border-gray-200">
+                 <div className="pt-2 mt-1 border-t border-gray-200">
                     <DataRow 
                         label={t("portfolio.summary.total_value")} 
                         value={totalValue} 
                         currency={currency} 
                         isBold 
-                        valueClassName="text-xl text-gray-800"
+                        valueClassName="text-xl text-gray-900"
+                        className="!border-b-0"
                     />
                  </div>
               </div>
