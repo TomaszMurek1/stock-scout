@@ -9,7 +9,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database.base import get_db
 from database.company import Company
-from database.stock_data import StockPriceHistory
+from services.basket_resolver import resolve_baskets_to_companies
+from services.company_filter_service import filter_by_market_cap
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -412,17 +413,11 @@ def scan_fibonacci_elliott(
     Scan multiple stocks from baskets for Elliott Wave patterns.
     Returns stocks that meet the minimum Kelly Fraction threshold.
     """
-    from database.baskets import BasketCompany
-    from services.company_filter_service import filter_by_market_cap
-    
-    # Get companies from the specified baskets
-    companies = (
-        db.query(Company)
-        .join(BasketCompany, BasketCompany.company_id == Company.company_id)
-        .filter(BasketCompany.basket_id.in_(req.basket_ids))
-        .distinct()
-        .all()
-    )
+    # Get companies from the specified baskets using the resolver
+    try:
+        _, companies = resolve_baskets_to_companies(db, req.basket_ids)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     
     # Apply market cap filter using the service
     if req.min_market_cap and req.min_market_cap > 0:
