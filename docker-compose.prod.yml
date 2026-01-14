@@ -57,8 +57,6 @@ services:
       NODE_OPTIONS: --max-old-space-size=256
     volumes:
       - n8n_data:/home/node/.n8n
-    volumes:
-      - n8n_data:/home/node/.n8n
     ports:
       - "5678:5678"
 
