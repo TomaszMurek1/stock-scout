@@ -26,7 +26,7 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
       const isDev = import.meta.env.DEV;
       const baseUrl = isDev ? "http://localhost:5678" : "https://tomektest.byst.re/n8n";
       
-      const path = isTestMode ? "/webhook-test/ai-advisor" : "/webhook/ai-advisor";
+      const path = isDev ? "/webhook-test/ai-advisor" : "/webhook/ai-advisor";
       
       const response = await fetch(`${baseUrl}${path}`, {
         method: "POST",
