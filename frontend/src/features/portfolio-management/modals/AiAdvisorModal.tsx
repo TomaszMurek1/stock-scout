@@ -24,7 +24,7 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
       // Use /webhook-test/ for temporary editor testing, /webhook/ for activated workflows
       // Auto-detect production mode via Vite
       const isDev = import.meta.env.DEV;
-      const baseUrl = isDev ? "http://localhost:5678" : "https://tomektest.byst.re:5678";
+      const baseUrl = isDev ? "http://localhost:5678" : "https://tomektest.byst.re/n8n";
       
       const path = isTestMode ? "/webhook-test/ai-advisor" : "/webhook/ai-advisor";
       

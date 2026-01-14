@@ -41,7 +41,8 @@ services:
       N8N_HOST: tomektest.byst.re
       N8N_PORT: 5678
       N8N_PROTOCOL: https
-      WEBHOOK_URL: https://tomektest.byst.re:5678/
+      N8N_PATH: /n8n/
+      WEBHOOK_URL: https://tomektest.byst.re/n8n/
       N8N_DB_TYPE: postgresdb
       N8N_DB_POSTGRES_HOST: ${DB_HOST}
       N8N_DB_POSTGRES_PORT: 5432
