@@ -90,6 +90,7 @@ services:
       N8N_EXECUTIONS_DATA_PRUNE: "true"
       N8N_EXECUTIONS_DATA_MAX_AGE: 72
       N8N_ENCRYPTION_KEY: "supersecretkey"
+      N8N_CORS_ALLOWED_ORIGINS: "http://localhost:5173"
       NODE_OPTIONS: --max-old-space-size=256
     volumes:
       - n8n_dev_data:/home/node/.n8n

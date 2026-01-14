@@ -7,9 +7,10 @@ import { useTranslation } from "react-i18next";
 
 interface HeaderProps {
   onAdd: () => void;
+  onAnalyze?: () => void;
 }
 
-export const Header: FC<HeaderProps> = ({ onAdd }) => {
+export const Header: FC<HeaderProps> = ({ onAdd, onAnalyze }) => {
   const { t } = useTranslation();
 
   return (
@@ -22,9 +23,14 @@ export const Header: FC<HeaderProps> = ({ onAdd }) => {
           {t("portfolio_header.track_positions")}
         </p>
       </div>
-      <Button onClick={onAdd} className="bg-teal-600 hover:bg-teal-700 text-white border-none">
-        {t("common.buy_instrument")}
-      </Button>
+      <div className="flex gap-2">
+        <Button onClick={onAnalyze} variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800">
+           ✨ AI Advisor
+        </Button>
+        <Button onClick={onAdd} className="bg-teal-600 hover:bg-teal-700 text-white border-none">
+          {t("common.buy_instrument")}
+        </Button>
+      </div>
     </div>
   );
 };
