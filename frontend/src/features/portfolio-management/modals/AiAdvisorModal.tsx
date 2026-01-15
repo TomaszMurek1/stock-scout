@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Sparkles, Loader2, AlertTriangle, FileText } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
+import { apiClient } from "@/services/apiClient";
+
 interface AiAdvisorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,7 +15,6 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isTestMode, setIsTestMode] = useState(true); // Default to true since user is likely testing
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -21,33 +22,17 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
     setAnalysis(null);
 
     try {
-      // Use /webhook-test/ for temporary editor testing, /webhook/ for activated workflows
-      // Auto-detect production mode via Vite
-      const isDev = import.meta.env.DEV;
-      const baseUrl = isDev ? "http://localhost:5678" : "https://tomektest.byst.re/n8n";
-      
-      const path = isDev ? "/webhook-test/ai-advisor" : "/webhook/ai-advisor";
-      
-      const response = await fetch(`${baseUrl}${path}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trigger: "frontend", mode: isTestMode ? "test" : "production" }),
+      // The backend now auto-detects the mode (test/prod) based on its environment
+      const { data } = await apiClient.post("/ai-advisor/analyze", { 
+        trigger: "frontend"
+      }).catch(err => {
+        if (err.response?.status === 404) {
+          throw new Error("AI Advisor service is not ready. If you are developing, ensure the n8n 'Listen' mode is active.");
+        }
+        throw err;
       });
 
-      if (response.status === 404) {
-        throw new Error(
-          isTestMode 
-            ? "n8n is not listening! Click 'Listen for test event' in your Webhook node."
-            : "Workflow not active! Activate your workflow in n8n to use production mode."
-        );
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Analysis failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      // Expecting Gemini response in data.candidates[0].content.parts[0].text
       // Expecting Gemini response in data[0].parts[0].text or similar structure depending on n8n output
       // Our n8n workflow 'Respond to Webhook' should return the JSON from Gemini.
       // Gemini API returns: candidates[0].content.parts[0].text
@@ -91,21 +76,6 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
                   Our AI will scan your current holdings, risk distribution, and cash position to provide actionable insights.
                 </p>
               </div>
-
-              {import.meta.env.DEV && (
-                  <div className="flex items-center justify-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg w-fit mx-auto">
-                    <input 
-                      type="checkbox" 
-                      id="test-mode" 
-                      checked={isTestMode} 
-                      onChange={(e) => setIsTestMode(e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label htmlFor="test-mode" className="cursor-pointer select-none">
-                      Test Mode (Editor must be open)
-                    </label>
-                  </div>
-              )}
 
               <Button onClick={handleAnalyze} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
                 <Sparkles className="mr-2 h-4 w-4" />

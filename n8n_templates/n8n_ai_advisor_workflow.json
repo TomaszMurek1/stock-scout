@@ -1,5 +1,5 @@
 {
-  "name": "AI Portfolio Advisor",
+  "name": "AI Portfolio Advisor (Token Based)",
   "nodes": [
     {
       "parameters": {
@@ -7,7 +7,7 @@
         "path": "ai-advisor",
         "responseMode": "responseNode",
         "options": {
-          "allowedOrigins": "http://localhost:5173"
+          "allowedOrigins": "*"
         }
       },
       "id": "webhook-trigger",
@@ -21,53 +21,14 @@
       "webhookId": "ai-advisor"
     },
     {
-      "parameters": {},
-      "id": "manual-trigger",
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        200,
-        340
-      ]
-    },
-    {
       "parameters": {
-        "method": "POST",
-        "url": "http://backend:8000/api/auth/login",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "email",
-              "value": "REPLACE_WITH_YOUR_EMAIL"
-            },
-            {
-              "name": "password",
-              "value": "REPLACE_WITH_YOUR_PASSWORD"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "login",
-      "name": "Login to Stock Scout",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        420,
-        240
-      ]
-    },
-    {
-      "parameters": {
-        "url": "http://backend:8000/api/portfolio/dashboard/core",
+        "url": "=http://backend:8000/api/portfolio/dashboard/core",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $json.access_token }}"
+              "value": "={{ $json.headers.authorization }}"
             }
           ]
         },
@@ -78,8 +39,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        600,
-        240
+        400,
+        140
       ]
     },
     {
@@ -91,8 +52,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        780,
-        240
+        600,
+        140
       ]
     },
     {
@@ -109,8 +70,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        960,
-        240
+        800,
+        140
       ]
     },
     {
@@ -122,35 +83,13 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1140,
-        240
+        1000,
+        140
       ]
     }
   ],
   "connections": {
     "Webhook Trigger": {
-      "main": [
-        [
-          {
-            "node": "Login to Stock Scout",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Manual Trigger": {
-      "main": [
-        [
-          {
-            "node": "Login to Stock Scout",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Login to Stock Scout": {
       "main": [
         [
           {

@@ -34,6 +34,7 @@ from api import (
     admin_price_data,
     wyckoff,
     alerts,
+    ai_advisor,
 )
 
 from database.base import Base, engine
@@ -91,6 +92,7 @@ app.include_router(valuation_series.router,           prefix="/api/valuation",  
 app.include_router(baskets_api.router,                prefix="/api",               tags=["Baskets"])
 app.include_router(transactions.router,               prefix="/api/transactions",  tags=["Transactions"])
 app.include_router(alerts.router,                     prefix="/api/alerts",        tags=["Alerts"])
+app.include_router(ai_advisor.router,                 prefix="/api/ai-advisor",    tags=["AI Advisor"])
 app.include_router(transactions_transfer.router,       prefix="/api/transfer",      tags=["Transfers"])
 app.include_router(transactions_transfer_cash.router,  prefix="/api/transfer-cash", tags=["Transfers"])
 app.include_router(watchlist.router,                  prefix="/api/watchlist",     tags=["Watchlist"])
