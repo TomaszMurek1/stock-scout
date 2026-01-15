@@ -7,6 +7,7 @@ import LoadingScreen from "@/components/shared/loading-screen";
 import Summary from "./parts/summary/Summary";
 import Performance from "./parts/performance/Performance";
 import AddStockModal from "./modals/add-stock/AddStockModal";
+import AiAdvisorModal from "./modals/AiAdvisorModal";
 import { usePortfolioBaseData } from "./hooks/usePortfolioBaseData";
 import { usePortfolioTotals } from "./hooks/usePortfolioTotals";
 import PortfolioTabs from "./tabs/PortfolioTabs";
@@ -18,6 +19,7 @@ import { useTranslation } from "react-i18next";
 export default function PortfolioManagement() {
   const [isMounting, setIsMounting] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"portfolio" | "performance">("portfolio");
   // Keep track of which tabs have been loaded to forceMount them after first visit
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(["portfolio"]));
@@ -81,7 +83,10 @@ export default function PortfolioManagement() {
       <div className="max-w-[1400px] mx-auto px-4 py-8">
         {/* Main Card Container - wraps header and all content */}
         <div className="p-6 rounded-xl bg-gray-100  space-y-6">
-          <Header onAdd={() => setIsAddModalOpen(true)} />
+          <Header 
+            onAdd={() => setIsAddModalOpen(true)} 
+            onAnalyze={() => setIsAiModalOpen(true)}
+          />
 
           <AnimatedTabs
             defaultValue="portfolio"
@@ -148,6 +153,11 @@ export default function PortfolioManagement() {
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={handleAddSuccess}
+        />
+        
+        <AiAdvisorModal 
+          isOpen={isAiModalOpen}
+          onClose={() => setIsAiModalOpen(false)}
         />
       </div>
     </div>

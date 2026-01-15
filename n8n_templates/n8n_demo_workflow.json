@@ -1,0 +1,92 @@
+{
+  "name": "Stock Scout Demo",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e7c6b9f1-0a6e-4b3a-9c7d-8e5f1g2h3i4j",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/auth/login",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "REPLACE_WITH_YOUR_EMAIL"
+            },
+            {
+              "name": "password",
+              "value": "REPLACE_WITH_YOUR_PASSWORD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p",
+      "name": "Login to Stock Scout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://backend:8000/api/portfolio/dashboard/core",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "q1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h",
+      "name": "Get Portfolio Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        690,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Login to Stock Scout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login to Stock Scout": {
+      "main": [
+        [
+          {
+            "node": "Get Portfolio Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

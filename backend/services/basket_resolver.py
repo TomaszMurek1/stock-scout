@@ -12,12 +12,48 @@ log = logging.getLogger(__name__)
 
 
 def _query_pairs_for_basket(db: Session, basket: Basket) -> List[Tuple[int | None, int | None]]:
+    # Scenario A: Smart Basket with Rules
+    if basket.rules:
+        # Initial set of company/market IDs
+        results: Set[Tuple[int | None, int | None]] = set()
+
+        # 1. Market Rules: {"market_codes": ["XNYS", "XNAS"]}
+        if "market_codes" in basket.rules:
+            codes = basket.rules["market_codes"]
+            market_results = (
+                db.query(Company.company_id, Company.market_id)
+                .filter(Company.yfinance_market.in_(codes))
+                .all()
+            )
+            results.update(market_results)
+
+        # 2. Force Include: {"include_symbols": ["AAPL", "TL0.DE"]}
+        if "include_symbols" in basket.rules:
+            inc_tickers = basket.rules["include_symbols"]
+            inc_results = (
+                db.query(Company.company_id, Company.market_id)
+                .filter(Company.ticker.in_(inc_tickers))
+                .all()
+            )
+            results.update(inc_results)
+
+        # 3. Force Exclude: {"exclude_symbols": ["TL0.DE"]}
+        if "exclude_symbols" in basket.rules:
+            exc_tickers = basket.rules["exclude_symbols"]
+            exc_ids = {row[0] for row in db.query(Company.company_id).filter(Company.ticker.in_(exc_tickers)).all()}
+            results = {r for r in results if r[0] not in exc_ids}
+
+        return list(results)
+
+    # Scenario B: Legacy Market Reference
     if basket.type == BasketType.MARKET and basket.reference_id is not None:
         return (
             db.query(Company.company_id, Company.market_id)
             .filter(Company.market_id == basket.reference_id)
             .all()
         )
+    
+    # Scenario C: Legacy Index Reference
     if basket.type == BasketType.INDEX and basket.reference_id is not None:
         return (
             db.query(Company.company_id, Company.market_id)
@@ -28,6 +64,8 @@ def _query_pairs_for_basket(db: Session, basket: Basket) -> List[Tuple[int | Non
             .filter(company_stockindex_association.c.index_id == basket.reference_id)
             .all()
         )
+        
+    # Scenario D: Static Custom Basket
     return (
         db.query(Company.company_id, Company.market_id)
         .join(BasketCompany, BasketCompany.company_id == Company.company_id)
