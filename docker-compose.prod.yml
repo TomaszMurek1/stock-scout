@@ -38,11 +38,11 @@ services:
     container_name: prod_n8n
     restart: always
     environment:
-      N8N_HOST: tomektest.byst.re
+      N8N_HOST: n8n.tomektest.byst.re
       N8N_PORT: 5678
       N8N_PROTOCOL: https
-      N8N_PATH: /n8n/
-      WEBHOOK_URL: https://tomektest.byst.re/n8n/
+      N8N_PATH: /
+      WEBHOOK_URL: https://n8n.tomektest.byst.re/
       N8N_DB_TYPE: postgresdb
       N8N_DB_POSTGRES_HOST: ${DB_HOST}
       N8N_DB_POSTGRES_PORT: ${DB_PORT}
