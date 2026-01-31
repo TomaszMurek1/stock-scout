@@ -15,23 +15,23 @@ export const AlertStatusBadge: React.FC<AlertStatusBadgeProps> = ({ state }) => 
         case 'triggered':
             icon = <Zap className="h-3 w-3 fill-current" />;
             colorClass = 'bg-red-100 text-red-700 border-red-200';
-            label = t("alerts.triggered");
+            label = t("portfolio.alerts.triggered");
             break;
         case 'snoozed':
             icon = <Clock className="h-3 w-3" />;
             colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
-            label = t("alerts.snoozed");
+            label = t("portfolio.alerts.snoozed");
             break;
         case 'read':
             icon = <CheckCircle className="h-3 w-3" />;
             colorClass = 'bg-gray-100 text-gray-500 border-gray-200';
-            label = t("alerts.read");
+            label = t("portfolio.alerts.read");
             break;
         case 'pending':
         default:
             icon = <Bell className="h-3 w-3" />;
             colorClass = 'bg-blue-100 text-blue-700 border-blue-200';
-            label = t("alerts.pending");
+            label = t("portfolio.alerts.pending");
             break;
     }
 

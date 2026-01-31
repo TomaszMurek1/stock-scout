@@ -22,7 +22,7 @@ export const AlertConditionCell: React.FC<AlertConditionCellProps> = ({ row }) =
             </div>
             
             {(row.alert_type === AlertType.SMA_50_APPROACHING_SMA_200) ? (
-                <span className="text-xs text-gray-500 font-medium">{t("alerts.within")} {row.threshold_value}%</span>
+                <span className="text-xs text-gray-500 font-medium">{t("portfolio.alerts.within")} {row.threshold_value}%</span>
             ) : (
                 (row.alert_type !== AlertType.SMA_50_ABOVE_SMA_200 && 
                 row.alert_type !== AlertType.SMA_50_BELOW_SMA_200) && (
