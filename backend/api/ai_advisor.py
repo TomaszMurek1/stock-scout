@@ -24,8 +24,11 @@ async def analyze_portfolio(
     This hides n8n from the frontend and centralizes security.
     """
     if not authorization:
+        logger.warning("❌ Missing Authorization header in proxy request")
         raise HTTPException(status_code=401, detail="Missing Authorization header")
 
+    logger.info(f"🔄 Proxying request for user {user.email}. Auth header present: {bool(authorization)}")
+    
     body = await request.json()
     
     # Auto-detect mode based on backend environment

@@ -45,7 +45,7 @@ services:
       WEBHOOK_URL: https://tomektest.byst.re/n8n/
       N8N_DB_TYPE: postgresdb
       N8N_DB_POSTGRES_HOST: ${DB_HOST}
-      N8N_DB_POSTGRES_PORT: 5432
+      N8N_DB_POSTGRES_PORT: ${DB_PORT}
       N8N_DB_POSTGRES_DATABASE: ${DB_NAME}
       N8N_DB_POSTGRES_USER: ${DB_USER}
       N8N_DB_POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -55,6 +55,7 @@ services:
       N8N_EXECUTIONS_DATA_MAX_AGE: 72
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
       N8N_CORS_ALLOWED_ORIGINS: "https://tomektest.byst.re"
+      N8N_PROXY_HOPS: 1
       NODE_OPTIONS: --max-old-space-size=256
     volumes:
       - n8n_data:/home/node/.n8n
