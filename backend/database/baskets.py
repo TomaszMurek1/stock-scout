@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    JSON,
     UniqueConstraint,
     func,
 )
@@ -42,7 +43,12 @@ class Basket(Base):
     # - type=MARKET  -> reference_id = market_id
     # - type=INDEX   -> reference_id = index_id
     # - type=PORTFOLIO -> reference_id = portfolio_id
+    # - type=PORTFOLIO -> reference_id = portfolio_id
     reference_id = Column(Integer, nullable=True)
+
+    # Dynamic rules for "Smart Baskets"
+    # Example: {"market_codes": ["XNYS", "XNAS"]}
+    rules = Column(JSON, nullable=True)
 
     created_at = Column(
         DateTime,

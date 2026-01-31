@@ -125,9 +125,10 @@ def _create_company_from_yfinance(ticker: str, db: Session) -> Company:
     return company
 
 
-def _assign_market_from_yfinance(company: Company, db: Session) -> Market | None:
+def _assign_market_auto(company: Company, db: Session) -> Market | None:
     """Assign market to company using the same logic as sync-company-markets."""
     try:
+        # This now includes FMP fallback
         exchange = _detect_yahoo_exchange(company.ticker)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Market detection failed for %s: %s", company.ticker, exc)
@@ -210,7 +211,7 @@ def get_company_market(company: Company, db: Session) -> Market | None:
     if company.market:
         return company.market
 
-    return _assign_market_from_yfinance(company, db)
+    return _assign_market_auto(company, db)
 
 
 def get_company_financials(company: Company, db: Session) -> dict:

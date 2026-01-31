@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import requests
 from typing import Dict, Optional
 
 import yfinance as yf
@@ -70,6 +72,34 @@ def _looks_delisted(ticker_obj: yf.Ticker) -> bool:
     return False
 
 
+
+def _detect_fmp_exchange(ticker: str) -> Optional[str]:
+    """Fallback using Financial Modeling Prep if yfinance fails."""
+    api_key = os.getenv("FMP_API_KEY")
+    if not api_key:
+        log.warning("FMP_API_KEY not found, skipping FMP fallback for %s", ticker)
+        return None
+
+    try:
+        url = f"https://financialmodelingprep.com/stable/profile?symbol={ticker}&apikey={api_key}"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code != 200:
+            return None
+        
+        data = resp.json()
+        if not data or not isinstance(data, list):
+            return None
+            
+        profile = data[0]
+        exchange = profile.get("exchange")
+        if exchange:
+            return str(exchange).upper()
+            
+    except Exception as e:
+        log.warning("FMP fallback failed for %s: %s", ticker, e)
+        
+    return None
+
 def _detect_yahoo_exchange(ticker: str) -> Optional[str]:
     ticker_obj = yf.Ticker(ticker)
 
@@ -85,6 +115,7 @@ def _detect_yahoo_exchange(ticker: str) -> Optional[str]:
     except Exception as exc:  # noqa: BLE001
         if _is_not_found(exc):
             return "DELISTED"
+        # If it's a rate limit or other error, we continue to next method
         log.warning("Failed to read fast_info for %s: %s", ticker, exc)
 
     try:
@@ -96,6 +127,12 @@ def _detect_yahoo_exchange(ticker: str) -> Optional[str]:
         if _is_not_found(exc):
             return "DELISTED"
         log.warning("Failed to read info for %s: %s", ticker, exc)
+
+    # Try FMP Fallback before giving up
+    fmp_exchange = _detect_fmp_exchange(ticker)
+    if fmp_exchange:
+        log.info(f"FMP Fallback: Found exchange {fmp_exchange} for {ticker}")
+        return fmp_exchange
 
     if _looks_delisted(ticker_obj):
         return "DELISTED"
