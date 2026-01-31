@@ -74,11 +74,12 @@ services:
       dev_db:
         condition: service_healthy
     environment:
-      N8N_HOST: n8n.localhost
+      N8N_HOST: localhost
       N8N_PORT: 5678
       N8N_PROTOCOL: http
-      N8N_EDITOR_BASE_URL: http://n8n.localhost/
-      WEBHOOK_URL: http://n8n.localhost/
+      N8N_PATH: /n8n/
+      N8N_EDITOR_BASE_URL: http://localhost/n8n/
+      WEBHOOK_URL: http://localhost/n8n/
       N8N_DB_TYPE: postgresdb
       N8N_DB_POSTGRES_HOST: ${DB_HOST}
       N8N_DB_POSTGRES_PORT: 5432
