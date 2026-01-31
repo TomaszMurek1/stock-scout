@@ -80,9 +80,6 @@ def _resolve_baskets_or_404(db: Session, basket_ids: list[int]):
         return resolve_baskets_to_companies(db, basket_ids)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-
 
 
 def load_existing_golden_cross_analysis(
@@ -101,6 +98,20 @@ def load_existing_golden_cross_analysis(
     return analysis_map
 
 
+def _format_result(ticker, name, cross_date, days_since, close, short_ma, long_ma):
+    return {
+        "ticker": ticker,
+        "data": {
+            "ticker": ticker,
+            "name": name,
+            "date": cross_date.strftime("%Y-%m-%d"),
+            "days_since_cross": days_since,
+            "close": close,
+            "short_ma": short_ma,
+            "long_ma": long_ma,
+        },
+    }
+
 def filter_pairs_needing_update(
     companies,
     market_ids,
@@ -117,35 +128,23 @@ def filter_pairs_needing_update(
         if not mkt or mkt.market_id not in market_ids:
             continue
         rec = analysis_map.get((comp.company_id, mkt.market_id))
-        if (
-            rec
-            and rec.cross_date
-            and (now - rec.cross_date).days <= days_to_look_back
-            and rec.days_since_cross is not None
-            and rec.days_since_cross <= days_to_look_back
-        ):
-            golden_cross_results.append(
-                {
-                    "ticker": comp.ticker,
-                    "data": {
-                        "ticker": comp.ticker,
-                        "name": comp.name,
-                        "date": rec.cross_date.strftime("%Y-%m-%d"),
-                        "days_since_cross": rec.days_since_cross,
-                        "close": rec.cross_price,
-                        "short_ma": short_window,
-                        "long_ma": long_window,
-                    },
-                }
-            )
+        
+        # Check if we have a valid recent cross in cache
+        if rec and rec.cross_date:
+            days_since = (now - rec.cross_date).days
+            if days_since <= days_to_look_back:
+                golden_cross_results.append(
+                    _format_result(
+                        comp.ticker, comp.name, rec.cross_date, days_since,
+                        rec.cross_price, short_window, long_window
+                    )
+                )
+                continue
+
+        # If data is fresh (updated today) but no cross matched above, skip
+        if rec and rec.last_updated and rec.last_updated.date() == now:
             continue
-        if (
-            rec
-            and not rec.cross_date
-            and rec.last_updated
-            and rec.last_updated.date() == now
-        ):
-            continue
+            
         pairs_to_check.append((comp, mkt))
     return pairs_to_check
 
@@ -157,14 +156,16 @@ def fetch_price_history_for_pairs(
     lookback_days = long_window + days_to_look_back + 5
     start_date = today - timedelta(days=lookback_days)
     end_date = today
+    
     tickers_by_market = {}
     for comp, mkt in pairs_to_check:
         tickers_by_market.setdefault(mkt.name, []).append(comp.ticker)
+        
     BATCH_SIZE = 50
     for market_name, tickers in tickers_by_market.items():
-        logger.info(f"Preparing batches for market: {market_name}, tickers: {tickers}")
+        logger.info(f"Preparing batches for market: {market_name}, tickers: {len(tickers)} tickers")
         for chunk in _chunked(tickers, BATCH_SIZE):
-            resp = fetch_and_save_stock_price_history_data_batch(
+            fetch_and_save_stock_price_history_data_batch(
                 tickers=chunk,
                 market_name=market_name,
                 db=db,
@@ -172,7 +173,6 @@ def fetch_price_history_for_pairs(
                 end_date=end_date,
                 force_update=False,
             )
-            logger.info(f"Batch fetch [{market_name}] {chunk[:5]}…: {resp}")
 
 
 def analyze_and_build_results(
@@ -186,6 +186,9 @@ def analyze_and_build_results(
     adjusted,
     golden_cross_results,
 ):
+    from datetime import datetime
+    now_date = datetime.utcnow().date()
+    
     for comp, mkt in pairs_to_check:
         analysis_record = get_or_update_analysis_result(
             db=db,
@@ -199,26 +202,17 @@ def analyze_and_build_results(
             adjusted=adjusted,
             stale_after_days=1,
         )
-        if (
-            analysis_record
-            and analysis_record.cross_date
-            and analysis_record.days_since_cross is not None
-            and analysis_record.days_since_cross <= days_to_look_back
-        ):
-            golden_cross_results.append(
-                {
-                    "ticker": comp.ticker,
-                    "data": {
-                        "ticker": comp.ticker,
-                        "name": comp.name,
-                        "date": analysis_record.cross_date.strftime("%Y-%m-%d"),
-                        "days_since_cross": analysis_record.days_since_cross,
-                        "close": analysis_record.cross_price,
-                        "short_ma": short_window,
-                        "long_ma": long_window,
-                    },
-                }
-            )
+        
+        if analysis_record and analysis_record.cross_date:
+            days_since = (now_date - analysis_record.cross_date).days
+            
+            if days_since <= days_to_look_back:
+                golden_cross_results.append(
+                    _format_result(
+                        comp.ticker, comp.name, analysis_record.cross_date, days_since,
+                        analysis_record.cross_price, short_window, long_window
+                    )
+                )
 
 def run_golden_cross_scan(
     db: Session,
