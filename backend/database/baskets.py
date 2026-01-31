@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum as SQLAlchemyEnum,
+    Boolean as SQLAlchemyBoolean,
     ForeignKey,
     Integer,
     String,
@@ -26,6 +27,14 @@ class BasketType(PyEnum):
 
 class Basket(Base):
     __tablename__ = "baskets"
+    __table_args__ = (
+        UniqueConstraint(
+            "name",
+            "owner_id",
+            name="uq_basket_name_owner",
+            postgresql_nulls_not_distinct=True,
+        ),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -34,6 +43,9 @@ class Basket(Base):
 
     # One of BasketType
     type = Column(SQLAlchemyEnum(BasketType), nullable=False)
+    
+    # Hide from frontend lists (e.g. for "Delisted / OTC")
+    is_visible = Column(SQLAlchemyBoolean, default=True, server_default="true", nullable=False)
 
     # Optional owner (null for system / global baskets like "WIG20", "US", etc.)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)

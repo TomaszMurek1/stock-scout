@@ -34,6 +34,9 @@ def list_baskets(
     elif not include_global:
         query = query.filter(Basket.owner_id == None)  # noqa: E711
 
+    # Filter out hidden baskets (e.g. Delisted / OTC)
+    query = query.filter(Basket.is_visible == True)  # noqa: E712
+
     return query.order_by(Basket.name.asc()).all()
 
 
