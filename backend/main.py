@@ -35,6 +35,8 @@ from api import (
     wyckoff,
     alerts,
     ai_advisor,
+    ev_to_revenue,
+    break_even_point,
 )
 
 from database.base import Base, engine
@@ -73,6 +75,8 @@ app.include_router(death_cross.router,                prefix="/api/technical-ana
 app.include_router(choch.router,                      prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(breakout.router,                   prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(wyckoff.router,                    prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(ev_to_revenue.router,              prefix="/api/technical-analysis", tags=["Analysis"])
+app.include_router(break_even_point.router,           prefix="/api/technical-analysis", tags=["Analysis"])
 app.include_router(fundamentals.router,               prefix="/api/fundamentals", tags=["Analysis"])
 app.include_router(compare.router,                    prefix="/api/compare",      tags=["Comparison"])
 app.include_router(company_search.router,             prefix="/api/companies",    tags=["Company Search"])

@@ -57,7 +57,7 @@ const BreakoutForm: React.FC = () => {
     );
   };
 
-  const results = result?.data || [];
+  const results = Array.isArray(result) ? result : result?.data || [];
 
   return (
     <div className="space-y-6">
