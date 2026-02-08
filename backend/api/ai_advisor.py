@@ -75,5 +75,145 @@ async def analyze_portfolio(
             logger.error("n8n timed out.")
             raise HTTPException(status_code=504, detail="AI Advisor timed out. Please try again later.")
         except Exception as e:
+            raise HTTPException(status_code=500, detail=f"AI Advisor Proxy Error: {str(e)}")
+
+@router.post("/feed")
+async def feed_knowledge(
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    user = Depends(get_current_user)
+):
+    """
+    Proxies knowledge saving requests to n8n stock-adviser-feed.
+    This workflow is used to populate the vector DB with ticker-specific data.
+    """
+    if not authorization:
+        logger.warning("❌ Missing Authorization header in proxy request")
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+
+    logger.info(f"🔄 Proxying feed request for user {user.email}")
+    
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    # Validate ticker presence
+    if "ticker" not in body or not body["ticker"]:
+        raise HTTPException(status_code=400, detail="Ticker is required")
+    
+    # Auto-detect mode based on backend environment
+    is_dev = settings.ENV == "development"
+    # The n8n endpoint is specifically 'stock-adviser-feed'
+    path = "/webhook-test/stock-adviser-feed" if is_dev else "/webhook/stock-adviser-feed"
+    
+    url = f"{N8N_BASE_URL}{path}"
+    
+    logger.debug(f"Proxying feed request to n8n: {url}")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            # Forward to n8n with auth header
+            response = await client.post(
+                url,
+                json=body,
+                headers={"Authorization": authorization},
+                timeout=60.0 
+            )
+            
+            if response.status_code == 404:
+                raise HTTPException(
+                    status_code=404, 
+                    detail="n8n is not listening on stock-adviser-feed! Ensure the workflow is active."
+                )
+            
+            if response.status_code >= 400:
+                logger.error(f"n8n error: {response.status_code} - {response.text}")
+                try:
+                    error_json = response.json()
+                    detail = error_json.get("message") or response.text
+                except:
+                    detail = response.text
+                raise HTTPException(status_code=response.status_code, detail=detail)
+            
+            return response.json()
+            
+        except httpx.ConnectError:
+            logger.error("Could not connect to n8n service.")
+            raise HTTPException(status_code=502, detail="AI Advisor service (n8n) is currently unreachable.")
+        except httpx.TimeoutException:
+            logger.error("n8n timed out.")
+            raise HTTPException(status_code=504, detail="AI Advisor timed out.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"AI Advisor Proxy Error: {str(e)}")
+
+@router.post("/ask")
+async def ask_advisor(
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    user = Depends(get_current_user)
+):
+    """
+    Proxies questions to n8n stock-adviser-ask.
+    This workflow retrieves relevant context from vector DB (and optionally live stock data) to answer user questions.
+    """
+    if not authorization:
+        logger.warning("❌ Missing Authorization header in proxy request")
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+
+    logger.info(f"🔄 Proxying ask request for user {user.email}")
+    
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    # Validate query presence
+    if "query" not in body or not body["query"]:
+        raise HTTPException(status_code=400, detail="Query is required")
+    
+    # Auto-detect mode based on backend environment
+    is_dev = settings.ENV == "development"
+    # The n8n endpoint is specifically 'stock-adviser-ask'
+    path = "/webhook-test/stock-adviser-ask" if is_dev else "/webhook/stock-adviser-ask"
+    
+    url = f"{N8N_BASE_URL}{path}"
+    
+    logger.debug(f"Proxying ask request to n8n: {url}")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            # Forward to n8n with auth header
+            response = await client.post(
+                url,
+                json=body,
+                headers={"Authorization": authorization},
+                timeout=60.0 
+            )
+            
+            if response.status_code == 404:
+                raise HTTPException(
+                    status_code=404, 
+                    detail="n8n is not listening on stock-adviser-ask! Ensure the workflow is active."
+                )
+            
+            if response.status_code >= 400:
+                logger.error(f"n8n error: {response.status_code} - {response.text}")
+                try:
+                    error_json = response.json()
+                    detail = error_json.get("message") or response.text
+                except:
+                    detail = response.text
+                raise HTTPException(status_code=response.status_code, detail=detail)
+            
+            return response.json()
+            
+        except httpx.ConnectError:
+            logger.error("Could not connect to n8n service.")
+            raise HTTPException(status_code=502, detail="AI Advisor service (n8n) is currently unreachable.")
+        except httpx.TimeoutException:
+            logger.error("n8n timed out.")
+            raise HTTPException(status_code=504, detail="AI Advisor timed out.")
+        except Exception as e:
             logger.exception("Unexpected error in AI Advisor proxy")
             raise HTTPException(status_code=500, detail=f"AI Advisor Proxy Error: {str(e)}")
