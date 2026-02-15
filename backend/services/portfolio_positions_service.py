@@ -14,17 +14,10 @@ from database.portfolio import Transaction
 from services.yfinance_data_update.data_update_service import fetch_and_save_stock_price_history_data_batch
 from services.portfolio_metrics_service import PortfolioMetricsService
 from services.fx.fx_rate_helper import get_latest_fx_rate, get_fx_rates_batch_for_date
+from utils.decimal_helpers import to_decimal as _to_d
 
 logger = logging.getLogger(__name__)
 
-
-def _to_d(x: Any) -> Decimal:
-    """Helper for safe decimal conversion."""
-    if x is None:
-        return Decimal("0")
-    if isinstance(x, Decimal):
-        return x
-    return Decimal(str(x))
 
 
 def _get_raw_positions(db: Session, account_ids: List[int]) -> List[PortfolioPositions]:

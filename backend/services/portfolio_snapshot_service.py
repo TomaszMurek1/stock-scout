@@ -4,9 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database.valuation import PortfolioValuationDaily
 from database.portfolio import Transaction, TransactionType, Portfolio
+from utils.decimal_helpers import to_decimal as _dec
 
-def _dec(x) -> Decimal:
-    return Decimal(str(x or "0"))
 
 def get_portfolio_snapshot(
     db: Session,

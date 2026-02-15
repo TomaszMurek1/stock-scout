@@ -17,7 +17,7 @@ from database.base import SessionLocal, engine
 from database.portfolio import Transaction, Portfolio
 from database.company import Company
 from schemas.portfolio_schemas import TransactionType
-from api.positions_service import apply_transaction_to_position, recompute_account_cash
+from services.positions_service import apply_transaction_to_position, recompute_account_cash
 from services.valuation.rematerializ import rematerialize_from_tx
 
 # Configuration

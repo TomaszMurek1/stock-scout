@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, case, literal
 
 from api.portfolio_crud import get_or_create_portfolio
-from api.positions_service import apply_transaction_to_position, get_default_account_id
+from services.positions_service import apply_transaction_to_position, get_default_account_id
 from services.auth.auth import get_current_user
 from database.base import get_db
 from database.user import User
@@ -21,19 +21,9 @@ from services.fx.fx_rate_service import fetch_and_save_fx_rate
 from database.fx import FxRate
 from decimal import Decimal, getcontext
 import logging
+from utils.decimal_helpers import to_decimal as _dec
 
-# -----------------------------------------------------------------------------
-# Logging
-# -----------------------------------------------------------------------------
 log = logging.getLogger("api.portfolio_management")
-if not log.handlers:
-    handler = logging.StreamHandler()
-    fmt = logging.Formatter(
-        "%(levelname)s:%(name)s:%(message)s"
-    )
-    handler.setFormatter(fmt)
-    log.addHandler(handler)
-log.setLevel(logging.DEBUG)
 
 
 # ---------- DECIMAL PRECISION ----------
@@ -45,8 +35,6 @@ router = APIRouter()
 CASH_PRECISION = Decimal("0.0001")
 
 
-def _dec(value) -> Decimal:
-    return Decimal(str(value or "0"))
 
 
 def _get_portfolio_account(db: Session, portfolio, account_id: Optional[int]) -> Account:

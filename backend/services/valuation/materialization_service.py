@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from utils.decimal_helpers import to_decimal as _dec
 from typing import Dict, Iterable, Optional, List
 import logging
 
@@ -22,15 +23,6 @@ from services.fx.fx_rate_helper import get_fx_rate_for_date
 log = logging.getLogger(__name__)
 
 # ---------- Public Helpers ----------
-
-def _dec(x) -> Decimal:
-    """Internal helper for decimal conversion."""
-    if isinstance(x, Decimal):
-        return x
-    try:
-        return Decimal(str(x))
-    except (InvalidOperation, TypeError, ValueError):
-        return Decimal("0")
 
 def get_last_pvd_date(db: Session, portfolio_id: int) -> date | None:
     return (
