@@ -2,7 +2,6 @@ import logging
 from requests import Session
 from sqlalchemy.exc import OperationalError
 import time
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def retry_on_db_lock(func):

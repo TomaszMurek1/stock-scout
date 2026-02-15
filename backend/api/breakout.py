@@ -12,7 +12,7 @@ from database.stock_data import StockPriceHistory
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
-from api.golden_cross import resolve_universe
+from services.scan_universe_resolver import resolve_universe
 from services.company_filter_service import filter_by_market_cap
 from services.scan_job_service import create_job, run_scan_task
 
@@ -20,10 +20,8 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def _chunked(seq, size):
-    """Yield successive size-chunks from seq."""
-    for i in range(0, len(seq), size):
-        yield seq[i : i + size]
+from utils.itertools_helpers import chunked
+
 
 def detect_consolidation(prices: list[StockPriceHistory], consolidation_period: int, threshold_pct: float):
     # Sort prices by date ascending just in case
@@ -103,7 +101,7 @@ def run_consolidation_scan(db: Session, request: BreakoutRequest):
 
     BATCH_SIZE = 50
     for market_name, tickers in tickers_by_market.items():
-        for chunk in _chunked(tickers, BATCH_SIZE):
+        for chunk in chunked(tickers, BATCH_SIZE):
             fetch_and_save_stock_price_history_data_batch(
                 tickers=chunk,
                 market_name=market_name,

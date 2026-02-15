@@ -1,0 +1,70 @@
+# ========================================
+# .aiexclude — Files excluded from AI context
+# ========================================
+
+# ---------- Dependencies ----------
+node_modules/
+frontend/node_modules/
+backend/venv/
+backend/.venv/
+.venv/
+
+# ---------- Build artifacts ----------
+frontend/dist/
+__pycache__/
+
+# ---------- Lock files ----------
+frontend/package-lock.json
+
+# ---------- Large data / debug dumps ----------
+backend/single-ticker-response.json
+backend/portfolio_management_response.json
+backend/services/yfinance_probe_response.json
+backend/database/yfinance-probe_*
+backend/output_AAPL.txt
+backend/sections_output.txt
+backend/financial_statements.txt
+backend/ttwr_analysis.txt
+backend/prompt.txt
+*.sql
+
+# ---------- Debug / one-off scripts ----------
+backend/debug_*.py
+backend/trace_*.py
+backend/verify_*.py
+backend/simulate_*.py
+backend/compare_flows.py
+backend/check_sells.py
+backend/fix_history.py
+backend/test_batch_fetch.py
+backend/test_batch_write.py
+backend/test_single_ticker_loader.py
+backend/analyze_user_metrics.py
+backend/investigate_strategy.py
+debug_break_even.py
+extract_ftse.py
+
+# ---------- Spreadsheets ----------
+backend/*.xlsx
+
+# ---------- Database files ----------
+*.db
+*.sqlite3
+*.dump
+
+# ---------- Environment ----------
+.env
+.env.prod
+backend/.env
+
+# ---------- Git ----------
+.git/
+
+# ---------- IDE / editor ----------
+.vscode/
+.devcontainer/
+
+# ---------- Misc ----------
+helpers.txt
+frontend/co_dalej.txt
+backend/yfinance.Ticker.rst.txt

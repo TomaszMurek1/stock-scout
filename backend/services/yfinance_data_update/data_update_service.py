@@ -24,7 +24,6 @@ from services.stock_data.stock_data_service import (
 )
 from utils.db_retry import retry_on_db_lock
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

@@ -31,7 +31,6 @@ from api import (
     company_notes,
     breakout,
     admin_price_data,
-    admin_price_data,
     wyckoff,
     alerts,
     ai_advisor,
@@ -43,10 +42,14 @@ from database.base import Base, engine
 from core.openapi_overrides import add_bearer_auth
 
 logging.basicConfig(
-    level=logging.DEBUG,  # <-- makes root logger DEBUG
+    level=logging.INFO,
     format="[%(levelname)s] %(name)s: %(message)s",
     stream=sys.stdout,
 )
+# In dev, enable DEBUG only for our own code — keep third-party libs quiet
+if settings.ENV != "production":
+    for ns in ("api", "services", "utils", "database"):
+        logging.getLogger(ns).setLevel(logging.DEBUG)
 
 # Initialize FastAPI
 app = FastAPI(
@@ -65,8 +68,9 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-# Create database tables (only for dev, remove for production)
-Base.metadata.create_all(bind=engine)
+# Create database tables (dev only — Alembic handles production migrations)
+if settings.ENV != "production":
+    Base.metadata.create_all(bind=engine)
 
 # Register routers
 app.include_router(accounts.router,                   prefix="/api/accounts",     tags=["Accounts"])

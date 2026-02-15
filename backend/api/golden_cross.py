@@ -15,71 +15,15 @@ from services.analysis_results.analysis_results import get_or_update_analysis_re
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
-from services.basket_resolver import resolve_baskets_to_companies
+from services.scan_universe_resolver import resolve_universe
 from services.company_filter_service import filter_by_market_cap
 from services.scan_job_service import create_job, run_scan_task
+from utils.itertools_helpers import chunked
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
-def _chunked(seq, size):
-    """Yield successive size-chunks from seq."""
-    for i in range(0, len(seq), size):
-        yield seq[i : i + size]
-
-
-def get_markets_and_companies(db, market_names):
-    markets = db.query(Market).filter(Market.name.in_(market_names)).all()
-    market_ids = [m.market_id for m in markets]
-    if not market_ids:
-        raise HTTPException(status_code=404, detail="No matching markets found.")
-    companies = db.query(Company).filter(Company.market_id.in_(market_ids)).all()
-    if not companies:
-        raise HTTPException(
-            status_code=404, detail="No companies found for these markets."
-        )
-    return market_ids, companies
-
-
-def resolve_universe(db: Session, market_names: list[str] | None, basket_ids: list[int] | None):
-    market_ids = set()
-    company_map = {}
-
-    if market_names:
-        mids, comps = get_markets_and_companies(db, market_names)
-        market_ids.update(mids)
-        for comp in comps:
-            company_map[comp.company_id] = comp
-
-    if basket_ids:
-        basket_market_ids, basket_companies = _resolve_baskets_or_404(db, basket_ids)
-        market_ids.update(basket_market_ids)
-        for comp in basket_companies:
-            company_map[comp.company_id] = comp
-
-    if not company_map:
-        return market_ids, []
-
-    # Ensure market IDs also include values from resolved companies (in case baskets lacked mid info)
-    for comp in company_map.values():
-        if comp.market and comp.market.market_id:
-            market_ids.add(comp.market.market_id)
-
-    if not market_ids:
-        return [], []
-
-    return list(market_ids), list(company_map.values())
-
-
-def _resolve_baskets_or_404(db: Session, basket_ids: list[int]):
-    if not basket_ids:
-        return set(), []
-    try:
-        return resolve_baskets_to_companies(db, basket_ids)
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 def load_existing_golden_cross_analysis(
@@ -164,7 +108,7 @@ def fetch_price_history_for_pairs(
     BATCH_SIZE = 50
     for market_name, tickers in tickers_by_market.items():
         logger.info(f"Preparing batches for market: {market_name}, tickers: {len(tickers)} tickers")
-        for chunk in _chunked(tickers, BATCH_SIZE):
+        for chunk in chunked(tickers, BATCH_SIZE):
             fetch_and_save_stock_price_history_data_batch(
                 tickers=chunk,
                 market_name=market_name,
