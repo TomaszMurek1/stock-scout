@@ -9,10 +9,11 @@ interface DetailedBreakdownProps {
   itd: any;
   selectedPeriod: Period;
   currency: any;
+  realizedPnl?: number;
   isLoading?: boolean;
 }
 
-export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, holdings = [], accounts = [], isLoading }: DetailedBreakdownProps & { holdings?: any[], accounts?: any[] }) => {
+export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, holdings = [], accounts = [], realizedPnl: backendRealizedPnl, isLoading }: DetailedBreakdownProps & { holdings?: any[], accounts?: any[] }) => {
   const { t } = useTranslation();
 
   if (isLoading) {
@@ -67,8 +68,11 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
   const totalCapitalGains = round2(totalCapitalGainsRaw);
 
   // 3. Realized PnL (Closed Positions)
-  // Total - Unrealized
-  const realizedPnL = round2(totalCapitalGains - activeUnrealizedPnL);
+  // Use backend-computed value (from actual sell transactions & avg cost basis)
+  // Fallback to subtraction only if backend value is not available
+  const realizedPnL = backendRealizedPnl != null
+    ? round2(backendRealizedPnl)
+    : round2(totalCapitalGains - activeUnrealizedPnL);
 
   // 4. Income & Expenses
   // Use ITD for "Total Portfolio Profit" context

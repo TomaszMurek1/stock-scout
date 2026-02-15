@@ -34,6 +34,7 @@
       "portfolio": "Portfel",
       "performance": "Wyniki",
       "your_stocks": "Twoje Akcje",
+      "closed_positions": "Zamknięte Pozycje",
       "watchlist": "Obserwowane",
       "alerts": "Alerty",
       "transactions": "Transakcje",
@@ -55,6 +56,21 @@
         "current_value": "Obecna Wartość",
         "gain_loss": "Zysk / Strata",
         "empty_state": "Brak akcji w portfelu. Dodaj akcje, aby rozpocząć."
+    },
+    "closed": {
+        "shares_sold": "Sprzedane Akcje",
+        "cost_basis": "Koszt Nabycia",
+        "proceeds": "Wpływy ze Sprzedaży",
+        "realized_pnl": "Zrealizowany Z/S",
+        "last_sell": "Ostatnia Sprzedaż",
+        "sell_date": "Data Sprzedaży",
+        "sell_price": "Cena Sprzedaży",
+        "holding_period": "Okres",
+        "total_realized": "Łączny Zrealizowany Z/S",
+        "stocks": "akcji",
+        "trades": "transakcji",
+        "empty_title": "Brak Zamkniętych Pozycji",
+        "empty_description": "Kiedy sprzedasz akcje, pojawią się tutaj z Twoim zrealizowanym zyskiem/stratą."
     },
     "watchlist": {
         "title": "Obserwowane",
