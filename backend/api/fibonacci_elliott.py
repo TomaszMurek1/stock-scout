@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database.base import get_db
 from database.company import Company
+from database.stock_data import StockPriceHistory
 from services.basket_resolver import resolve_baskets_to_companies
 from services.company_filter_service import filter_by_market_cap
 
@@ -337,8 +338,21 @@ def compute_risk(
         
     mean_mae = np.mean(mae)
     mean_mfe = np.mean(mfe) if mfe else 0
-    R = mean_mfe / mean_mae if mean_mae != 0 else 1
-    kel = max(0, p - (1 - p) / R)
+    
+    # Avoid division by zero or extremely low risk (too perfect)
+    # Floor MAE at 0.5% (0.005) to dampen infinite reward/risk ratios
+    safe_mae = max(mean_mae, 0.005)
+    
+    R = mean_mfe / safe_mae
+    
+    # Standard Kelly Formula: K = p - (1-p)/R
+    kel = p - (1 - p) / R
+    
+    # Cap at 0.0 -> 0.5 (Half-Kelly for safety)
+    # Because full Kelly is aggressive, professional traders often use Half or Quarter Kelly.
+    # We cap at 0.99 mathematically, but practically 0.5 is a sane max for a scanner.
+    kel = max(0.0, min(kel, 0.5))
+    
     return mets, round(kel, 3)
 
 
@@ -404,6 +418,52 @@ class ScanResponse(BaseModel):
     data: List[ScanResultItem]
 
 
+def _process_company_scan(
+    db: Session,
+    company: Company,
+    pivot_threshold: float,
+    min_kelly_fraction: float
+) -> Optional[ScanResultItem]:
+    """
+    Helper to process a single company for the scan including data loading and analysis.
+    Returns None if criteria not met or error occurs.
+    """
+    try:
+        # Load data for the company
+        # We catch HTTP exceptions from load_data to return None gracefully
+        try:
+            df = load_data(db, company.ticker)
+        except HTTPException:
+            return None
+            
+        # Detect pivots and waves
+        pivots = detect_pivots(df.close, pivot_threshold)
+        waves = label_elliott_waves(pivots)
+        
+        # Calculate risk metrics and Kelly Fraction
+        _, kelly = compute_risk(df.close, waves)
+        
+        # Filter by minimum Kelly Fraction
+        if kelly >= min_kelly_fraction:
+            # Get the last wave label
+            last_wave = waves[-1].wave_label if waves else None
+            
+            return ScanResultItem(
+                ticker=company.ticker,
+                company_name=company.name,
+                kelly_fraction=kelly,
+                wave_count=len(waves),
+                pivot_count=len(pivots),
+                last_wave=last_wave,
+            )
+    except Exception as e:
+        # Log but return None to continue scanning other stocks
+        logger.warning(f"Failed to analyze {company.ticker}: {str(e)}")
+        return None
+    
+    return None
+
+
 @router.post("/scan", response_model=ScanResponse)
 def scan_fibonacci_elliott(
     req: ScanRequest,
@@ -430,35 +490,11 @@ def scan_fibonacci_elliott(
     logger.info(f"Scanning {len(companies)} companies for Elliott Wave patterns")
     
     for company in companies:
-        try:
-            # Load data for the company
-            df = load_data(db, company.ticker)
-            
-            # Detect pivots and waves
-            pivots = detect_pivots(df.close, req.pivot_threshold)
-            waves = label_elliott_waves(pivots)
-            
-            # Calculate risk metrics and Kelly Fraction
-            _, kelly = compute_risk(df.close, waves)
-            
-            # Filter by minimum Kelly Fraction
-            if kelly >= req.min_kelly_fraction:
-                # Get the last wave label
-                last_wave = waves[-1].wave_label if waves else None
-                
-                results.append(ScanResultItem(
-                    ticker=company.ticker,
-                    company_name=company.name,
-                    kelly_fraction=kelly,
-                    wave_count=len(waves),
-                    pivot_count=len(pivots),
-                    last_wave=last_wave,
-                ))
-                
-        except Exception as e:
-            # Log but continue scanning other stocks
-            logger.warning(f"Failed to analyze {company.ticker}: {str(e)}")
-            continue
+        result_item = _process_company_scan(
+            db, company, req.pivot_threshold, req.min_kelly_fraction
+        )
+        if result_item:
+            results.append(result_item)
     
     logger.info(f"Found {len(results)} stocks matching criteria")
     return ScanResponse(data=results)

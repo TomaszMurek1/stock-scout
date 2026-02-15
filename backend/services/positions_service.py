@@ -1,5 +1,5 @@
-# api/positions_service.py
-from decimal import Decimal
+# services/positions_service.py
+from utils.decimal_helpers import to_decimal as _dec
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database.portfolio import Portfolio, Transaction
@@ -31,8 +31,6 @@ def get_default_account_id(db: Session, portfolio_id: int) -> int:
     return acc.id
 
 
-def _dec(x) -> Decimal:
-    return Decimal(str(x or "0"))
 
 
 def apply_transaction_to_position(db: Session, tx: Transaction) -> None:

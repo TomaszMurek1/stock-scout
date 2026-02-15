@@ -27,5 +27,19 @@ export default defineConfig({
       interval: 100, // optional: how often to poll
     },
     host: true, // allow external access (optional)
+    proxy: {
+      '/n8n': {
+        target: 'http://n8n:5678',
+        changeOrigin: false,
+        rewrite: (path) => path.replace(/^\/n8n/, ''),
+        secure: false,
+        ws: true,
+      },
+      '/api': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });

@@ -8,6 +8,7 @@ Also materializes valuation for the transfer date(s).
 from uuid import uuid4
 from datetime import datetime, date
 from decimal import Decimal
+from utils.decimal_helpers import to_decimal as _dec
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -22,8 +23,6 @@ router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
 CASH_PRECISION = Decimal("0.0001")
 
 
-def _dec(value) -> Decimal:
-    return Decimal(str(value or "0"))
 
 
 def _ensure_account_currency(db: Session, account: Account, fallback: str) -> str:

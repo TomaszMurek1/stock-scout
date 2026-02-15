@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
 from database.base import get_db
-from database.user import User
+from database.user import User, UserScope
 from core.config import settings
 from fastapi.security import HTTPBearer
 oauth2_scheme = HTTPBearer()
@@ -60,6 +60,18 @@ def get_current_user(
         raise credentials_exception
 
     logger.info(f"✅ Authenticated user: {user.email} (ID: {user.id})")
+    return user
+
+
+def require_admin(
+    user: User = Depends(get_current_user),
+) -> User:
+    """FastAPI dependency that ensures the caller is an admin."""
+    if user.scope != UserScope.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
     return user
 
 

@@ -15,6 +15,7 @@ import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+from utils.itertools_helpers import chunked
 
 
 class PriceHistoryRequest(BaseModel):
@@ -26,10 +27,7 @@ class PriceHistoryRequest(BaseModel):
     min_market_cap: Optional[float] = Field(None, ge=0, description="Minimum market cap in millions USD")
 
 
-def _chunked(seq, size):
-    """Yield successive size-chunks from seq."""
-    for i in range(0, len(seq), size):
-        yield seq[i : i + size]
+
 
 def run_populate_price_history(db: Session, request: PriceHistoryRequest):
     if not request.basket_ids:
@@ -102,7 +100,7 @@ def run_populate_price_history(db: Session, request: PriceHistoryRequest):
         
         logger.info(f"Fetching price history for {len(tickers)} companies in {market_name}")
         
-        for chunk in _chunked(tickers, 50):
+        for chunk in chunked(tickers, 50):
             try:
                 resp = fetch_and_save_stock_price_history_data_batch(
                     tickers=chunk,

@@ -3,7 +3,6 @@ from sqlalchemy.exc import IntegrityError
 from database.market import Market
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

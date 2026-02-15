@@ -53,9 +53,16 @@ Updates the JSON rules for a specific basket.
 
 ## 4. Technical Implementation Details
 
-### Resolver
-The core logic resides in `backend/services/basket_resolver.py`. The `resolve_baskets_to_companies` function is the primary entry point for turning basket IDs into company objects.
+### Helper Methods
+The resolver handles three scenarios:
+1.  **Rules-Based**: Query using `market_codes`, `include_symbols`, etc.
+2.  **Legacy Market**: Query by `market_id`.
+3.  **Static**: Join with `basket_companies`.
 
+### Visibility & constraints
+- **Hidden Baskets**: Baskets can be hidden from the frontend by setting `is_visible=False`. This is useful for "utility" baskets like "Delisted / OTC" that shouldn't be selected by users.
+- **Uniqueness**: Basket names must be unique per owner (including System baskets where owner is NULL).
+ 
 ### Usage in Scans
 All scanning endpoints (e.g., Golden Cross, Fibonacci-Elliott, Breakouts) use the dynamic resolver. 
 > [!NOTE]

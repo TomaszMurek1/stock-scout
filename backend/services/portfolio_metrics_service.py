@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from utils.portfolio_utils import serialize_breakdown
 from database.portfolio import Transaction, TransactionType
 from database.valuation import PortfolioValuationDaily
+from utils.decimal_helpers import to_decimal as _to_d
 
 from services.metrics_rules import (
     amount_sql,
@@ -29,14 +30,6 @@ getcontext().prec = 28
 D = Decimal
 PERIODS = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"]
 
-
-def _to_d(x: Any) -> Decimal:
-    """Safe Decimal conversion helper."""
-    if x is None:
-        return D("0")
-    if isinstance(x, Decimal):
-        return x
-    return D(str(x))
 
 
 def _dt_end_of_day(d: date) -> datetime:

@@ -39,17 +39,4 @@ export function computeHoldingMetrics(holding: ApiHolding): HoldingMetrics {
   };
 }
 
-export function formatCurrencySafe(value: number, currency: string): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "-";
-  }
-
-  try {
-    return value.toLocaleString(undefined, {
-      style: "currency",
-      currency,
-    });
-  } catch {
-    return `${value.toFixed(2)} ${currency}`;
-  }
-}
+// formatCurrencySafe is now available from "@/utils/formatting" as formatCurrency

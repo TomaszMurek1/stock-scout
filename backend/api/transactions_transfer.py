@@ -16,7 +16,7 @@ from database.base import get_db
 from database.position import PortfolioPositions
 from database.account import Account
 from database.portfolio import Portfolio, Transaction, TransactionType
-from api.positions_service import apply_transaction_to_position
+from services.positions_service import apply_transaction_to_position
 from api.valuation_materialize import materialize_day
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])

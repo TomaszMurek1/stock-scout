@@ -8,6 +8,7 @@ from database.portfolio import Transaction
 from database.company import Company
 from database.market import Market
 from schemas.portfolio_schemas import TransactionType
+from services.auth.auth import require_admin
 
 router = APIRouter(prefix="/api/valuation/debug", tags=["Snapshots"])
 
@@ -15,7 +16,12 @@ def _eod(d: date) -> datetime:
     return datetime.combine(d, time.max.replace(microsecond=0))
 
 @router.get("/holdings")
-def debug_holdings(portfolio_id: int, as_of: date, db: Session = Depends(get_db)):
+def debug_holdings(
+    portfolio_id: int,
+    as_of: date,
+    db: Session = Depends(get_db),
+    _: str = Depends(require_admin),
+):
     cutoff = _eod(as_of)
     qty_expr = func.coalesce(
         func.sum(

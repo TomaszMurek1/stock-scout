@@ -39,9 +39,6 @@ from services.yfinance_data_update.data_update_service import ensure_fresh_data
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 
 def fetch_company_overview_from_api(ticker: str) -> dict:

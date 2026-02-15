@@ -12,7 +12,7 @@ from database.stock_data import StockPriceHistory
 from services.yfinance_data_update.data_update_service import (
     fetch_and_save_stock_price_history_data_batch,
 )
-from api.golden_cross import resolve_universe
+from services.scan_universe_resolver import resolve_universe
 from services.company_filter_service import filter_by_market_cap
 from services.scan_job_service import create_job, run_scan_task
 
@@ -20,10 +20,8 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def _chunked(seq, size):
-    """Yield successive size-chunks from seq."""
-    for i in range(0, len(seq), size):
-        yield seq[i : i + size]
+from utils.itertools_helpers import chunked
+
 
 def detect_consolidation(prices: list[StockPriceHistory], consolidation_period: int, threshold_pct: float):
     # Sort prices by date ascending just in case
@@ -84,16 +82,26 @@ def run_consolidation_scan(db: Session, request: BreakoutRequest):
     # 3. Fetch/Ensure Data
     lookback_days = request.consolidation_period + 10 
     today = datetime.utcnow().date()
-    start_date = today - timedelta(days=lookback_days * 2) 
+    # Increase lookback to 3x to account for weekends/holidays safely
+    start_date = today - timedelta(days=lookback_days * 3) 
     
     tickers_by_market = {}
     for comp in companies:
+        if not comp.market:
+            # Try to ensure market is loaded
+            try:
+                db.refresh(comp)
+            except Exception:
+                pass
+        
         if comp.market:
             tickers_by_market.setdefault(comp.market.name, []).append(comp.ticker)
+        else:
+            logger.warning(f"Company {comp.ticker} has no linked Market, skipping data fetch.")
 
     BATCH_SIZE = 50
     for market_name, tickers in tickers_by_market.items():
-        for chunk in _chunked(tickers, BATCH_SIZE):
+        for chunk in chunked(tickers, BATCH_SIZE):
             fetch_and_save_stock_price_history_data_batch(
                 tickers=chunk,
                 market_name=market_name,
@@ -104,6 +112,9 @@ def run_consolidation_scan(db: Session, request: BreakoutRequest):
             )
 
     # 4. Analyze
+    matches_count = 0
+    logger.info(f"Starting analysis on {len(companies)} companies...")
+    
     for comp in companies:
         prices = (
             db.query(StockPriceHistory)
@@ -113,6 +124,11 @@ def run_consolidation_scan(db: Session, request: BreakoutRequest):
             .all()
         )
         
+        # Debug logging for first few companies or if list is empty
+        if not prices:
+            # logger.debug(f"No prices found for {comp.ticker} since {start_date}")
+            continue
+            
         consolidation_data = detect_consolidation(
             prices, 
             request.consolidation_period, 
@@ -120,6 +136,7 @@ def run_consolidation_scan(db: Session, request: BreakoutRequest):
         )
         
         if consolidation_data:
+            matches_count += 1
             results.append({
                 "ticker": comp.ticker,
                 "name": comp.name,

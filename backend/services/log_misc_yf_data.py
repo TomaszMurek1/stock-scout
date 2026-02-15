@@ -3,7 +3,7 @@ import yfinance as yf
 import logging
 import pandas as pd
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 
 def print_yfinance_summary(ticker: str):

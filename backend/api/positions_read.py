@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from database.base import get_db
 from database.position import PortfolioPositions
-from api.positions_service import recompute_position
+from services.positions_service import recompute_position
 
 router = APIRouter(prefix="/api/positions", tags=["Positions"])
 

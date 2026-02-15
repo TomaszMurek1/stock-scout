@@ -9,7 +9,8 @@ from services.auth.auth import get_current_user
 from database.base import get_db
 from database.user import User
 from schemas.wyckoff_schemas import WyckoffRequest, WyckoffResult, WyckoffScore
-from api.golden_cross import resolve_universe, _chunked
+from services.scan_universe_resolver import resolve_universe
+from utils.itertools_helpers import chunked
 from services.company_filter_service import filter_by_market_cap
 from services.yfinance_data_update.data_update_service import fetch_and_save_stock_price_history_data_batch
 from database.stock_data import StockPriceHistory
@@ -96,7 +97,7 @@ def run_wyckoff_scan(db: Session, request: WyckoffRequest):
         
     for m_name, comps in companies_by_market.items():
         tickers = [c.ticker for c in comps]
-        for chunk in _chunked(tickers, 50):
+        for chunk in chunked(tickers, 50):
             fetch_and_save_stock_price_history_data_batch(
                 tickers=chunk,
                 market_name=m_name,

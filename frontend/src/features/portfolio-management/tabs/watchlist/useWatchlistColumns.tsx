@@ -5,19 +5,8 @@ import { MRT_ColumnDef } from "material-react-table"
 import type { WatchlistStock } from "./types"
 import { API_URL } from "@/services/apiClient"
 import { useTranslation } from "react-i18next"
+import { formatCurrency } from "@/utils/formatting"
 
-const formatCurrency = (value: number | null | undefined, currency?: string | null) => {
-    if (value === null || value === undefined) {
-        return "—"
-    }
-    const formatter = new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: currency || "USD",
-        maximumFractionDigits: 2,
-        minimumFractionDigits: 2,
-    })
-    return formatter.format(value)
-}
 
 export function useWatchlistColumns(): MRT_ColumnDef<WatchlistStock>[] { 
     const { t } = useTranslation()

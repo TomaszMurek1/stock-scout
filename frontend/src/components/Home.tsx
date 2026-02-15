@@ -1,12 +1,8 @@
-// import FeaturesSection from "./to-be-used/feature-section";
-// import CallToActions from "@/components/to-be-used/call-to-actions";
 import { CompanySearch } from "@/features/company-search/CompanySearch";
 import HeroSection from "@/features/hero-section/hero-section";
 import { LinkToPortfolio } from "@/features/portfolio-management/LinkToPortfolio";
 import ScenarioCarousel from "@/features/scenario-carousel/scenario-carousel";
 import { useLocation } from "react-router-dom";
-// import { useTranslation } from "react-i18next"; // Removed to avoid lint error if not used in this file yet. 
-// Wait, I need useTranslation.
 
 export default function Home() {
   const location = useLocation();
@@ -26,8 +22,6 @@ export default function Home() {
           />
         )}
       </div>
-      {/* <FeaturesSection /> */}
-      {/* <CallToActions /> */}
     </div>
   );
 }

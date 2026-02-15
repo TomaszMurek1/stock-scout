@@ -1,6 +1,5 @@
 import React from "react";
 import { format } from "date-fns";
-import { formatCurrency } from "@/utils/formatting";
 
 export const StockChartTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) {
@@ -25,8 +24,8 @@ export const StockChartTooltip = ({ active, payload, label }: any) => {
           let valueText = "";
 
           if (typeof entry.value === 'number') {
-             valueText = formatCurrency({ value: entry.value });
-          } else {
+             valueText = entry.value.toFixed(2);
+           } else {
              valueText = entry.value;
           }
 

@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import List
 from database.base import get_db
 from database.portfolio import Transaction
-from api.positions_service import (
+from services.positions_service import (
     reverse_transaction_from_position,
     apply_transaction_to_position,
     recompute_account_cash,
@@ -86,7 +86,7 @@ def create_transaction(payload: dict, db: Session = Depends(get_db)):
     """
     from datetime import datetime
     from database.portfolio import TransactionType
-    from api.positions_service import apply_transaction_to_position
+    from services.positions_service import apply_transaction_to_position
 
     required_fields = ["user_id", "portfolio_id", "account_id", "transaction_type", "quantity", "currency", "currency_rate"]
     for f in required_fields:

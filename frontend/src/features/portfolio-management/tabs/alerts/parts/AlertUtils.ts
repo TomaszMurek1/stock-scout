@@ -21,13 +21,13 @@ export const formatDate = (dateString: string, t?: TFunction) => {
 
 export const formatType = (type: AlertType, t: TFunction) => {
     switch (type) {
-        case AlertType.PRICE_ABOVE: return t("alerts.type.price_above");
-        case AlertType.PRICE_BELOW: return t("alerts.type.price_below");
-        case AlertType.PERCENT_CHANGE_UP: return t("alerts.type.percent_up");
-        case AlertType.PERCENT_CHANGE_DOWN: return t("alerts.type.percent_down");
-        case AlertType.SMA_50_ABOVE_SMA_200: return t("alerts.type.golden_cross");
-        case AlertType.SMA_50_BELOW_SMA_200: return t("alerts.type.death_cross");
-        case AlertType.SMA_50_APPROACHING_SMA_200: return t("alerts.type.approaching_cross");
+        case AlertType.PRICE_ABOVE: return t("portfolio.alerts.type.price_above");
+        case AlertType.PRICE_BELOW: return t("portfolio.alerts.type.price_below");
+        case AlertType.PERCENT_CHANGE_UP: return t("portfolio.alerts.type.percent_up");
+        case AlertType.PERCENT_CHANGE_DOWN: return t("portfolio.alerts.type.percent_down");
+        case AlertType.SMA_50_ABOVE_SMA_200: return t("portfolio.alerts.type.golden_cross");
+        case AlertType.SMA_50_BELOW_SMA_200: return t("portfolio.alerts.type.death_cross");
+        case AlertType.SMA_50_APPROACHING_SMA_200: return t("portfolio.alerts.type.approaching_cross");
         default: return type;
     }
 };

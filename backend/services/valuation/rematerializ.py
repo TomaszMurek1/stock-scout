@@ -12,7 +12,7 @@ from services.valuation.materialization_service import (
     get_first_tx_date, 
     delete_range_pvd
 )
-from api.positions_service import recompute_account_cash
+from services.positions_service import recompute_account_cash
 
 def rematerialize_from_tx(db: Session, portfolio_id: int, tx_day: date, *, end: date | None = None) -> None:
     """
