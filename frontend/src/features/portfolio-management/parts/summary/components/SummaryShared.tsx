@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CurrencyCode, Period } from "@/features/portfolio-management/types";
-import { currencyLocaleMap, formatCurrency, formatPercent } from "../summary.helpers";
+import { formatCurrency, formatPercent } from "@/utils/formatting";
 
 export const PERIODS: Period[] = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"];
 
@@ -63,15 +63,8 @@ export const Value = ({
   currency?: CurrencyCode;
   className?: string;
 }) => {
-  const formatted = currency
-    ? value.toLocaleString(currencyLocaleMap[currency], {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    : value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return <div className={`text-2xl font-bold text-gray-900 ${className}`}>{formatted}</div>;
+  const formatted = formatCurrency(value, currency);
+  return <div className={`text-2xl font-bold text-gray-900 ${className}`}>{formatted === "N/A" ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : formatted}</div>;
 };
 
 export const PercentValue = ({ value }: { value: number }) => {
@@ -103,7 +96,7 @@ export const DataRow = ({
   <div className={`flex justify-between items-center py-2 border-b border-gray-50 last:border-0 ${className}`}>
     <span className={`text-sm ${isBold ? "text-gray-800 font-medium" : "text-gray-500"}`}>{label}</span>
     <span className={`${isBold ? "font-bold text-gray-900" : "text-gray-700 font-medium"} ${valueClassName}`}>
-      {currency
+      {formatCurrency(value, currency) !== "N/A"
         ? formatCurrency(value, currency)
         : value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
     </span>

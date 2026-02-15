@@ -1,23 +1,8 @@
-export type CurrencyCode = "USD" | "EUR" | "GBP" | "PLN";
-
-export const currencyLocaleMap: Record<CurrencyCode, string> = {
-  USD: "en-US",
-  EUR: "de-DE",
-  GBP: "en-GB",
-  PLN: "pl-PL",
-};
-
-export const formatCurrency = (
-  value: number | undefined | null,
-  currency: CurrencyCode,
-  locale = currencyLocaleMap[currency]
-): string =>
-  (value || 0).toLocaleString(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-export const formatPercent = (value: number, decimals = 2): string =>
-  `${value.toFixed(decimals)}%`;
+// Re-export from the canonical formatting module.
+// Kept for backward compatibility — new code should import from "@/utils/formatting".
+export {
+  type CurrencyCode,
+  currencyLocaleMap,
+  formatCurrency,
+  formatPercent,
+} from "@/utils/formatting";

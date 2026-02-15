@@ -1,6 +1,7 @@
 // tabs/holdings/holdingsRenderers.tsx
 import type { ApiHolding } from "../../types";
-import { computeHoldingMetrics, formatCurrencySafe } from "./holdingsUtils";
+import { computeHoldingMetrics } from "./holdingsUtils";
+import { formatCurrency as formatCurrencySafe } from "@/utils/formatting";
 
 interface RendererParams {
   holding: ApiHolding;

@@ -1,7 +1,7 @@
 import { IFormGeneratorField } from "@/components/shared/forms/form-field-generator.types";
 import { z } from "zod";
 
-export const goldenCrossFormSchema = z.object({
+export const crossScanFormSchema = z.object({
   shortPeriod: z.coerce
     .number()
     .int()
@@ -12,9 +12,9 @@ export const goldenCrossFormSchema = z.object({
   basketIds: z.array(z.string()).nonempty("Select at least one basket"),
   minMarketCap: z.coerce.number().min(0).optional(),
 });
-export type GoldenCrossFormValues = z.infer<typeof goldenCrossFormSchema>;
+export type CrossScanFormValues = z.infer<typeof crossScanFormSchema>;
 
-export const baseGoldenCrossFields: IFormGeneratorField<GoldenCrossFormValues>[] = [
+export const baseCrossScanFields: IFormGeneratorField<CrossScanFormValues>[] = [
   {
     name: "shortPeriod",
     label: "scans.common.short_period.label",

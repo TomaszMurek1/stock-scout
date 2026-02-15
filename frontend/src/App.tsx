@@ -27,7 +27,7 @@ import InvitationManager from "./features/admin/InvitationManager";
 import { StockOnePager } from "./features/stock-one-pager/stock-one-pager";
 import { FiboWaveScenario } from "./features/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
 import FibonacciElliottScanPage from "./features/scenario-carousel/scan-types/fibonacci-elliott/fibonacci-elliott-page";
-import { StockCompare } from "./features/comapre-stocks-page/StockCompare";
+import { StockCompare } from "./features/compare-stocks-page/StockCompare";
 import AdminFxBatchForm from "./features/admin/admin-fx-batch/admin-fx-batch";
 import AdminCreateTickersForm from "./features/admin/admin-create-tickers/admin-create-tickers";
 import Header from "./components/Header";

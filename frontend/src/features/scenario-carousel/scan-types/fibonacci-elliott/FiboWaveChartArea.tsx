@@ -17,7 +17,11 @@ import {
 import { WaveShape } from "./WaveShape";
 import { ChartRow, Fibo, Pivot, Wave } from "./fiboWaves.types";
 import { safeParseDate } from "@/utils/dates";
-import { monthAbbr } from "@/utils/constans";
+
+const monthAbbr = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
 interface ChartProps {
     data: {

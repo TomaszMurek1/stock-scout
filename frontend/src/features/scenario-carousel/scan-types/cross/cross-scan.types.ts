@@ -1,4 +1,4 @@
-interface ISingleItem {
+export interface ICrossScanItem {
   ticker: string;
   name: string;
   date: string;
@@ -9,12 +9,12 @@ interface ISingleItem {
   volume: number;
 }
 
-export interface IData {
+export interface ICrossScanData {
   ticker: string;
-  data: ISingleItem;
+  data: ICrossScanItem;
 }
 
-export interface ScanResultsProps {
+export interface CrossScanResultsProps {
   status: string;
-  data: IData[];
+  data: ICrossScanData[];
 }
