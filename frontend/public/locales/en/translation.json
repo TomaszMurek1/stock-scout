@@ -34,6 +34,7 @@
       "portfolio": "Portfolio",
       "performance": "Performance",
       "your_stocks": "Your Stocks",
+      "closed_positions": "Closed Positions",
       "watchlist": "Watchlist",
       "alerts": "Alerts",
       "transactions": "Transactions",
@@ -55,6 +56,21 @@
         "current_value": "Current Value",
         "gain_loss": "Gain / Loss",
         "empty_state": "No stocks in your portfolio. Add some stocks to get started."
+    },
+    "closed": {
+        "shares_sold": "Shares Sold",
+        "cost_basis": "Cost Basis",
+        "proceeds": "Proceeds",
+        "realized_pnl": "Realized P/L",
+        "last_sell": "Last Sold",
+        "sell_date": "Sell Date",
+        "sell_price": "Sell Price",
+        "holding_period": "Held",
+        "total_realized": "Total Realized P/L",
+        "stocks": "stocks",
+        "trades": "trades",
+        "empty_title": "No Closed Positions",
+        "empty_description": "When you sell stocks, they'll appear here with your realized profit/loss."
     },
     "watchlist": {
         "title": "Watchlist",
@@ -109,6 +125,16 @@
             "golden_cross": "Golden Cross",
             "death_cross": "Death Cross",
             "approaching_cross": "Approaching Cross"
+        },
+        "telegram": {
+            "title": "Telegram Notifications",
+            "connected": "Connected",
+            "connected_desc": "You'll receive alert notifications via Telegram.",
+            "connect_desc": "Connect your Telegram to receive instant alert notifications on your phone.",
+            "connect": "Connect Telegram",
+            "disconnect": "Disconnect",
+            "waiting": "Waiting for connection...",
+            "waiting_hint": "Click 'Start' in Telegram, then come back here."
         }
     },
     "transactions": {

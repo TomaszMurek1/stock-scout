@@ -48,6 +48,125 @@ class PortfolioMetricsService:
     def __init__(self, db: Session):
         self.db = db
 
+    def compute_realized_pnl(self, portfolio_id: int) -> Tuple[Decimal, List[Dict]]:
+        """
+        Compute realized PnL from actual sell transactions using weighted-average
+        cost basis.  Every amount is converted to portfolio currency at the FX
+        rate recorded on the transaction.
+
+        Returns:
+            (total_realized_pnl, closed_positions_list)
+            Each item in closed_positions_list is a dict with per-sell-event details.
+        """
+        from database.company import Company
+        from collections import defaultdict
+
+        rows = (
+            self.db.query(
+                Transaction.company_id,
+                Transaction.transaction_type,
+                Transaction.quantity,
+                Transaction.price,
+                Transaction.currency_rate,
+                Transaction.currency,
+                Transaction.fee,
+                Transaction.timestamp,
+                Company.ticker,
+                Company.name,
+            )
+            .join(Company, Transaction.company_id == Company.company_id)
+            .filter(
+                Transaction.portfolio_id == portfolio_id,
+                Transaction.transaction_type.in_([TransactionType.BUY, TransactionType.SELL]),
+                Transaction.company_id.isnot(None),
+            )
+            .order_by(Transaction.timestamp, Transaction.id)
+            .all()
+        )
+
+        # Group by company, preserving chronological order
+        by_company: Dict[int, list] = defaultdict(list)
+        for r in rows:
+            by_company[r.company_id].append(r)
+
+        total_realized = D("0")
+        closed_positions: List[Dict] = []
+
+        for company_id, txns in by_company.items():
+            pool_cost = D("0")       # total cost in portfolio currency
+            pool_cost_icy = D("0")   # total cost in instrument currency
+            pool_shares = D("0")     # total shares held
+            # Weighted-average buy timestamp (for holding period)
+            pool_ts_weighted = D("0")  # sum of (cost * timestamp_epoch)
+
+            ticker = txns[0].ticker
+            name = txns[0].name
+
+            for tx in txns:
+                qty = _to_d(tx.quantity)
+                price = _to_d(tx.price)
+                fx = _to_d(tx.currency_rate) or D("1")
+                fee = _to_d(tx.fee) or D("0")
+                ts_epoch = D(str(tx.timestamp.timestamp()))
+
+                if tx.transaction_type == TransactionType.BUY:
+                    cost_pcy = qty * price * fx + fee * fx
+                    cost_icy = qty * price + fee
+                    pool_cost += cost_pcy
+                    pool_cost_icy += cost_icy
+                    pool_shares += qty
+                    pool_ts_weighted += cost_pcy * ts_epoch
+
+                elif tx.transaction_type == TransactionType.SELL:
+                    if pool_shares <= 0:
+                        continue
+                    avg_cost = pool_cost / pool_shares
+                    avg_cost_icy = pool_cost_icy / pool_shares
+                    proceeds_pcy = qty * price * fx - fee * fx
+                    proceeds_icy = qty * price - fee
+                    cost_basis = qty * avg_cost
+                    cost_basis_icy = qty * avg_cost_icy
+                    pnl = proceeds_pcy - cost_basis
+                    pnl_icy = proceeds_icy - cost_basis_icy
+
+                    # Holding period from weighted-average buy date
+                    holding_days = None
+                    if pool_cost > 0:
+                        avg_buy_epoch = pool_ts_weighted / pool_cost
+                        holding_days = int((ts_epoch - avg_buy_epoch) / D("86400"))
+
+                    pnl_pct = float(pnl / cost_basis * D("100")) if cost_basis != 0 else 0.0
+
+                    closed_positions.append({
+                        "company_id": company_id,
+                        "ticker": ticker,
+                        "name": name,
+                        "sell_date": tx.timestamp.strftime("%Y-%m-%d"),
+                        "quantity": float(qty),
+                        "sell_price": float(price),
+                        "sell_currency": tx.currency,
+                        "sell_fx_rate": float(fx),
+                        "proceeds_pcy": float(proceeds_pcy),
+                        "proceeds_icy": float(proceeds_icy),
+                        "cost_basis_pcy": float(cost_basis),
+                        "cost_basis_icy": float(cost_basis_icy),
+                        "realized_pnl": float(pnl),
+                        "realized_pnl_icy": float(pnl_icy),
+                        "realized_pnl_pct": round(pnl_pct, 2),
+                        "holding_period_days": holding_days,
+                    })
+
+                    total_realized += pnl
+
+                    # Reduce pool proportionally
+                    frac = cost_basis / pool_cost if pool_cost > 0 else D("0")
+                    pool_ts_weighted -= pool_ts_weighted * frac
+                    pool_cost -= cost_basis
+                    pool_cost_icy -= cost_basis_icy
+                    pool_shares -= qty
+
+        return total_realized, closed_positions
+
     # =========================================================================
     # Date & Period Helpers
     # =========================================================================
@@ -579,9 +698,14 @@ class PortfolioMetricsService:
                 start_dates[p] = start.isoformat()
                 end_dates[p] = end_date.isoformat()
 
+        # Compute realized PnL from actual sell transactions (historical fact)
+        realized_pnl, closed_positions = self.compute_realized_pnl(portfolio_id)
+
         result = {
             "portfolio_id": portfolio_id,
             "as_of_date": end_date.isoformat(),
+            "realized_pnl": float(realized_pnl),
+            "closed_positions": closed_positions,
             "performance": {
                 "ttwr": ttwr_map,
                 "ttwr_invested": inv_map,

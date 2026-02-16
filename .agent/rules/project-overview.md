@@ -477,7 +477,24 @@ The system uses a **Lazy Loading + Admin Batch** strategy (see `docs/BACKEND_DAT
 - **Zustand** for client state, **React Query** for server state.
 - **Accessibility** — `tabIndex`, `aria-label`, keyboard handlers on interactive elements.
 - **Feature-based folder structure** under `src/features/`.
-- **i18n** — all user-facing strings go through `t()` function (EN + PL).
+- **i18n** — all user-facing strings go through `t()` function (EN + PL). See **Internationalization** section below.
+
+### Internationalization (i18n)
+
+The app uses **react-i18next** with two supported languages: **English** (default) and **Polish**.
+
+| Item | Path |
+|------|------|
+| EN translations | `frontend/public/locales/en/translation.json` |
+| PL translations | `frontend/public/locales/pl/translation.json` |
+
+**Conventions:**
+
+- **Never hardcode user-facing text** — always use `t("key")` or `t("key", { defaultValue: "Fallback" })`.
+- **Nested dot-notation** keys organized by feature: `portfolio.tabs.*`, `portfolio.closed.*`, `scans.wyckoff.*`, etc.
+- **Both files must stay in sync** — when adding a key to EN, always add the PL translation too.
+- **Lowercase key names** in `snake_case` (e.g. `shares_sold`, `empty_description`).
+- Keys that are generic across features go under `common.*` (e.g. `common.shares`, `common.loading`).
 
 ### General
 

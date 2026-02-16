@@ -114,10 +114,31 @@ export interface PortfolioBreakdown {
   };
 }
 
+export interface ClosedPosition {
+  company_id: number;
+  ticker: string;
+  name: string;
+  sell_date: string;
+  quantity: number;
+  sell_price: number;
+  sell_currency: string;
+  sell_fx_rate: number;
+  proceeds_pcy: number;
+  proceeds_icy: number;
+  cost_basis_pcy: number;
+  cost_basis_icy: number;
+  realized_pnl: number;
+  realized_pnl_icy: number;
+  realized_pnl_pct: number;
+  holding_period_days: number | null;
+}
+
 export interface PortfolioPerformance {
   portfolio_id: number;
   as_of_date?: string;
   unit?: string;
+  realized_pnl?: number;
+  closed_positions?: ClosedPosition[];
   performance: any;
   period_meta?: any;
   breakdowns?: any;

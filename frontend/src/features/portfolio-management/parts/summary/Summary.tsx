@@ -77,6 +77,7 @@ const Summary = React.memo<SummaryProps>(({ portfolio, accounts, performance, ho
             currency={currency}
             holdings={holdings}
             accounts={accounts}
+            realizedPnl={performance?.realized_pnl}
             isLoading={!hasPerformance}
           />
         </>

@@ -33,6 +33,9 @@ class User(Base):
     )
     alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
 
+    # Telegram integration
+    telegram_chat_id = Column(String, nullable=True)
+
 
 class Invitation(Base):
     __tablename__ = "invitations"

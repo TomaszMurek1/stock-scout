@@ -2,8 +2,8 @@
 
 import React, { lazy, Suspense, useState } from "react";
 import { AnimatedTabs, AnimatedTabsContent, AnimatedTabsList, FramerTabTrigger } from "@/components/ui/animated-tabs";
-import { BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react";
-import { ApiHolding, Transaction, Period } from "../types";
+import { Archive, BarChart3, Bell, Clock, DollarSign, PieChart } from "lucide-react";
+import { ApiHolding, ClosedPosition, Transaction, Period } from "../types";
 import { useTranslation } from "react-i18next";
 
 const HoldingsTab = lazy(() => import("./holdings/HoldingsTab"));
@@ -12,10 +12,12 @@ const AlertsTab = lazy(() => import("./alerts/AlertsTab"));
 const TransactionsTab = lazy(() => import("./transactions/TransactionsTab"));
 const CashTab = lazy(() => import("./cash/CashTab"));
 const RiskTab = lazy(() => import("./risk/RiskTab"));
+const ClosedPositionsTab = lazy(() => import("./closed-positions/ClosedPositionsTab"));
 
 interface PortfolioTabsProps {
   byHolding?: ApiHolding[];
   transactions: Transaction[];
+  closedPositions?: ClosedPosition[];
   onRemove: (ticker: string) => void;
   isLoading?: boolean;
   selectedPeriod?: Period;
@@ -27,6 +29,7 @@ interface PortfolioTabsProps {
 export default function PortfolioTabs({
   byHolding,
   transactions,
+  closedPositions,
   onRemove,
   isLoading,
   selectedPeriod,
@@ -58,6 +61,16 @@ export default function PortfolioTabs({
           <span>{t("portfolio.tabs.your_stocks")}</span>
         </FramerTabTrigger>
         
+        <FramerTabTrigger 
+            value="closed" 
+            isSelected={activeTab === "closed"}
+            layoutId="portfolio-subtabs"
+            className="flex-none px-4"
+        >
+          <Archive className="h-4 w-4" />
+          <span>{t("portfolio.tabs.closed_positions", { defaultValue: "Closed Positions" })}</span>
+        </FramerTabTrigger>
+
         <FramerTabTrigger 
             value="watchlist" 
             isSelected={activeTab === "watchlist"}
@@ -117,6 +130,13 @@ export default function PortfolioTabs({
              onRemove={onRemove} 
              isLoading={isLoading} 
              selectedPeriod={selectedPeriod}
+          />
+        </AnimatedTabsContent>
+        <AnimatedTabsContent value="closed" forceMount={true} className="min-h-[calc(100vh-220px)]">
+          <ClosedPositionsTab
+            closedPositions={closedPositions ?? []}
+            portfolioCurrency={portfolioCurrency}
+            isLoading={isLoading}
           />
         </AnimatedTabsContent>
         <AnimatedTabsContent value="watchlist" forceMount={true} className="min-h-[calc(100vh-220px)]">

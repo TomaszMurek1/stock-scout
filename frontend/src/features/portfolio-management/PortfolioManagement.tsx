@@ -135,6 +135,7 @@ export default function PortfolioManagement() {
                 onRemove={sell}
                 byHolding={totals.byHolding}
                 transactions={transactions}
+                closedPositions={performance?.closed_positions}
                 isLoading={isLoading}
                 selectedPeriod={selectedPeriod}
                 externalTab={activeSubTab}
