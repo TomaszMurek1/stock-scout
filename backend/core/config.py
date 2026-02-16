@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALLOWED_ORIGINS: list = ["http://localhost:5173", "http://localhost"]
     ENV: str = "development"
+    TELEGRAM_BOT_TOKEN: str = ""
+    INTERNAL_API_TOKEN: str = ""
 
     class Config:
         env_file = ".env"

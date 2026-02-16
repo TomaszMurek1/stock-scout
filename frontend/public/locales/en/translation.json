@@ -125,6 +125,16 @@
             "golden_cross": "Golden Cross",
             "death_cross": "Death Cross",
             "approaching_cross": "Approaching Cross"
+        },
+        "telegram": {
+            "title": "Telegram Notifications",
+            "connected": "Connected",
+            "connected_desc": "You'll receive alert notifications via Telegram.",
+            "connect_desc": "Connect your Telegram to receive instant alert notifications on your phone.",
+            "connect": "Connect Telegram",
+            "disconnect": "Disconnect",
+            "waiting": "Waiting for connection...",
+            "waiting_hint": "Click 'Start' in Telegram, then come back here."
         }
     },
     "transactions": {

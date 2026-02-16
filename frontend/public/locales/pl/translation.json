@@ -125,6 +125,16 @@
             "golden_cross": "Złoty Krzyż",
             "death_cross": "Krzyż Śmierci",
             "approaching_cross": "Zbliżający się Krzyż"
+        },
+        "telegram": {
+            "title": "Powiadomienia Telegram",
+            "connected": "Połączono",
+            "connected_desc": "Będziesz otrzymywać powiadomienia o alertach przez Telegram.",
+            "connect_desc": "Połącz Telegram, aby otrzymywać natychmiastowe powiadomienia o alertach na telefon.",
+            "connect": "Połącz Telegram",
+            "disconnect": "Rozłącz",
+            "waiting": "Oczekiwanie na połączenie...",
+            "waiting_hint": "Kliknij 'Start' w Telegramie, a następnie wróć tutaj."
         }
     },
     "transactions": {

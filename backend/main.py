@@ -33,6 +33,8 @@ from api import (
     admin_price_data,
     wyckoff,
     alerts,
+    alert_checker,
+    telegram_bot,
     ai_advisor,
     ev_to_revenue,
     break_even_point,
@@ -51,11 +53,14 @@ if settings.ENV != "production":
     for ns in ("api", "services", "utils", "database"):
         logging.getLogger(ns).setLevel(logging.DEBUG)
 
+from api.telegram_bot import telegram_lifespan
+
 # Initialize FastAPI
 app = FastAPI(
     title="Stock Scout API",
     docs_url=None if settings.ENV == "production" else "/docs",
     redoc_url=None,
+    lifespan=telegram_lifespan,
 )
 add_bearer_auth(app)
 
@@ -100,6 +105,8 @@ app.include_router(valuation_series.router,           prefix="/api/valuation",  
 app.include_router(baskets_api.router,                prefix="/api",               tags=["Baskets"])
 app.include_router(transactions.router,               prefix="/api/transactions",  tags=["Transactions"])
 app.include_router(alerts.router,                     prefix="/api/alerts",        tags=["Alerts"])
+app.include_router(alert_checker.router,              prefix="/api/alerts",        tags=["Alerts"])
+app.include_router(telegram_bot.router,               prefix="/api/telegram",      tags=["Telegram"])
 app.include_router(ai_advisor.router,                 prefix="/api/ai-advisor",    tags=["AI Advisor"])
 app.include_router(transactions_transfer.router,       prefix="/api/transfer",      tags=["Transfers"])
 app.include_router(transactions_transfer_cash.router,  prefix="/api/transfer-cash", tags=["Transfers"])

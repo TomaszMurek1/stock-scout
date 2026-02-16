@@ -24,7 +24,9 @@ from database.stock_data import CompanyMarketData, StockPriceHistory
 from database.fx import FxRate
 
 # If you have any other models, import them here too
-# from database.other_model import OtherModel
+from database.user import User, Invitation
+from database.alert import Alert
+from database.company_note import CompanyNote
 
 # Alembic config object
 config = context.config
