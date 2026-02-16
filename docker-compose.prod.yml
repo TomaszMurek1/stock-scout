@@ -9,6 +9,8 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       ENV: production
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
     expose:
       - "8000"
     restart: always
