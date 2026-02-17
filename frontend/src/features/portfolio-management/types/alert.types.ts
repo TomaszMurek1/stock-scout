@@ -6,7 +6,23 @@ export enum AlertType {
     SMA_50_ABOVE_SMA_200 = "SMA_50_ABOVE_SMA_200",
     SMA_50_BELOW_SMA_200 = "SMA_50_BELOW_SMA_200",
     SMA_50_APPROACHING_SMA_200 = "SMA_50_APPROACHING_SMA_200",
+    // Auto-generated SMA monitoring types
+    SMA_50_CROSS_ABOVE = "SMA_50_CROSS_ABOVE",
+    SMA_50_CROSS_BELOW = "SMA_50_CROSS_BELOW",
+    SMA_200_CROSS_ABOVE = "SMA_200_CROSS_ABOVE",
+    SMA_200_CROSS_BELOW = "SMA_200_CROSS_BELOW",
+    SMA_50_DISTANCE = "SMA_50_DISTANCE",
+    SMA_200_DISTANCE = "SMA_200_DISTANCE",
 }
+
+export const AUTO_SMA_TYPES = new Set([
+    AlertType.SMA_50_CROSS_ABOVE,
+    AlertType.SMA_50_CROSS_BELOW,
+    AlertType.SMA_200_CROSS_ABOVE,
+    AlertType.SMA_200_CROSS_BELOW,
+    AlertType.SMA_50_DISTANCE,
+    AlertType.SMA_200_DISTANCE,
+]);
 
 export interface Alert {
     id: number;

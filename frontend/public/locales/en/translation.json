@@ -124,7 +124,9 @@
             "percent_down": "% Move Down",
             "golden_cross": "Golden Cross",
             "death_cross": "Death Cross",
-            "approaching_cross": "Approaching Cross"
+            "approaching_cross": "Approaching Cross",
+            "sma50_distance": "SMA 50 Distance",
+            "sma200_distance": "SMA 200 Distance"
         },
         "telegram": {
             "title": "Telegram Notifications",
@@ -135,6 +137,20 @@
             "disconnect": "Disconnect",
             "waiting": "Waiting for connection...",
             "waiting_hint": "Click 'Start' in Telegram, then come back here."
+        },
+        "sma": {
+            "title": "SMA Monitoring",
+            "description": "Automatically monitor SMA conditions for all your holdings and watchlist tickers.",
+            "group_sma50": "SMA 50",
+            "group_sma200": "SMA 200",
+            "sma50_cross_above": "Price goes above SMA 50",
+            "sma50_cross_below": "Price drops below SMA 50",
+            "sma200_cross_above": "Price goes above SMA 200",
+            "sma200_cross_below": "Price drops below SMA 200",
+            "sma50_distance_25": "Price ≥25% from SMA 50",
+            "sma50_distance_50": "Price ≥50% from SMA 50",
+            "sma200_distance_25": "Price ≥25% from SMA 200",
+            "sma200_distance_50": "Price ≥50% from SMA 200"
         }
     },
     "transactions": {

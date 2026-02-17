@@ -22,7 +22,13 @@ class AlertType(str, enum.Enum):
     SMA_50_ABOVE_SMA_200 = "SMA_50_ABOVE_SMA_200"
     SMA_50_BELOW_SMA_200 = "SMA_50_BELOW_SMA_200"
     SMA_50_APPROACHING_SMA_200 = "SMA_50_APPROACHING_SMA_200" # Within X% (from parameter)
-    # Future types like TECHNICAL, NEWS, EARNINGS can be added here
+    # Auto-generated SMA monitoring types
+    SMA_50_CROSS_ABOVE = "SMA_50_CROSS_ABOVE"
+    SMA_50_CROSS_BELOW = "SMA_50_CROSS_BELOW"
+    SMA_200_CROSS_ABOVE = "SMA_200_CROSS_ABOVE"
+    SMA_200_CROSS_BELOW = "SMA_200_CROSS_BELOW"
+    SMA_50_DISTANCE = "SMA_50_DISTANCE"    # threshold_value = 25 or 50
+    SMA_200_DISTANCE = "SMA_200_DISTANCE"  # threshold_value = 25 or 50
 
 class Alert(Base):
     __tablename__ = "alerts"

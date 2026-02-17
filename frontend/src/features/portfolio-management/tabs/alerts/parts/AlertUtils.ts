@@ -28,6 +28,12 @@ export const formatType = (type: AlertType, t: TFunction) => {
         case AlertType.SMA_50_ABOVE_SMA_200: return t("portfolio.alerts.type.golden_cross");
         case AlertType.SMA_50_BELOW_SMA_200: return t("portfolio.alerts.type.death_cross");
         case AlertType.SMA_50_APPROACHING_SMA_200: return t("portfolio.alerts.type.approaching_cross");
+        case AlertType.SMA_50_CROSS_ABOVE: return t("portfolio.alerts.sma.sma50_cross_above");
+        case AlertType.SMA_50_CROSS_BELOW: return t("portfolio.alerts.sma.sma50_cross_below");
+        case AlertType.SMA_200_CROSS_ABOVE: return t("portfolio.alerts.sma.sma200_cross_above");
+        case AlertType.SMA_200_CROSS_BELOW: return t("portfolio.alerts.sma.sma200_cross_below");
+        case AlertType.SMA_50_DISTANCE: return t("portfolio.alerts.type.sma50_distance", "SMA 50 Distance");
+        case AlertType.SMA_200_DISTANCE: return t("portfolio.alerts.type.sma200_distance", "SMA 200 Distance");
         default: return type;
     }
 };

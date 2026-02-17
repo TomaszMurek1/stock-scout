@@ -34,6 +34,7 @@ from api import (
     wyckoff,
     alerts,
     alert_checker,
+    alert_preferences,
     telegram_bot,
     ai_advisor,
     ev_to_revenue,
@@ -106,6 +107,7 @@ app.include_router(baskets_api.router,                prefix="/api",            
 app.include_router(transactions.router,               prefix="/api/transactions",  tags=["Transactions"])
 app.include_router(alerts.router,                     prefix="/api/alerts",        tags=["Alerts"])
 app.include_router(alert_checker.router,              prefix="/api/alerts",        tags=["Alerts"])
+app.include_router(alert_preferences.router,          prefix="/api/alert-preferences", tags=["Alerts"])
 app.include_router(telegram_bot.router,               prefix="/api/telegram",      tags=["Telegram"])
 app.include_router(ai_advisor.router,                 prefix="/api/ai-advisor",    tags=["AI Advisor"])
 app.include_router(transactions_transfer.router,       prefix="/api/transfer",      tags=["Transfers"])

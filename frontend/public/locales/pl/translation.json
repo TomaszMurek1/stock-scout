@@ -124,7 +124,9 @@
             "percent_down": "% Spadek",
             "golden_cross": "Złoty Krzyż",
             "death_cross": "Krzyż Śmierci",
-            "approaching_cross": "Zbliżający się Krzyż"
+            "approaching_cross": "Zbliżający się Krzyż",
+            "sma50_distance": "Odległość od SMA 50",
+            "sma200_distance": "Odległość od SMA 200"
         },
         "telegram": {
             "title": "Powiadomienia Telegram",
@@ -135,6 +137,20 @@
             "disconnect": "Rozłącz",
             "waiting": "Oczekiwanie na połączenie...",
             "waiting_hint": "Kliknij 'Start' w Telegramie, a następnie wróć tutaj."
+        },
+        "sma": {
+            "title": "Monitoring SMA",
+            "description": "Automatycznie monitoruj warunki SMA dla wszystkich posiadanych akcji i listy obserwowanych.",
+            "group_sma50": "SMA 50",
+            "group_sma200": "SMA 200",
+            "sma50_cross_above": "Cena idzie powyżej SMA 50",
+            "sma50_cross_below": "Cena spada poniżej SMA 50",
+            "sma200_cross_above": "Cena idzie powyżej SMA 200",
+            "sma200_cross_below": "Cena spada poniżej SMA 200",
+            "sma50_distance_25": "Cena ≥25% od SMA 50",
+            "sma50_distance_50": "Cena ≥50% od SMA 50",
+            "sma200_distance_25": "Cena ≥25% od SMA 200",
+            "sma200_distance_50": "Cena ≥50% od SMA 200"
         }
     },
     "transactions": {

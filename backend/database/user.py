@@ -32,6 +32,9 @@ class User(Base):
         "FavoriteStock", back_populates="user", cascade="all, delete-orphan"
     )
     alerts = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
+    alert_preferences = relationship(
+        "UserAlertPreferences", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
 
     # Telegram integration
     telegram_chat_id = Column(String, nullable=True)
