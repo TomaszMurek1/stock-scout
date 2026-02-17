@@ -120,7 +120,7 @@ export default function AlertsTab() {
         if (isSnoozed) return "snoozed";
         if (alert.is_read) return "read";
         const isLiveTriggered = triggeredAlerts[alert.id];
-        if (isLiveTriggered) return "triggered";
+        if (isLiveTriggered || alert.is_triggered) return "triggered";
         return "pending";
     }
 
@@ -170,7 +170,7 @@ export default function AlertsTab() {
                 id: 'info',
                 header: t("portfolio.alerts.info"),
                 size: 250,
-                Cell: ({ row }) => <AlertInfoCell row={row.original} isTriggered={triggeredAlerts[row.original.id]} />,
+                Cell: ({ row }) => <AlertInfoCell row={row.original} isTriggered={triggeredAlerts[row.original.id] || row.original.is_triggered} />,
             }
         ],
         [navigate, triggeredAlerts, t]

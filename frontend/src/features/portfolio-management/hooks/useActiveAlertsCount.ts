@@ -76,7 +76,8 @@ export const useActiveAlertsCount = () => {
                     }
                     return false;
                 default:
-                    return false;
+                    // Auto-generated SMA alerts are already triggered at creation
+                    return alert.is_triggered === true;
             }
         }).length;
     }, [alerts, holdings, watchlistData]);
