@@ -1,23 +1,29 @@
 """
 Alert checker endpoint for n8n cron integration.
 
-Called periodically by n8n to evaluate active alerts against current stock prices.
-Returns triggered alerts with chat_id, message, and the bot token so n8n
-can send Telegram messages without needing its own token configuration.
+Called periodically by n8n to evaluate:
+1. Manual per-ticker alerts (PRICE_ABOVE, PRICE_BELOW, etc.)
+2. Automatic SMA monitoring for holdings & watchlist tickers
 """
 
+import json
 import logging
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime, date
+from typing import List
 
 import yfinance as yf
 from fastapi import APIRouter, Depends, HTTPException, Header, status
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from database.base import get_db
 from database.alert import Alert, AlertType
+from database.company import Company
+from database.portfolio import Transaction, FavoriteStock, Portfolio
+from database.stock_data import CompanyMarketData
 from database.user import User
+from database.user_alert_preferences import UserAlertPreferences
 from core.config import settings
 
 router = APIRouter()
@@ -29,7 +35,8 @@ logger = logging.getLogger(__name__)
 class TriggeredAlert(BaseModel):
     chat_id: str
     message: str
-    alert_id: int
+    alert_id: int  # 0 for SMA-based alerts (no DB alert row)
+
 
 class CheckResponse(BaseModel):
     bot_token: str
@@ -55,55 +62,19 @@ def check_alerts(
     _=Depends(verify_internal_token),
 ):
     """
-    Evaluate all active, non-triggered alerts.
+    Evaluate all active alerts AND SMA-based monitoring.
     Returns the bot_token and a list of triggered alerts so n8n can
     send Telegram messages using the token from this response.
     """
-
-    # 1. Fetch active alerts for users who have Telegram connected
-    alerts = (
-        db.query(Alert)
-        .join(User, Alert.user_id == User.id)
-        .filter(
-            Alert.is_active == True,           # noqa: E712
-            Alert.is_triggered == False,       # noqa: E712
-            User.telegram_chat_id.isnot(None),
-            User.telegram_chat_id != "",
-        )
-        .options(joinedload(Alert.user))
-        .all()
-    )
-
-    if not alerts:
-        logger.info("No active alerts to check")
-        return CheckResponse(bot_token=settings.TELEGRAM_BOT_TOKEN or "", triggered=[])
-
-    # 2. Collect unique tickers and fetch current prices
-    tickers = list({a.ticker for a in alerts})
-    logger.info(f"Checking {len(alerts)} alerts across {len(tickers)} tickers: {tickers}")
-
-    prices = _fetch_current_prices(tickers)
-
-    # 3. Evaluate each alert
     triggered: list[TriggeredAlert] = []
 
-    for alert in alerts:
-        price = prices.get(alert.ticker)
-        if price is None:
-            logger.warning(f"No price data for {alert.ticker}, skipping alert {alert.id}")
-            continue
+    # Part 1: Manual per-ticker alerts
+    triggered.extend(_check_manual_alerts(db))
 
-        is_met, msg = _evaluate_alert(alert, price)
+    # Part 2: SMA monitoring for holdings & watchlist
+    triggered.extend(_check_sma_alerts(db))
 
-        if is_met:
-            triggered.append(TriggeredAlert(
-                chat_id=alert.user.telegram_chat_id,
-                message=msg,
-                alert_id=alert.id,
-            ))
-            logger.info(f"🔔 Alert {alert.id} triggered: {msg}")
-
-    logger.info(f"Check complete: {len(triggered)}/{len(alerts)} alerts triggered")
+    logger.info(f"Check complete: {len(triggered)} total notifications to send")
     return CheckResponse(bot_token=settings.TELEGRAM_BOT_TOKEN or "", triggered=triggered)
 
 
@@ -125,6 +96,389 @@ def mark_alert_triggered(
     db.commit()
 
     return {"ok": True, "alert_id": alert_id}
+
+
+# ── Part 1: Manual alerts ────────────────────────────────────────────────────
+
+def _check_manual_alerts(db: Session) -> list[TriggeredAlert]:
+    """Check per-ticker alerts created by users."""
+    alerts = (
+        db.query(Alert)
+        .join(User, Alert.user_id == User.id)
+        .filter(
+            Alert.is_active == True,           # noqa: E712
+            Alert.is_triggered == False,       # noqa: E712
+            Alert.is_read == False,            # noqa: E712
+            User.telegram_chat_id.isnot(None),
+            User.telegram_chat_id != "",
+        )
+        .options(joinedload(Alert.user))
+        .all()
+    )
+
+    if not alerts:
+        logger.info("No active manual alerts to check")
+        return []
+
+    tickers = list({a.ticker for a in alerts})
+    logger.info(f"Checking {len(alerts)} manual alerts across {len(tickers)} tickers")
+
+    prices = _fetch_current_prices(tickers)
+    triggered: list[TriggeredAlert] = []
+
+    for alert in alerts:
+        price = prices.get(alert.ticker)
+        if price is None:
+            continue
+
+        is_met, msg = _evaluate_alert(alert, price)
+        if is_met:
+            triggered.append(TriggeredAlert(
+                chat_id=alert.user.telegram_chat_id,
+                message=msg,
+                alert_id=alert.id,
+            ))
+            logger.info(f"🔔 Alert {alert.id} triggered: {msg}")
+
+    return triggered
+
+
+# ── Auto-generated SMA alert types (used for identification) ─────────────────
+
+AUTO_SMA_TYPES = {
+    AlertType.SMA_50_CROSS_ABOVE,
+    AlertType.SMA_50_CROSS_BELOW,
+    AlertType.SMA_200_CROSS_ABOVE,
+    AlertType.SMA_200_CROSS_BELOW,
+    AlertType.SMA_50_DISTANCE,
+    AlertType.SMA_200_DISTANCE,
+}
+
+# Opposite types for auto-close logic
+_OPPOSITE_TYPE = {
+    AlertType.SMA_50_CROSS_ABOVE: AlertType.SMA_50_CROSS_BELOW,
+    AlertType.SMA_50_CROSS_BELOW: AlertType.SMA_50_CROSS_ABOVE,
+    AlertType.SMA_200_CROSS_ABOVE: AlertType.SMA_200_CROSS_BELOW,
+    AlertType.SMA_200_CROSS_BELOW: AlertType.SMA_200_CROSS_ABOVE,
+}
+
+
+def _check_sma_alerts(db: Session) -> list[TriggeredAlert]:
+    """
+    Check SMA conditions for all users who have Telegram + prefs enabled.
+
+    Uses STATE TRANSITION detection:
+    - Tracks last-known state (above/below) per ticker+SMA in `last_sma_alerts_sent`
+    - Only creates an Alert when state CHANGES (e.g. above → below)
+    - Auto-closes the opposite alert when condition reverses
+    """
+    users_with_prefs = (
+        db.query(User, UserAlertPreferences)
+        .join(UserAlertPreferences, UserAlertPreferences.user_id == User.id)
+        .filter(
+            User.telegram_chat_id.isnot(None),
+            User.telegram_chat_id != "",
+        )
+        .all()
+    )
+
+    if not users_with_prefs:
+        return []
+
+    triggered: list[TriggeredAlert] = []
+
+    for user, prefs in users_with_prefs:
+        # Check if any pref is enabled
+        if not any([
+            prefs.sma50_cross_above, prefs.sma50_cross_below,
+            prefs.sma200_cross_above, prefs.sma200_cross_below,
+            prefs.sma50_distance_25, prefs.sma50_distance_50,
+            prefs.sma200_distance_25, prefs.sma200_distance_50,
+        ]):
+            continue
+
+        company_ids = _get_user_company_ids(db, user.id)
+        if not company_ids:
+            continue
+
+        market_data = (
+            db.query(CompanyMarketData, Company.ticker, Company.company_id)
+            .join(Company, CompanyMarketData.company_id == Company.company_id)
+            .filter(CompanyMarketData.company_id.in_(company_ids))
+            .all()
+        )
+
+        # Load state tracker
+        try:
+            state = json.loads(prefs.last_sma_alerts_sent or "{}")
+        except (json.JSONDecodeError, TypeError):
+            state = {}
+
+        state_changed = False
+
+        for md, ticker, company_id in market_data:
+            price = md.current_price
+            sma50 = md.sma_50
+            sma200 = md.sma_200
+
+            if not price:
+                continue
+
+            # ── SMA 50 cross ─────────────────────────────────────────
+            if (prefs.sma50_cross_above or prefs.sma50_cross_below) and sma50:
+                current_side = "above" if price > sma50 else "below"
+                state_key = f"{ticker}_sma50"
+                prev_side = state.get(state_key)
+
+                if prev_side != current_side:  # state changed (or first time)
+                    state[state_key] = current_side
+                    state_changed = True
+
+                    if current_side == "below" and prefs.sma50_cross_below:
+                        alert = _create_sma_alert(
+                            db, user, ticker, company_id,
+                            AlertType.SMA_50_CROSS_BELOW,
+                            sma50,
+                            f"📉 {ticker} dropped below SMA 50\nPrice: {price:.2f} | SMA 50: {sma50:.2f}",
+                        )
+                        if alert:
+                            triggered.append(TriggeredAlert(
+                                chat_id=user.telegram_chat_id,
+                                message=alert.message,
+                                alert_id=alert.id,
+                            ))
+                    elif current_side == "above" and prefs.sma50_cross_above:
+                        alert = _create_sma_alert(
+                            db, user, ticker, company_id,
+                            AlertType.SMA_50_CROSS_ABOVE,
+                            sma50,
+                            f"📈 {ticker} crossed above SMA 50\nPrice: {price:.2f} | SMA 50: {sma50:.2f}",
+                        )
+                        if alert:
+                            triggered.append(TriggeredAlert(
+                                chat_id=user.telegram_chat_id,
+                                message=alert.message,
+                                alert_id=alert.id,
+                            ))
+
+                    # Auto-close opposite alert
+                    _auto_close_opposite(db, user.id, ticker, current_side, "sma50")
+
+            # ── SMA 200 cross ────────────────────────────────────────
+            if (prefs.sma200_cross_above or prefs.sma200_cross_below) and sma200:
+                current_side = "above" if price > sma200 else "below"
+                state_key = f"{ticker}_sma200"
+                prev_side = state.get(state_key)
+
+                if prev_side != current_side:
+                    state[state_key] = current_side
+                    state_changed = True
+
+                    if current_side == "below" and prefs.sma200_cross_below:
+                        alert = _create_sma_alert(
+                            db, user, ticker, company_id,
+                            AlertType.SMA_200_CROSS_BELOW,
+                            sma200,
+                            f"📉 {ticker} dropped below SMA 200\nPrice: {price:.2f} | SMA 200: {sma200:.2f}",
+                        )
+                        if alert:
+                            triggered.append(TriggeredAlert(
+                                chat_id=user.telegram_chat_id,
+                                message=alert.message,
+                                alert_id=alert.id,
+                            ))
+                    elif current_side == "above" and prefs.sma200_cross_above:
+                        alert = _create_sma_alert(
+                            db, user, ticker, company_id,
+                            AlertType.SMA_200_CROSS_ABOVE,
+                            sma200,
+                            f"📈 {ticker} crossed above SMA 200\nPrice: {price:.2f} | SMA 200: {sma200:.2f}",
+                        )
+                        if alert:
+                            triggered.append(TriggeredAlert(
+                                chat_id=user.telegram_chat_id,
+                                message=alert.message,
+                                alert_id=alert.id,
+                            ))
+
+                    _auto_close_opposite(db, user.id, ticker, current_side, "sma200")
+
+            # ── SMA 50 distance ──────────────────────────────────────
+            if (prefs.sma50_distance_25 or prefs.sma50_distance_50) and sma50 and sma50 > 0:
+                pct = abs((price - sma50) / sma50) * 100
+                new_alerts = _check_distance_transitions(
+                    db, state, user, ticker, company_id,
+                    price, sma50, pct, "sma50",
+                    prefs.sma50_distance_25, prefs.sma50_distance_50,
+                    AlertType.SMA_50_DISTANCE,
+                )
+                triggered.extend(new_alerts)
+                if new_alerts:
+                    state_changed = True
+
+            # ── SMA 200 distance ─────────────────────────────────────
+            if (prefs.sma200_distance_25 or prefs.sma200_distance_50) and sma200 and sma200 > 0:
+                pct = abs((price - sma200) / sma200) * 100
+                new_alerts = _check_distance_transitions(
+                    db, state, user, ticker, company_id,
+                    price, sma200, pct, "sma200",
+                    prefs.sma200_distance_25, prefs.sma200_distance_50,
+                    AlertType.SMA_200_DISTANCE,
+                )
+                triggered.extend(new_alerts)
+                if new_alerts:
+                    state_changed = True
+
+        # Persist state if anything changed
+        if state_changed:
+            prefs.last_sma_alerts_sent = json.dumps(state)
+            db.commit()
+
+    logger.info(f"SMA check: {len(triggered)} notifications")
+    return triggered
+
+
+def _create_sma_alert(
+    db: Session,
+    user: User,
+    ticker: str,
+    company_id: int,
+    alert_type: AlertType,
+    threshold: float,
+    message: str,
+) -> Alert | None:
+    """Create a real Alert row for an SMA condition. Returns the alert or None."""
+    alert = Alert(
+        user_id=user.id,
+        company_id=company_id,
+        ticker=ticker,
+        alert_type=alert_type,
+        threshold_value=threshold,
+        is_active=True,
+        is_triggered=True,
+        last_triggered_at=datetime.utcnow(),
+        is_read=False,
+        message=message,
+    )
+    db.add(alert)
+    db.flush()  # get the id
+    logger.info(f"🔔 Auto SMA alert created: [{alert.id}] {ticker} {alert_type.value}")
+    return alert
+
+
+def _auto_close_opposite(
+    db: Session, user_id: int, ticker: str, current_side: str, sma_label: str
+):
+    """Auto-close (deactivate) the opposite SMA alert when condition reverses."""
+    if sma_label == "sma50":
+        opposite_type = (
+            AlertType.SMA_50_CROSS_ABOVE if current_side == "below"
+            else AlertType.SMA_50_CROSS_BELOW
+        )
+    else:
+        opposite_type = (
+            AlertType.SMA_200_CROSS_ABOVE if current_side == "below"
+            else AlertType.SMA_200_CROSS_BELOW
+        )
+
+    closed = (
+        db.query(Alert)
+        .filter(
+            Alert.user_id == user_id,
+            Alert.ticker == ticker,
+            Alert.alert_type == opposite_type,
+            Alert.is_active == True,  # noqa: E712
+        )
+        .update({"is_active": False}, synchronize_session="fetch")
+    )
+    if closed:
+        logger.info(f"🔕 Auto-closed {closed} opposite {opposite_type.value} alert(s) for {ticker}")
+
+
+def _check_distance_transitions(
+    db: Session,
+    state: dict,
+    user: User,
+    ticker: str,
+    company_id: int,
+    price: float,
+    sma_val: float,
+    pct: float,
+    sma_label: str,  # "sma50" or "sma200"
+    enabled_25: bool,
+    enabled_50: bool,
+    alert_type: AlertType,
+) -> list[TriggeredAlert]:
+    """Check distance threshold transitions and create alerts."""
+    results: list[TriggeredAlert] = []
+    direction = "above" if price > sma_val else "below"
+
+    for threshold, enabled in [(25, enabled_25), (50, enabled_50)]:
+        if not enabled:
+            continue
+
+        state_key = f"{ticker}_{threshold}pct_{sma_label}"
+        now_exceeds = pct >= threshold
+        prev_exceeded = state.get(state_key, False)
+
+        if now_exceeds and not prev_exceeded:
+            # Crossed INTO the threshold zone
+            state[state_key] = True
+            msg = (
+                f"⚠️ {ticker} is {pct:.1f}% {direction} {sma_label.upper()}\n"
+                f"Price: {price:.2f} | {sma_label.upper()}: {sma_val:.2f}"
+            )
+            alert = _create_sma_alert(
+                db, user, ticker, company_id,
+                alert_type, threshold, msg,
+            )
+            if alert:
+                results.append(TriggeredAlert(
+                    chat_id=user.telegram_chat_id,
+                    message=alert.message,
+                    alert_id=alert.id,
+                ))
+        elif not now_exceeds and prev_exceeded:
+            # Dropped back under threshold — auto-close and reset
+            state[state_key] = False
+            db.query(Alert).filter(
+                Alert.user_id == user.id,
+                Alert.ticker == ticker,
+                Alert.alert_type == alert_type,
+                Alert.threshold_value == threshold,
+                Alert.is_active == True,  # noqa: E712
+            ).update({"is_active": False}, synchronize_session="fetch")
+
+    return results
+
+
+def _get_user_company_ids(db: Session, user_id: int) -> set[int]:
+    """Get all company_ids from user's holdings and watchlist."""
+    company_ids = set()
+
+    # Holdings: distinct company_ids from BUY transactions (non-null)
+    portfolio = db.query(Portfolio).filter(Portfolio.user_id == user_id).first()
+    if portfolio:
+        holding_ids = (
+            db.query(Transaction.company_id)
+            .filter(
+                Transaction.portfolio_id == portfolio.id,
+                Transaction.company_id.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+        company_ids.update(cid for (cid,) in holding_ids)
+
+    # Watchlist
+    fav_ids = (
+        db.query(FavoriteStock.company_id)
+        .filter(FavoriteStock.user_id == user_id)
+        .all()
+    )
+    company_ids.update(cid for (cid,) in fav_ids)
+
+    return company_ids
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

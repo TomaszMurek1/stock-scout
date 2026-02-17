@@ -19,6 +19,7 @@ import { AlertConditionCell } from "./parts/AlertConditionCell"
 import { AlertInfoCell } from "./parts/AlertInfoCell"
 import { AlertRowActions } from "./parts/AlertRowActions"
 import { TelegramConnect } from "./parts/TelegramConnect"
+import { SmaMonitoring } from "./parts/SmaMonitoring"
 
 export default function AlertsTab() {
     const { alerts, isLoadingAlerts, updateAlert, deleteAlert, clearAllAlerts } = useAppStore(
@@ -178,6 +179,7 @@ export default function AlertsTab() {
     return (
         <>
         <TelegramConnect />
+        <SmaMonitoring />
         <div className="shadow-sm rounded-lg overflow-hidden border border-gray-200 bg-white">
             <MaterialReactTable
                 columns={columns}

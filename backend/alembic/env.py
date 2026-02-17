@@ -27,6 +27,7 @@ from database.fx import FxRate
 from database.user import User, Invitation
 from database.alert import Alert
 from database.company_note import CompanyNote
+from database.user_alert_preferences import UserAlertPreferences
 
 # Alembic config object
 config = context.config

@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertType } from "@/features/portfolio-management/types/alert.types";
+import { AlertType, AUTO_SMA_TYPES } from "@/features/portfolio-management/types/alert.types";
 import { AlertRow } from "./AlertUtils";
 
 interface AlertValueCellProps {
@@ -8,9 +8,22 @@ interface AlertValueCellProps {
 
 export const AlertValueCell: React.FC<AlertValueCellProps> = ({ row }) => {
     const type = row.alert_type;
-    const isSmaAlert = type.startsWith('SMA');
-    
-    if (isSmaAlert) {
+
+    // Auto-generated SMA alerts (cross/distance) — show current price
+    if (AUTO_SMA_TYPES.has(type)) {
+        return (
+            <span className="font-mono text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                {row.currentPrice?.toFixed(2) || "—"}
+            </span>
+        );
+    }
+
+    // Manual SMA comparison alerts (golden cross / death cross / approaching)
+    const isSmaCompare = type === AlertType.SMA_50_ABOVE_SMA_200
+        || type === AlertType.SMA_50_BELOW_SMA_200
+        || type === AlertType.SMA_50_APPROACHING_SMA_200;
+
+    if (isSmaCompare) {
         const sma = row.currentSma;
         if (!sma) return <span className="text-gray-400">Loading...</span>;
         
@@ -27,7 +40,7 @@ export const AlertValueCell: React.FC<AlertValueCellProps> = ({ row }) => {
                 <span className="text-purple-600 font-bold">SMA200: {sma.sma200?.toFixed(2) ?? 'N/A'}</span>
                 {diffElem}
             </div>
-        )
+        );
     }
     
     return (

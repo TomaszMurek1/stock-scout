@@ -1,0 +1,190 @@
+/* ── SMA Monitoring card ────────────────────────────────── */
+
+.sma-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+/* ── Header (clickable) ─────────────────────────────────── */
+
+.sma-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.75rem 1.15rem;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.sma-header:hover {
+    background: linear-gradient(135deg, #e4ebff 0%, #dde5ff 100%);
+}
+
+.sma-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sma-header-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.sma-header-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.sma-active-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.sma-chevron {
+    color: #64748b;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.sma-chevron.open {
+    transform: rotate(180deg);
+}
+
+/* ── Body (collapsible) ─────────────────────────────────── */
+
+.sma-body {
+    max-height: 600px;
+    opacity: 1;
+    padding: 0.75rem 1.15rem 1rem;
+    transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+    overflow: hidden;
+}
+
+.sma-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.sma-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.45;
+}
+
+/* ── Groups ──────────────────────────────────────────────── */
+
+.sma-group {
+    margin-bottom: 0.65rem;
+}
+
+.sma-group:last-child {
+    margin-bottom: 0;
+}
+
+.sma-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.sma-group-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+}
+
+/* ── Toggle rows ─────────────────────────────────────────── */
+
+.sma-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.1s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.sma-toggle-row:last-child {
+    border-bottom: none;
+}
+
+.sma-toggle-row:hover {
+    background: #f1f5f9;
+}
+
+.sma-toggle-label {
+    font-size: 0.82rem;
+    color: #334155;
+}
+
+/* ── Toggle switch ───────────────────────────────────────── */
+
+.sma-switch {
+    position: relative;
+    width: 38px;
+    height: 20px;
+    border-radius: 10px;
+    background: #cbd5e1;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sma-switch.on {
+    background: #3b82f6;
+}
+
+.sma-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sma-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.sma-switch.on .sma-knob {
+    transform: translateX(18px);
+}
