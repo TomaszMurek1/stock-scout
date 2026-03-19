@@ -13,10 +13,11 @@ import { formatCurrency, formatPercent } from "@/utils/formatting";
 export const PERIODS: Period[] = ["1d", "1w", "1m", "3m", "6m", "1y", "ytd", "itd"];
 
 export const PeriodSelector = ({ selected, onSelect }: { selected: Period; onSelect: (p: Period) => void }) => (
-  <div className="flex bg-gray-100 p-1 rounded-lg">
+  <div data-id="periods" className="flex bg-gray-100 p-1 rounded-lg">
     {PERIODS.map((p) => (
       <button
         key={p}
+        data-id={`period-${p}`}
         onClick={() => onSelect(p)}
         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
           selected === p
@@ -30,8 +31,8 @@ export const PeriodSelector = ({ selected, onSelect }: { selected: Period; onSel
   </div>
 );
 
-export const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 ${className}`}>
+export const Card = ({ children, className = "", ...rest }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 ${className}`} {...rest}>
     {children}
   </div>
 );

@@ -60,7 +60,7 @@ const TradePanel: FC<TradePanelProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} data-id="form-trade" className="space-y-6">
         <FormField
           control={form.control}
           name="quantity"
@@ -87,6 +87,7 @@ const TradePanel: FC<TradePanelProps> = ({
         </div>
 
         <Button
+          data-id="btn-trade-submit"
           type="submit"
           className={`w-full ${
             isBuy

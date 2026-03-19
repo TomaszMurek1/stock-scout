@@ -49,7 +49,7 @@ export default function AddAlertModal({ isOpen, onClose, defaultTicker, onSucces
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px] bg-white text-slate-800">
+            <DialogContent data-id="modal-add-alert" className="sm:max-w-[425px] bg-white text-slate-800">
                 <DialogHeader>
                     <DialogTitle>Set Price Alert</DialogTitle>
                     <DialogDescription>
@@ -124,7 +124,7 @@ export default function AddAlertModal({ isOpen, onClose, defaultTicker, onSucces
                         />
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={isLoadingAlerts}>
+                        <Button type="submit" disabled={isLoadingAlerts} data-id="btn-set-alert">
                             {isLoadingAlerts ? "Creating..." : "Set Alert"}
                         </Button>
                     </DialogFooter>

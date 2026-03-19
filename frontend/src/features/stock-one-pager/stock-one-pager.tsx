@@ -44,7 +44,7 @@ export const StockOnePager: FC = () => {
   if (!stock) return null;
   if (stock.delisted) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div data-id="stock-delisted" className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
         <div className="bg-white rounded-lg shadow-lg max-w-xl w-full p-8 text-center space-y-3">
           <p className="text-2xl font-semibold text-gray-900">{ticker} is delisted</p>
           <p className="text-gray-600">
@@ -67,7 +67,7 @@ export const StockOnePager: FC = () => {
       : 0;
 
   return (
-    <div className="h-screen flex flex-col bg-[#F8FAFC] overflow-y-auto">
+    <div data-id="stock-page" className="h-screen flex flex-col bg-[#F8FAFC] overflow-y-auto">
       <StockPageContent
         stock={stock}
         ticker={ticker || ""}

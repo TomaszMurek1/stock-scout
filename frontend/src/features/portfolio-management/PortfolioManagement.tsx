@@ -79,10 +79,10 @@ export default function PortfolioManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-slate-900">
-      <div className="max-w-[1400px] mx-auto px-4 py-8">
+    <div data-id="pm-page" className="min-h-screen bg-gray-100 text-slate-900">
+      <div data-id="pm-container" className="max-w-[1400px] mx-auto px-4 py-8">
         {/* Main Card Container - wraps header and all content */}
-        <div className="p-6 rounded-xl bg-gray-100  space-y-6">
+        <div data-id="pm-card" className="p-6 rounded-xl bg-gray-100  space-y-6">
           <Header 
             onAdd={() => setIsAddModalOpen(true)} 
             onAnalyze={() => setIsAiModalOpen(true)}
@@ -103,12 +103,14 @@ export default function PortfolioManagement() {
             }}
             className="space-y-6"
             ref={tabsRef}
+            data-id="pm-tabs"
           >
-            <AnimatedTabsList className="bg-slate-100/50 p-1 h-auto flex overflow-x-auto no-scrollbar gap-1 w-full sm:w-auto justify-start">
+            <AnimatedTabsList data-id="pm-tabs-list" className="bg-slate-100/50 p-1 h-auto flex overflow-x-auto no-scrollbar gap-1 w-full sm:w-auto justify-start">
               <FramerTabTrigger
                 value="portfolio"
                 isSelected={activeTab === "portfolio"}
                 className="px-6 py-2"
+                data-id="tab-portfolio"
               >
                 {t("portfolio.tabs.portfolio")}
               </FramerTabTrigger>
@@ -116,12 +118,13 @@ export default function PortfolioManagement() {
                 value="performance"
                 isSelected={activeTab === "performance"}
                 className="px-6 py-2"
+                data-id="tab-perf"
               >
                 {t("portfolio.tabs.performance")}
               </FramerTabTrigger>
             </AnimatedTabsList>
 
-            <AnimatedTabsContent value="portfolio" forceMount={loadedTabs.has("portfolio") || undefined} className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="portfolio" forceMount={loadedTabs.has("portfolio") || undefined} className="space-y-6 animate-in fade-in-0 mt-0" data-id="content-portfolio">
               <Summary
                 portfolio={portfolio}
                 accounts={accounts} 
@@ -144,7 +147,7 @@ export default function PortfolioManagement() {
               />
             </AnimatedTabsContent>
 
-            <AnimatedTabsContent value="performance" forceMount={loadedTabs.has("performance") || undefined} className="space-y-6 animate-in fade-in-0 mt-0">
+            <AnimatedTabsContent value="performance" forceMount={loadedTabs.has("performance") || undefined} className="space-y-6 animate-in fade-in-0 mt-0" data-id="content-perf">
               <Performance />
             </AnimatedTabsContent>
           </AnimatedTabs>

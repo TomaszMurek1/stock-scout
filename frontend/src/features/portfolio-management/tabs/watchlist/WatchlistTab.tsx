@@ -27,12 +27,13 @@ const WatchlistTab = React.memo(() => {
   }, [loadWatchlist]);
 
   return (
-    <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+    <div data-id="watchlist" className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
       <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-800">{t("portfolio.watchlist.title")}</h2>
         <div className="flex space-x-2">
           <AddWatchlistDialog />
           <Button
+            data-id="btn-refresh-watchlist"
             variant="outline"
             size="sm"
             className="text-gray-600"

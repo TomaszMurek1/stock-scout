@@ -131,7 +131,7 @@ export function CompanySearch({
     const primaryMarket = selected?.market?.name || ""
 
     return (
-        <div ref={wrapperRef} className={cn("mx-auto px-4 py-6", containerClassName)}>
+        <div ref={wrapperRef} data-id="search" className={cn("mx-auto px-4 py-6", containerClassName)}>
             <div className={cn("bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4 shadow-sm", contentClassName)}>
                 <div className="flex justify-between items-center">
                     {/* Left side - Icon and Search */}
@@ -177,6 +177,7 @@ export function CompanySearch({
                     {/* Right side - Action Button */}
                     <div className="flex items-center">
                         <button
+                            data-id="btn-search-action"
                             onClick={handleAction}
                             disabled={!selected || actionLoading}
                             className="bg-gray-800 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center shadow-sm hover:shadow-md disabled:shadow-none w-48 justify-center"

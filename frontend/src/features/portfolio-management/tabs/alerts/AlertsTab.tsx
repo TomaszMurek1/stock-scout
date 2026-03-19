@@ -180,7 +180,7 @@ export default function AlertsTab() {
         <>
         <TelegramConnect />
         <SmaMonitoring />
-        <div className="shadow-sm rounded-lg overflow-hidden border border-gray-200 bg-white">
+        <div data-id="alerts" className="shadow-sm rounded-lg overflow-hidden border border-gray-200 bg-white">
             <MaterialReactTable
                 columns={columns}
                 data={tableData}
@@ -202,6 +202,7 @@ export default function AlertsTab() {
                         </div>
                         {alerts.length > 0 && (
                             <button 
+                                data-id="btn-clear-alerts"
                                 onClick={clearAllAlerts}
                                 className="text-sm text-gray-500 hover:text-red-600 underline"
                             >

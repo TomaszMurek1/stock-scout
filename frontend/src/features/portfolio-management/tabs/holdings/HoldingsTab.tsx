@@ -135,7 +135,7 @@ const HoldingsTab =  React.memo(({ holdings, transactions, onRemove, isLoading, 
 
   if (isLoading && (!holdings || holdings.length === 0)) {
      return (
-       <div className="space-y-4 p-4">
+       <div data-id="holdings-skeleton" className="space-y-4 p-4">
          {[1, 2, 3].map((i) => (
            <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
          ))}
@@ -148,7 +148,7 @@ const HoldingsTab =  React.memo(({ holdings, transactions, onRemove, isLoading, 
   }
 
   return (
-    <div className="shadow-sm">
+    <div data-id="holdings" className="shadow-sm">
       <MaterialReactTable
         columns={columns}
         data={groupedHoldings}

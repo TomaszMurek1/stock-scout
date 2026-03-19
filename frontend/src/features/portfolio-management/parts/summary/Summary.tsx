@@ -27,17 +27,21 @@ const Summary = React.memo<SummaryProps>(({ portfolio, accounts, performance, ho
   const itd = performance?.breakdowns?.itd;
   const perf = performance?.performance;
 
-  const hasPerformance = !!(breakdown && itd && perf);
+  // Distinguish "data loaded but empty" from "data still loading".
+  // Performance is considered "received" once the portfolio_id is populated (> 0).
+  const perfDataReceived = performance?.portfolio_id > 0;
+  const hasPerformance = !!(breakdown && Object.keys(breakdown).length > 0 && itd && perf);
   const hasHoldings = (portfolio.invested_value_current > 0) || (holdings && holdings.length > 0);
 
   // If loading, we calculate effective loading states for children.
   // We want to show skeletons if we are globally loading.
   const isGlobalLoading = isLoading; 
   // Partial loading for performance (if core loaded but perf pending)
-  const isPerfLoading = isGlobalLoading || !hasPerformance;
+  // Once perf data is received (even if empty), stop showing loading skeletons.
+  const isPerfLoading = isGlobalLoading || (!perfDataReceived && !hasPerformance);
 
   return (
-    <div className="space-y-8">
+    <div data-id="summary" className="space-y-8">
       {/* 1. Top Level Brief (Invested, Net Deposits, Cash, PnL) */}
       <PortfolioBrief 
         portfolio={portfolio} 
@@ -53,7 +57,7 @@ const Summary = React.memo<SummaryProps>(({ portfolio, accounts, performance, ho
       ) : (
         <>
           {/* Header & Period Selector */}
-          <div className="flex items-center justify-between pt-2">
+          <div data-id="returns-header" className="flex items-center justify-between pt-2">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-gray-500" />
                 {t("portfolio.summary.returns_analysis")} ({selectedPeriod.toUpperCase()})
@@ -78,7 +82,7 @@ const Summary = React.memo<SummaryProps>(({ portfolio, accounts, performance, ho
             holdings={holdings}
             accounts={accounts}
             realizedPnl={performance?.realized_pnl}
-            isLoading={!hasPerformance}
+            isLoading={isPerfLoading}
           />
         </>
       )}
