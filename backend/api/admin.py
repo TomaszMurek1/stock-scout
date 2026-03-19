@@ -19,7 +19,7 @@ from services.fundamentals.financials_batch_update_service import (
 )
 from services.admin_yfinance_probe import gather_yfinance_snapshot
 from services.basket_resolver import resolve_baskets_to_companies
-from services.scan_job_service import create_job, run_scan_task
+from services.scan_job_service import create_job, get_active_job, run_scan_task, start_job_in_thread
 
 
 class SyncCompanyMarketsRequest(BaseModel):
@@ -128,18 +128,21 @@ def run_financials_market_update_task(db: Session, market_name: str | None = Non
 
 @router.post("/run-financials-market-update")
 def run_financials_batch_update(
-    background_tasks: BackgroundTasks,
     market_name: str | None = None,
     db: Session = Depends(get_db),
     _: str = Depends(require_admin),  # Only admin can modify
 ):
+    existing = get_active_job(db, "financials_market_update")
+    if existing:
+        return {"job_id": existing.id, "status": existing.status, "already_running": True}
+
     job = create_job(db, "financials_market_update")
 
     def task_wrapper(db_session: Session):
         return run_financials_market_update_task(db_session, market_name)
 
-    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
-    return {"job_id": job.id, "status": "PENDING"}
+    start_job_in_thread(job.id, task_wrapper)
+    return {"job_id": job.id, "status": "PENDING", "already_running": False}
 
 
 def run_financials_for_baskets_task(db: Session, basket_ids: list[int]):
@@ -167,20 +170,23 @@ def run_financials_for_baskets_task(db: Session, basket_ids: list[int]):
 @router.post("/run-financials-baskets")
 def run_financials_for_baskets(
     payload: BasketRefreshRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _: str = Depends(require_admin),
 ):
     if not payload.basket_ids:
         raise HTTPException(status_code=400, detail="basket_ids are required")
     
+    existing = get_active_job(db, "financials_basket_refresh")
+    if existing:
+        return {"job_id": existing.id, "status": existing.status, "already_running": True}
+
     job = create_job(db, "financials_basket_refresh")
 
     def task_wrapper(db_session: Session):
         return run_financials_for_baskets_task(db_session, payload.basket_ids)
 
-    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
-    return {"job_id": job.id, "status": "PENDING"}
+    start_job_in_thread(job.id, task_wrapper)
+    return {"job_id": job.id, "status": "PENDING", "already_running": False}
 
 
 @router.post("/sync-company-markets")

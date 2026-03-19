@@ -35,16 +35,10 @@ const adminLinks = [
     icon: Search,
   },
   {
-    title: "Refresh fundamentals",
-    description: "Trigger yfinance financial updates (annual + quarterly) across markets.",
-    href: "/admin/financial-refresh",
+    title: "Data Refresh",
+    description: "Refresh price and fundamental data — for all companies or specific baskets.",
+    href: "/admin/data-refresh",
     icon: RefreshCw,
-  },
-  {
-    title: "Populate Price History",
-    description: "Fetch and store historical OHLCV data for companies in selected baskets.",
-    href: "/admin/price-history",
-    icon: Database,
   },
   {
     title: "Manage Invitations",

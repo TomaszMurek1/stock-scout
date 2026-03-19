@@ -834,6 +834,20 @@ def update_financials_for_tickers(
             )
             eligible_tickers.append(comp.ticker)
         else:
+            # Stamp last_updated so we don't re-check this company on subsequent
+            # runs today — the "already checked today" guard (above) will skip it.
+            try:
+                fn = db.query(CompanyFinancials).filter_by(company_id=comp.company_id).first()
+                if fn:
+                    fn.last_updated = now_utc
+                else:
+                    fn = CompanyFinancials(company_id=comp.company_id, last_updated=now_utc)
+                    db.add(fn)
+                db.commit()
+            except Exception as e:
+                logger.error(f"[{comp.ticker}] Failed to stamp last_updated: {e}")
+                db.rollback()
+
             if log_skips:
                 if not last_annual and not last_quarter:
                     logger.info(f"[{comp.ticker}] No previous reports; will update.")

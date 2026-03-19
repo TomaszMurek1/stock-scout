@@ -1,6 +1,6 @@
 # Stock Scout — Project Overview
 
-> **Last updated:** 2026-02-15
+> **Last updated:** 2026-03-19
 > Master reference file for AI assistants, new contributors, and the project owner.
 
 ---
@@ -317,8 +317,9 @@ All routes are prefixed with `/api/` and registered in `backend/main.py`.
 | `/api/watchlist` | Watchlist | `watchlist.py` | Favorites / watchlist |
 | `/api/alerts` | Alerts | `alerts.py` | Price/volume alert CRUD |
 | `/api/ai-advisor` | AI Advisor | `ai_advisor.py` | n8n proxy for AI workflow |
-| `/api/admin` | Admin | `admin.py`, `admin_price_data.py` | Market sync, invitations, financials refresh |
-| `/api/jobs` | Jobs | `jobs.py` | Background job status |
+| `/api/admin` | Admin | `admin.py`, `admin_price_data.py` | Market sync, invitations, basket financials/price refresh |
+| `/api/n8n` | Data Refresh | `data_refresh.py` | Consolidated price & fundamental refresh (admin + n8n) |
+| `/api/jobs` | Jobs | `jobs.py` | Background job status polling |
 
 ---
 
@@ -348,8 +349,7 @@ Defined in `frontend/src/App.tsx`. All routes except `/signin` are wrapped in `<
 | `/admin/sync-markets` | `AdminSyncMarkets` | Market data sync |
 | `/admin/valuation` | `AdminValuationTools` | Portfolio valuation tools |
 | `/admin/yfinance-probe` | `AdminYFinanceProbe` | Raw yfinance data probe |
-| `/admin/financial-refresh` | `AdminFinancialRefresh` | Financials refresh |
-| `/admin/price-history` | `AdminPriceHistory` | Price history admin |
+| `/admin/data-refresh` | `AdminDataRefresh` | Consolidated data refresh (prices + fundamentals) |
 | `/admin/invitations` | `InvitationManager` | Invitation code management |
 
 ---
@@ -443,13 +443,20 @@ Production uses `Dockerfile.prod` for both backend and frontend. The frontend is
 
 ## 10. Data Ingestion Strategy
 
-The system uses a **Lazy Loading + Admin Batch** strategy (see `docs/BACKEND_DATA_FLOW.md`):
+The system uses a **Lazy Loading + Admin Batch + n8n Automation** strategy (see `docs/BACKEND_DATA_FLOW.md`):
 
 1. **Lazy Load** — When a user visits `/stock-details/:ticker`, the backend checks data freshness and fetches from yfinance if stale (>350 days for annual, >80 days for quarterly).
-2. **Admin Batch Update** — Admin can trigger `POST /api/admin/run-financials-market-update` to refresh all companies in a market.
-3. **Scan-triggered refresh** — Technical scans (Golden Cross, Break-Even) refresh price/financial data as needed before computing results.
+2. **Admin Data Refresh** — Consolidated page at `/admin/data-refresh` with:
+   - **Refresh All Companies** — price or fundamental data for all markets (`POST /n8n/admin-daily-prices`, `POST /n8n/admin-daily-fundamentals`).
+   - **Refresh by Basket** — target specific baskets (`POST /admin/populate-price-history`, `POST /admin/run-financials-baskets`).
+3. **n8n Daily Automation** — `POST /n8n/n8n-daily-prices` and `POST /n8n/n8n-daily-fundamentals` (internal token auth).
+4. **Scan-triggered refresh** — Technical scans (Golden Cross, Break-Even) refresh price/financial data as needed before computing results.
 
-**Key:** `CompanyMarketData` (including `market_cap`) is **only** populated by the admin Financials Market Update, not by lazy load or scans.
+**Key conventions** (see `.agent/rules/background-jobs.md`):
+- All heavy jobs run in **dedicated threads** via `start_job_in_thread()` (never `BackgroundTasks`).
+- **Duplicate job prevention** — endpoints check for existing PENDING/RUNNING jobs before creating new ones.
+- **Stale job cleanup** — jobs stuck >2 hours are auto-marked as FAILED.
+- **Smart skip logic** — `CompanyFinancials.last_updated` is stamped for all checked companies (including those confirmed fresh), preventing redundant re-evaluation.
 
 ---
 
@@ -575,6 +582,6 @@ cd backend && flake8 . && black --check .
 | Add new feature | Create `frontend/src/features/feature-name/` → add route in `App.tsx` |
 | Add Shadcn component | `npx shadcn-ui@latest add <component>` in `frontend/` |
 | Add translation keys | Edit `frontend/public/locales/{en,pl}/translation.json` |
-| Run financials update | Admin Dashboard → "Run Financials Market Update" |
+| Run data refresh | Admin Dashboard → "Data Refresh" or `POST /n8n/admin-daily-*` |
 | Access n8n (dev) | `http://localhost:5678` or `http://localhost/n8n/` |
 | View API docs (dev) | `http://localhost:8000/docs` |

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,7 @@ from services.company_filter_service import filter_by_market_cap
 from database.user import User
 from services.basket_resolver import resolve_baskets_to_companies
 from services.yfinance_data_update.data_update_service import fetch_and_save_stock_price_history_data_batch
-from services.scan_job_service import create_job, run_scan_task
+from services.scan_job_service import create_job, get_active_job, start_job_in_thread
 import logging
 
 router = APIRouter()
@@ -144,7 +144,6 @@ def run_populate_price_history(db: Session, request: PriceHistoryRequest):
 @router.post("/populate-price-history")
 def start_populate_price_history(
     request: PriceHistoryRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _: str = Depends(get_current_user),  # Admin check handled by frontend routing
 ):
@@ -156,11 +155,15 @@ def start_populate_price_history(
     if not request.basket_ids:
         raise HTTPException(status_code=400, detail="At least one basket must be selected")
     
+    existing = get_active_job(db, "populate_price_history")
+    if existing:
+        return {"job_id": existing.id, "status": existing.status, "already_running": True}
+
     job = create_job(db, "populate_price_history")
     
     def task_wrapper(db_session: Session):
         return run_populate_price_history(db_session, request)
         
-    background_tasks.add_task(run_scan_task, job.id, task_wrapper)
+    start_job_in_thread(job.id, task_wrapper)
     
-    return {"job_id": job.id, "status": "PENDING"}
+    return {"job_id": job.id, "status": "PENDING", "already_running": False}

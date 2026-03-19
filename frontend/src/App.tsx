@@ -21,8 +21,7 @@ import AdminDashboard from "./features/admin/AdminDashboard";
 import AdminSyncMarkets from "./features/admin/admin-sync-markets/AdminSyncMarkets";
 import AdminValuationTools from "./features/admin/admin-valuation/admin-valuation";
 import AdminYFinanceProbe from "./features/admin/admin-yfinance-probe/AdminYFinanceProbe";
-import AdminFinancialRefresh from "./features/admin/admin-financial-refresh/AdminFinancialRefresh";
-import AdminPriceHistory from "./features/admin/admin-price-history/AdminPriceHistory";
+import AdminDataRefresh from "./features/admin/admin-data-refresh/AdminDataRefresh";
 import InvitationManager from "./features/admin/InvitationManager";
 import { StockOnePager } from "./features/stock-one-pager/stock-one-pager";
 import { FiboWaveScenario } from "./features/scenario-carousel/scan-types/fibonacci-elliott/FiboWaveScenario";
@@ -127,12 +126,8 @@ function App() {
                 element={<PrivateRoute element={<AdminYFinanceProbe />} />}
               />
               <Route
-                path="/admin/financial-refresh"
-                element={<PrivateRoute element={<AdminFinancialRefresh />} />}
-              />
-              <Route
-                path="/admin/price-history"
-                element={<PrivateRoute element={<AdminPriceHistory />} />}
+                path="/admin/data-refresh"
+                element={<PrivateRoute element={<AdminDataRefresh />} />}
               />
               <Route
                 path="/admin/invitations"
