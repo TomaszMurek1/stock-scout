@@ -84,13 +84,14 @@ export const AddStockForm: FC<AddStockFormProps> = ({
     `${hasError ? "border-red-500" : "border-slate-300"} ${INPUT_CLASS}`;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="min-h-[500px] p-6 grid grid-cols-4 gap-x-4 gap-y-7 content-start">
+    <form onSubmit={handleSubmit(onSubmit)} data-id="form-add-stock" className="min-h-[500px] p-6 grid grid-cols-4 gap-x-4 gap-y-7 content-start">
       {/* Type Toggle */}
       <div className="col-span-4 flex justify-center mb-2">
         <div className="bg-slate-100 p-1 rounded-lg flex gap-1">
           <button
             type="button"
             onClick={() => handleTypeChange("buy")}
+            data-id="toggle-buy"
             className={`px-6 py-1.5 rounded-md text-xs font-bold transition-all ${
               isBuy 
                 ? "bg-white text-teal-700 shadow-sm" 
@@ -102,6 +103,7 @@ export const AddStockForm: FC<AddStockFormProps> = ({
           <button
             type="button"
             onClick={() => handleTypeChange("sell")}
+            data-id="toggle-sell"
             className={`px-6 py-1.5 rounded-md text-xs font-bold transition-all ${
               !isBuy 
                 ? "bg-white text-blue-700 shadow-sm" 
@@ -282,6 +284,7 @@ export const AddStockForm: FC<AddStockFormProps> = ({
           variant="ghost"
           onClick={onClose}
           disabled={loading}
+          data-id="btn-cancel"
           className="text-slate-500 hover:text-slate-800 hover:bg-slate-200 font-semibold"
         >
           Cancel
@@ -289,6 +292,7 @@ export const AddStockForm: FC<AddStockFormProps> = ({
         <Button 
           type="submit" 
           disabled={loading || !selectedTicker || hasInsufficientBalance || hasInsufficientShares}
+          data-id="btn-submit-stock"
           className={`${ThemeButton} text-white font-bold px-8 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

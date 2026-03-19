@@ -325,7 +325,7 @@ const ClosedPositionsTab = React.memo(
 
     if (isLoading && (!closedPositions || closedPositions.length === 0)) {
       return (
-        <div className="space-y-4 p-4">
+        <div data-id="closed-skeleton" className="space-y-4 p-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
           ))}
@@ -335,7 +335,7 @@ const ClosedPositionsTab = React.memo(
 
     if (!closedPositions || closedPositions.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div data-id="closed-empty" className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -362,7 +362,7 @@ const ClosedPositionsTab = React.memo(
     const summaryColor = totalPnl >= 0 ? "text-green-600" : "text-red-600";
 
     return (
-      <div className="shadow-sm">
+      <div data-id="closed" className="shadow-sm">
         {/* Summary banner */}
         <div className="bg-white border border-gray-200 rounded-t-lg px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">

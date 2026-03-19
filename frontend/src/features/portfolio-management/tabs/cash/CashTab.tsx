@@ -147,9 +147,9 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
     );
 
   return (
-    <div className="space-y-8">
+    <div data-id="cash" className="space-y-8">
       {/* 1. Summary Card */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div data-id="cash-summary" className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
          <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
                 <DollarSign size={20} />
@@ -162,7 +162,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
       </div>
 
       {/* 2. Accounts Table */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+      <div data-id="cash-accounts" className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
              <h3 className="text-sm font-semibold text-gray-700">{t("portfolio.cash.accounts_balances")}</h3>
         </div>
@@ -194,7 +194,7 @@ export default function CashTab({ accounts = [], transactions = [] }: CashTabPro
       </div>
       
       {/* 3. Funding History Table */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+      <div data-id="cash-funding" className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
              <h3 className="text-sm font-semibold text-gray-700">{t("portfolio.cash.funding_history")}</h3>
         </div>

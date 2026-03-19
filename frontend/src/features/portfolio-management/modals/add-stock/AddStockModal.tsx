@@ -56,7 +56,7 @@ const AddStockModal: FC<AddStockModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[650px] bg-slate-50 p-0 overflow-hidden border-none shadow-2xl rounded-xl [&>button.absolute]:hidden">
+      <DialogContent data-id="modal-add-stock" className="sm:max-w-[650px] bg-slate-50 p-0 overflow-hidden border-none shadow-2xl rounded-xl [&>button.absolute]:hidden">
         <DialogHeader className={`${headerGradient} bg-gradient-to-br border-b-4 px-6 py-4 relative transition-colors duration-300`}>
           <DialogTitle className="text-white text-xl font-bold flex items-center gap-2">
             {titleText}

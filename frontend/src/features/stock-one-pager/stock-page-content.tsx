@@ -49,7 +49,7 @@ const StockPageContentComponent: FC<StockPageContentProps> = ({
   const currencyCode = executive_summary?.currency ?? "USD";
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-8">
+    <div data-id="stock-content" className="max-w-[1400px] mx-auto px-4 py-6 space-y-8">
       <StockHeader
         ticker={ticker}
         executiveSummary={executive_summary}
@@ -81,7 +81,7 @@ const StockPageContentComponent: FC<StockPageContentProps> = ({
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div data-id="stock-sidebar" className="space-y-6">
           <KeyMetricsSummaryCard
             valuationMetrics={valuation_metrics}
             investorMetrics={investor_metrics}

@@ -15,7 +15,7 @@ export const ReturnsAnalysis = ({ breakdown, perf, selectedPeriod, isLoading }: 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-id="returns-skeleton" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
@@ -28,7 +28,7 @@ export const ReturnsAnalysis = ({ breakdown, perf, selectedPeriod, isLoading }: 
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div data-id="returns" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Simple Return - PRIMARY METRIC (most intuitive) */}
       <Card className={`${
         (breakdown?.invested?.simple_return_pct || 0) >= 0 

@@ -19,7 +19,7 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div data-id="brief-skeleton" className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i} className="animate-pulse">
             <div className="flex items-center gap-3 mb-2">
@@ -71,16 +71,16 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
   const hasIban = accounts?.some(a => a.iban);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div data-id="brief" className="grid grid-cols-1 md:grid-cols-5 gap-4">
        <Card>
-         <div className="flex items-center gap-3 mb-2">
+         <div data-id="brief-value" className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Wallet size={20} /></div>
           <Label>{t("portfolio.summary.total_value")}</Label>
         </div>
         <Value value={totalValue} currency={currency} />
       </Card>
       <Card>
-         <div className="flex items-center gap-3 mb-2">
+         <div data-id="brief-invested" className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><PieChart size={20} /></div>
           <Label tooltip={t("portfolio.summary.tooltips.invested_value")}>{t("portfolio.summary.invested_value")}</Label>
         </div>
@@ -90,6 +90,7 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
       <Card>
          <div className="flex items-center gap-3 mb-2">
             <button 
+                data-id="btn-iban"
                 onClick={hasIban ? handleCopyAccount : undefined}
                 className={`p-2 rounded-lg transition-all duration-700 ${
                     hasIban 
@@ -106,7 +107,7 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
       </Card>
 
        <Card>
-         <div className="flex items-center gap-3 mb-2">
+         <div data-id="brief-deposits" className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><ArrowDownRight size={20} /></div>
           <Label tooltip={t("portfolio.summary.tooltips.net_deposits")}>{t("portfolio.summary.net_deposits")}</Label>
         </div>
@@ -114,7 +115,7 @@ export const PortfolioBrief = ({ portfolio, accounts, performance, currency, isL
       </Card>
    
       <Card>
-        <div className="flex items-center gap-3 mb-2">
+        <div data-id="brief-pnl" className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-orange-50 rounded-lg text-orange-600"><TrendingUp size={20} /></div>
            <Label tooltip={t("portfolio.summary.tooltips.total_pnl_lifetime")}>
              {t("portfolio.summary.total_pnl")}

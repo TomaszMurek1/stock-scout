@@ -18,7 +18,7 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
 
   if (isLoading) {
       return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div data-id="breakdown-skeleton" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {[1, 2].map(i => (
                 <Card key={i} className={`pl-5 border-l-4 ${i === 1 ? 'border-blue-500' : 'border-indigo-500'}`}>
                     <div className="animate-pulse">
@@ -100,9 +100,9 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
   // 14974 + 3069 = 18043. Matches closely.
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div data-id="breakdown" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
        {/* CARD 1: PERFORMANCE BREAKDOWN */}
-       <Card className="border-l-4 border-blue-500 pl-5 h-full">
+       <Card className="border-l-4 border-blue-500 pl-5 h-full" data-id="card-perf">
           <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
              <DollarSign className="w-5 h-5 text-gray-500"/>
              {t("portfolio.summary.detailed_breakdown")}
@@ -171,7 +171,7 @@ export const DetailedBreakdown = ({ breakdown, itd, selectedPeriod, currency, ho
        </Card>
 
        {/* CARD 2: CAPITAL STRUCTURE */}
-       <Card className="border-l-4 border-indigo-500 pl-5 h-full">
+       <Card className="border-l-4 border-indigo-500 pl-5 h-full" data-id="card-capital">
           <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
              {t("portfolio.summary.total_market_value")}
           </h4>

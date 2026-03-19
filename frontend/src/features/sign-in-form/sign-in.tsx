@@ -66,11 +66,11 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
   };
 
   return (
-    <Box sx={{ maxWidth: 400, margin: "auto", mt: 4 }}>
+    <Box data-id="auth-page" sx={{ maxWidth: 400, margin: "auto", mt: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         {isRegistering ? t("auth.register2") : t("auth.sign_in")}
       </Typography>
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate data-id="auth-form">
         {isRegistering ? (
           <RegisterForm
             username={username}
@@ -96,6 +96,7 @@ const SignIn: React.FC<SignInProps> = ({ onClose, onSignIn, onError }) => {
           </Typography>
         )}
         <Button
+          data-id="btn-auth-submit"
           type="submit"
           fullWidth
           variant="contained"

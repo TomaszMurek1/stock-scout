@@ -63,8 +63,9 @@ export const LanguageSwitcher = () => {
   };
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div data-id="lang-switcher" className="relative" ref={menuRef}>
       <button
+        data-id="lang-btn"
         onClick={() => setShowMenu(!showMenu)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
       >
@@ -78,7 +79,7 @@ export const LanguageSwitcher = () => {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 overflow-hidden">
+        <div data-id="lang-menu" className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 overflow-hidden">
           <div className="px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Select Language</p>
           </div>

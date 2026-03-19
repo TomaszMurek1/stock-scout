@@ -19,8 +19,8 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"
 
 export default function RiskAnalysis() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-gray-200 shadow-sm">
+        <div data-id="risk" className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card data-id="risk-sectors" className="border-gray-200 shadow-sm">
                 <CardHeader>
                     <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
                         <PieChartIcon className="h-5 w-5 text-primary" />
@@ -53,7 +53,7 @@ export default function RiskAnalysis() {
                 </CardContent>
             </Card>
 
-            <Card className="border-gray-200 shadow-sm">
+            <Card data-id="risk-metrics" className="border-gray-200 shadow-sm">
                 <CardHeader>
                     <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-primary" />
@@ -111,7 +111,7 @@ export default function RiskAnalysis() {
                 </CardContent>
             </Card>
 
-            <Card className="md:col-span-2">
+            <Card data-id="risk-recommendations" className="md:col-span-2">
                 <CardHeader>
                     <CardTitle>Risk Recommendations</CardTitle>
                 </CardHeader>

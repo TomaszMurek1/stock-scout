@@ -200,7 +200,7 @@ export default function TransactionsHistory({ transactions = [], portfolioCurren
   );
 
   return (
-    <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+    <div data-id="transactions" className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
         <MaterialReactTable
             columns={columns}
             data={portfolioActivity}

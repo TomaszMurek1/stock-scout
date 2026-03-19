@@ -56,7 +56,7 @@ const adminLinks = [
 
 export default function AdminDashboard() {
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <div data-id="admin-page" className="container mx-auto px-4 py-8 space-y-8">
       <header className="space-y-2">
         <div className="flex items-center gap-3 text-slate-700">
           <Shield className="w-6 h-6" />
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
         </p>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div data-id="admin-grid" className="grid gap-6 md:grid-cols-2">
         {adminLinks.map((link) => (
           <Card key={link.href} className="bg-white">
             <CardHeader className="space-y-3">

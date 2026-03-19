@@ -76,12 +76,12 @@ const Header: React.FC = () => {
   const email = getEmail();
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
+    <header data-id="app-header" className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
       {/* Gradient accent line at the bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600" />
       <div className="max-w-[1600px] mx-auto px-4 py-4">
-        <nav className="flex justify-between items-center">
-          <Link to="/" className="relative inline-block group">
+        <nav data-id="nav" className="flex justify-between items-center">
+          <Link to="/" className="relative inline-block group" data-id="logo">
             <span className="text-2xl font-bold text-gray-800 tracking-tight">StockScan Pro</span>
             <Badge 
               variant="warning" 
@@ -92,12 +92,12 @@ const Header: React.FC = () => {
           </Link>
           <ul className="flex space-x-4 items-center">
             <li>
-              <Link to="/" className="text-gray-600 hover:text-gray-800">
+              <Link to="/" className="text-gray-600 hover:text-gray-800" data-id="nav-home">
                 {t("nav_header.home")}
               </Link>
             </li>
             <li>
-              <Link to="/about" className="text-gray-600 hover:text-gray-800">
+              <Link to="/about" className="text-gray-600 hover:text-gray-800" data-id="nav-about">
                 {t("nav_header.about")}
               </Link>
             </li>
@@ -113,7 +113,7 @@ const Header: React.FC = () => {
               {isAuthenticated && email ? (
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <Bell 
+                    <Bell data-id="nav-bell" 
                         className="h-5 w-5 text-gray-600 hover:text-gray-800 cursor-pointer" 
                         onClick={() => navigate('/portfolio-management', { state: { activeTab: 'alerts', scrollToTabs: true } })} 
                     />
@@ -126,6 +126,7 @@ const Header: React.FC = () => {
 
                   <div className="relative" ref={menuRef}>
                     <button
+                      data-id="user-menu-btn"
                       onClick={() => setShowMenu(!showMenu)}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
                     >
@@ -146,7 +147,7 @@ const Header: React.FC = () => {
                     </button>
 
                     {showMenu && (
-                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 overflow-hidden">
+                      <div data-id="user-menu" className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 overflow-hidden">
                         <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100">
                           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Signed in as</p>
                           <p className="text-sm font-semibold text-gray-900 truncate mt-1">{email}</p>
@@ -162,6 +163,7 @@ const Header: React.FC = () => {
                             <div className="my-1 border-t border-gray-100"></div>
                             <Link
                               to="/admin"
+                              data-id="nav-admin"
                               className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                               onClick={() => setShowMenu(false)}
                             >
@@ -172,7 +174,7 @@ const Header: React.FC = () => {
                         )}
                         
                         <div className="my-1 border-t border-gray-100"></div>
-                        <button
+                        <button data-id="btn-signout"
                           onClick={() => {
                             logout();
                             setShowMenu(false);
@@ -187,7 +189,7 @@ const Header: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <Button
+                <Button data-id="btn-signin"
                   variant="outline"
                   className="bg-gray-800 text-white hover:bg-gray-700"
                   onClick={() => navigate('/signin')}

@@ -94,7 +94,7 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl bg-white text-slate-900 h-[80vh] flex flex-col">
+      <DialogContent data-id="modal-ai" className="sm:max-w-2xl bg-white text-slate-900 h-[80vh] flex flex-col">
         {/* ... existing header ... */}
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
@@ -103,10 +103,10 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="analyze" className="w-full flex-1 flex flex-col">
+        <Tabs defaultValue="analyze" className="w-full flex-1 flex flex-col" data-id="ai-tabs">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="analyze">Portfolio Analysis</TabsTrigger>
-            <TabsTrigger value="knowledge">Knowledge Base (PoC)</TabsTrigger>
+            <TabsTrigger value="analyze" data-id="ai-tab-analyze">Portfolio Analysis</TabsTrigger>
+            <TabsTrigger value="knowledge" data-id="ai-tab-kb">Knowledge Base (PoC)</TabsTrigger>
           </TabsList>
           
           <TabsContent value="analyze" className="flex-1 overflow-y-auto pr-2">
@@ -122,7 +122,7 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
                     Our AI will scan your current holdings, risk distribution, and cash position to provide actionable insights.
                   </p>
                 </div>
-                <Button onClick={handleAnalyze} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
+                <Button onClick={handleAnalyze} size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200" data-id="btn-analyze">
                   <Sparkles className="mr-2 h-4 w-4" />
                   Generate Analysis
                 </Button>
@@ -169,7 +169,7 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
                 />
                 <div className="flex justify-between items-center">
                     <span className="text-sm text-purple-700">{knowledgeStatus}</span>
-                    <Button onClick={handleSaveKnowledge} disabled={loading || !knowledgeText || !ticker} size="sm" className="bg-purple-600 hover:bg-purple-700">
+                    <Button onClick={handleSaveKnowledge} disabled={loading || !knowledgeText || !ticker} size="sm" className="bg-purple-600 hover:bg-purple-700" data-id="btn-save-kb">
                         <Save className="h-3 w-3 mr-2" /> Save to Memory
                     </Button>
                 </div>
@@ -193,7 +193,7 @@ export default function AiAdvisorModal({ isOpen, onClose }: AiAdvisorModalProps)
                         className="bg-white"
                         rows={2}
                     />
-                    <Button onClick={handleAskKnowledge} disabled={loading || !queryText} className="h-auto bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={handleAskKnowledge} disabled={loading || !queryText} className="h-auto bg-blue-600 hover:bg-blue-700" data-id="btn-ask-kb">
                         Ask
                     </Button>
                 </div>

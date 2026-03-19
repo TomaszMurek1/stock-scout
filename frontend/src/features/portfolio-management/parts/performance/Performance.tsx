@@ -3,7 +3,7 @@ const PerformanceChart = lazy(() => import("./performance-chart"))
 
 const Performance = React.memo(function Performance() {
     return (
-        <Suspense fallback={<div className="py-10 text-center animate-pulse text-gray-400">Loading chart...</div>}>
+        <Suspense fallback={<div data-id="perf-loading" className="py-10 text-center animate-pulse text-gray-400">Loading chart...</div>}>
             <PerformanceChart />
         </Suspense>
     )
