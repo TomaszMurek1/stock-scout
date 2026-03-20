@@ -176,16 +176,21 @@ def fetch_and_save_stock_price_history_data(
 
 def update_smas_for_company(db: Session, company_id: int, market_id: int):
     """
-    Calculate simple moving averages (50, 200) based on DB history 
-    and update CompanyMarketData.
+    Calculate simple moving averages (20, 50, 100, 200) based on DB history
+    and update both CompanyMarketData (latest SMA values) and
+    StockPriceHistory (cached SMA columns for recent rows).
     """
     try:
         from database.stock_data import CompanyMarketData
         import pandas as pd
 
-        # Fetch last 300 days of closing prices
+        # Fetch last 300 days of closing prices (enough for SMA-200 + margin)
         history_rows = (
-            db.query(StockPriceHistory.date, StockPriceHistory.close)
+            db.query(
+                StockPriceHistory.data_id,
+                StockPriceHistory.date,
+                StockPriceHistory.adjusted_close,
+            )
             .filter_by(company_id=company_id, market_id=market_id)
             .order_by(StockPriceHistory.date.desc())
             .limit(300)
@@ -196,30 +201,48 @@ def update_smas_for_company(db: Session, company_id: int, market_id: int):
             return
 
         # Create DataFrame (reversed because we fetched DESC)
-        df = pd.DataFrame(history_rows, columns=["date", "close"])
-        df = df.sort_values("date", ascending=True).set_index("date")
+        df = pd.DataFrame(history_rows, columns=["data_id", "date", "adjusted_close"])
+        df = df.sort_values("date", ascending=True).reset_index(drop=True)
 
         # Check sufficiency
-        if len(df) < 50:
+        if len(df) < 20:
             return
 
-        # Calculate SMAs
-        closes = df['close']
-        sma50 = closes.rolling(window=50).mean().iloc[-1]
-        
-        sma200 = None
-        if len(df) >= 200:
-            sma200 = closes.rolling(window=200).mean().iloc[-1]
+        # Calculate all SMAs
+        closes = df['adjusted_close']
+        sma_windows = {20: None, 50: None, 100: None, 200: None}
+        for w in sma_windows:
+            if len(df) >= w:
+                sma_windows[w] = closes.rolling(window=w).mean()
 
-        # Update Market Data
+        # -- Update CompanyMarketData with latest SMA values --
         md = db.query(CompanyMarketData).filter_by(company_id=company_id).first()
         if md:
-            if not pd.isna(sma50):
-                md.sma_50 = float(sma50)
-            if sma200 and not pd.isna(sma200):
-                md.sma_200 = float(sma200)
-            db.commit()
-            logger.info(f"Updated SMAs for company {company_id}: SMA50={md.sma_50}, SMA200={md.sma_200}")
+            if sma_windows[50] is not None and not pd.isna(sma_windows[50].iloc[-1]):
+                md.sma_50 = float(sma_windows[50].iloc[-1])
+            if sma_windows[200] is not None and not pd.isna(sma_windows[200].iloc[-1]):
+                md.sma_200 = float(sma_windows[200].iloc[-1])
+
+        # -- Update StockPriceHistory cached SMA columns for recent rows --
+        # Only update rows that don't yet have SMA values (typically the newest rows)
+        from sqlalchemy import text
+        for i in range(len(df) - 1, max(len(df) - 10, -1), -1):
+            row = df.iloc[i]
+            sma_vals = {}
+            for w, series in sma_windows.items():
+                if series is not None and not pd.isna(series.iloc[i]):
+                    sma_vals[f"sma_{w}"] = float(series.iloc[i])
+
+            if sma_vals:
+                set_clause = ", ".join(f"{k} = :{k}" for k in sma_vals)
+                sma_vals["did"] = int(row["data_id"])
+                db.execute(
+                    text(f"UPDATE stock_price_history SET {set_clause} WHERE data_id = :did"),
+                    sma_vals,
+                )
+
+        db.commit()
+        logger.info(f"Updated SMAs for company {company_id}")
 
     except Exception as e:
         logger.error(f"Error calculating SMAs for company {company_id}: {e}")
