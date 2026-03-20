@@ -66,6 +66,10 @@ class StockPriceHistory(Base):
     close = Column(Float)
     adjusted_close = Column(Float)
     volume = Column(Integer)
+    sma_20 = Column(Float, nullable=True)
+    sma_50 = Column(Float, nullable=True)
+    sma_100 = Column(Float, nullable=True)
+    sma_200 = Column(Float, nullable=True)
     created_at = Column(
         DateTime,
         default=lambda: datetime(1900, 1, 1, tzinfo=timezone.utc),
