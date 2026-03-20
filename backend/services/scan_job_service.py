@@ -1,6 +1,7 @@
 import logging
 import traceback
-from datetime import datetime
+import threading
+from datetime import datetime, timedelta
 from uuid import UUID
 from typing import Any, Callable, Dict
 from sqlalchemy.orm import Session
@@ -20,6 +21,34 @@ def create_job(db: Session, job_type: str) -> Job:
 def get_job(db: Session, job_id: UUID) -> Job:
     """Get job by ID."""
     return db.query(Job).filter(Job.id == job_id).first()
+
+
+def get_active_job(db: Session, job_type: str, max_age_hours: int = 2) -> Job | None:
+    """
+    Return an active (PENDING or RUNNING) job of the given type, if any.
+    Jobs older than max_age_hours are considered stale (server restart, crash)
+    and are automatically marked as FAILED so they don't block new jobs.
+    """
+    cutoff = datetime.utcnow() - timedelta(hours=max_age_hours)
+
+    active_jobs = (
+        db.query(Job)
+        .filter(Job.type == job_type, Job.status.in_(["PENDING", "RUNNING"]))
+        .order_by(Job.created_at.desc())
+        .all()
+    )
+
+    for job in active_jobs:
+        if job.created_at < cutoff:
+            # Stale job — mark as failed so it doesn't block forever
+            job.status = "FAILED"
+            job.error = "Marked as stale (exceeded max age)"
+            db.commit()
+            logger.warning(f"Marked stale job {job.id} ({job_type}) as FAILED")
+            continue
+        return job  # Found a recent active job
+
+    return None
 
 def update_job_status(db: Session, job_id: UUID, status: str, result: Any = None, error: str = None):
     """Update job status and result/error."""
@@ -59,3 +88,20 @@ def run_scan_task(job_id: UUID, task_func: Callable[[Session], Any]):
         update_job_status(db, job_id, "FAILED", error=str(e))
     finally:
         db.close()
+
+
+def start_job_in_thread(job_id: UUID, task_func: Callable[[Session], Any]):
+    """
+    Run a scan task in a dedicated daemon thread.
+    Unlike BackgroundTasks.add_task (which uses the same threadpool as API
+    handlers), this creates a separate thread so heavy jobs cannot starve
+    normal API requests.
+    """
+    thread = threading.Thread(
+        target=run_scan_task,
+        args=(job_id, task_func),
+        daemon=True,
+        name=f"job-{job_id}",
+    )
+    thread.start()
+    logger.info(f"Started job {job_id} in dedicated thread {thread.name}")

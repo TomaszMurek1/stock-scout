@@ -28,16 +28,14 @@ interface PriceHistoryResponse {
 export default function AdminPriceHistory() {
   const [selectedBaskets, setSelectedBaskets] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>(() => {
-    // Default to 365 days ago
     const date = new Date();
     date.setDate(date.getDate() - 365);
     return date.toISOString().split("T")[0];
   });
   const [endDate, setEndDate] = useState<string>(() => {
-    // Default to today
     return new Date().toISOString().split("T")[0];
   });
-  const [minMarketCap, setMinMarketCap] = useState<number>(500); // Default 500M USD
+  const [minMarketCap, setMinMarketCap] = useState<number>(500);
   const [forceUpdate, setForceUpdate] = useState(false);
   
   const { startJob, isLoading, result, error, status } = useScanJob<PriceHistoryResponse>({
@@ -67,10 +65,10 @@ export default function AdminPriceHistory() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div data-id="admin-price-history-page" className="container mx-auto px-4 py-8">
       <FormCardGenerator
         title="Populate Historical Price Data"
-        subtitle="Fetch and store historical OHLCV data for companies in selected baskets. Useful for ensuring scanners have sufficient historical data."
+        subtitle="Fetch and store historical OHLCV data for companies in selected baskets. Useful for initial data seeding when onboarding new markets. For daily price refresh of all companies, use the Data Refresh page."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-1 gap-4">
@@ -124,6 +122,7 @@ export default function AdminPriceHistory() {
           </div>
 
           <MuiButton
+            data-id="btn-basket-prices"
             type="submit"
             variant="contained"
             className="bg-slate-700 hover:bg-slate-800"

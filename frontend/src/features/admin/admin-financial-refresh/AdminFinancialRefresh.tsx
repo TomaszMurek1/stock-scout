@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Button as MuiButton, CircularProgress, TextField } from "@mui/material";
+import { useState } from "react";
+import { Button as MuiButton, CircularProgress } from "@mui/material";
 import { toast } from "react-toastify";
 import { apiClient } from "@/services/apiClient";
 import FormCardGenerator from "@/components/shared/forms/form-card-generator";
@@ -12,7 +12,6 @@ interface MarketResult {
 }
 
 export default function AdminFinancialRefresh() {
-  const [marketName, setMarketName] = useState("all");
   const [selectedBaskets, setSelectedBaskets] = useState<string[]>([]);
   
   const { startJob, isLoading, result, error, status } = useScanJob<{results: MarketResult[]}>({
@@ -23,10 +22,6 @@ export default function AdminFinancialRefresh() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
-    // We can use startJob for both. It resets state on each call. 
-    // This is fine since we likely won't run both simultaneously from the same component instance 
-    // (UI blocks while loading mostly, or user clicks one then waits).
-    
     if (selectedBaskets.length > 0) {
         startJob(() => 
             apiClient.post("/admin/run-financials-baskets", { 
@@ -36,7 +31,7 @@ export default function AdminFinancialRefresh() {
     } else {
         startJob(() => 
             apiClient.post("/admin/run-financials-market-update", null, { 
-                params: { market_name: marketName || "all" } 
+                params: { market_name: "all" } 
             })
         );
     }
@@ -45,31 +40,22 @@ export default function AdminFinancialRefresh() {
   const displayResults = result?.results || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div data-id="admin-financial-refresh-page" className="container mx-auto px-4 py-8">
       <FormCardGenerator
         title="Refresh financial data"
-        subtitle="Trigger yfinance financial and quarterly snapshots for all markets. Uses stored data to avoid duplicates."
+        subtitle="Trigger yfinance financial and quarterly snapshots for selected baskets. Uses stored data to avoid duplicates. For a full refresh of all companies, use the Data Refresh page."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-1 gap-4">
-            <TextField
-              label="Market name (optional)"
-              placeholder="all"
-              value={marketName}
-              onChange={(e) => setMarketName(e.target.value)}
-              size="small"
-              helperText="Sent as query param; backend currently refreshes all markets regardless. Leave empty and select baskets below for targeted refresh."
+            <BasketChipSelector
+              value={selectedBaskets}
+              onChange={setSelectedBaskets}
+              label="Select Baskets (optional)"
+              description="Choose baskets to refresh financial data for specific companies. Leave empty to refresh all markets."
             />
-            <div className="mt-4">
-              <BasketChipSelector
-                value={selectedBaskets}
-                onChange={setSelectedBaskets}
-                label="Select Baskets (optional)"
-                description="Choose baskets to refresh financial data for specific companies."
-              />
-            </div>
           </div>
           <MuiButton
+            data-id="btn-basket-fundamentals"
             type="submit"
             variant="contained"
             className="bg-slate-700 hover:bg-slate-800"

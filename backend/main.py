@@ -39,6 +39,7 @@ from api import (
     ai_advisor,
     ev_to_revenue,
     break_even_point,
+    data_refresh,
 )
 
 from database.base import Base, engine
@@ -118,6 +119,7 @@ app.include_router(admin.router,                      prefix="/api/admin",      
 app.include_router(admin_price_data.router,           prefix="/api/admin",         tags=["Admin"])
 app.include_router(jobs.router,                       prefix="/api",               tags=["Jobs"])
 app.include_router(auth.router,                       prefix="/api/auth",          tags=["Authentication"])
+app.include_router(data_refresh.router,                prefix="/api/n8n",           tags=["n8n"])
 
 @app.get("/")
 async def root():
