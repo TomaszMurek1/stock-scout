@@ -536,3 +536,228 @@ def _evaluate_alert(alert: Alert, current_price: float) -> tuple[bool, str]:
         pass
 
     return False, ""
+
+
+# ── SMA Distance Report ─────────────────────────────────────────────────────
+
+# Band definitions: (label, emoji, min_pct, max_pct)
+# min is inclusive, max is exclusive (except the last open-ended band)
+_SMA_BANDS = [
+    # Near SMA
+    ("±5%  (near SMA)",       "🎯", -5,       5),
+    # Above SMA (ascending distance)
+    ("5 – 10%  above SMA",    "🟢", 5.001,    10),
+    ("10 – 17.5%  above SMA", "🟩", 10.001,   17.5),
+    ("17.5 – 25%  above SMA", "💚", 17.5001,  25),
+    ("25%+  above SMA",       "🚀", 25.001,   None),
+    # Below SMA (ascending distance)
+    ("5 – 10%  below SMA",    "🔴", -10,      -5.001),
+    ("10 – 17.5%  below SMA", "🟥", -17.5,    -10.001),
+    ("17.5 – 25%  below SMA", "❤️",  -25,      -17.5001),
+    ("25%+  below SMA",       "💀", None,     -25.001),
+]
+
+
+def _classify_pct(pct: float) -> int | None:
+    """Return the band index (0-8) for a given percentage, or None."""
+    for idx, (_, _, lo, hi) in enumerate(_SMA_BANDS):
+        if lo is None:
+            # open-ended below: pct <= hi
+            if pct <= hi:
+                return idx
+        elif hi is None:
+            # open-ended above: pct >= lo
+            if pct >= lo:
+                return idx
+        else:
+            if lo <= pct <= hi:
+                return idx
+    return None
+
+
+class SmaReportMessage(BaseModel):
+    chat_id: str
+    text: str
+    parse_mode: str = "HTML"
+
+
+class SmaReportResponse(BaseModel):
+    bot_token: str
+    messages: List[SmaReportMessage]
+
+
+# Telegram message limit with a small safety margin
+_TG_MAX_LEN = 4000
+
+
+@router.post("/sma-report", response_model=SmaReportResponse)
+def sma_distance_report(
+    db: Session = Depends(get_db),
+    _=Depends(verify_internal_token),
+):
+    """
+    Generate a Telegram-formatted SMA distance report for every user
+    with Telegram connected.  Groups holdings + watchlist tickers by
+    their % distance from SMA 50 and SMA 200.
+    """
+    users = (
+        db.query(User)
+        .filter(
+            User.telegram_chat_id.isnot(None),
+            User.telegram_chat_id != "",
+        )
+        .all()
+    )
+
+    if not users:
+        return SmaReportResponse(bot_token=settings.TELEGRAM_BOT_TOKEN or "", messages=[])
+
+    all_messages: list[SmaReportMessage] = []
+
+    for user in users:
+        company_ids = _get_user_company_ids(db, user.id)
+        if not company_ids:
+            continue
+
+        rows = (
+            db.query(CompanyMarketData, Company.ticker)
+            .join(Company, CompanyMarketData.company_id == Company.company_id)
+            .filter(CompanyMarketData.company_id.in_(company_ids))
+            .all()
+        )
+
+        if not rows:
+            continue
+
+        chunks = _build_sma_report_messages(rows)
+        for msg in chunks:
+            all_messages.append(SmaReportMessage(chat_id=user.telegram_chat_id, text=msg))
+
+    logger.info(f"SMA report: {len(all_messages)} messages to send")
+    return SmaReportResponse(bot_token=settings.TELEGRAM_BOT_TOKEN or "", messages=all_messages)
+
+
+def _build_sma_report_messages(
+    rows: list[tuple[CompanyMarketData, str]],
+) -> list[str]:
+    """
+    Build HTML-formatted Telegram messages for SMA 50 + SMA 200.
+    Returns a list of message strings, each ≤ 4000 chars.
+    """
+    # Build sections (one per SMA) as lists of band blocks
+    sections: list[tuple[str, list[str]]] = []  # (section_header, [band_blocks])
+
+    for sma_label, sma_attr in [("SMA 50", "sma_50"), ("SMA 200", "sma_200")]:
+        # band_index → list of (ticker, pct)
+        bands: dict[int, list[tuple[str, float]]] = {}
+
+        for md, ticker in rows:
+            price = md.current_price
+            sma_val = getattr(md, sma_attr)
+            if not price or not sma_val or sma_val == 0:
+                continue
+
+            pct = ((price - sma_val) / sma_val) * 100
+            band_idx = _classify_pct(pct)
+            if band_idx is not None:
+                bands.setdefault(band_idx, []).append((ticker, pct))
+
+        if not bands:
+            continue
+
+        section_header = (
+            f"{'━' * 20}\n"
+            f"<b>📊  {sma_label}  Distance Report</b>\n"
+            f"{'━' * 20}"
+        )
+
+        band_blocks: list[str] = []
+        for idx, (label, emoji, _, _) in enumerate(_SMA_BANDS):
+            entries = bands.get(idx)
+            if not entries:
+                continue
+            # Sort alphabetically; .WA tickers grouped at the end
+            entries.sort(key=lambda e: (e[0].endswith(".WA"), e[0]))
+
+            header_line = f"\n{emoji}  <b>{label}</b>  ({len(entries)})"
+
+            if idx == 0:
+                # ±5% band: ticker names only, 2 columns
+                grid = _format_two_columns_plain(entries)
+            else:
+                # Other bands: ticker + percentage, 2 columns
+                grid = _format_two_columns_pct(entries)
+
+            block = f"{header_line}\n<pre>{grid}</pre>"
+            band_blocks.append(block)
+
+        sections.append((section_header, band_blocks))
+
+    if not sections:
+        return []
+
+    # Assemble into messages, splitting at _TG_MAX_LEN
+    date_str = date.today().strftime("%d %b %Y")
+    messages: list[str] = []
+
+    for section_header, band_blocks in sections:
+        header = (
+            f"<b>📈  SMA Distance Report</b>\n"
+            f"<i>{date_str}</i>\n\n"
+            f"{section_header}"
+        )
+
+        current_msg = header
+        for block in band_blocks:
+            # Would adding this block exceed the limit?
+            if len(current_msg) + len(block) + 1 > _TG_MAX_LEN:
+                # Flush current message
+                messages.append(current_msg)
+                # Start a new continuation message
+                current_msg = (
+                    f"<b>📈  SMA Distance Report</b>  <i>(cont.)</i>\n"
+                    f"<i>{date_str}</i>\n\n"
+                    f"{section_header}"
+                    f"{block}"
+                )
+            else:
+                current_msg += block
+
+        if current_msg:
+            messages.append(current_msg)
+
+    return messages
+
+
+def _format_two_columns_plain(entries: list[tuple[str, float]]) -> str:
+    """Format ticker names only (no %) in 2 columns, monospace."""
+    col_width = max((len(t) for t, _ in entries), default=6) + 2
+    lines: list[str] = []
+    for i in range(0, len(entries), 2):
+        left = entries[i][0].ljust(col_width)
+        if i + 1 < len(entries):
+            right = entries[i + 1][0]
+        else:
+            right = ""
+        lines.append(f" {left}{right}")
+    return "\n".join(lines)
+
+
+def _format_two_columns_pct(entries: list[tuple[str, float]]) -> str:
+    """Format ticker + percentage in 2 columns, monospace."""
+    def _fmt(ticker: str, pct: float) -> str:
+        sign = "+" if pct >= 0 else ""
+        return f"{ticker} ({sign}{pct:.1f}%)"
+
+    formatted = [_fmt(t, p) for t, p in entries]
+    col_width = max((len(s) for s in formatted), default=12) + 2
+    lines: list[str] = []
+    for i in range(0, len(formatted), 2):
+        left = formatted[i].ljust(col_width)
+        if i + 1 < len(formatted):
+            right = formatted[i + 1]
+        else:
+            right = ""
+        lines.append(f" {left}{right}")
+    return "\n".join(lines)
+
