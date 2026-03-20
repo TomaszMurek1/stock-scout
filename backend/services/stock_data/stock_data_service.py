@@ -223,21 +223,25 @@ def update_smas_for_company(db: Session, company_id: int, market_id: int):
             if sma_windows[200] is not None and not pd.isna(sma_windows[200].iloc[-1]):
                 md.sma_200 = float(sma_windows[200].iloc[-1])
 
-        # -- Update StockPriceHistory cached SMA columns for recent rows --
-        # Only update rows that don't yet have SMA values (typically the newest rows)
+        # -- Update StockPriceHistory cached SMA columns --
+        # Update all rows where sma_200 is NULL (new rows + any gap).
+        # After backfill, this is typically just 1-5 rows per refresh.
         from sqlalchemy import text
-        for i in range(len(df) - 1, max(len(df) - 10, -1), -1):
-            row = df.iloc[i]
+        for i, row in df.iterrows():
+            # Skip rows that already have all SMA values populated
+            # We check via the position — if the row's SMA is NaN in our computed series,
+            # or if it's one of the positions we want to fill
             sma_vals = {}
             for w, series in sma_windows.items():
                 if series is not None and not pd.isna(series.iloc[i]):
                     sma_vals[f"sma_{w}"] = float(series.iloc[i])
 
             if sma_vals:
+                # Only write if at least one SMA value is new
                 set_clause = ", ".join(f"{k} = :{k}" for k in sma_vals)
                 sma_vals["did"] = int(row["data_id"])
                 db.execute(
-                    text(f"UPDATE stock_price_history SET {set_clause} WHERE data_id = :did"),
+                    text(f"UPDATE stock_price_history SET {set_clause} WHERE data_id = :did AND sma_200 IS NULL"),
                     sma_vals,
                 )
 
