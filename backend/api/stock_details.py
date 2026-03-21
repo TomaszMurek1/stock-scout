@@ -92,6 +92,7 @@ def _empty_overview(ticker: str) -> dict:
 
 def _create_company_from_yfinance(ticker: str, db: Session) -> Company:
     """Create a Company record using yfinance metadata."""
+    ticker = ticker.upper().strip()
     try:
         stock_info = getattr(yf.Ticker(ticker), "info", {}) or {}
     except Exception as exc:  # noqa: BLE001
@@ -171,6 +172,7 @@ def _assign_market_auto(company: Company, db: Session) -> Market | None:
 def get_or_fetch_stock_price_history(
     ticker: str, market_name: str, company_id: int, cutoff_date: datetime, db: Session
 ):
+    ticker = ticker.upper().strip()
     logger.info(f"cutoff_date {cutoff_date} for {ticker}")
     stock_price_history = (
         db.query(StockPriceHistory.date, StockPriceHistory.close)
@@ -196,6 +198,7 @@ def get_or_fetch_stock_price_history(
 
 
 def get_company_by_ticker(ticker: str, db: Session) -> Company:
+    ticker = ticker.upper().strip()
     company = db.query(Company).filter(Company.ticker == ticker).first()
     if company:
         return company
@@ -408,6 +411,7 @@ def get_stock_details(
 ):
     import time
     start_total = time.time()
+    ticker = ticker.upper().strip()
     
     company = get_company_by_ticker(ticker, db)
     logger.info(f"[PERF] {ticker} get_company_by_ticker: {time.time() - start_total:.4f}s")
