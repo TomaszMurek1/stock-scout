@@ -14,7 +14,7 @@ from typing import List
 import yfinance as yf
 from fastapi import APIRouter, Depends, HTTPException, Header, status
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from sqlalchemy.orm import Session, joinedload
 
 from database.base import get_db
@@ -24,6 +24,7 @@ from database.portfolio import Transaction, FavoriteStock, Portfolio
 from database.stock_data import CompanyMarketData
 from database.user import User
 from database.user_alert_preferences import UserAlertPreferences
+from services.sma_lookup_service import get_latest_smas_bulk
 from core.config import settings
 
 router = APIRouter()
@@ -201,12 +202,10 @@ def _check_sma_alerts(db: Session) -> list[TriggeredAlert]:
         if not company_ids:
             continue
 
-        market_data = (
-            db.query(CompanyMarketData, Company.ticker, Company.company_id)
-            .join(Company, CompanyMarketData.company_id == Company.company_id)
-            .filter(CompanyMarketData.company_id.in_(company_ids))
-            .all()
-        )
+        market_data = _latest_market_data_rows(db, company_ids)
+
+        # Bulk-fetch SMA values from StockPriceHistory
+        sma_map = get_latest_smas_bulk(db, company_ids)
 
         # Load state tracker
         try:
@@ -218,8 +217,9 @@ def _check_sma_alerts(db: Session) -> list[TriggeredAlert]:
 
         for md, ticker, company_id in market_data:
             price = md.current_price
-            sma50 = md.sma_50
-            sma200 = md.sma_200
+            sma_data = sma_map.get(company_id, {})
+            sma50 = sma_data.get("sma_50")
+            sma200 = sma_data.get("sma_200")
 
             if not price:
                 continue
@@ -481,6 +481,52 @@ def _get_user_company_ids(db: Session, user_id: int) -> set[int]:
     return company_ids
 
 
+def _latest_market_data_rows(
+    db: Session,
+    company_ids: set[int],
+) -> list[tuple["CompanyMarketData", str, int]]:
+    """
+    Return one (CompanyMarketData, ticker, company_id) tuple per company_id,
+    picking the row with the latest last_updated timestamp.
+    Ties are broken by highest id.
+
+    NOTE: id order does NOT equal last_updated order — rows can be inserted
+    out of chronological sequence by the refresh job, so MAX(id) is unreliable.
+    """
+    # Subquery: latest last_updated per company_id
+    latest_ts_sq = (
+        db.query(
+            CompanyMarketData.company_id.label("cid"),
+            func.max(CompanyMarketData.last_updated).label("max_ts"),
+        )
+        .filter(CompanyMarketData.company_id.in_(company_ids))
+        .group_by(CompanyMarketData.company_id)
+        .subquery()
+    )
+
+    # Join back to get the actual row; if two rows share the same last_updated,
+    # pick the one with the highest id via a secondary MAX subquery.
+    best_id_sq = (
+        db.query(func.max(CompanyMarketData.id).label("best_id"))
+        .join(
+            latest_ts_sq,
+            and_(
+                CompanyMarketData.company_id == latest_ts_sq.c.cid,
+                CompanyMarketData.last_updated == latest_ts_sq.c.max_ts,
+            ),
+        )
+        .group_by(CompanyMarketData.company_id)
+        .subquery()
+    )
+
+    return (
+        db.query(CompanyMarketData, Company.ticker, Company.company_id)
+        .join(Company, CompanyMarketData.company_id == Company.company_id)
+        .filter(CompanyMarketData.id.in_(best_id_sq))
+        .all()
+    )
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _fetch_current_prices(tickers: list[str]) -> dict[str, float]:
@@ -590,6 +636,22 @@ class SmaReportResponse(BaseModel):
 _TG_MAX_LEN = 4000
 
 
+class _MdWithSma:
+    """
+    Thin adapter that injects sma_50/sma_200 from StockPriceHistory onto a
+    CompanyMarketData instance so `_build_sma_report_messages` can keep using
+    `getattr(md, "sma_50")` without changes.
+    """
+    def __init__(self, md: CompanyMarketData, sma_data: dict):
+        self._md = md
+        self.sma_50 = sma_data.get("sma_50")
+        self.sma_200 = sma_data.get("sma_200")
+
+    @property
+    def current_price(self):
+        return self._md.current_price
+
+
 @router.post("/sma-report", response_model=SmaReportResponse)
 def sma_distance_report(
     db: Session = Depends(get_db),
@@ -619,12 +681,17 @@ def sma_distance_report(
         if not company_ids:
             continue
 
-        rows = (
-            db.query(CompanyMarketData, Company.ticker)
-            .join(Company, CompanyMarketData.company_id == Company.company_id)
-            .filter(CompanyMarketData.company_id.in_(company_ids))
-            .all()
-        )
+        market_data_rows = _latest_market_data_rows(db, company_ids)
+
+        # Bulk-fetch SMA values from StockPriceHistory
+        sma_map = get_latest_smas_bulk(db, company_ids)
+
+        # Build rows as (md_with_sma, ticker) where md_with_sma is an object
+        # that has current_price, sma_50, sma_200
+        rows = []
+        for md, ticker, cid in market_data_rows:
+            sma_data = sma_map.get(cid, {})
+            rows.append((_MdWithSma(md, sma_data), ticker))
 
         if not rows:
             continue

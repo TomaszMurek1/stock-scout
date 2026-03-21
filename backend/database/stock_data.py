@@ -40,8 +40,7 @@ class CompanyMarketData(Base):
     ask_price = Column(Float, nullable=True)
     year_change = Column(Float, nullable=True)
     year_change = Column(Float, nullable=True)
-    sma_50 = Column(Float, nullable=True)
-    sma_200 = Column(Float, nullable=True)
+    shares_outstanding = Column(Float, nullable=True)
     shares_outstanding = Column(Float, nullable=True)
     shares_outstanding = Column(Float, nullable=True)
 

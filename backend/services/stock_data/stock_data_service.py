@@ -177,11 +177,9 @@ def fetch_and_save_stock_price_history_data(
 def update_smas_for_company(db: Session, company_id: int, market_id: int):
     """
     Calculate simple moving averages (20, 50, 100, 200) based on DB history
-    and update both CompanyMarketData (latest SMA values) and
-    StockPriceHistory (cached SMA columns for recent rows).
+    and update StockPriceHistory cached SMA columns for recent rows.
     """
     try:
-        from database.stock_data import CompanyMarketData
         import pandas as pd
 
         # Fetch last 300 days of closing prices (enough for SMA-200 + margin)
@@ -214,14 +212,6 @@ def update_smas_for_company(db: Session, company_id: int, market_id: int):
         for w in sma_windows:
             if len(df) >= w:
                 sma_windows[w] = closes.rolling(window=w).mean()
-
-        # -- Update CompanyMarketData with latest SMA values --
-        md = db.query(CompanyMarketData).filter_by(company_id=company_id).first()
-        if md:
-            if sma_windows[50] is not None and not pd.isna(sma_windows[50].iloc[-1]):
-                md.sma_50 = float(sma_windows[50].iloc[-1])
-            if sma_windows[200] is not None and not pd.isna(sma_windows[200].iloc[-1]):
-                md.sma_200 = float(sma_windows[200].iloc[-1])
 
         # -- Update StockPriceHistory cached SMA columns --
         # Update all rows where sma_200 is NULL (new rows + any gap).
