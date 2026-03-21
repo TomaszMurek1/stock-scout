@@ -262,11 +262,36 @@ def fetch_and_save_stock_price_history_data_batch(
             f"Batch inserted {len(mappings)} StockPriceHistory rows for {tickers}."
         )
         logger.info(f"[TIMER] Bulk insert + commit: {insert_end - insert_start:.3f}s")
+
+        # Recalculate SMAs for companies that received new price rows
+        sma_company_ids = {m["company_id"] for m in mappings}
+        for comp in companies:
+            if comp.company_id in sma_company_ids:
+                try:
+                    update_smas_for_company(db, comp.company_id, market_obj.market_id)
+                except Exception as e:
+                    logger.error(f"SMA update failed for {comp.ticker}: {e}")
+
         return {"status": "success", "inserted": len(mappings)}
     else:
         insert_end = time.time()
         logger.info("Batch insert: no new rows to add...")
         logger.info(f"[TIMER] No rows to insert: {insert_end - insert_start:.3f}s")
+
+        # Even if no new rows, SMAs might be missing from prior runs
+        for comp in companies:
+            try:
+                latest_sph = (
+                    db.query(StockPriceHistory)
+                    .filter_by(company_id=comp.company_id, market_id=market_obj.market_id)
+                    .order_by(StockPriceHistory.date.desc())
+                    .first()
+                )
+                if latest_sph and (latest_sph.sma_50 is None or latest_sph.sma_200 is None):
+                    update_smas_for_company(db, comp.company_id, market_obj.market_id)
+            except Exception as e:
+                logger.error(f"SMA backfill failed for {comp.ticker}: {e}")
+
         return {"status": "success", "inserted": 0}
 
 
