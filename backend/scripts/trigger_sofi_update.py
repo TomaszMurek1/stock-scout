@@ -27,9 +27,11 @@ def trigger_update():
         company = db.query(Company).filter(Company.ticker == 'SOFI').first()
         md = db.query(CompanyMarketData).filter(CompanyMarketData.company_id == company.company_id).first()
         if md:
+            from services.sma_lookup_service import get_latest_smas_for_company
+            sma_vals = get_latest_smas_for_company(db, company.company_id)
             print(f"SOFI Market Data after update:")
-            print(f"  SMA 50: {md.sma_50}")
-            print(f"  SMA 200: {md.sma_200}")
+            print(f"  SMA 50: {sma_vals['sma_50']}")
+            print(f"  SMA 200: {sma_vals['sma_200']}")
         else:
             print("No market data found.")
 

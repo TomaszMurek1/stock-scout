@@ -27,10 +27,12 @@ def check_sofi():
         if not md:
             print("No CompanyMarketData found for SOFI.")
         else:
+            from services.sma_lookup_service import get_latest_smas_for_company
+            sma_vals = get_latest_smas_for_company(db, company.company_id)
             print(f"SOFI Market Data:")
             print(f"  Current Price: {md.current_price}")
-            print(f"  SMA 50: {md.sma_50}")
-            print(f"  SMA 200: {md.sma_200}")
+            print(f"  SMA 50: {sma_vals['sma_50']}")
+            print(f"  SMA 200: {sma_vals['sma_200']}")
             print(f"  Last Updated: {md.last_updated}")
 
     except Exception as e:

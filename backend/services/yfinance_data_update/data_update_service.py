@@ -238,15 +238,6 @@ def fetch_and_save_stock_price_history_data_batch(
             continue
             
         latest_price = float(df.loc[last_valid_idx, "Close"])
-        
-        # Calculate SMAs (Rolling Averages)
-        closes = df['Close']
-        # We use the valid index to ensure we get the SMA corresponding to the latest price date
-        sma50_series = closes.rolling(window=50).mean()
-        sma200_series = closes.rolling(window=200).mean()
-        
-        latest_sma50 = sma50_series.loc[last_valid_idx]
-        latest_sma200 = sma200_series.loc[last_valid_idx]
 
         md = md_map.get(comp.company_id)
         if not md:
@@ -254,12 +245,6 @@ def fetch_and_save_stock_price_history_data_batch(
             db.add(md)
             
         md.current_price = latest_price
-        
-        if not pd.isna(latest_sma50):
-            md.sma_50 = float(latest_sma50)
-            
-        if not pd.isna(latest_sma200):
-            md.sma_200 = float(latest_sma200)
 
         md.last_updated = datetime.now(timezone.utc)
     
@@ -338,12 +323,17 @@ def ensure_fresh_data(
         include_quarterly=True,
     )
     
-    # 3b) Check if SMAs are populated (in case price was up-to-date but SMAs missing)
-    # We re-fetch MD because fetch_and_save... might have created/updated it
+    # 3b) Check if SMAs are populated in StockPriceHistory
+    # (in case price was up-to-date but SMAs missing from recent rows)
     try:
-        from database.stock_data import CompanyMarketData
-        md = db.query(CompanyMarketData).filter(CompanyMarketData.company_id == company.company_id).first()
-        if md and (md.sma_50 is None or md.sma_200 is None):
+        from database.stock_data import StockPriceHistory as SPH
+        latest_sph = (
+            db.query(SPH)
+            .filter(SPH.company_id == company.company_id, SPH.market_id == market.market_id)
+            .order_by(SPH.date.desc())
+            .first()
+        )
+        if latest_sph and (latest_sph.sma_50 is None or latest_sph.sma_200 is None):
             update_smas_for_company(db, company.company_id, market.market_id)
     except Exception as e:
         logger.error(f"Failed to backfill SMAs for {ticker}: {e}")

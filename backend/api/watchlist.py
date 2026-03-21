@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 from api.portfolio_crud import get_or_create_portfolio
 from services.auth.auth import get_current_user
 from services.company.company_service import get_or_create_company
+from services.sma_lookup_service import get_latest_smas_for_company, get_latest_smas_bulk
 from database.base import get_db
 from database.portfolio import FavoriteStock
 from database.position import PortfolioPositions
@@ -86,6 +87,10 @@ def get_holdings_for_user(db: Session, user: User) -> List[dict]:
         .all()
     )
 
+    # Bulk-fetch SMA values from StockPriceHistory
+    all_company_ids = {pos.company_id for pos in positions}
+    sma_map = get_latest_smas_bulk(db, all_company_ids)
+
     holdings: List[dict] = []
     for pos in positions:
         latest_md: Optional[CompanyMarketData] = (
@@ -99,14 +104,10 @@ def get_holdings_for_user(db: Session, user: User) -> List[dict]:
 
         if latest_md and latest_md.current_price is not None:
             last_price = round(float(latest_md.current_price), 2)
-        
-        sma_50: Optional[float] = None
-        sma_200: Optional[float] = None
-        if latest_md:
-             if latest_md.sma_50 is not None:
-                 sma_50 = float(latest_md.sma_50)
-             if latest_md.sma_200 is not None:
-                 sma_200 = float(latest_md.sma_200)
+
+        sma_vals = sma_map.get(pos.company_id, {})
+        sma_50 = sma_vals.get("sma_50")
+        sma_200 = sma_vals.get("sma_200")
 
         if pos.instrument_currency_code:
             currency = pos.instrument_currency_code
@@ -175,8 +176,6 @@ def _get_latest_market_data_for_company(
     last_price: Optional[float] = None
     currency: Optional[str] = None
     last_updated: Optional[str] = None
-    sma_50: Optional[float] = None
-    sma_200: Optional[float] = None
 
     if latest_md:
         if latest_md.current_price is not None:
@@ -189,17 +188,15 @@ def _get_latest_market_data_for_company(
             currency = latest_md.company.market.currency
         if latest_md.last_updated is not None:
             last_updated = latest_md.last_updated.isoformat()
-        if latest_md.sma_50 is not None:
-            sma_50 = float(latest_md.sma_50)
-        if latest_md.sma_200 is not None:
-            sma_200 = float(latest_md.sma_200)
+
+    sma_vals = get_latest_smas_for_company(db, company_id)
 
     return {
         "last_price": last_price,
         "currency": currency,
         "last_updated": last_updated,
-        "sma_50": sma_50,
-        "sma_200": sma_200,
+        "sma_50": sma_vals["sma_50"],
+        "sma_200": sma_vals["sma_200"],
     }
 
 
