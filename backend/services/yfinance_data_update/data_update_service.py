@@ -298,6 +298,7 @@ def fetch_and_save_stock_price_history_data_batch(
 def ensure_fresh_data(
     ticker: str, market_name: str, use_batch_for_price_history_data: int, db: Session
 ):
+    ticker = ticker.upper().strip()
     company = db.query(Company).filter_by(ticker=ticker).first()
     market = db.query(Market).filter_by(name=market_name).first()
 
