@@ -1,4 +1,4 @@
-import { FC, useState, useMemo } from "react";
+import { FC, useState, useMemo, useEffect } from "react";
 import { Badge } from "@/components/ui/Layout";
 import { RefreshedCard, RefreshedHeader } from "../components/refreshed-card";
 import { ChartBarIcon } from "@heroicons/react/24/outline";
@@ -7,6 +7,12 @@ import type { StockData } from "../stock-one-pager.types";
 import { subMonths, subYears, startOfYear, isAfter, parseISO } from "date-fns";
 import { PeriodSelector, Period } from "../components/period-selector";
 import { ChartMetrics } from "../components/chart-metrics";
+import { GmmaSqueezeChart } from "@/features/scenario-carousel/scan-types/gmma-squeeze/gmma-squeeze-chart";
+import { IGmmaChartDataPoint } from "@/features/scenario-carousel/scan-types/gmma-squeeze/gmma-squeeze-form.types";
+import { apiClient } from "@/services/apiClient";
+import { Loader2 } from "lucide-react";
+
+type ChartMode = "sma" | "gmma";
 
 interface TechnicalAnalysisChartCardProps {
   technicalAnalysis: StockData["technical_analysis"];
@@ -14,6 +20,7 @@ interface TechnicalAnalysisChartCardProps {
   shortWindow?: number;
   longWindow?: number;
   isRefreshed?: boolean;
+  ticker?: string;
 }
 
 const calculateVolatility = (prices: number[]): number => {
@@ -52,13 +59,61 @@ const calculateMaxDrawdown = (prices: number[]): number => {
   return maxDrawdown; // This will be a negative number (e.g., -0.15 for 15% drop)
 };
 
+const ChartModeSelector: FC<{ mode: ChartMode; onSelect: (m: ChartMode) => void }> = ({ mode, onSelect }) => {
+  const modes: { value: ChartMode; label: string }[] = [
+    { value: "sma", label: "SMA" },
+    { value: "gmma", label: "GMMA" },
+  ];
+
+  return (
+    <div data-id="toggle-chart-mode" className="flex p-1 bg-slate-100 rounded-lg">
+      {modes.map((m) => (
+        <button
+          key={m.value}
+          data-id={`btn-chart-${m.value}`}
+          onClick={() => onSelect(m.value)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
+            mode === m.value
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+          }`}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
   technicalAnalysis,
   shortWindow = 50,
   longWindow = 200,
   isRefreshed = false,
+  ticker,
 }) => {
   const [period, setPeriod] = useState<Period>("1Y");
+  const [chartMode, setChartMode] = useState<ChartMode>("sma");
+
+  // GMMA data — lazy-loaded on first switch
+  const [gmmaData, setGmmaData] = useState<IGmmaChartDataPoint[] | null>(null);
+  const [gmmaLoading, setGmmaLoading] = useState(false);
+  const [gmmaError, setGmmaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (chartMode !== "gmma" || !ticker || gmmaData) return;
+
+    setGmmaLoading(true);
+    setGmmaError(null);
+
+    apiClient
+      .get(`/technical-analysis/gmma-squeeze/chart/${ticker}`)
+      .then((res) => setGmmaData(res.data.data))
+      .catch((err) =>
+        setGmmaError(err?.response?.data?.detail || "Failed to load GMMA chart data")
+      )
+      .finally(() => setGmmaLoading(false));
+  }, [chartMode, ticker, gmmaData]);
 
   const fullData = useMemo(
     () =>
@@ -117,6 +172,8 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
     };
   }, [filteredData]);
 
+  const showGmma = chartMode === "gmma";
+
   return (
     <RefreshedCard isRefreshed={isRefreshed}>
       {/* Header Section */}
@@ -127,40 +184,66 @@ const TechnicalAnalysisChartCard: FC<TechnicalAnalysisChartCardProps> = ({
           </div>
           Technical Analysis
         </h3>
-        <PeriodSelector selectedPeriod={period} onSelect={setPeriod} />
+        <div className="flex items-center gap-3">
+          <ChartModeSelector mode={chartMode} onSelect={setChartMode} />
+          {!showGmma && <PeriodSelector selectedPeriod={period} onSelect={setPeriod} />}
+        </div>
       </RefreshedHeader>
 
       {/* Chart Section */}
       <div className={`px-5 transition-colors duration-1000 ${isRefreshed ? "bg-emerald-50/30" : "bg-white"}`}>
-        <div className="flex gap-2 mb-4 justify-end">
-          <Badge variant="neutral" className="bg-teal-50 text-teal-700 border-teal-100">
-            {`SMA ${shortWindow}`}
-          </Badge>
-          <Badge variant="neutral" className="bg-orange-50 text-orange-700 border-orange-100">
-            {`SMA ${longWindow}`}
-          </Badge>
-        </div>
-        <div className="h-[400px] w-full">
-          <StockChart
-            historicalData={filteredData}
-            shortWindow={shortWindow}
-            longWindow={longWindow}
-          />
-        </div>
+        {showGmma ? (
+          /* GMMA Chart */
+          <div className="py-4">
+            {gmmaLoading && (
+              <div data-id="gmma-loading" className="flex items-center justify-center py-20 text-slate-500">
+                <Loader2 className="animate-spin mr-3" size={24} />
+                <span className="text-lg">Loading GMMA chart…</span>
+              </div>
+            )}
+            {gmmaError && (
+              <div data-id="gmma-error" className="text-center py-16">
+                <p className="text-red-500 text-lg mb-2">⚠ {gmmaError}</p>
+              </div>
+            )}
+            {gmmaData && ticker && <GmmaSqueezeChart data={gmmaData} ticker={ticker} />}
+          </div>
+        ) : (
+          /* SMA Chart */
+          <>
+            <div className="flex gap-2 mb-4 justify-end">
+              <Badge variant="neutral" className="bg-teal-50 text-teal-700 border-teal-100">
+                {`SMA ${shortWindow}`}
+              </Badge>
+              <Badge variant="neutral" className="bg-orange-50 text-orange-700 border-orange-100">
+                {`SMA ${longWindow}`}
+              </Badge>
+            </div>
+            <div className="h-[400px] w-full">
+              <StockChart
+                historicalData={filteredData}
+                shortWindow={shortWindow}
+                longWindow={longWindow}
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Metrics Footer */}
-      <div className={`px-5 pt-3 pb-5 border-t border-slate-100 rounded-b-xl transition-colors duration-1000 ${
-          isRefreshed ? "bg-emerald-100/30" : "bg-slate-50/50"
-      }`}>
-        <ChartMetrics
-          volatility={volatility}
-          maxDrawdown={maxDrawdown}
-          percentFromMin={percentFromMin}
-          percentFromMax={percentFromMax}
-          periodPerformance={periodPerformance}
-        />
-      </div>
+      {/* Metrics Footer — only shown for SMA mode */}
+      {!showGmma && (
+        <div className={`px-5 pt-3 pb-5 border-t border-slate-100 rounded-b-xl transition-colors duration-1000 ${
+            isRefreshed ? "bg-emerald-100/30" : "bg-slate-50/50"
+        }`}>
+          <ChartMetrics
+            volatility={volatility}
+            maxDrawdown={maxDrawdown}
+            percentFromMin={percentFromMin}
+            percentFromMax={percentFromMax}
+            periodPerformance={periodPerformance}
+          />
+        </div>
+      )}
     </RefreshedCard>
   );
 };
