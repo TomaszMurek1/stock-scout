@@ -272,6 +272,10 @@
       "title": "Wyckoff Accumulation",
       "description": "Detect accumulation phase using price/volume evidence"
     },
+    "gmma_squeeze": {
+      "title": "GMMA Squeeze",
+      "description": "Detect GMMA compression breakouts (Borawski method)"
+    },
     "break_even_point": {
       "title": "Break Even Point",
       "description": "Discover stocks approaching their break-even levels"
@@ -487,6 +491,48 @@
       "min_kelly_fraction": {
         "label": "Minimum Kelly Fraction",
         "description": "Filter results by minimum Kelly Fraction (0-1)"
+      }
+    },
+    "gmma_squeeze": {
+      "title": "GMMA Squeeze Scanner",
+      "subtitle_desc": "Detect <strong>GMMA compression breakouts</strong> using the Borawski Volatility Squeeze method. Identifies stocks where 24 EMA lines compress and then expand with a <strong>bullish or bearish breakout</strong>.",
+      "bullets": {
+        "gmma": {
+          "label": "GMMA System",
+          "description": "24 Exponential Moving Averages grouped into Red (short-term), Blue (medium), and Green (long-term) bands."
+        },
+        "squeeze": {
+          "label": "Volatility Squeeze",
+          "description": "The Starter% metric measures how tightly the Red and Blue bands are compressed. Below 3% = maximum compression."
+        },
+        "breakout": {
+          "label": "Breakout Signal",
+          "description": "When Starter% expands from compression and price breaks the Red band — the 'spring' is released."
+        },
+        "trend": {
+          "label": "Trend Filter",
+          "description": "Detects both uptrends (above SMA 200, Clean Air) and downtrends (below SMA 200, inverted bands)."
+        }
+      },
+      "trend_filter": {
+        "label": "Trend Direction",
+        "description": "Filter by trend direction: uptrend (▲), downtrend (▼), or both."
+      },
+      "compression_threshold": {
+        "label": "Compression Threshold (%)",
+        "description": "Maximum Starter% value at T-1 to qualify as compressed. Lower = tighter squeeze (default: 3%)."
+      },
+      "band_width_threshold": {
+        "label": "Band Width Threshold (%)",
+        "description": "Maximum allowed internal width of Red/Blue bands at T-1. Rejects signals where bands are already wide (trend developed). Default: 5%."
+      },
+      "starter_smoothing": {
+        "label": "Starter Smoothing (periods)",
+        "description": "Rolling window for Starter% smoothing. Higher = less noise (default: 3)."
+      },
+      "session_limit": {
+        "label": "Session Limit",
+        "description": "Number of trading sessions to load per ticker for EMA calculation (default: 200)."
       }
     }
   },
