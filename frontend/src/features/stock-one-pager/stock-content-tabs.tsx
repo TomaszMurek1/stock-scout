@@ -67,6 +67,7 @@ export function StockContentTabs({
             shortWindow={shortWindow}
             longWindow={longWindow}
             isRefreshed={isRefreshed}
+            ticker={ticker}
           />
         </div>
       </AnimatedTabsContent>
