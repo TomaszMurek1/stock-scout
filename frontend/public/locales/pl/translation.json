@@ -272,6 +272,10 @@
       "title": "Akumulacja Wyckoffa",
       "description": "Wykryj fazę akumulacji używając dowodów cenowych i wolumenowych"
     },
+    "gmma_squeeze": {
+      "title": "GMMA Squeeze",
+      "description": "Wykryj wybicia z kompresji GMMA (metoda Borawskiego)"
+    },
     "break_even_point": {
       "title": "Próg Rentowności",
       "description": "Odkryj akcje zbliżające się do swoich poziomów rentowności"
@@ -487,6 +491,48 @@
       "min_kelly_fraction": {
         "label": "Minimalna Frakcja Kelly'ego",
         "description": "Filtruj wyniki według minimalnej frakcji Kelly'ego (0-1)"
+      }
+    },
+    "gmma_squeeze": {
+      "title": "Skaner GMMA Squeeze",
+      "subtitle_desc": "Wykryj <strong>wybicia z kompresji GMMA</strong> metodą Volatility Squeeze Borawskiego. Identyfikuje spółki, gdzie 24 linie EMA kompresują się, a następnie rozszerzają z <strong>byczym lub niedźwiedzim wybiciem</strong>.",
+      "bullets": {
+        "gmma": {
+          "label": "System GMMA",
+          "description": "24 Wykładnicze Średnie Kroczące pogrupowane w pasma Czerwone (krótkoterminowe), Niebieskie (średnie) i Zielone (długoterminowe)."
+        },
+        "squeeze": {
+          "label": "Kompresja Zmienności",
+          "description": "Wskaźnik Starter% mierzy jak ciasno skompresowane są pasma Czerwone i Niebieskie. Poniżej 3% = maksymalna kompresja."
+        },
+        "breakout": {
+          "label": "Sygnał Wybicia",
+          "description": "Gdy Starter% rozszerza się z kompresji, a cena przebija Czerwone pasmo — 'sprężyna' zostaje uwolniona."
+        },
+        "trend": {
+          "label": "Filtr Trendu",
+          "description": "Wykrywa zarówno trendy wzrostowe (powyżej SMA 200, Czyste Powietrze) jak i spadkowe (poniżej SMA 200, odwrócone pasma)."
+        }
+      },
+      "trend_filter": {
+        "label": "Kierunek Trendu",
+        "description": "Filtruj po kierunku trendu: wzrostowy (▲), spadkowy (▼) lub oba."
+      },
+      "compression_threshold": {
+        "label": "Próg Kompresji (%)",
+        "description": "Maksymalna wartość Starter% w T-1, aby zakwalifikować jako skompresowany. Niższy = ciaśniejszy squeeze (domyślnie: 3%)."
+      },
+      "band_width_threshold": {
+        "label": "Próg Szerokości Pasm (%)",
+        "description": "Maksymalna dozwolona wew. szerokość pasm Red/Blue w T-1. Odrzuca sygnały gdy pasma są szerokie (trend rozwinięty). Domyślnie: 5%."
+      },
+      "starter_smoothing": {
+        "label": "Wygładzanie Startera (okresy)",
+        "description": "Okno kroczące do wygładzania Starter%. Wyższy = mniej szumu (domyślnie: 3)."
+      },
+      "session_limit": {
+        "label": "Limit Sesji",
+        "description": "Liczba sesji handlowych do pobrania na ticker dla obliczeń EMA (domyślnie: 200)."
       }
     }
   },

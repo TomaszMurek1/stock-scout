@@ -17,6 +17,8 @@ import EvToRevenuePage from "./features/scenario-carousel/scan-types/ev-to-reven
 import BreakEvenPointPage from "./features/scenario-carousel/scan-types/break-even-point/break-even-point-page/break-even-point-page";
 import ChochScanPage from "./features/scenario-carousel/scan-types/choch/choch-page";
 import WyckoffScanPage from "./features/scenario-carousel/scan-types/wyckoff/wyckoff-page";
+import GmmaSqueezePage from "./features/scenario-carousel/scan-types/gmma-squeeze/gmma-squeeze-page";
+import GmmaChartPage from "./features/scenario-carousel/scan-types/gmma-squeeze/gmma-chart-page";
 import AdminDashboard from "./features/admin/AdminDashboard";
 import AdminSyncMarkets from "./features/admin/admin-sync-markets/AdminSyncMarkets";
 import AdminValuationTools from "./features/admin/admin-valuation/admin-valuation";
@@ -103,6 +105,14 @@ function App() {
               <Route
                 path="/scenarios/wyckoff"
                 element={<PrivateRoute element={<WyckoffScanPage />} />}
+              />
+              <Route
+                path="/scenarios/gmma-squeeze"
+                element={<PrivateRoute element={<GmmaSqueezePage />} />}
+              />
+              <Route
+                path="/scenarios/gmma-squeeze/chart/:ticker"
+                element={<PrivateRoute element={<GmmaChartPage />} />}
               />
               <Route path="/admin" element={<PrivateRoute element={<AdminDashboard />} />} />
               <Route

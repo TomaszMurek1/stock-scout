@@ -90,6 +90,14 @@ export const scenarios: Scenario[] = [
     type: "wyckoff",
   },
   {
+    title: "scenarios.gmma_squeeze.title",
+    description: "scenarios.gmma_squeeze.description",
+    icon: Activity,
+    href: "/scenarios/gmma-squeeze",
+    color: "bg-teal-200 bg-opacity-50",
+    type: "gmma-squeeze",
+  },
+  {
     title: "scenarios.break_even_point.title",
     description: "scenarios.break_even_point.description",
     icon: Target,

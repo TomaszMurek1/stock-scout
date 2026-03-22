@@ -38,6 +38,15 @@ class BreakoutRequest(BaseModel):
     min_market_cap: float | None = None
 
 
+class GmmaSqueezeRequest(BaseModel):
+    basket_ids: List[int] | None = None
+    min_market_cap: float | None = None
+    compression_threshold: float = 3.0    # max Starter% for T-1 compression
+    starter_smoothing: int = 3            # rolling window for Starter% smoothing
+    session_limit: int = 200              # sessions to fetch per ticker
+    trend_filter: str = "both"            # "up", "down", or "both"
+    band_width_threshold: float = 5.0     # max Red/Blue internal band width at T-1
+
 
 class TickerRequestAdmin(BaseModel):
     country: str
