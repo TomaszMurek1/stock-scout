@@ -85,7 +85,10 @@ async def _poll_telegram_updates():
                 data = resp.json()
 
                 if not data.get("ok"):
-                    logger.error(f"Telegram getUpdates error: {data}")
+                    if data.get("error_code") == 409:
+                        logger.warning("Telegram polling conflict (409) — usually expected during Uvicorn hot-reload.")
+                    else:
+                        logger.error(f"Telegram getUpdates error: {data}")
                     await asyncio.sleep(5)
                     continue
 

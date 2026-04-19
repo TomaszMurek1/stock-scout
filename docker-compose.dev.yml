@@ -32,8 +32,8 @@ services:
       dev_db:
         condition: service_healthy
     volumes:
-      - ./backend:/app
-      - .:/workspaces/stock-scout
+      - ./backend:/app:z
+      - .:/workspaces/stock-scout:z
     ports:
       - "8000:8000"
 
@@ -47,7 +47,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app:z
       - /app/node_modules
     ports:
       - "5173:5173"
@@ -65,7 +65,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro,z
 
   n8n:
     image: n8nio/n8n:latest

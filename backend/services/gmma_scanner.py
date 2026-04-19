@@ -384,7 +384,14 @@ def get_gmma_chart_data(db: Session, ticker: str, session_limit: int = 200) -> d
     """
     Return GMMA band data for a single ticker (for chart rendering).
     Returns close, sma_200, and 5 GMMA edges per session.
+
+    Internally fetches session_limit + EMA_WARMUP extra days so that
+    EMA values at the start of the visible window are fully converged.
     """
+    EMA_WARMUP = 120  # longest EMA = 90; 120 gives good convergence
+
+    fetch_limit = session_limit + EMA_WARMUP
+
     sql = text("""
         SELECT sub.date, sub.close, sub.sma_200
         FROM (
@@ -401,7 +408,7 @@ def get_gmma_chart_data(db: Session, ticker: str, session_limit: int = 200) -> d
         ORDER BY sub.date ASC
     """)
 
-    rows = db.execute(sql, {"ticker": ticker, "limit": session_limit}).fetchall()
+    rows = db.execute(sql, {"ticker": ticker, "limit": fetch_limit}).fetchall()
     if not rows:
         return {"ticker": ticker, "data": []}
 
@@ -409,7 +416,7 @@ def get_gmma_chart_data(db: Session, ticker: str, session_limit: int = 200) -> d
     for col in ("close", "sma_200"):
         df[col] = df[col].astype(np.float32)
 
-    # Compute GMMA edges
+    # Compute GMMA edges on full data (with warmup)
     ema_cols: list[str] = []
     for span in RED_PERIODS + BLUE_PERIODS + GREEN_PERIODS:
         col_name = f"ema_{span}"
@@ -427,6 +434,9 @@ def get_gmma_chart_data(db: Session, ticker: str, session_limit: int = 200) -> d
     df["ziel_top"] = df[green_cols].max(axis=1)
 
     df.drop(columns=ema_cols, inplace=True)
+
+    # Trim to requested window (drop warmup rows)
+    df = df.tail(session_limit).reset_index(drop=True)
 
     # Convert to list of dicts (rounded for JSON)
     chart_data = []
