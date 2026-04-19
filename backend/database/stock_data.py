@@ -39,9 +39,6 @@ class CompanyMarketData(Base):
     bid_price = Column(Float, nullable=True)
     ask_price = Column(Float, nullable=True)
     year_change = Column(Float, nullable=True)
-    year_change = Column(Float, nullable=True)
-    shares_outstanding = Column(Float, nullable=True)
-    shares_outstanding = Column(Float, nullable=True)
     shares_outstanding = Column(Float, nullable=True)
 
     last_updated = Column(
@@ -55,7 +52,7 @@ class CompanyMarketData(Base):
 
 class StockPriceHistory(Base):
     __tablename__ = "stock_price_history"
-    market_id = Column(Integer, ForeignKey("markets.market_id"), nullable=False)
+    market_id = Column(Integer, ForeignKey("markets.market_id"), primary_key=True, nullable=False)
     data_id = Column(Integer, primary_key=True, autoincrement=True)
     company_id = Column(Integer, ForeignKey("companies.company_id"), nullable=False)
     date = Column(Date, nullable=False, index=True)

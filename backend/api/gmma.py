@@ -7,7 +7,7 @@ POST /gmma-squeeze/report       → n8n: Telegram GMMA report per user (holdings
 
 import logging
 from datetime import date
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header, status
 from pydantic import BaseModel
@@ -132,12 +132,14 @@ def scan_gmma_squeeze(
 @router.get("/gmma-squeeze/chart/{ticker}")
 def gmma_chart(
     ticker: str,
+    days: int = 365,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Return GMMA band chart data for a single ticker.
     Used by the frontend to render an inline GMMA chart.
+    `days` controls how many trading days to return (default 365 ≈ 1 year).
     """
     if not current_user:
         raise HTTPException(
@@ -145,7 +147,10 @@ def gmma_chart(
             detail="Authentication required",
         )
 
-    result = get_gmma_chart_data(db, ticker.upper())
+    # Clamp to reasonable range
+    days = max(30, min(days, 1500))
+
+    result = get_gmma_chart_data(db, ticker.upper(), session_limit=days)
     if not result["data"]:
         raise HTTPException(status_code=404, detail=f"No data for ticker {ticker}")
 
