@@ -1,4 +1,3 @@
-"use client";
 
 import React, { lazy, Suspense, useState } from "react";
 import { AnimatedTabs, AnimatedTabsContent, AnimatedTabsList, FramerTabTrigger } from "@/components/ui/animated-tabs";

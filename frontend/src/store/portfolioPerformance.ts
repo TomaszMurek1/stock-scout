@@ -1,4 +1,3 @@
-"use client"
 import { apiClient } from "@/services/apiClient"
 import { CurrencyPoint } from "./portfolio";
 
