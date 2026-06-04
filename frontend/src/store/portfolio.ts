@@ -3,14 +3,11 @@ import {
   Portfolio,
   PortfolioPerformance,
   Account,
-} from "@/features/portfolio-management/types";
-import { apiClient } from "@/services/apiClient";
-import {
   Transaction,
-  WatchlistStock,
 } from "@/features/portfolio-management/types";
+import { WatchlistStock } from "@/features/portfolio-management/tabs/watchlist/types";
+import { apiClient } from "@/services/apiClient";
 import { Alert } from "@/features/portfolio-management/types/alert.types";
-export type Holding = { shares: number; average_cost_currency: string };
 
 export type CurrencyPoint = { date: string; close: number };
 type CurrencyPair = Record<string, CurrencyPoint[]>;

@@ -1,4 +1,3 @@
-"use client";
 import React, { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";

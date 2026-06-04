@@ -1,4 +1,3 @@
-"use client";
 
 import React, { useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";

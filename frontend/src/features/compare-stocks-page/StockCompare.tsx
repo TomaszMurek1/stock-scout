@@ -1,4 +1,3 @@
-"use client"
 import { FC } from "react"
 import { useParams } from "react-router-dom"
 import { useCompareData } from "./useCompareData"
